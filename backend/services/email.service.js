@@ -1,19 +1,21 @@
-const nodemailer = require('nodemailer');
+const axios = require('axios');
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
+const brevoHeaders = {
+  'api-key': process.env.BREVO_API_KEY,
+  'Content-Type': 'application/json',
+};
+
+// ============================================
+// Send OTP Email (Forgot Password)
+// ============================================
 const sendOTPEmail = async (toEmail, otp, adminName) => {
-  await transporter.sendMail({
-    from: `"DentalQuest" <${process.env.EMAIL_USER}>`,
-    to: toEmail,
+  await axios.post(BREVO_API_URL, {
+    sender: { name: 'DentalQuest', email: process.env.BREVO_SENDER_EMAIL },
+    to: [{ email: toEmail }],
     subject: 'DentalQuest — Password Reset OTP',
-    html: `
+    htmlContent: `
       <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:2rem;border:1px solid #e2e8f0;border-radius:16px;">
         <h1 style="color:#1e3a5f;text-align:center;">🦷 DentalQuest</h1>
         <h2 style="color:#1e3a5f;">Password Reset Request</h2>
@@ -27,15 +29,18 @@ const sendOTPEmail = async (toEmail, otp, adminName) => {
         <p style="color:#94a3b8;font-size:0.82rem;text-align:center;">DentalQuest — Oral Health Education Programme</p>
       </div>
     `,
-  });
+  }, { headers: brevoHeaders });
 };
 
+// ============================================
+// Send Invite Email (New Admin)
+// ============================================
 const sendInviteEmail = async (toEmail, inviteLink) => {
-  await transporter.sendMail({
-    from: `"DentalQuest" <${process.env.EMAIL_USER}>`,
-    to: toEmail,
+  await axios.post(BREVO_API_URL, {
+    sender: { name: 'DentalQuest', email: process.env.BREVO_SENDER_EMAIL },
+    to: [{ email: toEmail }],
     subject: 'You have been invited to DentalQuest Admin Portal!',
-    html: `
+    htmlContent: `
       <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:2rem;border:1px solid #e2e8f0;border-radius:16px;">
         <h1 style="color:#1e3a5f;text-align:center;">🦷 DentalQuest</h1>
         <h2 style="color:#1e3a5f;">You're Invited! 🎉</h2>
@@ -52,15 +57,18 @@ const sendInviteEmail = async (toEmail, inviteLink) => {
         <p style="color:#94a3b8;font-size:0.82rem;text-align:center;">DentalQuest — Oral Health Education Programme</p>
       </div>
     `,
-  });
+  }, { headers: brevoHeaders });
 };
 
+// ============================================
+// Send Reminder Email (Admin to Admin)
+// ============================================
 const sendReminderEmail = async (toEmail, adminName, subject, message, fromName) => {
-  await transporter.sendMail({
-    from: `"DentalQuest" <${process.env.EMAIL_USER}>`,
-    to: toEmail,
+  await axios.post(BREVO_API_URL, {
+    sender: { name: 'DentalQuest', email: process.env.BREVO_SENDER_EMAIL },
+    to: [{ email: toEmail }],
     subject: `DentalQuest: ${subject}`,
-    html: `
+    htmlContent: `
       <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:2rem;border:1px solid #e2e8f0;border-radius:16px;">
         <h1 style="color:#1e3a5f;text-align:center;">🦷 DentalQuest</h1>
         <h2 style="color:#1e3a5f;">${subject}</h2>
@@ -70,7 +78,7 @@ const sendReminderEmail = async (toEmail, adminName, subject, message, fromName)
         <p style="color:#94a3b8;font-size:0.82rem;text-align:center;">DentalQuest — Oral Health Education Programme</p>
       </div>
     `,
-  });
+  }, { headers: brevoHeaders });
 };
 
 module.exports = { sendOTPEmail, sendInviteEmail, sendReminderEmail };
