@@ -45,7 +45,7 @@ const downloadCSV = async (req, res) => {
       LEFT JOIN cp3_scores cp3 ON cp3.player_id = p.id
       GROUP BY p.id ORDER BY s.session_name, p.nickname
     `);
-    const headers = ['Nickname','Session','Joined At','CP1 Completed','CP1 Attempts','CP2 Completed','CP2 Attempts','CP3 Completed','CP3 Attempts','Quiz Score','Quiz Correct','Food Game Score'];
+    const headers = ['Nickname', 'Session', 'Joined At', 'CP1 Completed', 'CP1 Attempts', 'CP2 Completed', 'CP2 Attempts', 'CP3 Completed', 'CP3 Attempts', 'Quiz Score', 'Quiz Correct', 'Food Game Score'];
     const csvRows = [headers.join(',')];
     rows.forEach(r => {
       csvRows.push([
@@ -227,4 +227,25 @@ const changePassword = async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 };
 
-module.exports = { getPlayers, downloadCSV, getAnalytics, getAllAdmins, inviteAdmin, completeRegistration, verifyInviteToken, deleteAdmin, updateProfile, changePassword };
+const resendInvite = async (req, res) => {
+  try {
+    const [invites] = await db.query('SELECT * FROM admin_invitations WHERE id = ? AND used = FALSE AND expires_at > NOW()', [req.params.id]);
+    if (invites.length === 0) return res.status(404).json({ error: 'Invitation not found or already used' });
+    const invite = invites[0];
+    const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const token = jwt.sign({ email: invite.email, type: 'admin_invite' }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    await db.query('UPDATE admin_invitations SET token = ?, expires_at = ? WHERE id = ?', [token, newExpiry, invite.id]);
+    const inviteLink = `${process.env.CLIENT_URL}/admin/register?token=${token}`;
+    try { await sendInviteEmail(invite.email, inviteLink); } catch (e) { console.error('Email failed:', e.message); }
+    res.json({ message: 'Invitation resent!' });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+};
+
+const cancelInvite = async (req, res) => {
+  try {
+    await db.query('DELETE FROM admin_invitations WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Invitation cancelled' });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+};
+
+module.exports = { getPlayers, downloadCSV, getAnalytics, getAllAdmins, inviteAdmin, resendInvite, cancelInvite, completeRegistration, verifyInviteToken, deleteAdmin, updateProfile, changePassword };
