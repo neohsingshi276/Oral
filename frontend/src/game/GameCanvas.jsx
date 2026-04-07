@@ -78,7 +78,18 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
   useEffect(() => {
     api.get(`/game/position/${player.id}`).then(res => {
       if (res.data.position) {
-        charPos.current = { x: res.data.position.pos_x, y: res.data.position.pos_y };
+        const { pos_x, pos_y } = res.data.position;
+        // Only use saved position if it's within valid map bounds (not in ocean)
+        if (
+          pos_x > 100 && pos_x < MAP_WIDTH - 100 &&
+          pos_y > 100 && pos_y < MAP_HEIGHT - 100 &&
+          isWalkable(pos_x, pos_y)
+        ) {
+          charPos.current = { x: pos_x, y: pos_y };
+        } else {
+          // Reset to START if saved position is invalid
+          charPos.current = { x: START_POS.x, y: START_POS.y };
+        }
       }
     }).catch(() => { });
   }, [player.id]);
