@@ -6,13 +6,13 @@ export const MAP_HEIGHT = MAP_IMG_HEIGHT * MAP_SCALE;
 export const CHAR_SIZE = 28;
 export const CHAR_SPEED = 2.5;
 
-// Matched exactly to markers on map image
-export const START_POS = { x: 230 * MAP_SCALE, y: 1490 * MAP_SCALE };
+// START = bottom-left green label on map (~x=210, y=1490 in image coords)
+export const START_POS = { x: 210 * MAP_SCALE, y: 1490 * MAP_SCALE };
 
 export const CHECKPOINTS = [
-  { id: 1, x: 497 * MAP_SCALE, y: 820 * MAP_SCALE, radius: 40, color: '#7B2FBE', label: 'Checkpoint 1' },
-  { id: 2, x: 460 * MAP_SCALE, y: 488 * MAP_SCALE, radius: 40, color: '#CC3380', label: 'Checkpoint 2' },
-  { id: 3, x: 468 * MAP_SCALE, y: 118 * MAP_SCALE, radius: 40, color: '#E85D04', label: 'Checkpoint 3' },
+  { id: 1, x: 497 * MAP_SCALE, y: 820 * MAP_SCALE,  radius: 40, color: '#7B2FBE', label: 'Checkpoint 1' },
+  { id: 2, x: 460 * MAP_SCALE, y: 488 * MAP_SCALE,  radius: 40, color: '#CC3380', label: 'Checkpoint 2' },
+  { id: 3, x: 468 * MAP_SCALE, y: 118 * MAP_SCALE,  radius: 40, color: '#E85D04', label: 'Checkpoint 3' },
 ];
 
 export const CHECKPOINT_VIDEO_IDS = {
