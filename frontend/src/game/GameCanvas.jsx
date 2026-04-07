@@ -1,53 +1,40 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import mapBase from '../assets/map-base.jpg';
-import { MAP_WIDTH, MAP_HEIGHT, MAP_SCALE, MAP_IMG_WIDTH, MAP_IMG_HEIGHT, CHAR_SIZE, CHAR_SPEED, START_POS, CHECKPOINTS } from './gameConfig';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_SCALE, CHAR_SIZE, CHAR_SPEED, START_POS, CHECKPOINTS } from './gameConfig';
 import collisionData from '../assets/collision-grid.json';
 import api from '../services/api';
 
 const SAVE_INTERVAL = 5000;
 
-// Build collision lookup
 const COLLISION_GRID = collisionData.grid;
-const GRID_W = collisionData.width;   // tiles across original image
-const GRID_H = collisionData.height;  // tiles down original image
-const TILE_PX = collisionData.tileWidth; // pixels per tile in original image
+const GRID_W = collisionData.width;
+const GRID_H = collisionData.height;
+const TILE_PX = collisionData.tileWidth;
 
-/**
- * Check if a pixel position (in scaled/canvas coordinates) is walkable.
- * Convert from scaled coords → original image coords → tile coords.
- */
 const isWalkable = (px, py) => {
-  // Always allow near checkpoints and start position
+  // Always allow movement near START and checkpoints
   const nearSpecial = [START_POS, ...CHECKPOINTS].some(loc => {
-    const lx = loc.x, ly = loc.y;
-    const r = loc.radius || 30;
-    return Math.abs(px - lx) < r + 10 && Math.abs(py - ly) < r + 10;
+    const r = loc.radius || 60;
+    return Math.abs(px - loc.x) < r + 20 && Math.abs(py - loc.y) < r + 20;
   });
   if (nearSpecial) return true;
 
-  // Convert from scaled canvas coords to original image coords
+  // Convert scaled canvas coords → original image coords
   const imgX = px / MAP_SCALE;
   const imgY = py / MAP_SCALE;
 
-  // Check a few points around the character's feet area
-  const margin = 2;
-  const halfW = 6;
-  const feetY = imgY + 6;
-
+  // Check feet area of character
   const points = [
-    [imgX, feetY],                    // center bottom
-    [imgX - halfW + margin, feetY],   // left foot
-    [imgX + halfW - margin, feetY],   // right foot
-    [imgX, feetY - 4],                // slightly above feet
+    [imgX, imgY + 8],
+    [imgX - 6, imgY + 8],
+    [imgX + 6, imgY + 8],
+    [imgX, imgY],
   ];
 
   for (const [x, y] of points) {
     const tileX = Math.floor(x / TILE_PX);
     const tileY = Math.floor(y / TILE_PX);
-
-    // Out of bounds = blocked
     if (tileX < 0 || tileX >= GRID_W || tileY < 0 || tileY >= GRID_H) return false;
-
     const row = COLLISION_GRID[tileY];
     if (!row || row[tileX] !== '1') return false;
   }
@@ -74,24 +61,21 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
     return progress.find(p => p.checkpoint_number === cpId - 1)?.completed;
   }, [progress]);
 
-  // Load saved position
+  // Load saved position — only restore if it's a valid walkable spot
   useEffect(() => {
     api.get(`/game/position/${player.id}`).then(res => {
-      if (res.data.position) {
+      if (res.data?.position) {
         const { pos_x, pos_y } = res.data.position;
-        // Only use saved position if it's within valid map bounds (not in ocean)
-        if (
-          pos_x > 100 && pos_x < MAP_WIDTH - 100 &&
-          pos_y > 100 && pos_y < MAP_HEIGHT - 100 &&
-          isWalkable(pos_x, pos_y)
-        ) {
+        const inBounds = pos_x > 50 && pos_x < MAP_WIDTH - 50 && pos_y > 50 && pos_y < MAP_HEIGHT - 50;
+        if (inBounds && isWalkable(pos_x, pos_y)) {
           charPos.current = { x: pos_x, y: pos_y };
         } else {
-          // Reset to START if saved position is invalid
           charPos.current = { x: START_POS.x, y: START_POS.y };
         }
       }
-    }).catch(() => { });
+    }).catch(() => {
+      charPos.current = { x: START_POS.x, y: START_POS.y };
+    });
   }, [player.id]);
 
   // Load map image
@@ -103,14 +87,21 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
 
   // Keyboard events
   useEffect(() => {
-    const onDown = (e) => { if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; keys.current[e.key] = true; e.preventDefault(); };
+    const onDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      keys.current[e.key] = true;
+      e.preventDefault();
+    };
     const onUp = (e) => { keys.current[e.key] = false; };
     window.addEventListener('keydown', onDown);
     window.addEventListener('keyup', onUp);
-    return () => { window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp); };
+    return () => {
+      window.removeEventListener('keydown', onDown);
+      window.removeEventListener('keyup', onUp);
+    };
   }, []);
 
-  // Save position periodically
+  // Save position
   const savePosition = useCallback(() => {
     const completed = getCompletedCPs();
     const lastCP = completed.length > 0 ? Math.max(...completed) : 0;
@@ -131,7 +122,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw map at 3× scale
+      // Draw map
       if (mapImg.current) {
         ctx.drawImage(mapImg.current, 0, 0, MAP_WIDTH, MAP_HEIGHT);
       } else {
@@ -139,7 +130,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         ctx.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
       }
 
-      // Draw path between checkpoints (dashed red line)
+      // Draw path (dashed red)
       ctx.beginPath();
       ctx.setLineDash([12, 8]);
       ctx.strokeStyle = '#E8341A';
@@ -155,7 +146,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         const isUnlocked = isCheckpointUnlocked(cp.id);
         const isNear = nearCheckpoint === cp.id;
 
-        // Outer glow when near
         if (isNear && isUnlocked && !isCompleted) {
           ctx.beginPath();
           ctx.arc(cp.x, cp.y, 52, 0, Math.PI * 2);
@@ -163,7 +153,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
           ctx.fill();
         }
 
-        // Circle
         ctx.beginPath();
         ctx.arc(cp.x, cp.y, 28, 0, Math.PI * 2);
         ctx.fillStyle = isCompleted ? '#16a34a' : isUnlocked ? cp.color : '#94a3b8';
@@ -172,26 +161,22 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         ctx.lineWidth = 3;
         ctx.stroke();
 
-        // Number or check
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 18px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(isCompleted ? '✓' : String(cp.id), cp.x, cp.y);
 
-        // Label
         ctx.fillStyle = '#FFD700';
         ctx.font = 'bold 13px sans-serif';
         ctx.fillText(cp.label, cp.x + 38, cp.y - 10);
 
-        // Locked badge
         if (!isUnlocked && !isCompleted) {
           ctx.fillStyle = '#fff';
           ctx.font = '14px sans-serif';
           ctx.fillText('🔒', cp.x + 30, cp.y + 10);
         }
 
-        // Enter prompt
         if (isNear && isUnlocked && !isCompleted) {
           ctx.fillStyle = '#fff';
           ctx.font = 'bold 12px sans-serif';
@@ -199,7 +184,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         }
       });
 
-      // Draw START marker
+      // START marker
       ctx.beginPath();
       ctx.arc(START_POS.x, START_POS.y, 18, 0, Math.PI * 2);
       ctx.fillStyle = '#FFD700';
@@ -213,7 +198,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
       ctx.textBaseline = 'middle';
       ctx.fillText('START', START_POS.x, START_POS.y);
 
-      // Draw character (simple animated sprite)
+      // Character
       frameCount.current++;
       if (frameCount.current % 8 === 0) charFrame.current = (charFrame.current + 1) % 4;
 
@@ -222,13 +207,11 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
       const isMoving = keys.current['w'] || keys.current['s'] || keys.current['a'] || keys.current['d'] ||
         keys.current['ArrowUp'] || keys.current['ArrowDown'] || keys.current['ArrowLeft'] || keys.current['ArrowRight'];
 
-      // Body
       ctx.fillStyle = '#2563eb';
       ctx.beginPath();
       ctx.roundRect(cx - 10, cy - 6, 20, 22, 4);
       ctx.fill();
 
-      // Head
       ctx.fillStyle = '#FBBF24';
       ctx.beginPath();
       ctx.arc(cx, cy - 14, 12, 0, Math.PI * 2);
@@ -237,26 +220,22 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Eyes
       ctx.fillStyle = '#1e3a5f';
       ctx.beginPath(); ctx.arc(cx - 4, cy - 15, 2, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(cx + 4, cy - 15, 2, 0, Math.PI * 2); ctx.fill();
 
-      // Smile
       ctx.beginPath();
       ctx.arc(cx, cy - 12, 5, 0.2, Math.PI - 0.2);
       ctx.strokeStyle = '#1e3a5f';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Legs (animated)
       const legOffset = isMoving ? Math.sin(frameCount.current * 0.3) * 4 : 0;
       ctx.fillStyle = '#1e3a5f';
       ctx.fillRect(cx - 8, cy + 16, 7, 10 + legOffset);
       ctx.fillRect(cx + 1, cy + 16, 7, 10 - legOffset);
 
-      // Nickname above character
-      ctx.fillStyle = '#fff';
+      // Nickname tag
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
@@ -276,24 +255,16 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
       if (keys.current['a'] || keys.current['ArrowLeft']) dx = -CHAR_SPEED;
       if (keys.current['d'] || keys.current['ArrowRight']) dx = CHAR_SPEED;
 
-      // Diagonal speed normalization
       if (dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
 
-      // Collision-checked movement
       const newX = Math.max(CHAR_SIZE, Math.min(MAP_WIDTH - CHAR_SIZE, pos.x + dx));
       const newY = Math.max(CHAR_SIZE, Math.min(MAP_HEIGHT - CHAR_SIZE, pos.y + dy));
 
-      // Try moving on both axes
       if (isWalkable(newX, newY)) {
+        pos.x = newX; pos.y = newY;
+      } else if (dx !== 0 && isWalkable(newX, pos.y)) {
         pos.x = newX;
-        pos.y = newY;
-      }
-      // Try X only (slide along horizontal wall)
-      else if (dx !== 0 && isWalkable(newX, pos.y)) {
-        pos.x = newX;
-      }
-      // Try Y only (slide along vertical wall)
-      else if (dy !== 0 && isWalkable(pos.x, newY)) {
+      } else if (dy !== 0 && isWalkable(pos.x, newY)) {
         pos.y = newY;
       }
 
@@ -305,13 +276,12 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
       });
       setNearCheckpoint(near);
 
-      // Press E to enter checkpoint
       if (keys.current['e'] || keys.current['E']) {
         if (near) {
           const cp = CHECKPOINTS.find(c => c.id === near);
           const isUnlocked = isCheckpointUnlocked(cp.id);
-          const completed = getCompletedCPs();
-          if (isUnlocked && !completed.includes(cp.id)) {
+          const completedList = getCompletedCPs();
+          if (isUnlocked && !completedList.includes(cp.id)) {
             keys.current['e'] = false;
             keys.current['E'] = false;
             onCheckpointReached(cp.id);
@@ -319,7 +289,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         }
       }
 
-      // Auto save position
       if (Date.now() - lastSave.current > SAVE_INTERVAL) {
         lastSave.current = Date.now();
         savePosition();
@@ -333,18 +302,16 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
     return () => cancelAnimationFrame(animRef.current);
   }, [player, progress, nearCheckpoint, onCheckpointReached, savePosition, getCompletedCPs, isCheckpointUnlocked]);
 
-  // Camera: follow character via CSS transform
+  // Camera follows character
   const viewW = typeof window !== 'undefined' ? window.innerWidth - 32 : 1200;
   const viewH = typeof window !== 'undefined' ? window.innerHeight - 130 : 800;
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
 
-  // Update camera offset in game loop
   useEffect(() => {
     const updateCamera = () => {
       const targetX = Math.max(0, Math.min(MAP_WIDTH - viewW, charPos.current.x - viewW / 2));
       const targetY = Math.max(0, Math.min(MAP_HEIGHT - viewH, charPos.current.y - viewH / 2));
       setCameraOffset(prev => {
-        // Smooth camera lerp
         const newX = prev.x + (targetX - prev.x) * 0.12;
         const newY = prev.y + (targetY - prev.y) * 0.12;
         if (Math.abs(newX - prev.x) < 0.5 && Math.abs(newY - prev.y) < 0.5) return prev;
@@ -356,7 +323,15 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
   }, [viewW, viewH]);
 
   return (
-    <div style={{ width: `${viewW}px`, height: `${viewH}px`, overflow: 'hidden', borderRadius: '12px', border: '3px solid #1e3a5f', position: 'relative' }}>
+    <div style={{
+      width: `${viewW}px`,
+      height: `${viewH}px`,
+      overflow: 'hidden',
+      borderRadius: '12px',
+      border: '3px solid #1e3a5f',
+      position: 'relative',
+      margin: '0 auto',
+    }}>
       <canvas
         ref={canvasRef}
         width={MAP_WIDTH}
