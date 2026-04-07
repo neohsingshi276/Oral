@@ -1,36 +1,16 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import mapBase from '../assets/map-base.jpg';
 import { MAP_WIDTH, MAP_HEIGHT, MAP_SCALE, CHAR_SIZE, CHAR_SPEED, START_POS, CHECKPOINTS } from './gameConfig';
-import collisionData from '../assets/collision-grid.json';
 import api from '../services/api';
 
 const SAVE_INTERVAL = 5000;
 
-const COLLISION_GRID = collisionData.grid;
-const GRID_W = collisionData.width;
-const GRID_H = collisionData.height;
-const TILE_PX = collisionData.tileWidth;
-
-const isWalkable = (px, py) => {
-  // Convert scaled canvas coords → original image coords
-  const imgX = px / MAP_SCALE;
-  const imgY = py / MAP_SCALE;
-
-  const tileX = Math.floor(imgX / TILE_PX);
-  const tileY = Math.floor(imgY / TILE_PX);
-
-  // Out of bounds = blocked
-  if (tileX < 0 || tileX >= GRID_W || tileY < 0 || tileY >= GRID_H) return false;
-
-  const row = COLLISION_GRID[tileY];
-  if (!row) return false;
-
-  // Only block if tile is '0' (ocean/water)
-  return row[tileX] === '1';
-};
+// Ocean color RGB (the blue water surrounding the island)
+const OCEAN_R = 48, OCEAN_G = 118, OCEAN_B = 154;
 
 const GameCanvas = ({ player, progress, onCheckpointReached }) => {
   const canvasRef = useRef(null);
+  const offscreenRef = useRef(null); // offscreen canvas to sample map pixels
   const charPos = useRef({ x: START_POS.x, y: START_POS.y });
   const keys = useRef({});
   const mapImg = useRef(null);
@@ -49,13 +29,50 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
     return progress.find(p => p.checkpoint_number === cpId - 1)?.completed;
   }, [progress]);
 
-  // Load saved position — only restore if it's a valid walkable spot
+  // Sample a pixel from the original map image to check if it's ocean
+  const isOcean = useCallback((scaledX, scaledY) => {
+    const offscreen = offscreenRef.current;
+    if (!offscreen) return false;
+    const ctx = offscreen.getContext('2d');
+    // Convert from scaled coords to original image coords
+    const imgX = Math.floor(scaledX / MAP_SCALE);
+    const imgY = Math.floor(scaledY / MAP_SCALE);
+    const pixel = ctx.getImageData(imgX, imgY, 1, 1).data;
+    const r = pixel[0], g = pixel[1], b = pixel[2];
+    // Check if color is close to ocean color
+    return Math.abs(r - OCEAN_R) < 30 && Math.abs(g - OCEAN_G) < 30 && Math.abs(b - OCEAN_B) < 30;
+  }, []);
+
+  const isWalkable = useCallback((px, py) => {
+    // Check map bounds
+    if (px < 10 || px > MAP_WIDTH - 10 || py < 10 || py > MAP_HEIGHT - 10) return false;
+    // Only block ocean tiles
+    return !isOcean(px, py);
+  }, [isOcean]);
+
+  // Load map image + setup offscreen canvas for pixel sampling
+  useEffect(() => {
+    const img = new Image();
+    img.src = mapBase;
+    img.onload = () => {
+      mapImg.current = img;
+      // Draw map onto offscreen canvas at ORIGINAL size for pixel sampling
+      const offscreen = document.createElement('canvas');
+      offscreen.width = img.naturalWidth;
+      offscreen.height = img.naturalHeight;
+      const ctx = offscreen.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      offscreenRef.current = offscreen;
+    };
+  }, []);
+
+  // Load saved position
   useEffect(() => {
     api.get(`/game/position/${player.id}`).then(res => {
       if (res.data?.position) {
         const { pos_x, pos_y } = res.data.position;
         const inBounds = pos_x > 50 && pos_x < MAP_WIDTH - 50 && pos_y > 50 && pos_y < MAP_HEIGHT - 50;
-        if (inBounds && isWalkable(pos_x, pos_y)) {
+        if (inBounds && !isOcean(pos_x, pos_y)) {
           charPos.current = { x: pos_x, y: pos_y };
         } else {
           charPos.current = { x: START_POS.x, y: START_POS.y };
@@ -64,14 +81,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
     }).catch(() => {
       charPos.current = { x: START_POS.x, y: START_POS.y };
     });
-  }, [player.id]);
-
-  // Load map image
-  useEffect(() => {
-    const img = new Image();
-    img.src = mapBase;
-    img.onload = () => { mapImg.current = img; };
-  }, []);
+  }, [player.id, isOcean]);
 
   // Keyboard events
   useEffect(() => {
@@ -110,7 +120,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw map
       if (mapImg.current) {
         ctx.drawImage(mapImg.current, 0, 0, MAP_WIDTH, MAP_HEIGHT);
       } else {
@@ -162,7 +171,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         }
       });
 
-
       // Character
       frameCount.current++;
       if (frameCount.current % 8 === 0) charFrame.current = (charFrame.current + 1) % 4;
@@ -200,7 +208,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
       ctx.fillRect(cx - 8, cy + 16, 7, 10 + legOffset);
       ctx.fillRect(cx + 1, cy + 16, 7, 10 - legOffset);
 
-      // Nickname tag
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
@@ -233,7 +240,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         pos.y = newY;
       }
 
-      // Check near checkpoint
       let near = null;
       CHECKPOINTS.forEach(cp => {
         const dist = Math.sqrt((pos.x - cp.x) ** 2 + (pos.y - cp.y) ** 2);
@@ -265,9 +271,8 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
 
     animRef.current = requestAnimationFrame(update);
     return () => cancelAnimationFrame(animRef.current);
-  }, [player, progress, nearCheckpoint, onCheckpointReached, savePosition, getCompletedCPs, isCheckpointUnlocked]);
+  }, [player, progress, nearCheckpoint, onCheckpointReached, savePosition, getCompletedCPs, isCheckpointUnlocked, isWalkable]);
 
-  // Camera follows character
   const viewW = typeof window !== 'undefined' ? window.innerWidth - 32 : 1200;
   const viewH = typeof window !== 'undefined' ? window.innerHeight - 130 : 800;
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
