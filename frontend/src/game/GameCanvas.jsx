@@ -12,33 +12,21 @@ const GRID_H = collisionData.height;
 const TILE_PX = collisionData.tileWidth;
 
 const isWalkable = (px, py) => {
-  // Always allow movement near START and checkpoints
-  const nearSpecial = [START_POS, ...CHECKPOINTS].some(loc => {
-    const r = loc.radius || 60;
-    return Math.abs(px - loc.x) < r + 20 && Math.abs(py - loc.y) < r + 20;
-  });
-  if (nearSpecial) return true;
-
   // Convert scaled canvas coords → original image coords
   const imgX = px / MAP_SCALE;
   const imgY = py / MAP_SCALE;
 
-  // Check feet area of character
-  const points = [
-    [imgX, imgY + 8],
-    [imgX - 6, imgY + 8],
-    [imgX + 6, imgY + 8],
-    [imgX, imgY],
-  ];
+  const tileX = Math.floor(imgX / TILE_PX);
+  const tileY = Math.floor(imgY / TILE_PX);
 
-  for (const [x, y] of points) {
-    const tileX = Math.floor(x / TILE_PX);
-    const tileY = Math.floor(y / TILE_PX);
-    if (tileX < 0 || tileX >= GRID_W || tileY < 0 || tileY >= GRID_H) return false;
-    const row = COLLISION_GRID[tileY];
-    if (!row || row[tileX] !== '1') return false;
-  }
-  return true;
+  // Out of bounds = blocked
+  if (tileX < 0 || tileX >= GRID_W || tileY < 0 || tileY >= GRID_H) return false;
+
+  const row = COLLISION_GRID[tileY];
+  if (!row) return false;
+
+  // Only block if tile is '0' (ocean/water)
+  return row[tileX] === '1';
 };
 
 const GameCanvas = ({ player, progress, onCheckpointReached }) => {
@@ -130,16 +118,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         ctx.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
       }
 
-      // Draw path (dashed red)
-      ctx.beginPath();
-      ctx.setLineDash([12, 8]);
-      ctx.strokeStyle = '#E8341A';
-      ctx.lineWidth = 3;
-      ctx.moveTo(START_POS.x, START_POS.y);
-      CHECKPOINTS.forEach(cp => ctx.lineTo(cp.x, cp.y));
-      ctx.stroke();
-      ctx.setLineDash([]);
-
       // Draw checkpoints
       CHECKPOINTS.forEach(cp => {
         const isCompleted = completed.includes(cp.id);
@@ -184,19 +162,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         }
       });
 
-      // START marker
-      ctx.beginPath();
-      ctx.arc(START_POS.x, START_POS.y, 18, 0, Math.PI * 2);
-      ctx.fillStyle = '#FFD700';
-      ctx.fill();
-      ctx.strokeStyle = '#C8A800';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.fillStyle = '#5A4000';
-      ctx.font = 'bold 9px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('START', START_POS.x, START_POS.y);
 
       // Character
       frameCount.current++;
