@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import mapBase from '../assets/map-base.jpg';
-import { MAP_WIDTH, MAP_HEIGHT, MAP_SCALE, CHAR_SIZE, CHAR_SPEED, START_POS, CHECKPOINTS } from './gameConfig';
+import collisionData from '../assets/collision-grid.json';
+import { MAP_WIDTH, MAP_HEIGHT, MAP_SCALE, MAP_IMG_WIDTH, MAP_IMG_HEIGHT, CHAR_SIZE, CHAR_SPEED, START_POS, CHECKPOINTS } from './gameConfig';
 import api from '../services/api';
 
 const SAVE_INTERVAL = 5000;
 
-// Ocean color RGB (the blue water surrounding the island)
-const OCEAN_R = 48, OCEAN_G = 118, OCEAN_B = 154;
+// Collision grid: "1" = walkable, "0" = blocked (ocean, trees, buildings, fences, etc.)
+const GRID = collisionData.grid;
+const GRID_W = collisionData.width;   // 147
+const GRID_H = collisionData.height;  // 200
+const TILE_W = collisionData.tileWidth; // 8 (in original image pixels)
 
 const GameCanvas = ({ player, progress, onCheckpointReached }) => {
   const canvasRef = useRef(null);
-  const offscreenRef = useRef(null); // offscreen canvas to sample map pixels
   const charPos = useRef({ x: START_POS.x, y: START_POS.y });
   const keys = useRef({});
   const mapImg = useRef(null);
@@ -29,40 +32,32 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
     return progress.find(p => p.checkpoint_number === cpId - 1)?.completed;
   }, [progress]);
 
-  // Sample a pixel from the original map image to check if it's ocean
-  const isOcean = useCallback((scaledX, scaledY) => {
-    const offscreen = offscreenRef.current;
-    if (!offscreen) return false;
-    const ctx = offscreen.getContext('2d');
-    // Convert from scaled coords to original image coords
-    const imgX = Math.floor(scaledX / MAP_SCALE);
-    const imgY = Math.floor(scaledY / MAP_SCALE);
-    const pixel = ctx.getImageData(imgX, imgY, 1, 1).data;
-    const r = pixel[0], g = pixel[1], b = pixel[2];
-    // Check if color is close to ocean color
-    return Math.abs(r - OCEAN_R) < 30 && Math.abs(g - OCEAN_G) < 30 && Math.abs(b - OCEAN_B) < 30;
+  // Check collision grid: convert scaled world coords -> original image coords -> grid cell
+  const isWalkable = useCallback((scaledX, scaledY) => {
+    // Map bounds check
+    if (scaledX < 10 || scaledX > MAP_WIDTH - 10 || scaledY < 10 || scaledY > MAP_HEIGHT - 10) return false;
+
+    // Convert from scaled world coords to original image coords
+    const imgX = scaledX / MAP_SCALE;
+    const imgY = scaledY / MAP_SCALE;
+
+    // Convert to grid cell
+    const col = Math.floor(imgX / TILE_W);
+    const row = Math.floor(imgY / TILE_W);
+
+    // Bounds check on grid
+    if (row < 0 || row >= GRID_H || col < 0 || col >= GRID_W) return false;
+
+    // "1" = walkable, "0" = blocked
+    return GRID[row][col] === "1";
   }, []);
 
-  const isWalkable = useCallback((px, py) => {
-    // Check map bounds
-    if (px < 10 || px > MAP_WIDTH - 10 || py < 10 || py > MAP_HEIGHT - 10) return false;
-    // Only block ocean tiles
-    return !isOcean(px, py);
-  }, [isOcean]);
-
-  // Load map image + setup offscreen canvas for pixel sampling
+  // Load map image
   useEffect(() => {
     const img = new Image();
     img.src = mapBase;
     img.onload = () => {
       mapImg.current = img;
-      // Draw map onto offscreen canvas at ORIGINAL size for pixel sampling
-      const offscreen = document.createElement('canvas');
-      offscreen.width = img.naturalWidth;
-      offscreen.height = img.naturalHeight;
-      const ctx = offscreen.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      offscreenRef.current = offscreen;
     };
   }, []);
 
@@ -72,7 +67,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
       if (res.data?.position) {
         const { pos_x, pos_y } = res.data.position;
         const inBounds = pos_x > 50 && pos_x < MAP_WIDTH - 50 && pos_y > 50 && pos_y < MAP_HEIGHT - 50;
-        if (inBounds && !isOcean(pos_x, pos_y)) {
+        if (inBounds && isWalkable(pos_x, pos_y)) {
           charPos.current = { x: pos_x, y: pos_y };
         } else {
           charPos.current = { x: START_POS.x, y: START_POS.y };
@@ -81,7 +76,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
     }).catch(() => {
       charPos.current = { x: START_POS.x, y: START_POS.y };
     });
-  }, [player.id, isOcean]);
+  }, [player.id, isWalkable]);
 
   // Keyboard events
   useEffect(() => {
