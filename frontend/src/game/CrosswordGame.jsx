@@ -23,6 +23,9 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [hintedCells, setHintedCells] = useState(new Set());
+  const [showHintToast, setShowHintToast] = useState(false);
+  const [hintToastMsg, setHintToastMsg] = useState('');
   const [showGiveUp, setShowGiveUp] = useState(false);
   const [showCheckResult, setShowCheckResult] = useState(false);
   const [checkResult, setCheckResult] = useState({ correct: 0, wrong: 0, total: 0 });
@@ -242,15 +245,34 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   };
 
   const handleHint = () => {
-    if (!selectedCell || isGameOver || hintsUsed >= MAX_HINTS) return;
-    const { row, col } = selectedCell;
-    if (grid[row]?.[col]) {
-      const ng = userGrid.map(r => [...r]);
-      ng[row][col] = grid[row][col];
-      setUserGrid(ng);
-      checkWords(ng);
-      setHintsUsed(h => h + 1);
+    if (isGameOver || hintsUsed >= MAX_HINTS) return;
+    if (!selectedWord) {
+      setHintToastMsg('💡 Pilih perkataan dahulu sebelum guna petunjuk!');
+      setShowHintToast(true);
+      setTimeout(() => setShowHintToast(false), 2500);
+      return;
     }
+    // Reveal every letter of the selected word
+    const ng = userGrid.map(r => [...r]);
+    const newHinted = new Set(hintedCells);
+    selectedWord.word.toUpperCase().split('').forEach((letter, i) => {
+      const r = selectedWord.direction === 'across' ? selectedWord.start_row : selectedWord.start_row + i;
+      const c = selectedWord.direction === 'across' ? selectedWord.start_col + i : selectedWord.start_col;
+      ng[r][c] = letter;
+      newHinted.add(`${r}-${c}`);
+    });
+    setUserGrid(ng);
+    setHintedCells(newHinted);
+    checkWords(ng);
+    setHintsUsed(h => h + 1);
+    const remaining = MAX_HINTS - hintsUsed - 1;
+    setHintToastMsg(
+      remaining === 0
+        ? `💡 Petunjuk digunakan untuk "${selectedWord.word}"! Tiada petunjuk lagi.`
+        : `💡 "${selectedWord.word}" didedahkan! ${remaining} petunjuk berbaki.`
+    );
+    setShowHintToast(true);
+    setTimeout(() => setShowHintToast(false), 2500);
   };
 
   const handleReveal = () => {
@@ -280,6 +302,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     if (selectedCell?.row === row && selectedCell?.col === col) return '#FFD700';
     if (checked && userGrid[row]?.[col] && userGrid[row][col] === grid[row][col]) return '#bbf7d0';
     if (checked && userGrid[row]?.[col] && userGrid[row][col] !== grid[row][col]) return '#fecaca';
+    if (hintedCells.has(`${row}-${col}`)) return '#fef3c7'; // amber tint for hinted cells
     if (isCellInWord(row, col)) return '#bfdbfe';
     return '#fff';
   };
@@ -322,7 +345,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
 
   return (
     <div style={s.fullPage}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes pop{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}} @keyframes slideIn{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes pop{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}} @keyframes slideIn{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}} @keyframes hintPulse{0%,100%{background:#f59e0b}50%{background:#d97706}}`}</style>
 
       {/* Give Up Confirm Dialog */}
       {showGiveUp && (
@@ -352,6 +375,13 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
           <span style={{ color: '#16a34a', fontWeight: '700' }}>✅ {checkResult.correct} betul</span>
           {checkResult.wrong > 0 && <span style={{ color: '#e11d48', fontWeight: '700' }}>  ❌ {checkResult.wrong} salah</span>}
           {checkResult.correct === 0 && checkResult.wrong === 0 && <span style={{ color: '#f59e0b' }}>Tiada perkataan dilengkapkan lagi</span>}
+        </div>
+      )}
+
+      {/* Hint Toast */}
+      {showHintToast && (
+        <div style={{ ...s.toast, top: showCheckResult ? '120px' : '70px', background: '#1c1917', border: '1px solid #a16207' }}>
+          <span style={{ color: '#fbbf24', fontWeight: '600', fontSize: '0.88rem' }}>{hintToastMsg}</span>
         </div>
       )}
 
@@ -499,12 +529,18 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
           </div>
           <button style={s.checkBtn} onClick={handleCheck} disabled={isGameOver}>✅ Semak</button>
           <button
-            style={{ ...s.hintBtn, opacity: hintsLeft === 0 || isGameOver ? 0.5 : 1, cursor: hintsLeft === 0 || isGameOver ? 'not-allowed' : 'pointer' }}
+            style={{
+              ...s.hintBtn,
+              opacity: hintsLeft === 0 || isGameOver ? 0.5 : 1,
+              cursor: hintsLeft === 0 || isGameOver ? 'not-allowed' : 'pointer',
+              animation: hintsLeft > 0 && !isGameOver && selectedWord ? 'hintPulse 1.5s ease-in-out infinite' : 'none',
+              boxShadow: hintsLeft > 0 && !isGameOver && selectedWord ? '0 0 8px rgba(245,158,11,0.6)' : 'none',
+            }}
             onClick={handleHint}
             disabled={isGameOver || hintsLeft === 0}
-            title={hintsLeft === 0 ? 'Tiada petunjuk lagi!' : `${hintsLeft} petunjuk berbaki`}
+            title={hintsLeft === 0 ? 'Tiada petunjuk lagi!' : `${hintsLeft} petunjuk berbaki — klik untuk dedahkan perkataan yang dipilih`}
           >
-            💡 Petunjuk
+            💡 Petunjuk ({hintsLeft})
           </button>
           <button style={{ ...s.hintBtn, background: '#e11d48' }} onClick={() => setShowGiveUp(true)} disabled={isGameOver}>
             🏳️ Menyerah

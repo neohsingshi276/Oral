@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import GameCanvas from '../game/GameCanvas';
 import { CHECKPOINT_VIDEO_IDS } from '../game/gameConfig';
@@ -7,6 +7,82 @@ import api from '../services/api';
 import QuizGame from '../game/QuizGame';
 import CrosswordGame from '../game/CrosswordGame';
 import CP3Game from '../game/Trolley';
+
+// ─── Web Audio chime — no audio files needed ──────────────────────────────────
+// Plays a cheerful rising 3-note fanfare using the browser's AudioContext.
+const playSuccessChime = () => {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Notes: C5 → E5 → G5 (a major chord arpeggio)
+    const notes = [523.25, 659.25, 783.99];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const start = ctx.currentTime + i * 0.15;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.35, start + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.5);
+      osc.start(start);
+      osc.stop(start + 0.55);
+    });
+  } catch (e) {
+    // AudioContext blocked (e.g. no user gesture yet) — fail silently
+  }
+};
+
+// ─── Confetti particle component — pure CSS, no libraries ─────────────────────
+const CONFETTI_COLORS = ['#FFD700', '#2563eb', '#16a34a', '#e11d48', '#f59e0b', '#7c3aed', '#06b6d4', '#ec4899'];
+const SHAPES = ['square', 'circle', 'strip'];
+
+const ConfettiBlast = ({ onDone }) => {
+  const particles = Array.from({ length: 80 }, (_, i) => ({
+    id: i,
+    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    shape: SHAPES[i % SHAPES.length],
+    left: `${Math.random() * 100}%`,
+    delay: `${Math.random() * 0.6}s`,
+    duration: `${1.8 + Math.random() * 1.2}s`,
+    size: `${6 + Math.random() * 8}px`,
+    rotate: `${Math.random() * 720 - 360}deg`,
+    drift: `${(Math.random() - 0.5) * 200}px`,
+    fallDist: `${80 + Math.random() * 60}vh`,
+  }));
+
+  useEffect(() => {
+    const t = setTimeout(onDone, 3200);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999, overflow: 'hidden' }}>
+      <style>{`
+        @keyframes confettiFall {
+          0%   { transform: translateY(-20px) translateX(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(var(--fall)) translateX(var(--drift)) rotate(var(--rotate)); opacity: 0; }
+        }
+      `}</style>
+      {particles.map(p => (
+        <div key={p.id} style={{
+          position: 'absolute',
+          top: 0,
+          left: p.left,
+          width: p.shape === 'strip' ? `${parseInt(p.size) / 3}px` : p.size,
+          height: p.shape === 'strip' ? `${parseInt(p.size) * 2.5}px` : p.size,
+          background: p.color,
+          borderRadius: p.shape === 'circle' ? '50%' : p.shape === 'strip' ? '1px' : '2px',
+          '--fall': p.fallDist,
+          '--drift': p.drift,
+          '--rotate': p.rotate,
+          animation: `confettiFall ${p.duration} ${p.delay} ease-in forwards`,
+        }} />
+      ))}
+    </div>
+  );
+};
 
 const GamePage = () => {
   const { token } = useParams();
@@ -21,6 +97,7 @@ const GamePage = () => {
   const [allDone, setAllDone] = useState(false);
   const [quizKey, setQuizKey] = useState(0);
   const [showTutorial, setShowTutorial] = useState(() => !localStorage.getItem('tutorial_seen'));
+  const [showConfetti, setShowConfetti] = useState(false);
 
   // FIX: Validate the player object from localStorage before using it.
   // A missing, malformed, or tampered value used to throw an unhandled error
@@ -57,7 +134,13 @@ const GamePage = () => {
       const res = await api.get(`/game/progress/${playerId}`);
       setProgress(res.data.progress);
       const allCompleted = res.data.progress.every(p => p.completed);
-      if (allCompleted && res.data.progress.length === 3) setAllDone(true);
+      if (allCompleted && res.data.progress.length === 3) {
+        setAllDone(true);
+        // Grand finale — extra confetti burst for completing everything
+        playSuccessChime();
+        setTimeout(() => { playSuccessChime(); }, 600);
+        setShowConfetti(true);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -80,6 +163,10 @@ const GamePage = () => {
   const handleActivityDone = async () => {
     await api.post('/game/complete', { player_id: player.id, checkpoint_number: activeCP });
     await fetchProgress(player.id);
+
+    // 🎉 Celebrate every checkpoint completion with confetti + sound
+    playSuccessChime();
+    setShowConfetti(true);
 
     if (activeCP === 3) {
       setActiveCP(null);
@@ -351,6 +438,11 @@ const GamePage = () => {
             <button style={s.chatSendBtn} onClick={sendChat}>Send</button>
           </div>
         </div>
+      )}
+
+      {/* Confetti blast — fires on every checkpoint completion */}
+      {showConfetti && (
+        <ConfettiBlast onDone={() => setShowConfetti(false)} />
       )}
 
       {/* Floating Chat Button */}
