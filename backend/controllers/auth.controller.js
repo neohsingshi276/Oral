@@ -7,7 +7,18 @@ const { sendOTPEmail } = require('../services/email.service');
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ─── register ─────────────────────────────────────────────────────────────────
+// Only allowed when NO admins exist yet (first-time bootstrap).
+// After that, all admin creation must go through the invite flow.
 const register = async (req, res) => {
+  try {
+    const [count] = await db.query('SELECT COUNT(*) as cnt FROM admins');
+    if (count[0].cnt > 0)
+      return res.status(403).json({ error: 'Registration is closed. Use the invite link sent by the main admin.' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+
   const { name, email, password } = req.body;
   if (!name || !email || !password) return res.status(400).json({ error: 'All fields required' });
 
@@ -29,14 +40,11 @@ const register = async (req, res) => {
     if (existing.length > 0) return res.status(400).json({ error: 'Email already registered' });
 
     const password_hash = await bcrypt.hash(password, 10);
-    const [count] = await db.query('SELECT COUNT(*) as cnt FROM admins');
-    const role = count[0].cnt === 0 ? 'main_admin' : 'admin';
-
     const [result] = await db.query(
       'INSERT INTO admins (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-      [name.trim(), email, password_hash, role]
+      [name.trim(), email, password_hash, 'main_admin']
     );
-    res.status(201).json({ message: 'Admin registered', adminId: result.insertId });
+    res.status(201).json({ message: 'Main admin registered', adminId: result.insertId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -110,6 +118,9 @@ const forgotPassword = async (req, res) => {
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+    // FIX: Hash the OTP before storing — plain text OTPs in DB are a security risk
+    const otp_hash = await bcrypt.hash(otp, 10);
+
     // Upsert into DB — replaces any existing pending OTP for this email
     await db.query(
       `INSERT INTO otp_tokens (email, otp, admin_id, expires_at)
@@ -119,7 +130,7 @@ const forgotPassword = async (req, res) => {
          admin_id = VALUES(admin_id),
          expires_at = VALUES(expires_at),
          created_at = NOW()`,
-      [email, otp, admin.id, expiresAt]
+      [email, otp_hash, admin.id, expiresAt]
     );
 
     await sendOTPEmail(email, otp, admin.name);
@@ -149,7 +160,9 @@ const verifyOTP = async (req, res) => {
       return res.status(400).json({ error: 'No OTP found or OTP has expired. Please request a new one.' });
 
     const stored = rows[0];
-    if (stored.otp !== otp)
+    // FIX: Compare against hashed OTP using bcrypt
+    const isMatch = await bcrypt.compare(otp, stored.otp);
+    if (!isMatch)
       return res.status(400).json({ error: 'Invalid OTP. Please try again.' });
 
     // Valid — delete OTP from DB and issue a short-lived reset token

@@ -101,10 +101,25 @@ const submitQuiz = async (req, res) => {
     }
 
     const score = correct * 100 + Math.max(0, 50 - Math.floor((parseInt(time_taken, 10) || 0) / 10));
-    await db.query(
-      'INSERT INTO quiz_scores (player_id, session_id, score, correct_answers, total_questions, time_taken) VALUES (?,?,?,?,?,?)',
-      [player_id, session_id, score, correct, total, parseInt(time_taken, 10) || 0]
+
+    // FIX: Guard against duplicate submissions — only keep the best score
+    const [existing] = await db.query(
+      'SELECT id, score FROM quiz_scores WHERE player_id = ? AND session_id = ?',
+      [player_id, session_id]
     );
+    if (existing.length > 0) {
+      if (score > existing[0].score) {
+        await db.query(
+          'UPDATE quiz_scores SET score=?, correct_answers=?, total_questions=?, time_taken=? WHERE id=?',
+          [score, correct, total, parseInt(time_taken, 10) || 0, existing[0].id]
+        );
+      }
+    } else {
+      await db.query(
+        'INSERT INTO quiz_scores (player_id, session_id, score, correct_answers, total_questions, time_taken) VALUES (?,?,?,?,?,?)',
+        [player_id, session_id, score, correct, total, parseInt(time_taken, 10) || 0]
+      );
+    }
 
     res.json({ score, correct, total });
   } catch (err) {

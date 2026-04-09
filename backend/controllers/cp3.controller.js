@@ -142,8 +142,9 @@ const getFinalLeaderboard = async (req, res) => {
     );
 
     // Use at least 1 as denominator to avoid division-by-zero
-    const maxQuiz = Math.max(...quizScores.map(s => s.score), 1);
-    const maxCP3  = Math.max(...cp3Scores.map(s => s.score), 1);
+    // FIX: Guard against empty arrays — Math.max(...[]) = -Infinity, breaking all scores
+    const maxQuiz = quizScores.length > 0 ? Math.max(...quizScores.map(s => s.score)) : 1;
+    const maxCP3  = cp3Scores.length  > 0 ? Math.max(...cp3Scores.map(s  => s.score)) : 1;
     const doneSet = new Set(crosswordDone.map(d => d.player_id));
 
     const quizMap = Object.fromEntries(quizScores.map(s => [s.player_id, s]));

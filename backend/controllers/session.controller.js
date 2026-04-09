@@ -119,6 +119,12 @@ const updateSession = async (req, res) => {
   const sessionId = req.params.id;
 
   try {
+    // FIX: Verify ownership before allowing updates — same rule as deleteSession
+    const [rows] = await db.query('SELECT admin_id FROM game_sessions WHERE id = ?', [sessionId]);
+    if (rows.length === 0)
+      return res.status(404).json({ error: 'Session not found' });
+    if (req.admin.role !== 'main_admin' && rows[0].admin_id !== req.admin.id)
+      return res.status(403).json({ error: 'You can only edit your own sessions' });
     if (is_active !== undefined)
       await db.query('UPDATE game_sessions SET is_active = ? WHERE id = ?', [!!is_active, sessionId]);
 

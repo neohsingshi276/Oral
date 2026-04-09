@@ -11,6 +11,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
   const [matchLines, setMatchLines] = useState([]);
   const [leftSelected, setLeftSelected] = useState(null);
   const [answered, setAnswered] = useState(false);
+  const answeredRef = useRef(false); // FIX: ref mirrors state to avoid stale closure in timer
   const [answers, setAnswers] = useState([]);
   const [timeLeft, setTimeLeft] = useState(15);
   const [result, setResult] = useState(null);
@@ -43,45 +44,51 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     return () => clearInterval(timerRef.current);
   }, [currentQ, phase, answered]);
 
-  const handleTimeout = () => {
-    if (answered) return;
-    const q = questions[currentQ];
+  // FIX: Helper to set answered both in state AND ref atomically
+  const markAnswered = () => {
+    answeredRef.current = true;
     setAnswered(true);
+  };
+
+  const handleTimeout = () => {
+    if (answeredRef.current) return; // FIX: ref is immune to stale closure — state would be stale here
+    const q = questions[currentQ];
+    markAnswered();
     setAnswers(prev => [...prev, { question_id: q.id, selected_indexes: [], timed_out: true }]);
     setTimeout(() => nextQuestion(), 2000);
   };
 
   const handleMCSelect = (idx) => {
-    if (answered) return;
+    if (answeredRef.current) return;
     clearInterval(timerRef.current);
     setSelected([idx]);
-    setAnswered(true);
+    markAnswered();
     const q = questions[currentQ];
     setAnswers(prev => [...prev, { question_id: q.id, selected_indexes: [idx] }]);
     setTimeout(() => nextQuestion(), 1800);
   };
 
   const handleMultiToggle = (idx) => {
-    if (answered) return;
+    if (answeredRef.current) return;
     setSelected(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]);
   };
 
   const handleMultiSubmit = () => {
-    if (answered || selected.length === 0) return;
+    if (answeredRef.current || selected.length === 0) return;
     clearInterval(timerRef.current);
-    setAnswered(true);
+    markAnswered();
     const q = questions[currentQ];
     setAnswers(prev => [...prev, { question_id: q.id, selected_indexes: selected }]);
     setTimeout(() => nextQuestion(), 1800);
   };
 
   const handleMatchLeft = (idx) => {
-    if (answered) return;
+    if (answeredRef.current) return;
     setLeftSelected(idx);
   };
 
   const handleMatchRight = (idx) => {
-    if (answered || leftSelected === null) return;
+    if (answeredRef.current || leftSelected === null) return;
     const exists = matchLines.find(l => l[0] === leftSelected);
     if (exists) {
       setMatchLines(prev => prev.map(l => l[0] === leftSelected ? [leftSelected, idx] : l));
@@ -92,15 +99,16 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
   };
 
   const handleMatchSubmit = () => {
-    if (answered) return;
+    if (answeredRef.current) return;
     clearInterval(timerRef.current);
-    setAnswered(true);
+    markAnswered();
     const q = questions[currentQ];
     setAnswers(prev => [...prev, { question_id: q.id, selected_indexes: matchLines }]);
     setTimeout(() => nextQuestion(), 2000);
   };
 
   const nextQuestion = () => {
+    answeredRef.current = false; // FIX: reset ref before state so next render is correct
     setSelected([]);
     setMatchLines([]);
     setLeftSelected(null);

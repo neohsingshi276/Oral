@@ -19,9 +19,12 @@ const addFact = async (req, res) => {
   if (title.length > 120) return res.status(400).json({ error: 'Title too long (max 120 characters)' });
   if (content.length > 1000) return res.status(400).json({ error: 'Content too long (max 1000 characters)' });
 
-  // Convert uploaded file buffer to Base64 data URL for DB storage
+  // FIX: Validate uploaded file is actually an image before storing
   let image_url = null;
   if (req.file) {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(req.file.mimetype))
+      return res.status(400).json({ error: 'Only JPEG, PNG, GIF, or WebP images are allowed' });
     const base64 = req.file.buffer.toString('base64');
     image_url = `data:${req.file.mimetype};base64,${base64}`;
   }
@@ -46,6 +49,9 @@ const updateFact = async (req, res) => {
 
   try {
     if (req.file) {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(req.file.mimetype))
+        return res.status(400).json({ error: 'Only JPEG, PNG, GIF, or WebP images are allowed' });
       // Convert new image to Base64 and overwrite — no old file to delete since it's in DB
       const base64 = req.file.buffer.toString('base64');
       const image_url = `data:${req.file.mimetype};base64,${base64}`;

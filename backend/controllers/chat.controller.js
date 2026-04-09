@@ -22,10 +22,19 @@ const sendMessage = async (req, res) => {
 };
 
 const getMessages = async (req, res) => {
+  const player_id = parseInt(req.params.player_id, 10);
+  const { requester_player_id, session_id } = req.query;
+
+  // FIX: Verify the requester is the same player (or at least in the same session)
+  // to prevent any player from reading another player's private chat history.
+  if (!requester_player_id || parseInt(requester_player_id, 10) !== player_id) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
   try {
     const [rows] = await db.query(
       'SELECT * FROM chat_messages WHERE player_id = ? ORDER BY sent_at ASC',
-      [req.params.player_id]
+      [player_id]
     );
     res.json({ messages: rows });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }

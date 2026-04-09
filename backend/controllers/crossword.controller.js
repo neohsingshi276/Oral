@@ -51,12 +51,24 @@ function generateCrosswordLayout(wordsData) {
         for (let wIdx = 0; wIdx < word.length; wIdx++) {
           if (placed.word[pIdx] === word[wIdx]) {
             const newDir = placed.direction === 'across' ? 'down' : 'across';
-            const newRow = newDir === 'down'
-              ? placed.start_row - wIdx + (placed.direction === 'across' ? 0 : pIdx)
-              : placed.start_row + pIdx;
-            const newCol = newDir === 'across'
-              ? placed.start_col - wIdx + (placed.direction === 'across' ? pIdx : 0)
-              : placed.start_col + pIdx;
+
+            // FIX: Correct intersection math for all direction combinations.
+            // When placing a 'down' word crossing an 'across' placed word:
+            //   - The crossing cell is at placed.start_col + pIdx (col of the shared letter)
+            //   - The new word starts wIdx rows above that row
+            // When placing an 'across' word crossing a 'down' placed word:
+            //   - The crossing cell is at placed.start_row + pIdx (row of the shared letter)
+            //   - The new word starts wIdx cols to the left of that col
+            let newRow, newCol;
+            if (newDir === 'down') {
+              // new word is DOWN, placed word is ACROSS
+              newRow = placed.start_row - wIdx;
+              newCol = placed.start_col + pIdx;
+            } else {
+              // new word is ACROSS, placed word is DOWN
+              newRow = placed.start_row + pIdx;
+              newCol = placed.start_col - wIdx;
+            }
 
             if (checkCollision(word, newRow, newCol, newDir)) {
               placedWords.push({ id, word, clue, direction: newDir, start_row: newRow, start_col: newCol });

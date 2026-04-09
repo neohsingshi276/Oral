@@ -260,6 +260,9 @@ const deleteAdmin = async (req, res) => {
       return res.status(403).json({ error: 'Cannot delete the main admin account' });
 
     await db.query('DELETE FROM admins WHERE id = ?', [targetId]);
+    // FIX: Deactivate sessions belonging to the deleted admin so players
+    // can't join orphaned sessions and leaderboard queries don't break.
+    await db.query('UPDATE game_sessions SET is_active = FALSE WHERE admin_id = ?', [targetId]);
     await logActivity(req.admin.id, 'Deleted admin', `Deleted: ${rows[0].email}`);
     res.json({ message: 'Admin deleted' });
   } catch (err) {
@@ -361,6 +364,10 @@ const resendInvite = async (req, res) => {
 // regular admins can only cancel invites they created (if we track that),
 // or we restrict to main_admin only to keep it simple and safe.
 const cancelInvite = async (req, res) => {
+  // FIX: Enforce role check — only main_admin can cancel invitations
+  if (req.admin.role !== 'main_admin')
+    return res.status(403).json({ error: 'Only the main admin can cancel invitations' });
+
   try {
     const [invites] = await db.query(
       'SELECT id FROM admin_invitations WHERE id = ?', [req.params.id]

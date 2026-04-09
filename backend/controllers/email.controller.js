@@ -26,6 +26,7 @@ const sendReminder = async (req, res) => {
       res.json({ message: `Reminder sent to ${admins.length} admin(s)!` });
     } else {
       const [toAdmin] = await db.query('SELECT name, email FROM admins WHERE id = ?', [to_admin_id]);
+      if (toAdmin.length === 0) return res.status(404).json({ error: 'Admin not found' });
       await db.query(
         'INSERT INTO email_reminders (from_admin_id, to_admin_id, subject, message) VALUES (?,?,?,?)',
         [req.admin.id, to_admin_id, subject, message]
