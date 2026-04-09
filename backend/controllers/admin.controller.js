@@ -46,7 +46,15 @@ const downloadCSV = async (req, res) => {
       GROUP BY p.id ORDER BY s.session_name, p.nickname
     `);
     const headers = ['Nickname', 'Session', 'Joined At', 'CP1 Completed', 'CP1 Attempts', 'CP2 Completed', 'CP2 Attempts', 'CP3 Completed', 'CP3 Attempts', 'Quiz Score', 'Quiz Correct', 'Food Game Score'];
-    const csvRows = [headers.join(',')];
+    // Escape a CSV field: wrap in quotes if it contains commas, quotes, or newlines
+    const csvEscape = (val) => {
+      const str = String(val ?? '');
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    };
+    const csvRows = [headers.map(csvEscape).join(',')];
     rows.forEach(r => {
       csvRows.push([
         r.nickname, r.session_name,
@@ -55,7 +63,7 @@ const downloadCSV = async (req, res) => {
         r.cp2_completed ? 'Yes' : 'No', r.cp2_attempts || 0,
         r.cp3_completed ? 'Yes' : 'No', r.cp3_attempts || 0,
         r.quiz_score || 0, r.quiz_correct || 0, r.cp3_score || 0
-      ].join(','));
+      ].map(csvEscape).join(','));
     });
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=player_data.csv');
@@ -193,20 +201,27 @@ const verifyInviteToken = async (req, res) => {
 };
 
 const deleteAdmin = async (req, res) => {
-  if (parseInt(req.params.id) === req.admin.id) return res.status(400).json({ error: 'Cannot delete yourself!' });
+  const targetId = parseInt(req.params.id);
+  if (targetId === req.admin.id) return res.status(400).json({ error: 'Cannot delete yourself!' });
   try {
-    const [rows] = await db.query('SELECT name, email FROM admins WHERE id = ?', [req.params.id]);
-    await db.query('DELETE FROM admins WHERE id = ?', [req.params.id]);
-    await logActivity(req.admin.id, 'Deleted admin', `Deleted: ${rows[0]?.email}`);
+    const [rows] = await db.query('SELECT name, email, role FROM admins WHERE id = ?', [targetId]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Admin not found' });
+    if (rows[0].role === 'main_admin') return res.status(403).json({ error: 'Cannot delete the main admin account' });
+    await db.query('DELETE FROM admins WHERE id = ?', [targetId]);
+    await logActivity(req.admin.id, 'Deleted admin', `Deleted: ${rows[0].email}`);
     res.json({ message: 'Admin deleted' });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 };
 
 const updateProfile = async (req, res) => {
   const { name, email } = req.body;
+  if (!name || typeof name !== 'string' || name.trim().length === 0) return res.status(400).json({ error: 'Name required' });
   if (!emailRegex.test(email)) return res.status(400).json({ error: 'Invalid email format' });
   try {
-    await db.query('UPDATE admins SET name=?, email=? WHERE id=?', [name, email, req.admin.id]);
+    // Check if another admin already uses this email
+    const [existing] = await db.query('SELECT id FROM admins WHERE email = ? AND id != ?', [email, req.admin.id]);
+    if (existing.length > 0) return res.status(400).json({ error: 'Email already in use by another admin' });
+    await db.query('UPDATE admins SET name=?, email=? WHERE id=?', [name.trim(), email, req.admin.id]);
     await logActivity(req.admin.id, 'Updated profile');
     res.json({ message: 'Profile updated' });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }

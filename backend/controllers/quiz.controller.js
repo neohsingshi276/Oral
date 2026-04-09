@@ -58,6 +58,10 @@ const submitQuiz = async (req, res) => {
   if (answers.length > 100) return res.status(400).json({ error: 'Too many answers' });
 
   try {
+    // Verify player belongs to this session
+    const [playerRows] = await db.query('SELECT id FROM players WHERE id = ? AND session_id = ?', [player_id, session_id]);
+    if (playerRows.length === 0) return res.status(403).json({ error: 'Player does not belong to this session' });
+
     const total = answers.length;
     const questionIds = answers.map(a => a.question_id).filter(id => Number.isInteger(id));
     if (questionIds.length === 0) return res.status(400).json({ error: 'Invalid question IDs' });
@@ -203,11 +207,19 @@ const getQuizSettings = async (req, res) => {
 };
 
 const saveQuizSettings = async (req, res) => {
-  const { session_id, timer_seconds, question_order, question_count } = req.body;
+  const { session_id, timer_seconds, question_order, question_count, minimum_correct, selected_questions } = req.body;
   try {
     await db.query(
-      'INSERT INTO quiz_settings (session_id, timer_seconds, question_order, question_count) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE timer_seconds=?, question_order=?, question_count=?',
-      [session_id, timer_seconds, question_order, question_count, timer_seconds, question_order, question_count]
+      `INSERT INTO quiz_settings (session_id, timer_seconds, question_order, question_count, minimum_correct, selected_questions)
+       VALUES (?,?,?,?,?,?)
+       ON DUPLICATE KEY UPDATE
+         timer_seconds=?, question_order=?, question_count=?, minimum_correct=?, selected_questions=?`,
+      [
+        session_id, timer_seconds, question_order, question_count,
+        minimum_correct ?? 0, JSON.stringify(selected_questions || []),
+        timer_seconds, question_order, question_count,
+        minimum_correct ?? 0, JSON.stringify(selected_questions || [])
+      ]
     );
     res.json({ message: 'Settings saved' });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }

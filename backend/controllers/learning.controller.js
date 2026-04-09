@@ -38,10 +38,17 @@ const addVideo = async (req, res) => {
   if (!title || !youtube_url) {
     return res.status(400).json({ error: 'Title and YouTube URL are required' });
   }
+  if (title.length > 150) return res.status(400).json({ error: 'Title too long (max 150 characters)' });
+  if (description && description.length > 500) return res.status(400).json({ error: 'Description too long (max 500 characters)' });
+  // Accept youtube.com/watch?v=, youtu.be/, or youtube.com/embed/ links
+  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w-]{11}/;
+  if (!youtubeRegex.test(youtube_url)) {
+    return res.status(400).json({ error: 'Invalid YouTube URL. Use a youtube.com or youtu.be link.' });
+  }
   try {
     const [result] = await db.query(
       'INSERT INTO learning_videos (title, description, youtube_url, order_num) VALUES (?, ?, ?, ?)',
-      [title, description || '', youtube_url, order_num || 0]
+      [title.trim(), description?.trim() || '', youtube_url.trim(), order_num || 0]
     );
     res.status(201).json({ message: 'Video added', videoId: result.insertId });
   } catch (err) {
@@ -53,10 +60,17 @@ const addVideo = async (req, res) => {
 // PUT /api/videos/:id — update video (admin only)
 const updateVideo = async (req, res) => {
   const { title, description, youtube_url, order_num } = req.body;
+  if (!title || !youtube_url) return res.status(400).json({ error: 'Title and YouTube URL are required' });
+  if (title.length > 150) return res.status(400).json({ error: 'Title too long (max 150 characters)' });
+  if (description && description.length > 500) return res.status(400).json({ error: 'Description too long (max 500 characters)' });
+  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w-]{11}/;
+  if (!youtubeRegex.test(youtube_url)) {
+    return res.status(400).json({ error: 'Invalid YouTube URL. Use a youtube.com or youtu.be link.' });
+  }
   try {
     await db.query(
       'UPDATE learning_videos SET title=?, description=?, youtube_url=?, order_num=? WHERE id=?',
-      [title, description, youtube_url, order_num, req.params.id]
+      [title.trim(), description?.trim() || '', youtube_url.trim(), order_num, req.params.id]
     );
     res.json({ message: 'Video updated' });
   } catch (err) {

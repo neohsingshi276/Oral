@@ -21,7 +21,25 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
   const lastSave = useRef(Date.now());
   const charFrame = useRef(0);
   const frameCount = useRef(0);
+
+  // FIX: Use a ref for nearCheckpoint so the draw loop reads the latest value without
+  // being in the useEffect dependency array — previously caused the entire RAF loop to
+  // tear down and restart every time the player crossed a checkpoint boundary.
+  const nearCheckpointRef = useRef(null);
   const [nearCheckpoint, setNearCheckpoint] = useState(null);
+
+  // FIX: Responsive canvas size — recalculates on window resize instead of being
+  // frozen at the value from the initial render.
+  const getViewSize = () => ({
+    w: window.innerWidth - 32,
+    h: window.innerHeight - 130,
+  });
+  const [viewSize, setViewSize] = useState(getViewSize);
+  useEffect(() => {
+    const onResize = () => setViewSize(getViewSize());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const getCompletedCPs = useCallback(() => {
     return progress.filter(p => p.completed).map(p => p.checkpoint_number);
@@ -126,7 +144,8 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
       CHECKPOINTS.forEach(cp => {
         const isCompleted = completed.includes(cp.id);
         const isUnlocked = isCheckpointUnlocked(cp.id);
-        const isNear = nearCheckpoint === cp.id;
+        // FIX: Read from ref instead of state — no stale closure, no loop restart
+        const isNear = nearCheckpointRef.current === cp.id;
 
         if (isNear && isUnlocked && !isCompleted) {
           ctx.beginPath();
@@ -159,7 +178,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
           ctx.fillText('🔒', cp.x + 30, cp.y + 10);
         }
 
-        if (isNear && isUnlocked && !isCompleted) {
+        if (nearCheckpointRef.current === cp.id && isUnlocked && !isCompleted) {
           ctx.fillStyle = '#fff';
           ctx.font = 'bold 12px sans-serif';
           ctx.fillText('Press E to enter', cp.x, cp.y + 50);
@@ -240,6 +259,8 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         const dist = Math.sqrt((pos.x - cp.x) ** 2 + (pos.y - cp.y) ** 2);
         if (dist < cp.radius + 20) near = cp.id;
       });
+      // FIX: Update both ref (for draw loop) and state (for React UI like the "E prompt" hint)
+      nearCheckpointRef.current = near;
       setNearCheckpoint(near);
 
       if (keys.current['e'] || keys.current['E']) {
@@ -266,10 +287,13 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
 
     animRef.current = requestAnimationFrame(update);
     return () => cancelAnimationFrame(animRef.current);
-  }, [player, progress, nearCheckpoint, onCheckpointReached, savePosition, getCompletedCPs, isCheckpointUnlocked, isWalkable]);
+  // FIX: nearCheckpoint removed from deps — the draw loop uses nearCheckpointRef instead,
+  // so it no longer restarts the entire RAF loop on every checkpoint proximity change.
+  }, [player, progress, onCheckpointReached, savePosition, getCompletedCPs, isCheckpointUnlocked, isWalkable]);
 
-  const viewW = typeof window !== 'undefined' ? window.innerWidth - 32 : 1200;
-  const viewH = typeof window !== 'undefined' ? window.innerHeight - 130 : 800;
+  // FIX: Use responsive viewSize state instead of values frozen at first render
+  const viewW = viewSize.w;
+  const viewH = viewSize.h;
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
 
   useEffect(() => {

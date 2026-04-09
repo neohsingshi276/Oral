@@ -149,16 +149,44 @@ const getCrossword = async (req, res) => {
 // ============================================
 
 const submitScore = async (req, res) => {
-  const { player_id, session_id, words_correct, total_words, time_taken } = req.body;
+  const { player_id, session_id, words_correct, total_words, time_taken, time_remaining } = req.body;
+  // Validate inputs
+  if (!player_id || !session_id) return res.status(400).json({ error: 'player_id and session_id required' });
+  const safeWordsCorrect = Math.max(0, parseInt(words_correct, 10) || 0);
+  const safeTotalWords = Math.max(0, parseInt(total_words, 10) || 0);
+  const safeTimeRemaining = Math.max(0, parseInt(time_remaining, 10) || 0);
+  const safeTimeTaken = Math.max(0, parseInt(time_taken, 10) || 0);
+
+  // Verify player belongs to this session
   try {
-    const score = words_correct * 100 + Math.max(0, time_taken);
+    const [playerRows] = await db.query('SELECT id FROM players WHERE id = ? AND session_id = ?', [player_id, session_id]);
+    if (playerRows.length === 0) return res.status(403).json({ error: 'Player does not belong to this session' });
+  } catch (err) { return res.status(500).json({ error: 'Server error' }); }
 
-    await db.query(
-      'INSERT INTO crossword_scores (player_id, session_id, score, words_correct, total_words, time_taken) VALUES (?,?,?,?,?,?)',
-      [player_id, session_id, score, words_correct, total_words, time_taken]
+  try {
+    // Score = words correct * 100 + time remaining bonus (more time left = better)
+    const score = safeWordsCorrect * 100 + safeTimeRemaining;
+
+    // Upsert: only insert if no existing score, or update if new score is better
+    const [existing] = await db.query(
+      'SELECT id, score FROM crossword_scores WHERE player_id = ? AND session_id = ?',
+      [player_id, session_id]
     );
+    if (existing.length > 0) {
+      if (score > existing[0].score) {
+        await db.query(
+          'UPDATE crossword_scores SET score=?, words_correct=?, total_words=?, time_taken=? WHERE id=?',
+          [score, safeWordsCorrect, safeTotalWords, safeTimeTaken, existing[0].id]
+        );
+      }
+    } else {
+      await db.query(
+        'INSERT INTO crossword_scores (player_id, session_id, score, words_correct, total_words, time_taken) VALUES (?,?,?,?,?,?)',
+        [player_id, session_id, score, safeWordsCorrect, safeTotalWords, safeTimeTaken]
+      );
+    }
 
-    res.json({ score, words_correct, total_words });
+    res.json({ score, words_correct: safeWordsCorrect, total_words: safeTotalWords });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });

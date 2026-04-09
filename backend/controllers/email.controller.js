@@ -4,6 +4,10 @@ const { sendReminderEmail } = require('../services/email.service');
 const sendReminder = async (req, res) => {
   const { to_admin_id, subject, message } = req.body;
   if (!to_admin_id || !subject || !message) return res.status(400).json({ error: 'All fields required' });
+  if (typeof subject !== 'string' || subject.trim().length === 0) return res.status(400).json({ error: 'Subject cannot be empty' });
+  if (subject.length > 150) return res.status(400).json({ error: 'Subject too long (max 150 characters)' });
+  if (typeof message !== 'string' || message.trim().length === 0) return res.status(400).json({ error: 'Message cannot be empty' });
+  if (message.length > 2000) return res.status(400).json({ error: 'Message too long (max 2000 characters)' });
   try {
     const [sender] = await db.query('SELECT name, role FROM admins WHERE id = ?', [req.admin.id]);
     if (sender[0]?.role !== 'main_admin') return res.status(403).json({ error: 'Only Main Admin can send reminders' });
