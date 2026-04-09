@@ -229,6 +229,17 @@ CREATE TABLE IF NOT EXISTS admin_invitations (
   used BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS otp_tokens (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  email       VARCHAR(120) NOT NULL UNIQUE,
+  otp         VARCHAR(6)   NOT NULL,
+  admin_id    INT          NOT NULL,
+  expires_at  DATETIME     NOT NULL,
+  created_at  DATETIME     DEFAULT NOW(),
+  FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ============================================================
 -- SAMPLE DATA
 -- ============================================================

@@ -1,10 +1,8 @@
 const db = require('../db');
 
 // ============================================
-// AUTO-LAYOUT GENERATOR (ported from friend's Python code)
-// Places words by finding intersecting letters
+// AUTO-LAYOUT GENERATOR
 // ============================================
-
 function generateCrosswordLayout(wordsData) {
   const placedWords = [];
   const sorted = [...wordsData].sort((a, b) => b.word.length - a.word.length);
@@ -30,14 +28,17 @@ function generateCrosswordLayout(wordsData) {
     return true;
   }
 
+  // FIX: Track the next safe fallback row so floated words never stack on
+  // each other when many words fail to intersect.
+  let nextFallbackRow = 10;
+
   for (let i = 0; i < sorted.length; i++) {
     const item = sorted[i];
     const word = item.word.toUpperCase().trim();
     const clue = item.clue;
-    const id = item.id;
+    const id   = item.id;
 
     if (i === 0) {
-      // Place first word across at center-ish position
       placedWords.push({ id, word, clue, direction: 'across', start_row: 10, start_col: 10 });
       continue;
     }
@@ -68,13 +69,14 @@ function generateCrosswordLayout(wordsData) {
     }
 
     if (!foundFit) {
-      // Couldn't intersect — place separately
-      const newRow = 10 + (i * 2);
-      placedWords.push({ id, word, clue, direction: 'across', start_row: newRow, start_col: 20 });
+      // FIX: Each fallback word gets its own row (3 rows apart) so they
+      // never overlap each other in the rendered grid.
+      placedWords.push({ id, word, clue, direction: 'across', start_row: nextFallbackRow, start_col: 20 });
+      nextFallbackRow += 3;
     }
   }
 
-  // Normalize positions (shift so minimum row/col is 0)
+  // Normalize positions
   let minRow = Infinity, minCol = Infinity;
   for (const w of placedWords) {
     minRow = Math.min(minRow, w.start_row);
@@ -85,7 +87,6 @@ function generateCrosswordLayout(wordsData) {
     w.start_col -= minCol;
   }
 
-  // Calculate grid size needed
   let maxRow = 0, maxCol = 0;
   for (const w of placedWords) {
     const endRow = w.start_row + (w.direction === 'down' ? w.word.length : 1);
@@ -97,31 +98,32 @@ function generateCrosswordLayout(wordsData) {
   return { words: placedWords, gridSize: Math.max(maxRow, maxCol) };
 }
 
-// ============================================
-// GET CROSSWORD (with auto-layout)
-// ============================================
-
+// ─── getCrossword ─────────────────────────────────────────────────────────────
 const getCrossword = async (req, res) => {
-  try {
-    const { session_id } = req.params;
+  const sessionId = parseInt(req.params.session_id, 10);
+  if (!sessionId || sessionId <= 0)
+    return res.status(400).json({ error: 'Invalid session ID' });
 
-    // Fetch custom settings for this session
-    const [settingsRows] = await db.query('SELECT * FROM crossword_settings WHERE session_id = ?', [session_id]);
+  try {
+    const [settingsRows] = await db.query(
+      'SELECT * FROM crossword_settings WHERE session_id = ?', [sessionId]
+    );
     const cfg = settingsRows[0] || { word_count: 8, selected_words: null };
 
-    // Start building query
     let query = 'SELECT * FROM crossword_data';
     let queryParams = [];
 
-    // Parse the selected specific words
     let selectedIds = [];
     try {
       if (cfg.selected_words) {
-        selectedIds = typeof cfg.selected_words === 'string' ? JSON.parse(cfg.selected_words) : cfg.selected_words;
+        selectedIds = typeof cfg.selected_words === 'string'
+          ? JSON.parse(cfg.selected_words)
+          : cfg.selected_words;
       }
-    } catch (e) { }
+    } catch (e) {
+      console.error('Failed to parse selected_words JSON:', e.message);
+    }
 
-    // Only get the specific words the admin selected!
     if (selectedIds && selectedIds.length > 0) {
       const placeholders = selectedIds.map(() => '?').join(',');
       query += ` WHERE id IN (${placeholders})`;
@@ -129,13 +131,10 @@ const getCrossword = async (req, res) => {
     }
 
     const [rows] = await db.query(query, queryParams);
-
-    // Shuffle and pick the requested number of words
     const shuffled = rows.sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, Math.min(shuffled.length, cfg.word_count || 8));
 
     const layout = generateCrosswordLayout(selected);
-    // Return settings alongside layout so frontend can use them
     res.json({ ...layout, settings: cfg });
   } catch (err) {
     console.error(err);
@@ -143,35 +142,33 @@ const getCrossword = async (req, res) => {
   }
 };
 
-
-// ============================================
-// SUBMIT CROSSWORD SCORE
-// ============================================
-
+// ─── submitScore ──────────────────────────────────────────────────────────────
 const submitScore = async (req, res) => {
   const { player_id, session_id, words_correct, total_words, time_taken, time_remaining } = req.body;
-  // Validate inputs
-  if (!player_id || !session_id) return res.status(400).json({ error: 'player_id and session_id required' });
-  const safeWordsCorrect = Math.max(0, parseInt(words_correct, 10) || 0);
-  const safeTotalWords = Math.max(0, parseInt(total_words, 10) || 0);
+
+  if (!player_id || !session_id)
+    return res.status(400).json({ error: 'player_id and session_id required' });
+
+  const safeWordsCorrect  = Math.max(0, parseInt(words_correct,  10) || 0);
+  const safeTotalWords    = Math.max(0, parseInt(total_words,    10) || 0);
   const safeTimeRemaining = Math.max(0, parseInt(time_remaining, 10) || 0);
-  const safeTimeTaken = Math.max(0, parseInt(time_taken, 10) || 0);
-
-  // Verify player belongs to this session
-  try {
-    const [playerRows] = await db.query('SELECT id FROM players WHERE id = ? AND session_id = ?', [player_id, session_id]);
-    if (playerRows.length === 0) return res.status(403).json({ error: 'Player does not belong to this session' });
-  } catch (err) { return res.status(500).json({ error: 'Server error' }); }
+  const safeTimeTaken     = Math.max(0, parseInt(time_taken,     10) || 0);
 
   try {
-    // Score = words correct * 100 + time remaining bonus (more time left = better)
+    const [playerRows] = await db.query(
+      'SELECT id FROM players WHERE id = ? AND session_id = ?',
+      [player_id, session_id]
+    );
+    if (playerRows.length === 0)
+      return res.status(403).json({ error: 'Player does not belong to this session' });
+
     const score = safeWordsCorrect * 100 + safeTimeRemaining;
 
-    // Upsert: only insert if no existing score, or update if new score is better
     const [existing] = await db.query(
       'SELECT id, score FROM crossword_scores WHERE player_id = ? AND session_id = ?',
       [player_id, session_id]
     );
+
     if (existing.length > 0) {
       if (score > existing[0].score) {
         await db.query(
@@ -193,11 +190,12 @@ const submitScore = async (req, res) => {
   }
 };
 
-// ============================================
-// GET CROSSWORD LEADERBOARD
-// ============================================
-
+// ─── getLeaderboard ───────────────────────────────────────────────────────────
 const getLeaderboard = async (req, res) => {
+  const sessionId = parseInt(req.params.session_id, 10);
+  if (!sessionId || sessionId <= 0)
+    return res.status(400).json({ error: 'Invalid session ID' });
+
   try {
     const [rows] = await db.query(`
       SELECT s.player_id, s.score, s.words_correct,
@@ -206,9 +204,8 @@ const getLeaderboard = async (req, res) => {
       JOIN players p ON s.player_id = p.id
       WHERE s.session_id = ?
       ORDER BY s.score DESC
-    `, [req.params.session_id]);
+    `, [sessionId]);
 
-    // Keep only highest score per player
     const seen = {};
     const leaderboard = [];
     for (const row of rows) {
@@ -225,44 +222,82 @@ const getLeaderboard = async (req, res) => {
   }
 };
 
-// ============================================
-// ADMIN CRUD (unchanged pattern)
-// ============================================
-
+// ─── getAllWords ───────────────────────────────────────────────────────────────
 const getAllWords = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM crossword_data ORDER BY id');
     res.json({ words: rows });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
+// ─── addWord ──────────────────────────────────────────────────────────────────
+// FIX: Added full input validation — presence, type, length, and letter-only
+// check for word — preventing DB errors and bad crossword data.
 const addWord = async (req, res) => {
-  const { word, clue, direction, start_row, start_col } = req.body;
+  const { word, clue } = req.body;
+
+  if (!word || typeof word !== 'string' || word.trim().length === 0)
+    return res.status(400).json({ error: 'Word is required' });
+  if (!clue || typeof clue !== 'string' || clue.trim().length === 0)
+    return res.status(400).json({ error: 'Clue is required' });
+  if (word.trim().length > 50)
+    return res.status(400).json({ error: 'Word too long (max 50 characters)' });
+  if (clue.trim().length > 200)
+    return res.status(400).json({ error: 'Clue too long (max 200 characters)' });
+  if (!/^[a-zA-Z]+$/.test(word.trim()))
+    return res.status(400).json({ error: 'Word must contain letters only (no spaces or symbols)' });
+
   try {
     const [result] = await db.query(
-      'INSERT INTO crossword_data (word, clue, direction, start_row, start_col) VALUES (?,?,?,?,?)',
-      [word.toUpperCase(), clue, direction || 'across', start_row || 0, start_col || 0]
+      'INSERT INTO crossword_data (word, clue) VALUES (?,?)',
+      [word.trim().toUpperCase(), clue.trim()]
     );
     res.status(201).json({ message: 'Word added', id: result.insertId });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
+// ─── updateWord ───────────────────────────────────────────────────────────────
 const updateWord = async (req, res) => {
-  const { word, clue, direction, start_row, start_col } = req.body;
+  const { word, clue } = req.body;
+
+  if (!word || typeof word !== 'string' || word.trim().length === 0)
+    return res.status(400).json({ error: 'Word is required' });
+  if (!clue || typeof clue !== 'string' || clue.trim().length === 0)
+    return res.status(400).json({ error: 'Clue is required' });
+  if (word.trim().length > 50)
+    return res.status(400).json({ error: 'Word too long (max 50 characters)' });
+  if (clue.trim().length > 200)
+    return res.status(400).json({ error: 'Clue too long (max 200 characters)' });
+  if (!/^[a-zA-Z]+$/.test(word.trim()))
+    return res.status(400).json({ error: 'Word must contain letters only (no spaces or symbols)' });
+
   try {
     await db.query(
-      'UPDATE crossword_data SET word=?, clue=?, direction=?, start_row=?, start_col=? WHERE id=?',
-      [word.toUpperCase(), clue, direction || 'across', start_row || 0, start_col || 0, req.params.id]
+      'UPDATE crossword_data SET word=?, clue=? WHERE id=?',
+      [word.trim().toUpperCase(), clue.trim(), req.params.id]
     );
     res.json({ message: 'Word updated' });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
+// ─── deleteWord ───────────────────────────────────────────────────────────────
 const deleteWord = async (req, res) => {
   try {
     await db.query('DELETE FROM crossword_data WHERE id=?', [req.params.id]);
     res.json({ message: 'Word deleted' });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
-module.exports = { getCrossword, getAllWords, addWord, updateWord, deleteWord, submitScore, getLeaderboard };
+module.exports = {
+  getCrossword, getAllWords,
+  addWord, updateWord, deleteWord,
+  submitScore, getLeaderboard
+};

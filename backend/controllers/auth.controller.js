@@ -3,71 +3,124 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendOTPEmail } = require('../services/email.service');
 
-// Store OTPs temporarily in memory
-const otpStore = {};
+// ─── Shared helpers ───────────────────────────────────────────────────────────
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// ─── register ─────────────────────────────────────────────────────────────────
 const register = async (req, res) => {
   const { name, email, password } = req.body;
   if (!name || !email || !password) return res.status(400).json({ error: 'All fields required' });
 
-  // Field length limits
-  if (name.length > 80) return res.status(400).json({ error: 'Name too long (max 80 characters)' });
-  if (email.length > 120) return res.status(400).json({ error: 'Email too long (max 120 characters)' });
-  if (password.length > 128) return res.status(400).json({ error: 'Password too long (max 128 characters)' });
-
-  // Email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) return res.status(400).json({ error: 'Invalid email format' });
+  if (typeof name !== 'string' || name.trim().length === 0)
+    return res.status(400).json({ error: 'Invalid name' });
+  if (name.trim().length > 80)
+    return res.status(400).json({ error: 'Name too long (max 80 characters)' });
+  if (typeof email !== 'string' || email.length > 120)
+    return res.status(400).json({ error: 'Email too long (max 120 characters)' });
+  if (!emailRegex.test(email))
+    return res.status(400).json({ error: 'Invalid email format' });
+  if (typeof password !== 'string' || password.length < 6)
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (password.length > 128)
+    return res.status(400).json({ error: 'Password too long (max 128 characters)' });
 
   try {
     const [existing] = await db.query('SELECT id FROM admins WHERE email = ?', [email]);
     if (existing.length > 0) return res.status(400).json({ error: 'Email already registered' });
+
     const password_hash = await bcrypt.hash(password, 10);
     const [count] = await db.query('SELECT COUNT(*) as cnt FROM admins');
     const role = count[0].cnt === 0 ? 'main_admin' : 'admin';
+
     const [result] = await db.query(
       'INSERT INTO admins (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-      [name, email, password_hash, role]
+      [name.trim(), email, password_hash, role]
     );
     res.status(201).json({ message: 'Admin registered', adminId: result.insertId });
-  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
+// ─── login ────────────────────────────────────────────────────────────────────
+// FIX: Return a single generic error for both "no email" and "wrong password"
+// to prevent email enumeration attacks.
 const login = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  if (typeof email !== 'string' || email.length > 120)
+    return res.status(400).json({ error: 'Invalid email' });
+  if (typeof password !== 'string' || password.length > 128)
+    return res.status(400).json({ error: 'Invalid password' });
+
   try {
     const [rows] = await db.query('SELECT * FROM admins WHERE email = ?', [email]);
-    if (rows.length === 0) return res.status(401).json({ error: 'No Email Exists' });
+    // Generic message — do not reveal whether the email exists
+    if (rows.length === 0) return res.status(401).json({ error: 'Invalid email or password' });
+
     const admin = rows[0];
     const isMatch = await bcrypt.compare(password, admin.password_hash);
-    if (!isMatch) return res.status(401).json({ error: 'Invalid Password' });
-    const token = jwt.sign({ id: admin.id, email: admin.email, role: admin.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role, created_at: admin.created_at } });
-  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+    if (!isMatch) return res.status(401).json({ error: 'Invalid email or password' });
+
+    const token = jwt.sign(
+      { id: admin.id, email: admin.email, role: admin.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    res.json({
+      token,
+      admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role, created_at: admin.created_at }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
+// ─── getMe ────────────────────────────────────────────────────────────────────
 const getMe = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT id, name, email, role, created_at FROM admins WHERE id = ?', [req.admin.id]);
+    const [rows] = await db.query(
+      'SELECT id, name, email, role, created_at FROM admins WHERE id = ?',
+      [req.admin.id]
+    );
     if (rows.length === 0) return res.status(404).json({ error: 'Admin not found' });
     res.json({ admin: rows[0] });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
-// Send OTP to email
+// ─── forgotPassword ───────────────────────────────────────────────────────────
+// FIX: OTP is now stored in the database instead of in-memory (otpStore),
+// so it survives server restarts and works across multiple instances.
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
-  if (!email) return res.status(400).json({ error: 'Email required' });
+  if (!email || typeof email !== 'string')
+    return res.status(400).json({ error: 'Email required' });
+  if (email.length > 120 || !emailRegex.test(email))
+    return res.status(400).json({ error: 'Invalid email format' });
+
   try {
     const [rows] = await db.query('SELECT id, name, email FROM admins WHERE email = ?', [email]);
     if (rows.length === 0) return res.status(404).json({ error: 'No account found with this email' });
 
     const admin = rows[0];
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
-    const expiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    otpStore[email] = { otp, expiry, adminId: admin.id };
+    // Upsert into DB — replaces any existing pending OTP for this email
+    await db.query(
+      `INSERT INTO otp_tokens (email, otp, admin_id, expires_at)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         otp = VALUES(otp),
+         admin_id = VALUES(admin_id),
+         expires_at = VALUES(expires_at),
+         created_at = NOW()`,
+      [email, otp, admin.id, expiresAt]
+    );
 
     await sendOTPEmail(email, otp, admin.name);
     res.json({ message: 'OTP sent to your email!' });
@@ -77,30 +130,52 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// Verify OTP
+// ─── verifyOTP ────────────────────────────────────────────────────────────────
 const verifyOTP = async (req, res) => {
   const { email, otp } = req.body;
   if (!email || !otp) return res.status(400).json({ error: 'Email and OTP required' });
+  if (typeof email !== 'string' || email.length > 120)
+    return res.status(400).json({ error: 'Invalid email' });
+  if (typeof otp !== 'string' || otp.length > 6)
+    return res.status(400).json({ error: 'Invalid OTP format' });
 
-  const stored = otpStore[email];
-  if (!stored) return res.status(400).json({ error: 'No OTP found. Please request a new one.' });
-  if (Date.now() > stored.expiry) {
-    delete otpStore[email];
-    return res.status(400).json({ error: 'OTP has expired. Please request a new one.' });
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM otp_tokens WHERE email = ? AND expires_at > NOW()',
+      [email]
+    );
+
+    if (rows.length === 0)
+      return res.status(400).json({ error: 'No OTP found or OTP has expired. Please request a new one.' });
+
+    const stored = rows[0];
+    if (stored.otp !== otp)
+      return res.status(400).json({ error: 'Invalid OTP. Please try again.' });
+
+    // Valid — delete OTP from DB and issue a short-lived reset token
+    await db.query('DELETE FROM otp_tokens WHERE email = ?', [email]);
+
+    const resetToken = jwt.sign(
+      { adminId: stored.admin_id, email },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+    res.json({ message: 'OTP verified!', resetToken });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
   }
-  if (stored.otp !== otp) return res.status(400).json({ error: 'Invalid OTP. Please try again.' });
-
-  // OTP valid — generate reset token
-  const resetToken = jwt.sign({ adminId: stored.adminId, email }, process.env.JWT_SECRET, { expiresIn: '15m' });
-  delete otpStore[email];
-  res.json({ message: 'OTP verified!', resetToken });
 };
 
-// Reset password
+// ─── resetPassword ────────────────────────────────────────────────────────────
 const resetPassword = async (req, res) => {
   const { resetToken, newPassword } = req.body;
-  if (!resetToken || !newPassword) return res.status(400).json({ error: 'All fields required' });
-  if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (!resetToken || !newPassword)
+    return res.status(400).json({ error: 'All fields required' });
+  if (typeof newPassword !== 'string' || newPassword.length < 6)
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (newPassword.length > 128)
+    return res.status(400).json({ error: 'Password too long (max 128 characters)' });
 
   try {
     const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);

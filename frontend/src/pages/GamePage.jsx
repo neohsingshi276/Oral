@@ -22,10 +22,32 @@ const GamePage = () => {
   const [quizKey, setQuizKey] = useState(0);
   const [showTutorial, setShowTutorial] = useState(() => !localStorage.getItem('tutorial_seen'));
 
+  // FIX: Validate the player object from localStorage before using it.
+  // A missing, malformed, or tampered value used to throw an unhandled error
+  // and crash the entire page. Now we redirect cleanly instead.
   useEffect(() => {
     const saved = localStorage.getItem('player');
-    if (!saved) { navigate(`/join/${token}`); return; }
-    const p = JSON.parse(saved);
+    if (!saved) {
+      navigate(`/join/${token}`);
+      return;
+    }
+
+    let p;
+    try {
+      p = JSON.parse(saved);
+    } catch {
+      localStorage.removeItem('player');
+      navigate(`/join/${token}`);
+      return;
+    }
+
+    // Ensure the parsed object has the required fields
+    if (!p || !p.id || !p.session_id || !p.nickname) {
+      localStorage.removeItem('player');
+      navigate(`/join/${token}`);
+      return;
+    }
+
     setPlayer(p);
     fetchProgress(p.id);
   }, [token, navigate]);
@@ -36,11 +58,19 @@ const GamePage = () => {
       setProgress(res.data.progress);
       const allCompleted = res.data.progress.every(p => p.completed);
       if (allCompleted && res.data.progress.length === 3) setAllDone(true);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleCheckpointReached = (cpId) => {
-    api.post('/game/attempt', { player_id: player.id, checkpoint_number: cpId });
+  // FIX: Await the attempt API call so failures are caught and logged.
+  // Previously fire-and-forget meant failed attempts were silently swallowed.
+  const handleCheckpointReached = async (cpId) => {
+    try {
+      await api.post('/game/attempt', { player_id: player.id, checkpoint_number: cpId });
+    } catch (err) {
+      console.error('Failed to record checkpoint attempt:', err);
+    }
     setActiveCP(cpId);
     setCpStep('video');
   };
@@ -51,8 +81,6 @@ const GamePage = () => {
     await api.post('/game/complete', { player_id: player.id, checkpoint_number: activeCP });
     await fetchProgress(player.id);
 
-    // CP3: Trolley already shows CP3 leaderboard + final combined leaderboard internally.
-    // Skip the redundant "Checkpoint 3 Complete" modal — go straight to the congrats screen.
     if (activeCP === 3) {
       setActiveCP(null);
       setCpStep('video');
@@ -62,7 +90,7 @@ const GamePage = () => {
   };
 
   const handleQuizRetry = () => {
-    api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP });
+    api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }).catch(console.error);
     setQuizKey(prev => prev + 1);
     setCpStep('activity');
   };
@@ -75,17 +103,30 @@ const GamePage = () => {
   const sendChat = async () => {
     if (!chatInput.trim()) return;
     try {
-      await api.post('/chat', { player_id: player.id, session_id: player.session_id, sender_type: 'player', message: chatInput.trim() });
-      setChatMessages(prev => [...prev, { sender_type: 'player', message: chatInput.trim(), sent_at: new Date() }]);
+      await api.post('/chat', {
+        player_id: player.id,
+        session_id: player.session_id,
+        sender_type: 'player',
+        message: chatInput.trim()
+      });
+      setChatMessages(prev => [...prev, {
+        sender_type: 'player',
+        message: chatInput.trim(),
+        sent_at: new Date()
+      }]);
       setChatInput('');
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const fetchChat = async () => {
     try {
       const res = await api.get(`/chat/${player.id}`);
       setChatMessages(res.data.messages || []);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   useEffect(() => {
@@ -99,8 +140,8 @@ const GamePage = () => {
   if (!player) return <div style={s.loading}>Loading game... 🎮</div>;
 
   const showFullQuiz = activeCP === 1 && cpStep === 'activity';
-  const showFullCP3 = activeCP === 3 && cpStep === 'activity';
-  const showModal = activeCP && !showFullQuiz && !showFullCP3;
+  const showFullCP3  = activeCP === 3 && cpStep === 'activity';
+  const showModal    = activeCP && !showFullQuiz && !showFullCP3;
 
   return (
     <div style={s.page}>
@@ -115,7 +156,11 @@ const GamePage = () => {
         <div style={s.headerRight}>
           {[1, 2, 3].map(cp => {
             const done = progress.find(p => p.checkpoint_number === cp)?.completed;
-            return <div key={cp} style={{ ...s.cpBadge, background: done ? '#16a34a' : '#94a3b8' }}>{done ? '✓' : cp}</div>;
+            return (
+              <div key={cp} style={{ ...s.cpBadge, background: done ? '#16a34a' : '#94a3b8' }}>
+                {done ? '✓' : cp}
+              </div>
+            );
           })}
         </div>
       </div>
@@ -160,14 +205,17 @@ const GamePage = () => {
                 </div>
               </div>
             </div>
-            <button style={{ ...s.continueBtn, background: '#2563eb' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}>
+            <button
+              style={{ ...s.continueBtn, background: '#2563eb' }}
+              onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}
+            >
               🚀 Let's Go!
             </button>
           </div>
         </div>
       )}
 
-      {/* All Done — Congratulations screen (shown after CP3 Trolley finishes) */}
+      {/* All Done — Congratulations screen */}
       {allDone && (
         <div style={s.overlay}>
           <div style={s.doneCard}>
@@ -176,11 +224,7 @@ const GamePage = () => {
             <p style={s.doneText}>You completed all 3 checkpoints!</p>
             <p style={s.doneText}>You are a Dental Quest Champion! 🦷⭐</p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', margin: '1.5rem 0', background: '#f8fafc', borderRadius: '16px', padding: '1.25rem' }}>
-              {[
-                { label: 'Quiz', cp: 1 },
-                { label: 'Crossword', cp: 2 },
-                { label: 'Food Game', cp: 3 },
-              ].map(({ label, cp }) => {
+              {[{ label: 'Quiz', cp: 1 }, { label: 'Crossword', cp: 2 }, { label: 'Food Game', cp: 3 }].map(({ label, cp }) => {
                 const done = progress.find(p => p.checkpoint_number === cp)?.completed;
                 return (
                   <div key={cp} style={{ textAlign: 'center' }}>
@@ -223,11 +267,10 @@ const GamePage = () => {
         <CP3Game player={player} onComplete={handleActivityDone} />
       )}
 
-      {/* Checkpoint Modal — video step + crossword (CP2) + done step for CP1/CP2 only */}
+      {/* Checkpoint Modal */}
       {showModal && (
         <div style={s.overlay}>
           <div style={s.modal}>
-
             <div style={s.modalHeader}>
               <h2 style={s.modalTitle}>
                 {activeCP === 1 ? '🟣' : activeCP === 2 ? '🟤' : '🟠'} Checkpoint {activeCP}
@@ -260,7 +303,6 @@ const GamePage = () => {
               />
             )}
 
-            {/* Done step — only CP1 and CP2, NOT CP3 (CP3 skips straight to allDone) */}
             {cpStep === 'done' && activeCP !== 3 && (
               <div style={{ ...s.modalBody, textAlign: 'center' }}>
                 <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎉</div>
@@ -275,7 +317,6 @@ const GamePage = () => {
                 </button>
               </div>
             )}
-
           </div>
         </div>
       )}
@@ -288,7 +329,9 @@ const GamePage = () => {
             <button style={s.chatClose} onClick={() => setShowChat(false)}>✕</button>
           </div>
           <div style={s.chatMessages}>
-            {chatMessages.length === 0 && <p style={s.chatEmpty}>No messages yet. Ask your teacher for help!</p>}
+            {chatMessages.length === 0 && (
+              <p style={s.chatEmpty}>No messages yet. Ask your teacher for help!</p>
+            )}
             {chatMessages.map((m, i) => (
               <div key={i} style={{ ...s.chatMsg, ...(m.sender_type === 'player' ? s.chatMsgPlayer : s.chatMsgAdmin) }}>
                 <span style={s.chatSender}>{m.sender_type === 'player' ? player.nickname : 'Teacher'}</span>
@@ -325,7 +368,6 @@ const GamePage = () => {
       >
         💬
       </button>
-
     </div>
   );
 };

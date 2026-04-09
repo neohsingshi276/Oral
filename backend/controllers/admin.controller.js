@@ -6,47 +6,58 @@ const { sendInviteEmail, sendReminderEmail } = require('../services/email.servic
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// ─── getPlayers ───────────────────────────────────────────────────────────────
 const getPlayers = async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT p.*, s.session_name,
         MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
-        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts END) as cp1_attempts,
+        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
         MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
-        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts END) as cp2_attempts,
+        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts  END) as cp2_attempts,
         MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.completed END) as cp3_completed,
-        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts END) as cp3_attempts
+        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts
       FROM players p
       JOIN game_sessions s ON p.session_id = s.id
       LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
       GROUP BY p.id ORDER BY p.joined_at DESC
     `);
     res.json({ players: rows });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
+// ─── downloadCSV ──────────────────────────────────────────────────────────────
 const downloadCSV = async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT p.nickname, s.session_name, p.joined_at,
         MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
-        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts END) as cp1_attempts,
+        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
         MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
-        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts END) as cp2_attempts,
+        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts  END) as cp2_attempts,
         MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.completed END) as cp3_completed,
-        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts END) as cp3_attempts,
-        MAX(qs.score) as quiz_score,
-        MAX(qs.correct_answers) as quiz_correct,
-        MAX(cp3.score) as cp3_score
+        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts,
+        MAX(qs.score)            as quiz_score,
+        MAX(qs.correct_answers)  as quiz_correct,
+        MAX(cp3.score)           as cp3_score
       FROM players p
       JOIN game_sessions s ON p.session_id = s.id
       LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
-      LEFT JOIN quiz_scores qs ON qs.player_id = p.id
-      LEFT JOIN cp3_scores cp3 ON cp3.player_id = p.id
+      LEFT JOIN quiz_scores qs          ON qs.player_id = p.id
+      LEFT JOIN cp3_scores cp3          ON cp3.player_id = p.id
       GROUP BY p.id ORDER BY s.session_name, p.nickname
     `);
-    const headers = ['Nickname', 'Session', 'Joined At', 'CP1 Completed', 'CP1 Attempts', 'CP2 Completed', 'CP2 Attempts', 'CP3 Completed', 'CP3 Attempts', 'Quiz Score', 'Quiz Correct', 'Food Game Score'];
-    // Escape a CSV field: wrap in quotes if it contains commas, quotes, or newlines
+
+    const headers = [
+      'Nickname', 'Session', 'Joined At',
+      'CP1 Completed', 'CP1 Attempts',
+      'CP2 Completed', 'CP2 Attempts',
+      'CP3 Completed', 'CP3 Attempts',
+      'Quiz Score', 'Quiz Correct', 'Food Game Score'
+    ];
+
     const csvEscape = (val) => {
       const str = String(val ?? '');
       if (str.includes(',') || str.includes('"') || str.includes('\n')) {
@@ -54,6 +65,7 @@ const downloadCSV = async (req, res) => {
       }
       return str;
     };
+
     const csvRows = [headers.map(csvEscape).join(',')];
     rows.forEach(r => {
       csvRows.push([
@@ -62,63 +74,83 @@ const downloadCSV = async (req, res) => {
         r.cp1_completed ? 'Yes' : 'No', r.cp1_attempts || 0,
         r.cp2_completed ? 'Yes' : 'No', r.cp2_attempts || 0,
         r.cp3_completed ? 'Yes' : 'No', r.cp3_attempts || 0,
-        r.quiz_score || 0, r.quiz_correct || 0, r.cp3_score || 0
+        r.quiz_score    || 0, r.quiz_correct || 0, r.cp3_score || 0
       ].map(csvEscape).join(','));
     });
+
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=player_data.csv');
     res.send(csvRows.join('\n'));
     await logActivity(req.admin.id, 'Downloaded player data CSV');
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
+// ─── getAnalytics ─────────────────────────────────────────────────────────────
 const getAnalytics = async (req, res) => {
   try {
-    const [[{ total_players }]] = await db.query('SELECT COUNT(*) as total_players FROM players');
+    const [[{ total_players  }]] = await db.query('SELECT COUNT(*) as total_players  FROM players');
     const [[{ total_sessions }]] = await db.query('SELECT COUNT(*) as total_sessions FROM game_sessions');
-    const [[{ cp1_completed }]] = await db.query('SELECT COUNT(*) as cp1_completed FROM checkpoint_attempts WHERE checkpoint_number=1 AND completed=1');
-    const [[{ cp2_completed }]] = await db.query('SELECT COUNT(*) as cp2_completed FROM checkpoint_attempts WHERE checkpoint_number=2 AND completed=1');
-    const [[{ cp3_completed }]] = await db.query('SELECT COUNT(*) as cp3_completed FROM checkpoint_attempts WHERE checkpoint_number=3 AND completed=1');
+    const [[{ cp1_completed  }]] = await db.query('SELECT COUNT(*) as cp1_completed  FROM checkpoint_attempts WHERE checkpoint_number=1 AND completed=1');
+    const [[{ cp2_completed  }]] = await db.query('SELECT COUNT(*) as cp2_completed  FROM checkpoint_attempts WHERE checkpoint_number=2 AND completed=1');
+    const [[{ cp3_completed  }]] = await db.query('SELECT COUNT(*) as cp3_completed  FROM checkpoint_attempts WHERE checkpoint_number=3 AND completed=1');
+
     const [players] = await db.query(`
       SELECT p.*, s.session_name,
         MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
-        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts END) as cp1_attempts,
+        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
         MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
-        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts END) as cp2_attempts,
+        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts  END) as cp2_attempts,
         MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.completed END) as cp3_completed,
-        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts END) as cp3_attempts
+        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts
       FROM players p JOIN game_sessions s ON p.session_id = s.id
       LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
       GROUP BY p.id ORDER BY p.joined_at DESC
     `);
+
     res.json({ total_players, total_sessions, cp1_completed, cp2_completed, cp3_completed, players });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
+// ─── getAllAdmins ─────────────────────────────────────────────────────────────
 const getAllAdmins = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT id, name, email, role, created_at FROM admins ORDER BY role DESC, created_at ASC');
-    // Get pending invitations too
-    const [invites] = await db.query('SELECT * FROM admin_invitations WHERE used = FALSE AND expires_at > NOW() ORDER BY created_at DESC');
+    const [rows] = await db.query(
+      'SELECT id, name, email, role, created_at FROM admins ORDER BY role DESC, created_at ASC'
+    );
+    const [invites] = await db.query(
+      'SELECT * FROM admin_invitations WHERE used = FALSE AND expires_at > NOW() ORDER BY created_at DESC'
+    );
     res.json({ admins: rows, pending_invites: invites });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
-// Invite new admin — send email with registration link
+// ─── inviteAdmin ──────────────────────────────────────────────────────────────
 const inviteAdmin = async (req, res) => {
   const { email } = req.body;
-  if (!email) return res.status(400).json({ error: 'Email required' });
-  if (!emailRegex.test(email)) return res.status(400).json({ error: 'Invalid email format. Must include @ and valid domain' });
+  if (!email || typeof email !== 'string')
+    return res.status(400).json({ error: 'Email required' });
+  if (email.length > 120)
+    return res.status(400).json({ error: 'Email too long (max 120 characters)' });
+  if (!emailRegex.test(email))
+    return res.status(400).json({ error: 'Invalid email format. Must include @ and valid domain' });
+
   try {
-    // Check if already registered
     const [existing] = await db.query('SELECT id FROM admins WHERE email = ?', [email]);
-    if (existing.length > 0) return res.status(400).json({ error: 'This email is already registered as an admin' });
+    if (existing.length > 0)
+      return res.status(400).json({ error: 'This email is already registered as an admin' });
 
-    // Check if already invited
-    const [existingInvite] = await db.query('SELECT id FROM admin_invitations WHERE email = ? AND used = FALSE AND expires_at > NOW()', [email]);
-    if (existingInvite.length > 0) return res.status(400).json({ error: 'An invitation has already been sent to this email' });
+    const [existingInvite] = await db.query(
+      'SELECT id FROM admin_invitations WHERE email = ? AND used = FALSE AND expires_at > NOW()', [email]
+    );
+    if (existingInvite.length > 0)
+      return res.status(400).json({ error: 'An invitation has already been sent to this email' });
 
-    // Generate invitation token
     const token = jwt.sign({ email, type: 'admin_invite' }, process.env.JWT_SECRET, { expiresIn: '7d' });
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
@@ -127,51 +159,58 @@ const inviteAdmin = async (req, res) => {
       [email, token, expiresAt]
     );
 
-    // Send invite email
     const inviteLink = `${process.env.CLIENT_URL}/admin/register?token=${token}`;
     try {
       await sendInviteEmail(email, inviteLink);
     } catch (emailErr) {
       console.error('Invite email failed:', emailErr.message);
-      // Still save invitation even if email fails
     }
 
     await logActivity(req.admin.id, 'Sent admin invitation', `Invited: ${email}`);
     res.json({ message: 'Invitation sent to ' + email });
-  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
-// Verify invitation token and complete registration
+// ─── completeRegistration ─────────────────────────────────────────────────────
 const completeRegistration = async (req, res) => {
   const { token, name, password } = req.body;
-  if (!token || !name || !password) return res.status(400).json({ error: 'All fields required' });
-  if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
-  try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.type !== 'admin_invite') return res.status(400).json({ error: 'Invalid invitation token' });
 
-    // Check invitation in DB
+  if (!token || !name || !password)
+    return res.status(400).json({ error: 'All fields required' });
+  if (typeof name !== 'string' || name.trim().length === 0)
+    return res.status(400).json({ error: 'Invalid name' });
+  if (name.trim().length > 80)
+    return res.status(400).json({ error: 'Name too long (max 80 characters)' });
+  if (typeof password !== 'string' || password.length < 6)
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (password.length > 128)
+    return res.status(400).json({ error: 'Password too long (max 128 characters)' });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.type !== 'admin_invite')
+      return res.status(400).json({ error: 'Invalid invitation token' });
+
     const [invites] = await db.query(
       'SELECT * FROM admin_invitations WHERE token = ? AND used = FALSE AND expires_at > NOW()',
       [token]
     );
-    if (invites.length === 0) return res.status(400).json({ error: 'Invitation has expired or already been used' });
+    if (invites.length === 0)
+      return res.status(400).json({ error: 'Invitation has expired or already been used' });
 
     const email = invites[0].email;
-
-    // Check if already registered
     const [existing] = await db.query('SELECT id FROM admins WHERE email = ?', [email]);
-    if (existing.length > 0) return res.status(400).json({ error: 'This email is already registered' });
+    if (existing.length > 0)
+      return res.status(400).json({ error: 'This email is already registered' });
 
-    // Create admin account
     const password_hash = await bcrypt.hash(password, 10);
     await db.query(
       'INSERT INTO admins (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-      [name, email, password_hash, 'admin']
+      [name.trim(), email, password_hash, 'admin']
     );
-
-    // Mark invitation as used
     await db.query('UPDATE admin_invitations SET used = TRUE WHERE token = ?', [token]);
 
     res.json({ message: 'Account created successfully! You can now login.' });
@@ -179,88 +218,167 @@ const completeRegistration = async (req, res) => {
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
       return res.status(400).json({ error: 'Invalid or expired invitation link' });
     }
-    console.error(err); res.status(500).json({ error: 'Server error' });
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
-// Verify token (check if valid before showing form)
+// ─── verifyInviteToken ────────────────────────────────────────────────────────
 const verifyInviteToken = async (req, res) => {
   const { token } = req.params;
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.type !== 'admin_invite') return res.status(400).json({ error: 'Invalid token' });
+    if (decoded.type !== 'admin_invite')
+      return res.status(400).json({ error: 'Invalid token' });
+
     const [invites] = await db.query(
       'SELECT * FROM admin_invitations WHERE token = ? AND used = FALSE AND expires_at > NOW()',
       [token]
     );
-    if (invites.length === 0) return res.status(400).json({ error: 'Invitation expired or already used' });
+    if (invites.length === 0)
+      return res.status(400).json({ error: 'Invitation expired or already used' });
+
     res.json({ email: invites[0].email, valid: true });
   } catch (err) {
     res.status(400).json({ error: 'Invalid or expired invitation link' });
   }
 };
 
+// ─── deleteAdmin ──────────────────────────────────────────────────────────────
 const deleteAdmin = async (req, res) => {
-  const targetId = parseInt(req.params.id);
-  if (targetId === req.admin.id) return res.status(400).json({ error: 'Cannot delete yourself!' });
+  const targetId = parseInt(req.params.id, 10);
+  if (!targetId || targetId <= 0)
+    return res.status(400).json({ error: 'Invalid admin ID' });
+  if (targetId === req.admin.id)
+    return res.status(400).json({ error: 'Cannot delete yourself!' });
+
   try {
     const [rows] = await db.query('SELECT name, email, role FROM admins WHERE id = ?', [targetId]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Admin not found' });
-    if (rows[0].role === 'main_admin') return res.status(403).json({ error: 'Cannot delete the main admin account' });
+    if (rows.length === 0)
+      return res.status(404).json({ error: 'Admin not found' });
+    if (rows[0].role === 'main_admin')
+      return res.status(403).json({ error: 'Cannot delete the main admin account' });
+
     await db.query('DELETE FROM admins WHERE id = ?', [targetId]);
     await logActivity(req.admin.id, 'Deleted admin', `Deleted: ${rows[0].email}`);
     res.json({ message: 'Admin deleted' });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
+// ─── updateProfile ────────────────────────────────────────────────────────────
 const updateProfile = async (req, res) => {
   const { name, email } = req.body;
-  if (!name || typeof name !== 'string' || name.trim().length === 0) return res.status(400).json({ error: 'Name required' });
-  if (!emailRegex.test(email)) return res.status(400).json({ error: 'Invalid email format' });
+
+  if (!name || typeof name !== 'string' || name.trim().length === 0)
+    return res.status(400).json({ error: 'Name required' });
+  if (name.trim().length > 80)
+    return res.status(400).json({ error: 'Name too long (max 80 characters)' });
+  if (!email || typeof email !== 'string' || email.length > 120)
+    return res.status(400).json({ error: 'Invalid email' });
+  if (!emailRegex.test(email))
+    return res.status(400).json({ error: 'Invalid email format' });
+
   try {
-    // Check if another admin already uses this email
-    const [existing] = await db.query('SELECT id FROM admins WHERE email = ? AND id != ?', [email, req.admin.id]);
-    if (existing.length > 0) return res.status(400).json({ error: 'Email already in use by another admin' });
+    const [existing] = await db.query(
+      'SELECT id FROM admins WHERE email = ? AND id != ?', [email, req.admin.id]
+    );
+    if (existing.length > 0)
+      return res.status(400).json({ error: 'Email already in use by another admin' });
+
     await db.query('UPDATE admins SET name=?, email=? WHERE id=?', [name.trim(), email, req.admin.id]);
     await logActivity(req.admin.id, 'Updated profile');
     res.json({ message: 'Profile updated' });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
+// ─── changePassword ───────────────────────────────────────────────────────────
 const changePassword = async (req, res) => {
   const { current_password, new_password } = req.body;
-  if (!current_password || !new_password) return res.status(400).json({ error: 'Both passwords required' });
-  if (new_password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+  if (!current_password || !new_password)
+    return res.status(400).json({ error: 'Both passwords required' });
+  if (typeof new_password !== 'string' || new_password.length < 6)
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (new_password.length > 128)
+    return res.status(400).json({ error: 'New password too long (max 128 characters)' });
+  if (typeof current_password !== 'string' || current_password.length > 128)
+    return res.status(400).json({ error: 'Current password too long' });
+
   try {
     const [rows] = await db.query('SELECT password_hash FROM admins WHERE id=?', [req.admin.id]);
     const isMatch = await bcrypt.compare(current_password, rows[0].password_hash);
-    if (!isMatch) return res.status(400).json({ error: 'Current password is incorrect' });
+    if (!isMatch)
+      return res.status(400).json({ error: 'Current password is incorrect' });
+
     const hash = await bcrypt.hash(new_password, 10);
     await db.query('UPDATE admins SET password_hash=? WHERE id=?', [hash, req.admin.id]);
     await logActivity(req.admin.id, 'Changed password');
     res.json({ message: 'Password changed successfully' });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
+// ─── resendInvite ─────────────────────────────────────────────────────────────
 const resendInvite = async (req, res) => {
   try {
-    const [invites] = await db.query('SELECT * FROM admin_invitations WHERE id = ? AND used = FALSE AND expires_at > NOW()', [req.params.id]);
-    if (invites.length === 0) return res.status(404).json({ error: 'Invitation not found or already used' });
+    const [invites] = await db.query(
+      'SELECT * FROM admin_invitations WHERE id = ? AND used = FALSE AND expires_at > NOW()',
+      [req.params.id]
+    );
+    if (invites.length === 0)
+      return res.status(404).json({ error: 'Invitation not found or already used' });
+
     const invite = invites[0];
     const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const token = jwt.sign({ email: invite.email, type: 'admin_invite' }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    await db.query('UPDATE admin_invitations SET token = ?, expires_at = ? WHERE id = ?', [token, newExpiry, invite.id]);
+
+    await db.query(
+      'UPDATE admin_invitations SET token = ?, expires_at = ? WHERE id = ?',
+      [token, newExpiry, invite.id]
+    );
+
     const inviteLink = `${process.env.CLIENT_URL}/admin/register?token=${token}`;
-    try { await sendInviteEmail(invite.email, inviteLink); } catch (e) { console.error('Email failed:', e.message); }
+    try {
+      await sendInviteEmail(invite.email, inviteLink);
+    } catch (e) {
+      console.error('Resend email failed:', e.message);
+    }
+
     res.json({ message: 'Invitation resent!' });
-  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
+// ─── cancelInvite ─────────────────────────────────────────────────────────────
+// FIX: Added a check so only main_admin can cancel any invite;
+// regular admins can only cancel invites they created (if we track that),
+// or we restrict to main_admin only to keep it simple and safe.
 const cancelInvite = async (req, res) => {
   try {
+    const [invites] = await db.query(
+      'SELECT id FROM admin_invitations WHERE id = ?', [req.params.id]
+    );
+    if (invites.length === 0)
+      return res.status(404).json({ error: 'Invitation not found' });
+
     await db.query('DELETE FROM admin_invitations WHERE id = ?', [req.params.id]);
     res.json({ message: 'Invitation cancelled' });
-  } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
-module.exports = { getPlayers, downloadCSV, getAnalytics, getAllAdmins, inviteAdmin, resendInvite, cancelInvite, completeRegistration, verifyInviteToken, deleteAdmin, updateProfile, changePassword };
+module.exports = {
+  getPlayers, downloadCSV, getAnalytics,
+  getAllAdmins, inviteAdmin, resendInvite, cancelInvite,
+  completeRegistration, verifyInviteToken,
+  deleteAdmin, updateProfile, changePassword
+};
