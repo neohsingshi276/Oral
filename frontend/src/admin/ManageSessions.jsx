@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
-const ManageSessions = () => {
+const ManageSessions = ({ currentAdmin }) => {
   const [sessions, setSessions] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [words, setWords] = useState([]);
@@ -333,7 +333,14 @@ const ManageSessions = () => {
               <div style={s.sessionActions}>
                 {/* NEW EDIT BUTTON INSTALLED HERE! */}
                 <button style={s.btnEdit} onClick={() => handleEdit(session)}>✏️ Edit Settings</button>
-                <button style={session.is_active ? s.btnDeactivate : s.btnActivate} onClick={() => handleToggle(session.id, session.is_active)}>{session.is_active ? 'Deactivate' : 'Activate'}</button>
+                {/* Replace the existing Activate/Deactivate button with this: */}
+                {currentAdmin?.role === 'main_admin' && (
+                  <button
+                    style={session.is_active ? s.btnDeactivate : s.btnActivate}
+                    onClick={() => handleToggle(session.id, session.is_active)}>
+                    {session.is_active ? 'Deactivate' : 'Activate'}
+                  </button>
+                )}
                 <button style={s.btnDelete} onClick={() => handleDelete(session.id)}>🗑️ Delete</button>
               </div>
             </div>

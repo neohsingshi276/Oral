@@ -32,18 +32,18 @@ const getSessions = async (req, res) => {
     const sessionIds = sessions.map(s => s.id);
     const placeholders = sessionIds.map(() => '?').join(',');
 
-    const [qRows]   = await db.query(`SELECT * FROM quiz_settings      WHERE session_id IN (${placeholders})`, sessionIds);
-    const [cRows]   = await db.query(`SELECT * FROM crossword_settings  WHERE session_id IN (${placeholders})`, sessionIds);
+    const [qRows] = await db.query(`SELECT * FROM quiz_settings      WHERE session_id IN (${placeholders})`, sessionIds);
+    const [cRows] = await db.query(`SELECT * FROM crossword_settings  WHERE session_id IN (${placeholders})`, sessionIds);
     const [cp3Rows] = await db.query(`SELECT * FROM cp3_settings        WHERE session_id IN (${placeholders})`, sessionIds);
 
-    const quizMap      = Object.fromEntries(qRows.map(r   => [r.session_id, r]));
-    const crosswordMap = Object.fromEntries(cRows.map(r   => [r.session_id, r]));
-    const cp3Map       = Object.fromEntries(cp3Rows.map(r => [r.session_id, r]));
+    const quizMap = Object.fromEntries(qRows.map(r => [r.session_id, r]));
+    const crosswordMap = Object.fromEntries(cRows.map(r => [r.session_id, r]));
+    const cp3Map = Object.fromEntries(cp3Rows.map(r => [r.session_id, r]));
 
     for (const s of sessions) {
-      s.quiz_settings      = quizMap[s.id]      || {};
+      s.quiz_settings = quizMap[s.id] || {};
       s.crossword_settings = crosswordMap[s.id] || {};
-      s.cp3_settings       = cp3Map[s.id]       || {};
+      s.cp3_settings = cp3Map[s.id] || {};
     }
 
     res.json({ sessions });
@@ -125,8 +125,13 @@ const updateSession = async (req, res) => {
       return res.status(404).json({ error: 'Session not found' });
     if (req.admin.role !== 'main_admin' && rows[0].admin_id !== req.admin.id)
       return res.status(403).json({ error: 'You can only edit your own sessions' });
-    if (is_active !== undefined)
+
+    // Only main_admin can activate/deactivate session codes
+    if (is_active !== undefined) {
+      if (req.admin.role !== 'main_admin')
+        return res.status(403).json({ error: 'Only the Main Admin can activate or deactivate session codes' });
       await db.query('UPDATE game_sessions SET is_active = ? WHERE id = ?', [!!is_active, sessionId]);
+    }
 
     if (session_name !== undefined) {
       if (typeof session_name !== 'string' || session_name.trim().length === 0)

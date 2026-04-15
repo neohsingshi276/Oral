@@ -320,8 +320,8 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     return idx >= 0 ? idx + 1 : null;
   };
 
-  const cellSize = gridSize > 15 ? 36 : gridSize > 12 ? 42 : 52;
-  const fontSize = gridSize > 15 ? '0.85rem' : gridSize > 12 ? '1rem' : '1.2rem';
+  const cellSize = gridSize > 15 ? 40 : gridSize > 12 ? 46 : 56;
+  const fontSize = gridSize > 15 ? '0.9rem' : gridSize > 12 ? '1.05rem' : '1.25rem';
   const minCorrect = settings.minimum_correct || DEFAULT_MIN_CORRECT;
   const passed = minCorrect > 0 ? completed.length >= minCorrect : true;
   const pct = words.length > 0 ? Math.round((completed.length / words.length) * 100) : 0;
@@ -660,16 +660,16 @@ const s = {
   checkBtn: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 0.7rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.78rem' },
   hintBtn: { background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 0.7rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.78rem' },
   hintBar: { background: '#1e293b', color: '#e2e8f0', padding: '0.5rem 1rem', fontSize: '0.83rem', lineHeight: 1.5, flexShrink: 0 },
-  mainLayout: { flex: 1, display: 'flex', gap: '0.75rem', padding: '0.75rem 1rem', overflow: 'auto', alignItems: 'flex-start' },
-  cluesPanel: { width: '190px', flexShrink: 0, background: '#1e293b', borderRadius: '12px', padding: '0.75rem', display: 'flex', flexDirection: 'column', maxHeight: '100%' },
-  cluesPanelTitle: { color: '#FFD700', fontWeight: '800', fontSize: '0.82rem', marginBottom: '0.5rem', flexShrink: 0 },
-  cluesList: { flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.2rem' },
-  clueRow: { display: 'flex', alignItems: 'flex-start', gap: '0.3rem', padding: '0.3rem 0.5rem', borderRadius: '6px', cursor: 'pointer', transition: 'background 0.15s' },
+  mainLayout: { flex: 1, display: 'flex', gap: '1rem', padding: '1rem 1.25rem', overflow: 'auto', alignItems: 'flex-start' },
+  cluesPanel: { width: '220px', flexShrink: 0, background: '#1e293b', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', maxHeight: '100%' },
+  cluesPanelTitle: { color: '#FFD700', fontWeight: '800', fontSize: '0.85rem', marginBottom: '0.6rem', flexShrink: 0, borderBottom: '1px solid #334155', paddingBottom: '0.4rem' },
+  cluesList: { flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.35rem' },
+  clueRow: { display: 'flex', alignItems: 'flex-start', gap: '0.4rem', padding: '0.4rem 0.6rem', borderRadius: '6px', cursor: 'pointer', transition: 'background 0.15s' },
   clueRowActive: { background: '#2563eb' },
   clueRowDone: { opacity: 0.6 },
-  clueNum: { fontSize: '0.7rem', fontWeight: '800', color: '#60a5fa', flexShrink: 0, minWidth: '16px', paddingTop: '1px' },
-  clueText: { fontSize: '0.73rem', color: '#cbd5e1', lineHeight: 1.4, flex: 1 },
-  gridSection: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto' },
+  clueNum: { fontSize: '0.72rem', fontWeight: '800', color: '#60a5fa', flexShrink: 0, minWidth: '18px', paddingTop: '2px' },
+  clueText: { fontSize: '0.78rem', color: '#cbd5e1', lineHeight: 1.5, flex: 1 },
+  gridSection: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '0.5rem' },
   grid: { display: 'grid', gap: '1px', background: '#0f172a', border: '2px solid #334155', borderRadius: '8px', overflow: 'hidden' },
   cell: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   cellNum: { position: 'absolute', top: '1px', left: '2px', fontSize: '7px', fontWeight: '800', color: '#64748b', lineHeight: 1, zIndex: 1, pointerEvents: 'none' },

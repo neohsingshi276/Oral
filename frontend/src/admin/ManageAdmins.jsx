@@ -109,7 +109,7 @@ const ManageAdmins = ({ currentAdmin }) => {
                 <div style={s.adminEmail}>{admin.email}</div>
                 <div style={s.adminDate}>Joined {new Date(admin.created_at).toLocaleDateString()}</div>
               </div>
-              {admin.id !== currentAdmin?.id && admin.role !== 'main_admin' && (
+              {currentAdmin?.role === 'main_admin' && admin.id !== currentAdmin?.id && admin.role !== 'main_admin' && (
                 <button style={s.btnDelete} onClick={() => handleDelete(admin.id, admin.name)}>🗑️ Remove</button>
               )}
             </div>

@@ -74,7 +74,7 @@ const downloadCSV = async (req, res) => {
         r.cp1_completed ? 'Yes' : 'No', r.cp1_attempts || 0,
         r.cp2_completed ? 'Yes' : 'No', r.cp2_attempts || 0,
         r.cp3_completed ? 'Yes' : 'No', r.cp3_attempts || 0,
-        r.quiz_score    || 0, r.quiz_correct || 0, r.cp3_score || 0
+        r.quiz_score || 0, r.quiz_correct || 0, r.cp3_score || 0
       ].map(csvEscape).join(','));
     });
 
@@ -90,11 +90,11 @@ const downloadCSV = async (req, res) => {
 // ─── getAnalytics ─────────────────────────────────────────────────────────────
 const getAnalytics = async (req, res) => {
   try {
-    const [[{ total_players  }]] = await db.query('SELECT COUNT(*) as total_players  FROM players');
+    const [[{ total_players }]] = await db.query('SELECT COUNT(*) as total_players  FROM players');
     const [[{ total_sessions }]] = await db.query('SELECT COUNT(*) as total_sessions FROM game_sessions');
-    const [[{ cp1_completed  }]] = await db.query('SELECT COUNT(*) as cp1_completed  FROM checkpoint_attempts WHERE checkpoint_number=1 AND completed=1');
-    const [[{ cp2_completed  }]] = await db.query('SELECT COUNT(*) as cp2_completed  FROM checkpoint_attempts WHERE checkpoint_number=2 AND completed=1');
-    const [[{ cp3_completed  }]] = await db.query('SELECT COUNT(*) as cp3_completed  FROM checkpoint_attempts WHERE checkpoint_number=3 AND completed=1');
+    const [[{ cp1_completed }]] = await db.query('SELECT COUNT(*) as cp1_completed  FROM checkpoint_attempts WHERE checkpoint_number=1 AND completed=1');
+    const [[{ cp2_completed }]] = await db.query('SELECT COUNT(*) as cp2_completed  FROM checkpoint_attempts WHERE checkpoint_number=2 AND completed=1');
+    const [[{ cp3_completed }]] = await db.query('SELECT COUNT(*) as cp3_completed  FROM checkpoint_attempts WHERE checkpoint_number=3 AND completed=1');
 
     const [players] = await db.query(`
       SELECT p.*, s.session_name,
@@ -246,6 +246,10 @@ const verifyInviteToken = async (req, res) => {
 
 // ─── deleteAdmin ──────────────────────────────────────────────────────────────
 const deleteAdmin = async (req, res) => {
+  // Only main_admin is allowed to remove other admins
+  if (req.admin.role !== 'main_admin')
+    return res.status(403).json({ error: 'Only the Main Admin can remove admins' });
+
   const targetId = parseInt(req.params.id, 10);
   if (!targetId || targetId <= 0)
     return res.status(400).json({ error: 'Invalid admin ID' });

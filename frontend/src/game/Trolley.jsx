@@ -62,7 +62,7 @@ const CP3Game = ({ player, onComplete }) => {
         if (s.target_score) setTargetScore(s.target_score);
         setTimeLeft(s.timer_seconds || DEFAULT_DURATION);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [player]);
 
   const startGame = () => {
@@ -325,8 +325,10 @@ const CP3Game = ({ player, onComplete }) => {
       <div style={s.gameWrap}>
         <div style={s.gameHeader}>
           <div style={s.scorePanel}>
-            <span style={{ fontSize: '0.85rem', color: '#666' }}>Skor</span>
-            <span style={s.scoreVal}>{score}</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.72rem', color: '#888', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Score</span>
+              <span style={s.scoreVal}>{score}</span>
+            </div>
             {combo > 1 && <span style={s.combo}>🔥 {combo}x!</span>}
           </div>
           <div style={s.timerPanel}>
@@ -383,13 +385,13 @@ const s = {
   foodRow: { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' },
   foodChip: { fontSize: '1.8rem' },
   startBtn: { width: '100%', padding: '1rem', fontSize: '1.3rem', fontWeight: '900', background: 'linear-gradient(135deg,#FF6B35,#F7931E)', color: '#fff', border: 'none', borderRadius: '16px', cursor: 'pointer', boxShadow: '0 8px 25px rgba(255,107,53,0.4)' },
-  gameWrap: { width: '100%', maxWidth: '900px' },
-  gameHeader: { display: 'flex', gap: '1rem', marginBottom: '0.75rem' },
-  scorePanel: { flex: 1, background: '#fff', padding: '0.75rem 1.5rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '1rem', border: '3px solid #FFD93D' },
-  scoreVal: { fontSize: '2.5rem', fontWeight: '900', color: '#FF6B35' },
-  combo: { fontSize: '1rem', fontWeight: '800', color: '#FF6B35', animation: 'pulse 0.5s infinite' },
-  timerPanel: { background: '#fff', padding: '0.75rem 1.5rem', borderRadius: '16px', textAlign: 'center', border: '3px solid #4ECDC4', minWidth: '90px' },
-  timerVal: { fontSize: '2.5rem', fontWeight: '900', display: 'block' },
+  gameWrap: { width: '100%', maxWidth: '900px', display: 'flex', flexDirection: 'column' },
+  gameHeader: { display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', flexShrink: 0 },
+  scorePanel: { flex: 1, background: '#fff', padding: '0.5rem 1rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.75rem', border: '3px solid #FFD93D', minWidth: 0 },
+  scoreVal: { fontSize: '2rem', fontWeight: '900', color: '#FF6B35', lineHeight: 1 },
+  combo: { fontSize: '0.9rem', fontWeight: '800', color: '#FF6B35', animation: 'pulse 0.5s infinite' },
+  timerPanel: { background: '#fff', padding: '0.5rem 1rem', borderRadius: '12px', textAlign: 'center', border: '3px solid #4ECDC4', minWidth: '80px', flexShrink: 0 },
+  timerVal: { fontSize: '2rem', fontWeight: '900', display: 'block', lineHeight: 1 },
   gameArea: { position: 'relative', height: '500px', background: 'linear-gradient(180deg,#FFF9E6 0%,#FFE66D 100%)', borderRadius: '20px', overflow: 'hidden', border: '4px solid #fff', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' },
   shelf: { position: 'absolute', top: '25%', left: 0, right: 0, height: '10px', background: '#8B6F47', opacity: 0.3 },
   shelf2: { position: 'absolute', top: '55%', left: 0, right: 0, height: '10px', background: '#8B6F47', opacity: 0.3 },
