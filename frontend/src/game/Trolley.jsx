@@ -62,7 +62,7 @@ const CP3Game = ({ player, onComplete }) => {
         if (s.target_score) setTargetScore(s.target_score);
         setTimeLeft(s.timer_seconds || DEFAULT_DURATION);
       })
-      .catch(() => { });
+      .catch(() => {});
   }, [player]);
 
   const startGame = () => {

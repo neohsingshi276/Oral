@@ -32,18 +32,18 @@ const getSessions = async (req, res) => {
     const sessionIds = sessions.map(s => s.id);
     const placeholders = sessionIds.map(() => '?').join(',');
 
-    const [qRows] = await db.query(`SELECT * FROM quiz_settings      WHERE session_id IN (${placeholders})`, sessionIds);
-    const [cRows] = await db.query(`SELECT * FROM crossword_settings  WHERE session_id IN (${placeholders})`, sessionIds);
+    const [qRows]   = await db.query(`SELECT * FROM quiz_settings      WHERE session_id IN (${placeholders})`, sessionIds);
+    const [cRows]   = await db.query(`SELECT * FROM crossword_settings  WHERE session_id IN (${placeholders})`, sessionIds);
     const [cp3Rows] = await db.query(`SELECT * FROM cp3_settings        WHERE session_id IN (${placeholders})`, sessionIds);
 
-    const quizMap = Object.fromEntries(qRows.map(r => [r.session_id, r]));
-    const crosswordMap = Object.fromEntries(cRows.map(r => [r.session_id, r]));
-    const cp3Map = Object.fromEntries(cp3Rows.map(r => [r.session_id, r]));
+    const quizMap      = Object.fromEntries(qRows.map(r   => [r.session_id, r]));
+    const crosswordMap = Object.fromEntries(cRows.map(r   => [r.session_id, r]));
+    const cp3Map       = Object.fromEntries(cp3Rows.map(r => [r.session_id, r]));
 
     for (const s of sessions) {
-      s.quiz_settings = quizMap[s.id] || {};
+      s.quiz_settings      = quizMap[s.id]      || {};
       s.crossword_settings = crosswordMap[s.id] || {};
-      s.cp3_settings = cp3Map[s.id] || {};
+      s.cp3_settings       = cp3Map[s.id]       || {};
     }
 
     res.json({ sessions });

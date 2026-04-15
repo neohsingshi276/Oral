@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
-const ManageSessions = ({ currentAdmin }) => {
+const ManageSessions = () => {
+  const { admin } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [words, setWords] = useState([]);
@@ -331,13 +333,9 @@ const ManageSessions = ({ currentAdmin }) => {
                 <button style={copied === session.unique_token ? s.btnCopied : s.btnCopy} onClick={() => copyCode(session.unique_token)}>{copied === session.unique_token ? '✅ Copied!' : '📋 Copy Code'}</button>
               </div>
               <div style={s.sessionActions}>
-                {/* NEW EDIT BUTTON INSTALLED HERE! */}
                 <button style={s.btnEdit} onClick={() => handleEdit(session)}>✏️ Edit Settings</button>
-                {/* Replace the existing Activate/Deactivate button with this: */}
-                {currentAdmin?.role === 'main_admin' && (
-                  <button
-                    style={session.is_active ? s.btnDeactivate : s.btnActivate}
-                    onClick={() => handleToggle(session.id, session.is_active)}>
+                {admin?.role === 'main_admin' && (
+                  <button style={session.is_active ? s.btnDeactivate : s.btnActivate} onClick={() => handleToggle(session.id, session.is_active)}>
                     {session.is_active ? 'Deactivate' : 'Activate'}
                   </button>
                 )}

@@ -13,19 +13,13 @@ const getPlayers = async (req, res) => {
       SELECT p.*, s.session_name,
         MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
         MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
-        MAX(qs.score) as cp1_score,
         MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
         MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts  END) as cp2_attempts,
-        MAX(cs.score) as cp2_score,
         MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.completed END) as cp3_completed,
-        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts,
-        MAX(cp3.score) as cp3_score
-     FROM players p
+        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts
+      FROM players p
       JOIN game_sessions s ON p.session_id = s.id
       LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
-      LEFT JOIN quiz_scores qs ON qs.player_id = p.id
-      LEFT JOIN crossword_scores cs ON cs.player_id = p.id
-      LEFT JOIN cp3_scores cp3 ON cp3.player_id = p.id
       GROUP BY p.id ORDER BY p.joined_at DESC
     `);
     res.json({ players: rows });
@@ -80,7 +74,7 @@ const downloadCSV = async (req, res) => {
         r.cp1_completed ? 'Yes' : 'No', r.cp1_attempts || 0,
         r.cp2_completed ? 'Yes' : 'No', r.cp2_attempts || 0,
         r.cp3_completed ? 'Yes' : 'No', r.cp3_attempts || 0,
-        r.quiz_score || 0, r.quiz_correct || 0, r.cp3_score || 0
+        r.quiz_score    || 0, r.quiz_correct || 0, r.cp3_score || 0
       ].map(csvEscape).join(','));
     });
 
@@ -96,11 +90,11 @@ const downloadCSV = async (req, res) => {
 // ─── getAnalytics ─────────────────────────────────────────────────────────────
 const getAnalytics = async (req, res) => {
   try {
-    const [[{ total_players }]] = await db.query('SELECT COUNT(*) as total_players  FROM players');
+    const [[{ total_players  }]] = await db.query('SELECT COUNT(*) as total_players  FROM players');
     const [[{ total_sessions }]] = await db.query('SELECT COUNT(*) as total_sessions FROM game_sessions');
-    const [[{ cp1_completed }]] = await db.query('SELECT COUNT(*) as cp1_completed  FROM checkpoint_attempts WHERE checkpoint_number=1 AND completed=1');
-    const [[{ cp2_completed }]] = await db.query('SELECT COUNT(*) as cp2_completed  FROM checkpoint_attempts WHERE checkpoint_number=2 AND completed=1');
-    const [[{ cp3_completed }]] = await db.query('SELECT COUNT(*) as cp3_completed  FROM checkpoint_attempts WHERE checkpoint_number=3 AND completed=1');
+    const [[{ cp1_completed  }]] = await db.query('SELECT COUNT(*) as cp1_completed  FROM checkpoint_attempts WHERE checkpoint_number=1 AND completed=1');
+    const [[{ cp2_completed  }]] = await db.query('SELECT COUNT(*) as cp2_completed  FROM checkpoint_attempts WHERE checkpoint_number=2 AND completed=1');
+    const [[{ cp3_completed  }]] = await db.query('SELECT COUNT(*) as cp3_completed  FROM checkpoint_attempts WHERE checkpoint_number=3 AND completed=1');
 
     const [players] = await db.query(`
       SELECT p.*, s.session_name,
