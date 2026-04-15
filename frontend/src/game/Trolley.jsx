@@ -345,7 +345,6 @@ const CP3Game = ({ player, onComplete }) => {
             <div key={item.id} style={{ ...s.fallingItem, left: `${item.x}%`, top: `${item.y}px` }}>
               <div style={{ ...s.foodBubble, background: item.color + '40' }}>
                 <span style={{ fontSize: '2.5rem' }}>{item.emoji}</span>
-                <span style={{ fontSize: '0.7rem', fontWeight: '700', color: item.points > 0 ? '#16a34a' : '#e11d48' }}>{item.points > 0 ? `+${item.points}` : item.points}</span>
               </div>
             </div>
           ))}

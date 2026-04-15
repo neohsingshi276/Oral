@@ -192,7 +192,9 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
       const cx = charPos.current.x;
       const cy = charPos.current.y;
       const isMoving = keys.current['w'] || keys.current['s'] || keys.current['a'] || keys.current['d'] ||
-        keys.current['ArrowUp'] || keys.current['ArrowDown'] || keys.current['ArrowLeft'] || keys.current['ArrowRight'];
+        keys.current['ArrowUp'] || keys.current['ArrowDown'] || keys.current['ArrowLeft'] || keys.current['ArrowRight'] ||
+        keys.current['W'] || keys.current['A'] || keys.current['S'] || keys.current['D'];
+
 
       ctx.fillStyle = '#2563eb';
       ctx.beginPath();
@@ -236,10 +238,10 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
       const pos = charPos.current;
       let dx = 0, dy = 0;
 
-      if (keys.current['w'] || keys.current['ArrowUp']) dy = -CHAR_SPEED;
-      if (keys.current['s'] || keys.current['ArrowDown']) dy = CHAR_SPEED;
-      if (keys.current['a'] || keys.current['ArrowLeft']) dx = -CHAR_SPEED;
-      if (keys.current['d'] || keys.current['ArrowRight']) dx = CHAR_SPEED;
+      if (keys.current['w'] || keys.current['ArrowUp'] || keys.current['W']) dy = -CHAR_SPEED;
+      if (keys.current['s'] || keys.current['ArrowDown'] || keys.current['S']) dy = CHAR_SPEED;
+      if (keys.current['a'] || keys.current['ArrowLeft'] || keys.current['A']) dx = -CHAR_SPEED;
+      if (keys.current['d'] || keys.current['ArrowRight'] || keys.current['D']) dx = CHAR_SPEED;
 
       if (dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
 
@@ -287,8 +289,8 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
 
     animRef.current = requestAnimationFrame(update);
     return () => cancelAnimationFrame(animRef.current);
-  // FIX: nearCheckpoint removed from deps — the draw loop uses nearCheckpointRef instead,
-  // so it no longer restarts the entire RAF loop on every checkpoint proximity change.
+    // FIX: nearCheckpoint removed from deps — the draw loop uses nearCheckpointRef instead,
+    // so it no longer restarts the entire RAF loop on every checkpoint proximity change.
   }, [player, progress, onCheckpointReached, savePosition, getCompletedCPs, isCheckpointUnlocked, isWalkable]);
 
   // FIX: Use responsive viewSize state instead of values frozen at first render

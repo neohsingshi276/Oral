@@ -227,8 +227,8 @@ const GamePage = () => {
   if (!player) return <div style={s.loading}>Loading game... 🎮</div>;
 
   const showFullQuiz = activeCP === 1 && cpStep === 'activity';
-  const showFullCP3  = activeCP === 3 && cpStep === 'activity';
-  const showModal    = activeCP && !showFullQuiz && !showFullCP3;
+  const showFullCP3 = activeCP === 3 && cpStep === 'activity';
+  const showModal = activeCP && !showFullQuiz && !showFullCP3;
 
   return (
     <div style={s.page}>
@@ -254,7 +254,7 @@ const GamePage = () => {
 
       {/* Controls hint */}
       <div style={s.controls}>
-        <span>🕹️ Move: <strong>WASD</strong> or <strong>Arrow Keys</strong></span>
+        <span>🕹️ Move: <strong>Keyboard WASD</strong> or <strong>Arrow Keys</strong></span>
         <span style={{ marginLeft: '1.5rem' }}>🎯 Enter zone: <strong>Press E</strong></span>
       </div>
 
