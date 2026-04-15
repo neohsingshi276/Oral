@@ -13,13 +13,19 @@ const getPlayers = async (req, res) => {
       SELECT p.*, s.session_name,
         MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
         MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
+        MAX(qs.score) as cp1_score,
         MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
         MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts  END) as cp2_attempts,
+        MAX(cs.score) as cp2_score,
         MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.completed END) as cp3_completed,
-        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts
-      FROM players p
+        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts,
+        MAX(cp3.score) as cp3_score
+     FROM players p
       JOIN game_sessions s ON p.session_id = s.id
       LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
+      LEFT JOIN quiz_scores qs ON qs.player_id = p.id
+      LEFT JOIN crossword_scores cs ON cs.player_id = p.id
+      LEFT JOIN cp3_scores cp3 ON cp3.player_id = p.id
       GROUP BY p.id ORDER BY p.joined_at DESC
     `);
     res.json({ players: rows });
