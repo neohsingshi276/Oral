@@ -9,6 +9,7 @@ import ManageSessions from '../admin/ManageSessions';
 import ManageQuiz from '../admin/ManageQuiz';
 import ManageCrossword from '../admin/ManageCrossword';
 import AdminChat from '../admin/AdminChat';
+import StaffChat from '../admin/StaffChat';
 import ManageAdmins from '../admin/ManageAdmins';
 import ProfileSettings from '../admin/ProfileSettings';
 import EmailReminders from '../admin/EmailReminders';
@@ -26,6 +27,7 @@ const AdminDashboard = () => {
     { key: 'sessions', icon: '🎮', label: 'Game Sessions' },
     { key: 'students', icon: '👥', label: 'Players' },
     { key: 'chat', icon: '💬', label: 'Player Chat' },
+    { key: 'staffchat', icon: '🏢', label: 'Staff Chat' },
     { key: 'videos', icon: '📹', label: 'Learning Videos' },
     { key: 'facts', icon: '💡', label: 'Did You Know?' },
     { key: 'quiz', icon: '❓', label: 'Quiz Questions' },
@@ -50,6 +52,7 @@ const AdminDashboard = () => {
       case 'sessions': return <ManageSessions />;
       case 'students': return <ManageStudents />;
       case 'chat': return <AdminChat />;
+      case 'staffchat': return <StaffChat />;
       case 'videos': return <ManageVideos />;
       case 'facts': return <ManageFacts />;
       case 'quiz': return <ManageQuiz />;

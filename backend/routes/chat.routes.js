@@ -1,23 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const {
-  sendMessage, sendAdminMessage,
-  getMessages, getAdminMessages, getAllChats,
-  sendAdminInternalMessage, getAdminInternalMessages
+  sendMessage,
+  adminSendMessage,
+  getMessages,
+  adminGetMessages,
+  getAllChats,
 } = require('../controllers/chat.controller');
 const verifyToken = require('../middleware/verifyToken');
 
-// ── Player-facing routes (no auth) ──────────────────────────────────────────
-router.post('/', sendMessage);
+// ── IMPORTANT: specific /admin/* routes MUST be registered BEFORE /:player_id
+// otherwise Express matches "admin" as a player_id parameter and returns 404.
+
+// Admin routes (JWT required)
+router.post('/admin/reply',                  verifyToken, adminSendMessage);
+router.get('/admin/messages/:player_id',     verifyToken, adminGetMessages);
+router.get('/',                              verifyToken, getAllChats);
+
+// Player routes (no JWT — players don't have tokens)
+router.post('/',        sendMessage);
 router.get('/:player_id', getMessages);
-
-// ── Admin → Player chat (requires admin token) ────────────────────────────
-router.post('/admin/send', verifyToken, sendAdminMessage);
-router.get('/admin/player/:player_id', verifyToken, getAdminMessages);
-router.get('/', verifyToken, getAllChats);
-
-// ── Admin ↔ Main Admin internal chat ─────────────────────────────────────
-router.post('/admin/internal', verifyToken, sendAdminInternalMessage);
-router.get('/admin/internal', verifyToken, getAdminInternalMessages);
 
 module.exports = router;
