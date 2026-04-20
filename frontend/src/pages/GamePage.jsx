@@ -209,7 +209,7 @@ const GamePage = () => {
 
   const fetchChat = async () => {
     try {
-      const res = await api.get(`/chat/${player.id}`);
+      const res = await api.get(`/chat/${player.id}?session_id=${player.session_id}`);
       setChatMessages(res.data.messages || []);
     } catch (err) {
       console.error(err);

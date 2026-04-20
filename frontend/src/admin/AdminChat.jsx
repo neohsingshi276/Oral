@@ -16,8 +16,8 @@ const AdminChat = () => {
   const msgPollRef     = useRef(null);
 
   // ── Build player contact list from getAllChats ─────────────────────────────
-  // getAllChats returns ALL messages DESC. We group by player and compute unread
-  // based on lastSeenRef so opening a chat clears its badge immediately.
+  // getAllChats returns ALL messages ASC. We group by player, the last message
+  // per player is the most recent. Unread = player messages after lastSeenRef.
   const buildPlayerMap = (allMessages) => {
     const map = {};
     allMessages.forEach(m => {
@@ -32,11 +32,11 @@ const AdminChat = () => {
         };
       }
       const p = map[m.player_id];
-      // Messages are DESC from server — first one we see is the latest
-      if (!p.lastMessage) {
-        p.lastMessage = m.message;
-        p.lastTime    = m.sent_at;
-      }
+      // Messages are ASC — every iteration overwrites with the newer message,
+      // so after the loop p.lastMessage is the most recent one.
+      p.lastMessage = m.message;
+      p.lastTime    = m.sent_at;
+
       // Count unread: player messages sent after last time admin viewed this thread
       if (m.sender_type === 'player') {
         const lastSeen = lastSeenRef.current[m.player_id] || 0;
@@ -72,8 +72,6 @@ const AdminChat = () => {
         const latest = Math.max(...msgs.map(m => new Date(m.sent_at).getTime()));
         lastSeenRef.current[playerId] = latest;
       }
-      // Refresh contact list so unread badge updates to 0 immediately
-      fetchContacts();
     } catch (err) {
       console.error('fetchMessages error:', err);
     }

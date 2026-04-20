@@ -40,15 +40,26 @@ const adminSendMessage = async (req, res) => {
 };
 
 // ─── getMessages (player self-read only) ─────────────────────────────────────
+// Players identify themselves by player_id + session_id passed as query params.
+// This prevents one player from reading another player's messages.
 const getMessages = async (req, res) => {
   const player_id = parseInt(req.params.player_id, 10);
-  const { requester_player_id } = req.query;
+  const { session_id } = req.query;
 
-  if (!requester_player_id || parseInt(requester_player_id, 10) !== player_id) {
-    return res.status(403).json({ error: 'Access denied' });
+  if (!session_id) {
+    return res.status(400).json({ error: 'session_id query param required' });
   }
 
   try {
+    // Verify this player actually belongs to that session
+    const [playerRows] = await db.query(
+      'SELECT id FROM players WHERE id = ? AND session_id = ?',
+      [player_id, session_id]
+    );
+    if (playerRows.length === 0) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
     const [rows] = await db.query(
       'SELECT * FROM chat_messages WHERE player_id = ? ORDER BY sent_at ASC',
       [player_id]
@@ -79,7 +90,7 @@ const getAllChats = async (req, res) => {
     const [rows] = await db.query(`
       SELECT cm.*, p.nickname, p.session_id FROM chat_messages cm
       JOIN players p ON cm.player_id = p.id
-      ORDER BY cm.sent_at DESC
+      ORDER BY cm.sent_at ASC
     `);
     res.json({ messages: rows });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
