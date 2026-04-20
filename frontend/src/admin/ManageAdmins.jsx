@@ -61,7 +61,7 @@ const ManageAdmins = ({ currentAdmin }) => {
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: '200px' }}>
             <label style={s.label}>Email Address</label>
-            <input style={s.input} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="teacher@school.com" />
+            <input style={s.input} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="teacher@school.com" maxLength={120} />
           </div>
           <button style={s.btnPrimary} onClick={handleInvite} disabled={loading}>
             {loading ? 'Sending...' : '📧 Send Invitation'}

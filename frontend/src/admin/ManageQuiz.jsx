@@ -164,7 +164,8 @@ const ManageQuiz = () => {
               {/* Question text */}
               <div style={s.field}>
                 <label style={s.label}>Question</label>
-                <textarea style={{ ...s.input, height: '80px', resize: 'vertical' }} value={form.question} onChange={e => setForm({ ...form, question: e.target.value })} required placeholder="Tulis soalan di sini..." />
+                <textarea style={{ ...s.input, height: '80px', resize: 'vertical' }} value={form.question} onChange={e => setForm({ ...form, question: e.target.value })} required placeholder="Tulis soalan di sini..." maxLength={500} />
+                <p style={{ color: form.question.length > 450 ? '#e11d48' : '#94a3b8', fontSize: '0.75rem', margin: '0.2rem 0 0', textAlign: 'right' }}>{form.question.length}/500</p>
               </div>
 
               {/* Image upload */}

@@ -67,11 +67,11 @@ const ProfileSettings = ({ onClose }) => {
           <form onSubmit={handleProfileUpdate} style={s.body}>
             <div style={s.field}>
               <label style={s.label}>Full Name</label>
-              <input style={s.input} value={profile.name} onChange={e => setProfile({...profile, name: e.target.value})} required />
+              <input style={s.input} value={profile.name} onChange={e => setProfile({...profile, name: e.target.value})} required maxLength={80} />
             </div>
             <div style={s.field}>
               <label style={s.label}>Email</label>
-              <input style={s.input} type="email" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} required />
+              <input style={s.input} type="email" value={profile.email} onChange={e => setProfile({...profile, email: e.target.value})} required maxLength={120} />
             </div>
             <div style={s.field}>
               <label style={s.label}>Member Since</label>
@@ -87,17 +87,17 @@ const ProfileSettings = ({ onClose }) => {
             <div style={s.field}>
               <label style={s.label}>Current Password</label>
               <div style={s.passWrap}>
-                <input style={{...s.input, flex:1}} type={showPass ? 'text' : 'password'} value={passwords.current_password} onChange={e => setPasswords({...passwords, current_password: e.target.value})} required placeholder="Enter current password" />
+                <input style={{...s.input, flex:1}} type={showPass ? 'text' : 'password'} value={passwords.current_password} onChange={e => setPasswords({...passwords, current_password: e.target.value})} required placeholder="Enter current password" maxLength={128} />
                 <button type="button" style={s.eyeBtn} onClick={() => setShowPass(!showPass)}>{showPass ? '🙈' : '👁️'}</button>
               </div>
             </div>
             <div style={s.field}>
               <label style={s.label}>New Password</label>
-              <input style={s.input} type={showPass ? 'text' : 'password'} value={passwords.new_password} onChange={e => setPasswords({...passwords, new_password: e.target.value})} required placeholder="Min 6 characters" minLength={6} />
+              <input style={s.input} type={showPass ? 'text' : 'password'} value={passwords.new_password} onChange={e => setPasswords({...passwords, new_password: e.target.value})} required placeholder="Min 6 characters" minLength={6} maxLength={128} />
             </div>
             <div style={s.field}>
               <label style={s.label}>Confirm New Password</label>
-              <input style={s.input} type={showPass ? 'text' : 'password'} value={passwords.confirm_password} onChange={e => setPasswords({...passwords, confirm_password: e.target.value})} required placeholder="Repeat new password" />
+              <input style={s.input} type={showPass ? 'text' : 'password'} value={passwords.confirm_password} onChange={e => setPasswords({...passwords, confirm_password: e.target.value})} required placeholder="Repeat new password" maxLength={128} />
               {passwords.new_password && passwords.confirm_password && passwords.new_password !== passwords.confirm_password && (
                 <p style={{color:'#e11d48', fontSize:'0.78rem', margin:'0.25rem 0 0'}}>⚠️ Passwords do not match</p>
               )}

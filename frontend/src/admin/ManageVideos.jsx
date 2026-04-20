@@ -53,7 +53,7 @@ const ManageVideos = () => {
           <div style={s.formGrid}>
             <div style={s.field}>
               <label style={s.label}>Title</label>
-              <input style={s.input} value={form.title} onChange={e => setForm({...form, title: e.target.value})} required placeholder="Video title" />
+              <input style={s.input} value={form.title} onChange={e => setForm({...form, title: e.target.value})} required placeholder="Video title" maxLength={150} />
             </div>
             <div style={s.field}>
               <label style={s.label}>Order Number</label>
@@ -62,11 +62,11 @@ const ManageVideos = () => {
           </div>
           <div style={s.field}>
             <label style={s.label}>YouTube URL</label>
-            <input style={s.input} value={form.youtube_url} onChange={e => setForm({...form, youtube_url: e.target.value})} required placeholder="https://youtu.be/..." />
+            <input style={s.input} value={form.youtube_url} onChange={e => setForm({...form, youtube_url: e.target.value})} required placeholder="https://youtu.be/..." maxLength={200} />
           </div>
           <div style={s.field}>
             <label style={s.label}>Description</label>
-            <textarea style={{...s.input, height:'80px', resize:'vertical'}} value={form.description} onChange={e => setForm({...form, description: e.target.value})} placeholder="Short description..." />
+            <textarea style={{...s.input, height:'80px', resize:'vertical'}} value={form.description} onChange={e => setForm({...form, description: e.target.value})} placeholder="Short description..." maxLength={500} />
           </div>
           <div style={{display:'flex', gap:'0.75rem'}}>
             <button style={s.btnPrimary} type="submit">{editing ? 'Update Video' : 'Add Video'}</button>

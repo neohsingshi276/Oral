@@ -90,6 +90,7 @@ const AdminLoginPage = () => {
               value={form.email}
               onChange={handleChange}
               required
+              maxLength={120}
             />
           </div>
 
@@ -108,6 +109,7 @@ const AdminLoginPage = () => {
                 value={form.password}
                 onChange={handleChange}
                 required
+                maxLength={128}
               />
               <button
                 type="button"

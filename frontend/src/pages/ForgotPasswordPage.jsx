@@ -73,7 +73,7 @@ const ForgotPasswordPage = () => {
             <form onSubmit={handleSendOTP}>
               <div style={s.field}>
                 <label style={s.label}>Admin Email</label>
-                <input style={s.input} type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="admin@example.com" autoFocus />
+                <input style={s.input} type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="admin@example.com" autoFocus maxLength={120} />
               </div>
               <button style={s.btn} type="submit" disabled={loading}>
                 {loading ? 'Sending...' : '📧 Send OTP'}
@@ -128,13 +128,13 @@ const ForgotPasswordPage = () => {
               <div style={s.field}>
                 <label style={s.label}>New Password</label>
                 <div style={s.passWrap}>
-                  <input style={{...s.input, flex:1}} type={showPass ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)} required placeholder="Min 6 characters" minLength={6} />
+                  <input style={{...s.input, flex:1}} type={showPass ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)} required placeholder="Min 6 characters" minLength={6} maxLength={128} />
                   <button type="button" style={s.eyeBtn} onClick={() => setShowPass(!showPass)}>{showPass ? '🙈' : '👁️'}</button>
                 </div>
               </div>
               <div style={s.field}>
                 <label style={s.label}>Confirm New Password</label>
-                <input style={s.input} type={showPass ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="Repeat new password" />
+                <input style={s.input} type={showPass ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="Repeat new password" maxLength={128} />
                 {newPassword && confirmPassword && newPassword !== confirmPassword && (
                   <p style={{color:'#e11d48', fontSize:'0.78rem', margin:'0.25rem 0 0'}}>⚠️ Passwords do not match</p>
                 )}

@@ -67,18 +67,18 @@ const AdminRegisterPage = () => {
             <form onSubmit={handleSubmit}>
               <div style={s.field}>
                 <label style={s.label}>Your Full Name</label>
-                <input style={s.input} value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Teacher Ahmad" autoFocus />
+                <input style={s.input} value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Teacher Ahmad" autoFocus maxLength={80} />
               </div>
               <div style={s.field}>
                 <label style={s.label}>Password</label>
                 <div style={s.passWrap}>
-                  <input style={{...s.input, flex:1}} type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required placeholder="Min 6 characters" minLength={6} />
+                  <input style={{...s.input, flex:1}} type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required placeholder="Min 6 characters" minLength={6} maxLength={128} />
                   <button type="button" style={s.eyeBtn} onClick={() => setShowPass(!showPass)}>{showPass ? '🙈' : '👁️'}</button>
                 </div>
               </div>
               <div style={s.field}>
                 <label style={s.label}>Confirm Password</label>
-                <input style={s.input} type={showPass ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="Repeat password" />
+                <input style={s.input} type={showPass ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="Repeat password" maxLength={128} />
                 {password && confirmPassword && password !== confirmPassword && (
                   <p style={{color:'#e11d48', fontSize:'0.78rem', margin:'0.25rem 0 0'}}>⚠️ Passwords do not match</p>
                 )}

@@ -170,6 +170,17 @@ const getAllQuestions = async (req, res) => {
 const addQuestion = async (req, res) => {
   const { question, question_type, options, correct_answer, timer_seconds } = req.body;
 
+  if (!question || typeof question !== 'string' || question.trim().length === 0)
+    return res.status(400).json({ error: 'Question text is required' });
+  if (question.trim().length > 500)
+    return res.status(400).json({ error: 'Question too long (max 500 characters)' });
+  if (!question_type || !['multiple_choice','true_false','multi_select','match'].includes(question_type))
+    return res.status(400).json({ error: 'Invalid question type' });
+  if (!Array.isArray(options) || !Array.isArray(correct_answer))
+    return res.status(400).json({ error: 'Options and correct_answer must be arrays' });
+  if (options.length > 8)
+    return res.status(400).json({ error: 'Too many options (max 8)' });
+
   let image_url = null;
   if (req.file) {
     const base64 = req.file.buffer.toString('base64');
@@ -187,6 +198,18 @@ const addQuestion = async (req, res) => {
 
 const updateQuestion = async (req, res) => {
   const { question, question_type, options, correct_answer, timer_seconds } = req.body;
+
+  if (!question || typeof question !== 'string' || question.trim().length === 0)
+    return res.status(400).json({ error: 'Question text is required' });
+  if (question.trim().length > 500)
+    return res.status(400).json({ error: 'Question too long (max 500 characters)' });
+  if (!question_type || !['multiple_choice','true_false','multi_select','match'].includes(question_type))
+    return res.status(400).json({ error: 'Invalid question type' });
+  if (!Array.isArray(options) || !Array.isArray(correct_answer))
+    return res.status(400).json({ error: 'Options and correct_answer must be arrays' });
+  if (options.length > 8)
+    return res.status(400).json({ error: 'Too many options (max 8)' });
+
   try {
     if (req.file) {
       // Convert new image to Base64 — old image was in DB so nothing to delete from disk
