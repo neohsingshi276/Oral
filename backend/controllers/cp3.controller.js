@@ -114,7 +114,19 @@ const getCrosswordLeaderboard = async (req, res) => {
 };
 
 // ─── getFinalLeaderboard ──────────────────────────────────────────────────────
-// FIX: Score formula now totals to 100 (33 + 33 + 34) instead of 99.
+// Absolute marking scheme — scores based on actual performance, not relative
+// to best player in session:
+//
+//  CP1 Quiz      /33 = (correct_answers / total_questions) * 33
+//                      e.g. 2/9 correct → 7/33
+//
+//  CP2 Crossword /33 = (words_correct / total_words) * 33  (partial credit)
+//                      e.g. 3 out of 6 words → 17/33
+//
+//  CP3 Food Game /33 = if admin set target_score → (score / target) * 33, capped 33
+//                      else fallback to relative  → (score / session_max) * 33
+//
+//  Total = /99
 const getFinalLeaderboard = async (req, res) => {
   const sessionId = parseInt(req.params.session_id, 10);
   if (!sessionId || sessionId <= 0)
@@ -125,54 +137,73 @@ const getFinalLeaderboard = async (req, res) => {
       'SELECT id, nickname FROM players WHERE session_id = ?', [sessionId]
     );
 
+    // CP1: use correct_answers and total_questions directly
     const [quizScores] = await db.query(`
-      SELECT player_id, MAX(score) as score,
-             MAX(correct_answers) as correct, MAX(total_questions) as total
+      SELECT player_id,
+             MAX(correct_answers) as correct,
+             MAX(total_questions) as total
       FROM quiz_scores WHERE session_id = ? GROUP BY player_id
     `, [sessionId]);
 
-    const [crosswordDone] = await db.query(`
-      SELECT DISTINCT ca.player_id FROM checkpoint_attempts ca
-      JOIN players p ON ca.player_id = p.id
-      WHERE ca.checkpoint_number = 2 AND ca.completed = 1 AND p.session_id = ?
+    // CP2: use words_correct / total_words for partial credit
+    const [crosswordScores] = await db.query(`
+      SELECT player_id,
+             MAX(words_correct) as words_correct,
+             MAX(total_words)   as total_words
+      FROM crossword_scores WHERE session_id = ? GROUP BY player_id
     `, [sessionId]);
 
+    // CP3: raw game score + admin-set target
     const [cp3Scores] = await db.query(
       'SELECT player_id, score FROM cp3_scores WHERE session_id = ?', [sessionId]
     );
+    const [cp3Settings] = await db.query(
+      'SELECT target_score FROM cp3_settings WHERE session_id = ?', [sessionId]
+    );
 
-    // Use at least 1 as denominator to avoid division-by-zero
-    // FIX: Guard against empty arrays — Math.max(...[]) = -Infinity, breaking all scores
-    const maxQuiz = quizScores.length > 0 ? Math.max(...quizScores.map(s => s.score)) : 1;
-    const maxCP3  = cp3Scores.length  > 0 ? Math.max(...cp3Scores.map(s  => s.score)) : 1;
-    const doneSet = new Set(crosswordDone.map(d => d.player_id));
+    const adminTarget = cp3Settings[0]?.target_score || 0;
+    const maxCP3raw   = cp3Scores.length > 0 ? Math.max(...cp3Scores.map(s => s.score)) : 1;
+    const cp3Denom    = adminTarget > 0 ? adminTarget : maxCP3raw;
 
-    const quizMap = Object.fromEntries(quizScores.map(s => [s.player_id, s]));
-    const cp3Map  = Object.fromEntries(cp3Scores.map(s  => [s.player_id, s]));
+    const quizMap      = Object.fromEntries(quizScores.map(s     => [s.player_id, s]));
+    const crosswordMap = Object.fromEntries(crosswordScores.map(s => [s.player_id, s]));
+    const cp3Map       = Object.fromEntries(cp3Scores.map(s       => [s.player_id, s]));
 
     const leaderboard = players.map(player => {
-      const quiz               = quizMap[player.id];
-      const cp3                = cp3Map[player.id];
-      const crosswordCompleted = doneSet.has(player.id);
+      const quiz = quizMap[player.id];
+      const cw   = crosswordMap[player.id];
+      const cp3  = cp3Map[player.id];
 
-      // CP1 = 33, CP2 = 33, CP3 = 34 → max total = 100
-      const cp1Mark = quiz ? Math.round((quiz.score / maxQuiz) * 33) : 0;
-      const cp2Mark = crosswordCompleted ? 33 : 0;
-      const cp3Mark = cp3  ? Math.round((cp3.score  / maxCP3)  * 34) : 0;
-      const total   = cp1Mark + cp2Mark + cp3Mark;
+      // CP1: absolute — based on how many they got right
+      const cp1Correct = quiz?.correct || 0;
+      const cp1Total   = quiz?.total   || 0;
+      const cp1Mark    = cp1Total > 0 ? Math.round((cp1Correct / cp1Total) * 33) : 0;
+
+      // CP2: partial credit — based on words solved
+      const cwCorrect = cw?.words_correct || 0;
+      const cwTotal   = cw?.total_words   || 0;
+      const cp2Mark   = cwTotal > 0 ? Math.round((cwCorrect / cwTotal) * 33) : 0;
+
+      // CP3: based on target or session max, capped at 33
+      const cp3Raw  = cp3?.score || 0;
+      const cp3Mark = cp3Raw > 0 ? Math.min(33, Math.round((cp3Raw / Math.max(1, cp3Denom)) * 33)) : 0;
+
+      const total = cp1Mark + cp2Mark + cp3Mark;
 
       return {
-        player_id:       player.id,
-        nickname:        player.nickname,
-        cp1_raw:         quiz?.score   || 0,
-        cp1_correct:     quiz?.correct || 0,
-        cp1_total:       quiz?.total   || 0,
-        cp1_mark:        cp1Mark,
-        cp2_completed:   crosswordCompleted,
-        cp2_mark:        cp2Mark,
-        cp3_raw:         cp3?.score    || 0,
-        cp3_mark:        cp3Mark,
-        total_mark:      total,
+        player_id:     player.id,
+        nickname:      player.nickname,
+        cp1_correct:   cp1Correct,
+        cp1_total:     cp1Total,
+        cp1_mark:      cp1Mark,
+        cp2_words:     cwCorrect,
+        cp2_total:     cwTotal,
+        cp2_completed: cwCorrect > 0 && cwCorrect >= cwTotal,
+        cp2_mark:      cp2Mark,
+        cp3_raw:       cp3Raw,
+        cp3_target:    cp3Denom,
+        cp3_mark:      cp3Mark,
+        total_mark:    total,
       };
     }).sort((a, b) => b.total_mark - a.total_mark);
 
