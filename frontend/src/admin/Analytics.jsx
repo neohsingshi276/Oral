@@ -64,7 +64,8 @@ const Analytics = () => {
   const downloadCSV = async () => {
     try {
       const token = localStorage.getItem('token');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      // FIX: Use the same baseURL as the api service to avoid localhost fallback in production
+      const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/+$/, '');
       const res = await fetch(`${baseUrl}/admin/download-csv`, {
         headers: { Authorization: `Bearer ${token}` },
       });

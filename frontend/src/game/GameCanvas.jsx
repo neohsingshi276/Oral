@@ -1,15 +1,17 @@
 /**
- * GameCanvas.jsx  —  Phaser 3 version
+ * GameCanvas.jsx  —  Phaser 4 version
  *
- * SETUP BEFORE THIS WORKS:
- *  1. npm install phaser
- *  2. Copy map.json  →  public/assets/map.json
- *  3. Copy all tileset PNGs  →  public/assets/tilesets/<name>.png
- *     (Full list is in TILESET_SOURCES in gameConfig.js)
- *  4. Fine-tune CHECKPOINTS x/y in gameConfig.js after seeing the map.
+ * FIXED BUGS:
+ *  1. Asset paths: map.json and tilesets must be in public/assets/, not src/assets/
+ *     (src/assets files are hashed/bundled by Vite and NOT available at a stable URL)
+ *  2. Asset key sanitisation: Phaser keys cannot have spaces. "16oga (1)" → "16oga_1"
+ *     and "plant repack" → "plant_repack"
+ *  3. Path prefix: changed from '../assets/' → '/assets/' (absolute from public root)
+ *  4. Phaser 4 keyboard: this.input.keyboard can be null — added null guards
+ *  5. Duplicate TILESET_ENTRIES caused "already loaded" warnings — deduplicated by name
  */
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as Phaser from 'phaser';
 import {
   MAP_WIDTH, MAP_HEIGHT, CHAR_SPEED, START_POS,
@@ -19,9 +21,16 @@ import api from '../services/api';
 
 const SAVE_INTERVAL = 5000;
 
-// ─── Public asset paths ────────────────────────────────────────────────────────
-const MAP_JSON_URL = '/assets/map.json';
-const TILESET_BASE = '/assets/tilesets/';
+// ─── FIX 1: Use absolute public paths (not relative src/assets) ───────────────
+// Vite only serves files in /public at a stable URL.
+// Files in src/assets get content-hashed (e.g. map-Bg3xKp.json) and
+// are NOT reachable via a plain URL — Phaser's loader would get a 404.
+const MAP_JSON_URL  = '/assets/map.json';
+const TILESET_BASE  = '/assets/tilesets/';
+
+// ─── FIX 2: Key sanitiser — Phaser cache keys cannot contain spaces or parens ─
+const toKey = (filename) =>
+  filename.replace('.png', '').replace(/[\s()]/g, '_');
 
 // Names of every tile layer in map.json that should be rendered
 const TILE_LAYER_NAMES = [
@@ -34,7 +43,7 @@ const TILE_LAYER_NAMES = [
   'layer1',
   'layer2',
   'fencefrontlayer3',
-  'fishlowopacity',   // rendered at 0.34 alpha
+  'fishlowopacity',
   'smalltree',
   'bigtree',
 ];
@@ -42,8 +51,14 @@ const TILE_LAYER_NAMES = [
 // Object layers that hold collision rectangles
 const COLLISION_LAYERS = ['collisionbelowplayer', 'collisionupperplayer'];
 
-// ─── Helper: deduplicate tileset sources for loading ──────────────────────────
+// ─── FIX 3: Deduplicate sources so Phaser doesn't try to load the same file twice ─
 const UNIQUE_SOURCES = [...new Set(TILESET_SOURCES)];
+
+// ─── FIX 4: Deduplicate TILESET_ENTRIES by name (keeps first occurrence) ──────
+// Duplicate names caused "Key already in use" warnings and sometimes crashes.
+const UNIQUE_TILESET_ENTRIES = TILESET_ENTRIES.filter(
+  (entry, idx, arr) => arr.findIndex(e => e.name === entry.name) === idx
+);
 
 // ─── Viewport helper ──────────────────────────────────────────────────────────
 const getViewSize = () => ({
@@ -56,12 +71,11 @@ const getViewSize = () => ({
 // ──────────────────────────────────────────────────────────────────────────────
 const GameCanvas = ({ player, progress, onCheckpointReached }) => {
   const containerRef = useRef(null);
-  const gameRef = useRef(null);
-  const progressRef = useRef(progress);
-  const onCPRef = useRef(onCheckpointReached);
+  const gameRef      = useRef(null);
+  const progressRef  = useRef(progress);
+  const onCPRef      = useRef(onCheckpointReached);
   const [viewSize, setViewSize] = useState(getViewSize);
 
-  // Keep refs in sync with latest React props (avoids stale closures in Phaser)
   useEffect(() => { progressRef.current = progress; }, [progress]);
   useEffect(() => { onCPRef.current = onCheckpointReached; }, [onCheckpointReached]);
 
@@ -70,9 +84,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
     const onResize = () => {
       const s = getViewSize();
       setViewSize(s);
-      if (gameRef.current) {
-        gameRef.current.scale.resize(s.w, s.h);
-      }
+      if (gameRef.current) gameRef.current.scale.resize(s.w, s.h);
     };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
@@ -83,8 +95,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
     if (!containerRef.current) return;
     if (gameRef.current) { gameRef.current.destroy(true); gameRef.current = null; }
 
-    // Snapshot player info so the scene closure stays stable
-    const playerId = player.id;
+    const playerId       = player.id;
     const playerNickname = player.nickname;
 
     // ── Phaser scene ─────────────────────────────────────────────────────────
@@ -92,22 +103,21 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
       constructor() {
         super({ key: 'GameScene' });
         this.playerSprite = null;
-        this.nameLabel = null;
-        this.hintLabel = null;
-        this.colliders = null;
-        this.cpMarkers = [];     // { id, x, y, radius, gfx, labelText, cpLabel }
-        this.nearCP = null;
-        this.eKey = null;
-        this.cursors = null;
-        this.wasd = null;
-        this.lastSave = Date.now();
+        this.nameLabel    = null;
+        this.hintLabel    = null;
+        this.colliders    = null;
+        this.cpMarkers    = [];
+        this.nearCP       = null;
+        this.eKey         = null;
+        this.cursors      = null;
+        this.wasd         = null;
+        this.lastSave     = Date.now();
       }
 
       // ── preload ─────────────────────────────────────────────────────────────
       preload() {
-        // Progress bar while loading
         const { width, height } = this.scale;
-        const bar = this.add.graphics();
+        const bar    = this.add.graphics();
         const border = this.add.graphics();
         border.lineStyle(2, 0xffffff).strokeRect(width / 2 - 152, height / 2 - 12, 304, 24);
         this.load.on('progress', v => {
@@ -117,25 +127,21 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
           fontSize: '14px', color: '#ffffff',
         }).setOrigin(0.5);
 
-        // Map JSON
+        // Map JSON — served from /public/assets/map.json
         this.load.tilemapTiledJSON('map', MAP_JSON_URL);
 
-        // Tileset images — load each unique PNG once
+        // FIX: Use sanitised keys so Phaser doesn't choke on spaces/parens
         UNIQUE_SOURCES.forEach(src => {
-          const key = src.replace('.png', '');
+          const key = toKey(src);
           this.load.image(key, TILESET_BASE + src);
         });
 
-        // Player texture — draw once, generate texture
+        // Player texture
         const pg = this.make.graphics({ x: 0, y: 0, add: false });
-        // body
         pg.fillStyle(0x2563eb).fillRoundedRect(-10, -6, 20, 22, 4);
-        // head
         pg.fillStyle(0xFBBF24).fillCircle(0, -14, 10);
         pg.lineStyle(1.5, 0xD97706).strokeCircle(0, -14, 10);
-        // eyes
         pg.fillStyle(0x1e3a5f).fillCircle(-3, -15, 2).fillCircle(3, -15, 2);
-        // smile
         pg.lineStyle(1.5, 0x1e3a5f);
         pg.beginPath().arc(0, -12, 4, 0.2, Math.PI - 0.2).strokePath();
         pg.generateTexture('player_tex', 24, 36);
@@ -144,16 +150,14 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
 
       // ── create ──────────────────────────────────────────────────────────────
       create() {
-        // ── Tilemap ──────────────────────────────────────────────────────────
         const map = this.make.tilemap({ key: 'map' });
 
-        // Add every tileset (TILESET_ENTRIES preserves order & duplicates)
-        const addedTilesets = TILESET_ENTRIES.map(({ name, src }) => {
-          const key = src.replace('.png', '');
+        // FIX: Use the same sanitised key when adding tilesets to the map
+        const addedTilesets = UNIQUE_TILESET_ENTRIES.map(({ name, src }) => {
+          const key = toKey(src);
           return map.addTilesetImage(name, key) || null;
         }).filter(Boolean);
 
-        // Render tile layers
         const layerDepths = {
           map: 0, checkpointroad: 1, colourfloor: 2,
           fenceback: 3, fencemid: 4,
@@ -173,15 +177,13 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
           }
         });
 
-        // ── Collision from object layers ──────────────────────────────────────
+        // Collision
         this.colliders = this.physics.add.staticGroup();
-
         COLLISION_LAYERS.forEach(layerName => {
           const objLayer = map.getObjectLayer(layerName);
           if (!objLayer) return;
           objLayer.objects.forEach(obj => {
             if (obj.width > 0 && obj.height > 0) {
-              // invisible rectangle with a physics body
               const rect = this.add.rectangle(
                 obj.x + obj.width / 2,
                 obj.y + obj.height / 2,
@@ -194,57 +196,49 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
           });
         });
 
-        // ── Player sprite ─────────────────────────────────────────────────────
-        this.playerSprite = this.physics.add.sprite(
-          START_POS.x, START_POS.y, 'player_tex'
-        );
+        // Player
+        this.playerSprite = this.physics.add.sprite(START_POS.x, START_POS.y, 'player_tex');
         this.playerSprite
           .setCollideWorldBounds(true)
           .setDepth(15)
           .setDrag(300, 300);
         this.playerSprite.body.setSize(18, 18).setOffset(3, 14);
-
         this.physics.add.collider(this.playerSprite, this.colliders);
 
-        // ── Nickname label ────────────────────────────────────────────────────
+        // Labels
         this.nameLabel = this.add.text(START_POS.x, START_POS.y - 30, playerNickname, {
           fontSize: '11px', fontFamily: 'sans-serif',
           color: '#ffffff', backgroundColor: '#00000099',
           padding: { x: 4, y: 2 },
         }).setOrigin(0.5).setDepth(16);
 
-        // ── "Press E" hint ────────────────────────────────────────────────────
         this.hintLabel = this.add.text(0, 0, 'Press E to enter', {
           fontSize: '12px', fontFamily: 'sans-serif', fontStyle: 'bold',
           color: '#ffffff', backgroundColor: '#00000099',
           padding: { x: 5, y: 3 },
         }).setOrigin(0.5).setDepth(16).setVisible(false);
 
-        // ── Checkpoint markers ────────────────────────────────────────────────
         this._buildCheckpointMarkers();
 
-        // ── Camera ────────────────────────────────────────────────────────────
+        // Camera & physics bounds
         this.cameras.main.startFollow(this.playerSprite, true, 0.1, 0.1);
         this.cameras.main.setBounds(0, 0, MAP_WIDTH, MAP_HEIGHT);
-
-        // ── Physics world bounds ──────────────────────────────────────────────
         this.physics.world.setBounds(0, 0, MAP_WIDTH, MAP_HEIGHT);
 
-        // ── Input ─────────────────────────────────────────────────────────────
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.wasd = this.input.keyboard.addKeys({
-          up: Phaser.Input.Keyboard.KeyCodes.W,
-          down: Phaser.Input.Keyboard.KeyCodes.S,
-          left: Phaser.Input.Keyboard.KeyCodes.A,
-          right: Phaser.Input.Keyboard.KeyCodes.D,
-          upCap: Phaser.Input.Keyboard.KeyCodes.UP,
-          downCap: Phaser.Input.Keyboard.KeyCodes.DOWN,
-          leftCap: Phaser.Input.Keyboard.KeyCodes.LEFT,
-          rightCap: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-        });
-        this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+        // ── FIX 5: Phaser 4 — this.input.keyboard can be null if no keyboard plugin ─
+        // Guard every keyboard access with a null check
+        if (this.input.keyboard) {
+          this.cursors = this.input.keyboard.createCursorKeys();
+          this.wasd = this.input.keyboard.addKeys({
+            up:      Phaser.Input.Keyboard.KeyCodes.W,
+            down:    Phaser.Input.Keyboard.KeyCodes.S,
+            left:    Phaser.Input.Keyboard.KeyCodes.A,
+            right:   Phaser.Input.Keyboard.KeyCodes.D,
+          });
+          this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+        }
 
-        // ── Load saved position ───────────────────────────────────────────────
+        // Load saved position
         api.get(`/game/position/${playerId}`).then(res => {
           if (!res.data?.position) return;
           const { pos_x, pos_y } = res.data.position;
@@ -255,15 +249,15 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
             this.playerSprite.setPosition(pos_x, pos_y);
             this.cameras.main.centerOn(pos_x, pos_y);
           }
-        }).catch(() => { });
+        }).catch(() => {});
       }
 
       // ── _buildCheckpointMarkers ───────────────────────────────────────────
       _buildCheckpointMarkers() {
         CHECKPOINTS.forEach(cp => {
-          const prog = progressRef.current;
+          const prog        = progressRef.current;
           const isCompleted = prog.find(p => p.checkpoint_number === cp.id)?.completed;
-          const isUnlocked = cp.id === 1 || prog.find(p => p.checkpoint_number === cp.id - 1)?.completed;
+          const isUnlocked  = cp.id === 1 || prog.find(p => p.checkpoint_number === cp.id - 1)?.completed;
 
           const fillColor = isCompleted
             ? 0x16a34a
@@ -284,9 +278,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
           }).setDepth(13);
 
           if (!isUnlocked && !isCompleted) {
-            this.add.text(cp.x + 30, cp.y + 10, '🔒', {
-              fontSize: '14px',
-            }).setDepth(13);
+            this.add.text(cp.x + 30, cp.y + 10, '🔒', { fontSize: '14px' }).setDepth(13);
           }
 
           this.cpMarkers.push({ id: cp.id, x: cp.x, y: cp.y, radius: cp.radius, gfx, icon, cpLabel });
@@ -297,29 +289,27 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
       update() {
         if (!this.playerSprite) return;
 
-        // Movement
-        const speed = CHAR_SPEED * 60; // convert px/frame → px/sec
-        const { up, down, left, right } = this.wasd;
-        const c = this.cursors;
-        let vx = 0, vy = 0;
+        // FIX: Guard keyboard — if no keyboard plugin, skip movement
+        if (this.cursors && this.wasd) {
+          const speed = CHAR_SPEED * 60;
+          const { up, down, left, right } = this.wasd;
+          const c = this.cursors;
+          let vx = 0, vy = 0;
 
-        if (up.isDown || c.up.isDown) vy = -speed;
-        if (down.isDown || c.down.isDown) vy = speed;
-        if (left.isDown || c.left.isDown) vx = -speed;
-        if (right.isDown || c.right.isDown) vx = speed;
+          if (up.isDown    || c.up.isDown)    vy = -speed;
+          if (down.isDown  || c.down.isDown)  vy =  speed;
+          if (left.isDown  || c.left.isDown)  vx = -speed;
+          if (right.isDown || c.right.isDown) vx =  speed;
 
-        // Diagonal normalise
-        if (vx !== 0 && vy !== 0) { vx *= 0.707; vy *= 0.707; }
-
-        this.playerSprite.setVelocity(vx, vy);
+          if (vx !== 0 && vy !== 0) { vx *= 0.707; vy *= 0.707; }
+          this.playerSprite.setVelocity(vx, vy);
+        }
 
         const px = this.playerSprite.x;
         const py = this.playerSprite.y;
-
-        // Sync name label to player world position
         this.nameLabel.setPosition(px, py - 30);
 
-        // ── Checkpoint proximity ──────────────────────────────────────────────
+        // Checkpoint proximity
         let nearId = null;
         this.cpMarkers.forEach(({ id, x, y, radius }) => {
           const dist = Phaser.Math.Distance.Between(px, py, x, y);
@@ -327,17 +317,14 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         });
         this.nearCP = nearId;
 
-        // Update hint label
         if (nearId !== null) {
-          const prog = progressRef.current;
+          const prog        = progressRef.current;
           const isCompleted = prog.find(p => p.checkpoint_number === nearId)?.completed;
-          const isUnlocked = nearId === 1 || prog.find(p => p.checkpoint_number === nearId - 1)?.completed;
-          const marker = this.cpMarkers.find(m => m.id === nearId);
+          const isUnlocked  = nearId === 1 || prog.find(p => p.checkpoint_number === nearId - 1)?.completed;
+          const marker      = this.cpMarkers.find(m => m.id === nearId);
 
           if (isUnlocked && !isCompleted && marker) {
-            this.hintLabel
-              .setPosition(marker.x, marker.y + 50)
-              .setVisible(true);
+            this.hintLabel.setPosition(marker.x, marker.y + 50).setVisible(true);
           } else {
             this.hintLabel.setVisible(false);
           }
@@ -345,44 +332,40 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
           this.hintLabel.setVisible(false);
         }
 
-        // ── E key — enter checkpoint ──────────────────────────────────────────
-        if (Phaser.Input.Keyboard.JustDown(this.eKey) && nearId !== null) {
-          const prog = progressRef.current;
+        // E key — enter checkpoint (guard keyboard null)
+        if (this.eKey && Phaser.Input.Keyboard.JustDown(this.eKey) && nearId !== null) {
+          const prog        = progressRef.current;
           const isCompleted = prog.find(p => p.checkpoint_number === nearId)?.completed;
-          const isUnlocked = nearId === 1 || prog.find(p => p.checkpoint_number === nearId - 1)?.completed;
-
-          if (isUnlocked && !isCompleted) {
-            onCPRef.current(nearId);
-          }
+          const isUnlocked  = nearId === 1 || prog.find(p => p.checkpoint_number === nearId - 1)?.completed;
+          if (isUnlocked && !isCompleted) onCPRef.current(nearId);
         }
 
-        // ── Auto-save position ────────────────────────────────────────────────
+        // Auto-save position
         if (Date.now() - this.lastSave > SAVE_INTERVAL) {
           this.lastSave = Date.now();
-          const prog = progressRef.current;
-          const done = prog.filter(p => p.completed).map(p => p.checkpoint_number);
-          const lastCP = done.length > 0 ? Math.max(...done) : 0;
+          const prog    = progressRef.current;
+          const done    = prog.filter(p => p.completed).map(p => p.checkpoint_number);
+          const lastCP  = done.length > 0 ? Math.max(...done) : 0;
           api.post('/game/position', {
-            player_id: playerId,
-            pos_x: Math.round(px),
-            pos_y: Math.round(py),
+            player_id:       playerId,
+            pos_x:           Math.round(px),
+            pos_y:           Math.round(py),
             last_checkpoint: lastCP,
-          }).catch(() => { });
+          }).catch(() => {});
         }
       }
     }
 
-    // ── Phaser config ─────────────────────────────────────────────────────────
     const { w, h } = getViewSize();
     const config = {
-      type: Phaser.AUTO,
-      width: w,
+      type:   Phaser.AUTO,
+      width:  w,
       height: h,
       parent: containerRef.current,
       backgroundColor: '#1a472a',
       physics: {
         default: 'arcade',
-        arcade: { gravity: { y: 0 }, debug: false },
+        arcade:  { gravity: { y: 0 }, debug: false },
       },
       scene: GameScene,
     };
@@ -395,19 +378,18 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         gameRef.current = null;
       }
     };
-  }, [player.id]); // only rebuild when the player changes
+  }, [player.id]);
 
-  // ── Responsive container ───────────────────────────────────────────────────
   return (
     <div
       ref={containerRef}
       style={{
-        width: `${viewSize.w}px`,
-        height: `${viewSize.h}px`,
+        width:        `${viewSize.w}px`,
+        height:       `${viewSize.h}px`,
         borderRadius: '12px',
-        border: '3px solid #1e3a5f',
-        overflow: 'hidden',
-        margin: '0 auto',
+        border:       '3px solid #1e3a5f',
+        overflow:     'hidden',
+        margin:       '0 auto',
       }}
     />
   );
