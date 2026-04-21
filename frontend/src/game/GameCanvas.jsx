@@ -20,8 +20,8 @@ import api from '../services/api';
 const SAVE_INTERVAL = 5000;
 
 // ─── Public asset paths ────────────────────────────────────────────────────────
-const MAP_JSON_URL = '../assets/map.json';
-const TILESET_BASE = '../assets/tilesets/';
+const MAP_JSON_URL = '/assets/map.json';
+const TILESET_BASE = '/assets/tilesets/';
 
 // Names of every tile layer in map.json that should be rendered
 const TILE_LAYER_NAMES = [
