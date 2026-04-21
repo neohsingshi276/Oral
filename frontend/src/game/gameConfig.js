@@ -3,12 +3,21 @@
 export const TILE_SIZE = 16;
 export const MAP_COLS = 350;
 export const MAP_ROWS = 475;
+
 export const MAP_WIDTH = MAP_COLS * TILE_SIZE;   // 5600
 export const MAP_HEIGHT = MAP_ROWS * TILE_SIZE;  // 7600
 
+// The map-base.jpg source image is 1176×1600px; the game world is scaled up
+// to 5600×7600 so each original pixel covers MAP_SCALE game-world pixels.
+export const MAP_IMG_WIDTH = 1176;
+export const MAP_IMG_HEIGHT = 1600;
+export const MAP_SCALE = MAP_WIDTH / MAP_IMG_WIDTH;   // ≈ 4.76
+
 // Character
 export const CHAR_SIZE = 16;
-export const CHAR_SPEED = 180;   // pixels per second (Phaser arcade physics)
+// Speed in px per frame at 60 fps (was accidentally set to 180, a Phaser
+// px/second value — at 60fps that made the character fly across the map).
+export const CHAR_SPEED = 3;   // ~180 px/s at 60 fps
 
 // Start position — near the bottom of the map
 export const START_POS = { x: 3296, y: 7200 };

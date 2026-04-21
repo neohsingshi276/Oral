@@ -17,6 +17,8 @@ const YouTubePlayer = ({ videoId, onVideoEnd }) => {
   const intervalRef = useRef(null);
 
   useEffect(() => {
+    let destroyed = false;
+
     // Load YouTube IFrame API if not already loaded
     if (!window.YT) {
       const tag = document.createElement('script');
@@ -25,7 +27,8 @@ const YouTubePlayer = ({ videoId, onVideoEnd }) => {
     }
 
     const initPlayer = () => {
-      if (!containerRef.current) return;
+      // Guard: component may have unmounted while the script was loading
+      if (destroyed || !containerRef.current) return;
       playerRef.current = new window.YT.Player(containerRef.current, {
         videoId,
         playerVars: {
@@ -83,14 +86,23 @@ const YouTubePlayer = ({ videoId, onVideoEnd }) => {
       });
     };
 
-    // Wait for API to be ready
+    // Wait for API to be ready.
+    // FIX: Chain onto any existing callback instead of overwriting it —
+    // multiple YouTubePlayer mounts (or a remount after modal close/reopen)
+    // previously clobbered each other's initPlayer, leaving one player in a
+    // permanently uninitialised state.
     if (window.YT && window.YT.Player) {
       initPlayer();
     } else {
-      window.onYouTubeIframeAPIReady = initPlayer;
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (prev) prev();
+        initPlayer();
+      };
     }
 
     return () => {
+      destroyed = true;
       clearInterval(intervalRef.current);
       if (playerRef.current) {
         try { playerRef.current.destroy(); } catch (e) { }

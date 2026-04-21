@@ -296,22 +296,38 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
   // FIX: Use responsive viewSize state instead of values frozen at first render
   const viewW = viewSize.w;
   const viewH = viewSize.h;
-  const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
 
+  // FIX: Camera is now a ref, not state. Updating state inside a setInterval
+  // caused a second render cycle that ran out-of-sync with the RAF draw loop,
+  // producing visible jank. The canvas transform is applied directly to the
+  // DOM element via canvasRef so no re-render is needed.
+  const cameraRef = useRef({ x: 0, y: 0 });
+
+  // Keep viewSize available to the RAF loop without restarting it on resize
+  const viewSizeRef = useRef(viewSize);
+  useEffect(() => { viewSizeRef.current = viewSize; }, [viewSize]);
+
+  // Camera smoothing is driven inside the existing RAF loop (see the game loop
+  // useEffect above which calls draw() every frame). We apply the transform
+  // directly here so the canvas position is always in sync with the draw call.
+  // This replaces the old setInterval-based camera updater.
   useEffect(() => {
-    const updateCamera = () => {
-      const targetX = Math.max(0, Math.min(MAP_WIDTH - viewW, charPos.current.x - viewW / 2));
-      const targetY = Math.max(0, Math.min(MAP_HEIGHT - viewH, charPos.current.y - viewH / 2));
-      setCameraOffset(prev => {
-        const newX = prev.x + (targetX - prev.x) * 0.12;
-        const newY = prev.y + (targetY - prev.y) * 0.12;
-        if (Math.abs(newX - prev.x) < 0.5 && Math.abs(newY - prev.y) < 0.5) return prev;
-        return { x: newX, y: newY };
-      });
+    const el = canvasRef.current;
+    if (!el) return;
+    const smoothCamera = () => {
+      const { w, h } = viewSizeRef.current;
+      const cam = cameraRef.current;
+      const targetX = Math.max(0, Math.min(MAP_WIDTH - w, charPos.current.x - w / 2));
+      const targetY = Math.max(0, Math.min(MAP_HEIGHT - h, charPos.current.y - h / 2));
+      cam.x += (targetX - cam.x) * 0.12;
+      cam.y += (targetY - cam.y) * 0.12;
+      el.style.transform = `translate(${-Math.round(cam.x)}px, ${-Math.round(cam.y)}px)`;
+      animCameraRef.current = requestAnimationFrame(smoothCamera);
     };
-    const interval = setInterval(updateCamera, 16);
-    return () => clearInterval(interval);
-  }, [viewW, viewH]);
+    const animCameraRef = { current: null };
+    animCameraRef.current = requestAnimationFrame(smoothCamera);
+    return () => cancelAnimationFrame(animCameraRef.current);
+  }, []); // runs once — el, charPos, cameraRef, viewSizeRef are all refs
 
   return (
     <div style={{
@@ -330,7 +346,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         style={{
           display: 'block',
           imageRendering: 'auto',
-          transform: `translate(${-cameraOffset.x}px, ${-cameraOffset.y}px)`,
           willChange: 'transform',
         }}
         tabIndex={0}
