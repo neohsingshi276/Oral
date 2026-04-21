@@ -107,15 +107,27 @@ export default class PhaserGameScene extends Phaser.Scene {
   }
 
   init(data) {
-    // Callbacks from React
-    this.onNearCheckpoint = data.onNearCheckpoint || (() => {});
-    this.onCheckpointReached = data.onCheckpointReached || (() => {});
-    this.onLoadProgress = data.onLoadProgress || (() => {});
-    this.onLoadComplete = data.onLoadComplete || (() => {});
-    this.getProgress = data.getProgress || (() => []);
-    this.getIsCheckpointUnlocked = data.getIsCheckpointUnlocked || (() => true);
-    this.playerNickname = data.playerNickname || 'Player';
-    this.initialPos = data.initialPos || null;
+    // Callbacks arrive either via scene.start(key, data) or patched directly
+    // onto the instance by GameCanvas after the Phaser 'ready' event fires.
+    // We only overwrite if data actually provides a value.
+    if (data?.onNearCheckpoint)        this.onNearCheckpoint = data.onNearCheckpoint;
+    if (data?.onCheckpointReached)     this.onCheckpointReached = data.onCheckpointReached;
+    if (data?.onLoadProgress)          this.onLoadProgress = data.onLoadProgress;
+    if (data?.onLoadComplete)          this.onLoadComplete = data.onLoadComplete;
+    if (data?.getProgress)             this.getProgress = data.getProgress;
+    if (data?.getIsCheckpointUnlocked) this.getIsCheckpointUnlocked = data.getIsCheckpointUnlocked;
+    if (data?.playerNickname)          this.playerNickname = data.playerNickname;
+    if (data?.initialPos)              this.initialPos = data.initialPos;
+
+    // Safe defaults so create() never crashes on undefined callbacks
+    this.onNearCheckpoint        = this.onNearCheckpoint        || (() => {});
+    this.onCheckpointReached     = this.onCheckpointReached     || (() => {});
+    this.onLoadProgress          = this.onLoadProgress          || (() => {});
+    this.onLoadComplete          = this.onLoadComplete          || (() => {});
+    this.getProgress             = this.getProgress             || (() => []);
+    this.getIsCheckpointUnlocked = this.getIsCheckpointUnlocked || (() => true);
+    this.playerNickname          = this.playerNickname          || 'Player';
+    this.initialPos              = this.initialPos              || null;
   }
 
   preload() {
@@ -183,6 +195,9 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, mapWidthPx, mapHeightPx);
 
     // ── Collision bodies from object layers ───────────────────────────
+    // We add all zones to a single static group so we only need ONE
+    // physics.add.collider() call  — thousands of individual colliders
+    // would murder frame-rate.
     this.collisionGroup = this.physics.add.staticGroup();
 
     const addCollisionObjects = (layerName) => {
@@ -190,18 +205,14 @@ export default class PhaserGameScene extends Phaser.Scene {
       if (!objectLayer) return;
 
       objectLayer.objects.forEach(obj => {
+        let cx, cy, w, h;
+
         if (obj.ellipse) {
-          // Ellipse: represented as a rectangle body
-          const body = this.collisionGroup.create(
-            obj.x + obj.width / 2,
-            obj.y + obj.height / 2,
-            null
-          );
-          body.setVisible(false);
-          body.body.setSize(obj.width, obj.height);
-          body.body.setOffset(-obj.width / 2, -obj.height / 2);
+          cx = obj.x + obj.width / 2;
+          cy = obj.y + obj.height / 2;
+          w = obj.width;
+          h = obj.height;
         } else if (obj.polygon) {
-          // Polygon: approximate with bounding box
           let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
           obj.polygon.forEach(p => {
             minX = Math.min(minX, p.x);
@@ -209,29 +220,23 @@ export default class PhaserGameScene extends Phaser.Scene {
             maxX = Math.max(maxX, p.x);
             maxY = Math.max(maxY, p.y);
           });
-          const w = maxX - minX;
-          const h = maxY - minY;
-          if (w > 0 && h > 0) {
-            const body = this.collisionGroup.create(
-              obj.x + minX + w / 2,
-              obj.y + minY + h / 2,
-              null
-            );
-            body.setVisible(false);
-            body.body.setSize(w, h);
-            body.body.setOffset(-w / 2, -h / 2);
-          }
+          w = maxX - minX;
+          h = maxY - minY;
+          if (w <= 0 || h <= 0) return;
+          cx = obj.x + minX + w / 2;
+          cy = obj.y + minY + h / 2;
         } else if (obj.width > 0 && obj.height > 0) {
-          // Rectangle
-          const body = this.collisionGroup.create(
-            obj.x + obj.width / 2,
-            obj.y + obj.height / 2,
-            null
-          );
-          body.setVisible(false);
-          body.body.setSize(obj.width, obj.height);
-          body.body.setOffset(-obj.width / 2, -obj.height / 2);
+          cx = obj.x + obj.width / 2;
+          cy = obj.y + obj.height / 2;
+          w = obj.width;
+          h = obj.height;
+        } else {
+          return; // skip point objects or zero-size objects
         }
+
+        const zone = this.add.zone(cx, cy, w, h);
+        this.physics.add.existing(zone, true); // true = static body
+        this.collisionGroup.add(zone);
       });
     };
 
@@ -282,7 +287,7 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.playerBody.body.setSize(16, 16);
     this.playerBody.setCollideWorldBounds(true);
 
-    // Collide player with collision objects
+    // Collide player with all collision zones (single call, Phaser handles the rest)
     this.physics.add.collider(this.playerBody, this.collisionGroup);
 
     // ── Checkpoint markers ───────────────────────────────────────────
