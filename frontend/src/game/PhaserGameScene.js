@@ -17,52 +17,52 @@ import Phaser from 'phaser';
 // Phaser requires unique *keys* – two tilesets share the name "plants" and
 // "Checkpoint1" in the JSON, so we suffix duplicates with _2.
 const TILESET_ASSETS = [
-  { key: 'terrain',           file: 'terrain.png' },
-  { key: 'Video',             file: 'Video.png' },
-  { key: 'plant repack',      file: 'plant repack.png' },
-  { key: 'plants',            file: 'plants.png' },
-  { key: 'rocks',             file: 'rocks.png' },
-  { key: 'terrain_atlas',     file: 'terrain_atlas.png' },
-  { key: 'base_out_atlas',    file: 'base_out_atlas.png' },
-  { key: 'farming_fishing',   file: 'farming_fishing.png' },
-  { key: 'fence',             file: 'fence.png' },
-  { key: 'plants_2',          file: 'plants.png' },           // duplicate
-  { key: 'PathAndObjects',    file: 'PathAndObjects.png' },
-  { key: 'town',              file: 'town.png' },
-  { key: 'tileset_preview',   file: 'tileset_preview.png' },
-  { key: 'trees_plants',      file: 'trees_plants.png' },
+  { key: 'terrain', file: 'terrain.png' },
+  { key: 'Video', file: 'Video.png' },
+  { key: 'plant repack', file: 'plant repack.png' },
+  { key: 'plants', file: 'plants.png' },
+  { key: 'rocks', file: 'rocks.png' },
+  { key: 'terrain_atlas', file: 'terrain_atlas.png' },
+  { key: 'base_out_atlas', file: 'base_out_atlas.png' },
+  { key: 'farming_fishing', file: 'farming_fishing.png' },
+  { key: 'fence', file: 'fence.png' },
+  { key: 'plants_2', file: 'plants.png' },           // duplicate
+  { key: 'PathAndObjects', file: 'PathAndObjects.png' },
+  { key: 'town', file: 'town.png' },
+  { key: 'tileset_preview', file: 'tileset_preview.png' },
+  { key: 'trees_plants', file: 'trees_plants.png' },
   { key: 'transparent-bg-tiles', file: 'transparent-bg-tiles.png' },
-  { key: 'forrestup',         file: 'forrestup.png' },
-  { key: 'chicken_walk',      file: 'chicken_walk.png' },
-  { key: 'cow_walk',          file: 'cow_walk.png' },
-  { key: 'sheep_eat',         file: 'sheep_eat.png' },
-  { key: 'llama_walk',        file: 'llama_walk.png' },
+  { key: 'forrestup', file: 'forrestup.png' },
+  { key: 'chicken_walk', file: 'chicken_walk.png' },
+  { key: 'cow_walk', file: 'cow_walk.png' },
+  { key: 'sheep_eat', file: 'sheep_eat.png' },
+  { key: 'llama_walk', file: 'llama_walk.png' },
   { key: 'decorations-medieval', file: 'decorations-medieval.png' },
-  { key: 'foodfromcts1a',     file: 'foodfromcts1a.png' },
-  { key: 'fence_alt',         file: 'fence_alt.png' },
-  { key: 'fence_medieval',    file: 'fence_medieval.png' },
-  { key: 'fruit-trees',       file: 'fruit-trees.png' },
-  { key: 'thatched-roof',     file: 'thatched-roof.png' },
-  { key: 'cottage',           file: 'cottage.png' },
+  { key: 'foodfromcts1a', file: 'foodfromcts1a.png' },
+  { key: 'fence_alt', file: 'fence_alt.png' },
+  { key: 'fence_medieval', file: 'fence_medieval.png' },
+  { key: 'fruit-trees', file: 'fruit-trees.png' },
+  { key: 'thatched-roof', file: 'thatched-roof.png' },
+  { key: 'cottage', file: 'cottage.png' },
   { key: 'window_w_shutters', file: 'window_w_shutters.png' },
-  { key: 'castledoors',       file: 'castledoors.png' },
-  { key: 'monkeywin',         file: 'monkeywin.png' },
-  { key: 'frm',               file: 'frm.png' },
+  { key: 'castledoors', file: 'castledoors.png' },
+  { key: 'monkeywin', file: 'monkeywin.png' },
+  { key: 'frm', file: 'frm.png' },
   { key: 'fossils3-Photoroom', file: 'fossils3-Photoroom.png' },
-  { key: 'horse-brown',       file: 'horse-brown.png' },
-  { key: 'horse-white',       file: 'horse-white.png' },
-  { key: 'horse-black',       file: 'horse-black.png' },
-  { key: 'bunnysheet5',       file: 'bunnysheet5.png' },
-  { key: '16oga (1)',         file: '16oga (1).png' },
-  { key: 'Checkpoint1',       file: 'Checkpoint1.png' },
-  { key: 'Checkpoint2',       file: 'Checkpoint2.png' },
-  { key: 'Checkpoint3',       file: 'Checkpoint3.png' },
+  { key: 'horse-brown', file: 'horse-brown.png' },
+  { key: 'horse-white', file: 'horse-white.png' },
+  { key: 'horse-black', file: 'horse-black.png' },
+  { key: 'bunnysheet5', file: 'bunnysheet5.png' },
+  { key: '16oga (1)', file: '16oga (1).png' },
+  { key: 'Checkpoint1', file: 'Checkpoint1.png' },
+  { key: 'Checkpoint2', file: 'Checkpoint2.png' },
+  { key: 'Checkpoint3', file: 'Checkpoint3.png' },
   { key: 'start-sign-means-don-t-wait-and-action-Photoroom', file: 'start-sign-means-don-t-wait-and-action-Photoroom.png' },
-  { key: 'Checkpoint1_2',     file: 'Checkpoint1.png' },      // duplicate
-  { key: 'forest_tiles',      file: 'forest_tiles.png' },
-  { key: 'Try',               file: 'Try.png' },
-  { key: 'A',                 file: 'A.png' },
-  { key: 'B',                 file: 'B.png' },
+  { key: 'Checkpoint1_2', file: 'Checkpoint1.png' },      // duplicate
+  { key: 'forest_tiles', file: 'forest_tiles.png' },
+  { key: 'Try', file: 'Try.png' },
+  { key: 'A', file: 'A.png' },
+  { key: 'B', file: 'B.png' },
 ];
 
 // The order above matches the order of tilesets in map.json — this is critical
@@ -75,14 +75,14 @@ const TILESET_ASSETS = [
 // Obj id=14 (x:2880, y:4832) → middle area → CP2
 // Obj id=15 (x:2752, y:624)  → top of map → CP3
 const CHECKPOINT_DEFS = [
-  { id: 1, x: 3296, y: 6880, radius: 60, color: 0x7B2FBE, label: 'Checkpoint 1' },
-  { id: 2, x: 2880, y: 4832, radius: 60, color: 0xCC3380, label: 'Checkpoint 2' },
-  { id: 3, x: 2752, y: 624,  radius: 60, color: 0xE85D04, label: 'Checkpoint 3' },
+  { id: 1, x: 2880, y: 4832, radius: 60, color: 0x7B2FBE, label: 'Checkpoint 1' },
+  { id: 2, x: 3296, y: 6880, radius: 60, color: 0xCC3380, label: 'Checkpoint 2' },
+  { id: 3, x: 2752, y: 624, radius: 60, color: 0xE85D04, label: 'Checkpoint 3' },
 ];
 
 // Player start position — near the bottom of the map (near CP1)
-const START_X = 3296;
-const START_Y = 7100;  // 7200 is in the sea — first land tile is at y≈7150
+const START_X = 2880;
+const START_Y = 4832;  // 7200 is in the sea — first land tile is at y≈7150
 const PLAYER_SPEED = 180;
 
 // Tile layer names from Tiled (the order determines z-order)
@@ -110,24 +110,24 @@ export default class PhaserGameScene extends Phaser.Scene {
     // Callbacks arrive either via scene.start(key, data) or patched directly
     // onto the instance by GameCanvas after the Phaser 'ready' event fires.
     // We only overwrite if data actually provides a value.
-    if (data?.onNearCheckpoint)        this.onNearCheckpoint = data.onNearCheckpoint;
-    if (data?.onCheckpointReached)     this.onCheckpointReached = data.onCheckpointReached;
-    if (data?.onLoadProgress)          this.onLoadProgress = data.onLoadProgress;
-    if (data?.onLoadComplete)          this.onLoadComplete = data.onLoadComplete;
-    if (data?.getProgress)             this.getProgress = data.getProgress;
+    if (data?.onNearCheckpoint) this.onNearCheckpoint = data.onNearCheckpoint;
+    if (data?.onCheckpointReached) this.onCheckpointReached = data.onCheckpointReached;
+    if (data?.onLoadProgress) this.onLoadProgress = data.onLoadProgress;
+    if (data?.onLoadComplete) this.onLoadComplete = data.onLoadComplete;
+    if (data?.getProgress) this.getProgress = data.getProgress;
     if (data?.getIsCheckpointUnlocked) this.getIsCheckpointUnlocked = data.getIsCheckpointUnlocked;
-    if (data?.playerNickname)          this.playerNickname = data.playerNickname;
-    if (data?.initialPos)              this.initialPos = data.initialPos;
+    if (data?.playerNickname) this.playerNickname = data.playerNickname;
+    if (data?.initialPos) this.initialPos = data.initialPos;
 
     // Safe defaults so create() never crashes on undefined callbacks
-    this.onNearCheckpoint        = this.onNearCheckpoint        || (() => {});
-    this.onCheckpointReached     = this.onCheckpointReached     || (() => {});
-    this.onLoadProgress          = this.onLoadProgress          || (() => {});
-    this.onLoadComplete          = this.onLoadComplete          || (() => {});
-    this.getProgress             = this.getProgress             || (() => []);
+    this.onNearCheckpoint = this.onNearCheckpoint || (() => { });
+    this.onCheckpointReached = this.onCheckpointReached || (() => { });
+    this.onLoadProgress = this.onLoadProgress || (() => { });
+    this.onLoadComplete = this.onLoadComplete || (() => { });
+    this.getProgress = this.getProgress || (() => []);
     this.getIsCheckpointUnlocked = this.getIsCheckpointUnlocked || (() => true);
-    this.playerNickname          = this.playerNickname          || 'Player';
-    this.initialPos              = this.initialPos              || null;
+    this.playerNickname = this.playerNickname || 'Player';
+    this.initialPos = this.initialPos || null;
   }
 
   preload() {
