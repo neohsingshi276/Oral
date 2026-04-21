@@ -195,19 +195,16 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, mapWidthPx, mapHeightPx);
 
     // ── Sea tile collision ────────────────────────────────────────────
-    // gid=1392 is the sea/water tile in the base 'map' layer.
-    // We mark every sea tile as collidable so the player can't walk into water.
-    const SEA_GID = 1392;
-    const baseLayer = this.tileLayers[0]; // 'map' layer is first
+    // Block water/sea by excluding the known walkable tile GIDs.
+    // setCollisionByExclusion marks EVERY tile as solid EXCEPT the listed ones,
+    // which is exactly what we want: land = walkable, everything else = blocked.
+    // Known walkable base-layer GIDs (from map.json analysis):
+    //   1178 = sand/dirt path, 1511 = grass, 1515 = grass edge,
+    //   1516, 1067, 1387, 2480, 10659, 10907, 11227, 11355, 12438 = rare land tiles
+    const WALKABLE_GIDS = [1067, 1178, 1387, 1511, 1515, 1516, 2480, 10659, 10907, 11227, 11355, 12438];
+    const baseLayer = this.tileLayers[0]; // 'map' layer is always first
     if (baseLayer) {
-      baseLayer.setCollision(SEA_GID);
-      // Also handle horizontally/vertically flipped variants of the sea tile
-      // (Tiled uses high bits of the gid for flip flags)
-      baseLayer.forEachTile(tile => {
-        if (tile && (tile.index & 0x1FFFFFFF) === SEA_GID) {
-          tile.setCollision(true, true, true, true);
-        }
-      });
+      baseLayer.setCollisionByExclusion(WALKABLE_GIDS);
     }
 
     // ── Collision bodies from object layers ───────────────────────────
