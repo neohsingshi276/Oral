@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import {
   MAP_WIDTH, MAP_HEIGHT, CHAR_SPEED, START_POS,
   CHECKPOINTS, TILESET_ENTRIES, TILESET_SOURCES,
