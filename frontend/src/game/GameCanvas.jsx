@@ -51,7 +51,11 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         let initialPos = { x: START_X, y: START_Y };
         if (res.data?.position) {
           const { pos_x, pos_y } = res.data.position;
-          if (pos_x > 50 && pos_x < 10000 && pos_y > 50 && pos_y < 10000) {
+          // Reject positions that are clearly in the sea / outside the land area.
+          // The old backend default was (390, 1000) which is ocean — anything
+          // below x=500 or y=500 is off-map and should fall back to START.
+          const looksValid = pos_x > 500 && pos_y > 500 && pos_x < 9000 && pos_y < 9000;
+          if (looksValid) {
             initialPos = { x: pos_x, y: pos_y };
           }
         }
