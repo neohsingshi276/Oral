@@ -50,7 +50,7 @@ const joinGame = async (req, res) => {
 
     await db.query(
       'INSERT INTO player_positions (player_id, pos_x, pos_y, last_checkpoint) VALUES (?, ?, ?, ?)',
-      [playerId, 3296, 7200, 0]   // START_X=3296, START_Y=7200 (near Checkpoint 1)
+      [playerId, 3296, 7100, 0]   // START_X=3296, START_Y=7200 (near Checkpoint 1)
     );
 
     for (let cp = 1; cp <= 3; cp++) {

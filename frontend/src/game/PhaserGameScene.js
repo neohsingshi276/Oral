@@ -82,7 +82,7 @@ const CHECKPOINT_DEFS = [
 
 // Player start position — near the bottom of the map (near CP1)
 const START_X = 3296;
-const START_Y = 7200;
+const START_Y = 7100;  // 7200 is in the sea — first land tile is at y≈7150
 const PLAYER_SPEED = 180;
 
 // Tile layer names from Tiled (the order determines z-order)
@@ -194,6 +194,22 @@ export default class PhaserGameScene extends Phaser.Scene {
     const mapHeightPx = map.heightInPixels;
     this.physics.world.setBounds(0, 0, mapWidthPx, mapHeightPx);
 
+    // ── Sea tile collision ────────────────────────────────────────────
+    // gid=1392 is the sea/water tile in the base 'map' layer.
+    // We mark every sea tile as collidable so the player can't walk into water.
+    const SEA_GID = 1392;
+    const baseLayer = this.tileLayers[0]; // 'map' layer is first
+    if (baseLayer) {
+      baseLayer.setCollision(SEA_GID);
+      // Also handle horizontally/vertically flipped variants of the sea tile
+      // (Tiled uses high bits of the gid for flip flags)
+      baseLayer.forEachTile(tile => {
+        if (tile && (tile.index & 0x1FFFFFFF) === SEA_GID) {
+          tile.setCollision(true, true, true, true);
+        }
+      });
+    }
+
     // ── Collision bodies from object layers ───────────────────────────
     this.collisionGroup = this.physics.add.staticGroup();
 
@@ -294,8 +310,13 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.playerBody.body.setSize(16, 16);
     this.playerBody.setCollideWorldBounds(true);
 
-    // Collide player with collision objects
+    // Collide player with collision objects (trees, fences, etc.)
     this.physics.add.collider(this.playerBody, this.collisionGroup);
+
+    // Collide player with sea tiles
+    if (this.tileLayers[0]) {
+      this.physics.add.collider(this.playerBody, this.tileLayers[0]);
+    }
 
     // ── Checkpoint markers ───────────────────────────────────────────
     this.checkpointGraphics = [];

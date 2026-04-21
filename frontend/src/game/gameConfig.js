@@ -12,7 +12,7 @@ export const MAP_HEIGHT = MAP_ROWS * TILE_SIZE;   // 7600
 export const CHAR_SPEED = 180;
 
 // Start position — near the bottom of the map, beside Checkpoint 1
-export const START_POS = { x: 3296, y: 7200 };
+export const START_POS = { x: 3296, y: 7100 };
 
 // Checkpoints — match CHECKPOINT_DEFS in PhaserGameScene.js
 export const CHECKPOINTS = [
