@@ -195,9 +195,6 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, mapWidthPx, mapHeightPx);
 
     // ── Collision bodies from object layers ───────────────────────────
-    // We add all zones to a single static group so we only need ONE
-    // physics.add.collider() call  — thousands of individual colliders
-    // would murder frame-rate.
     this.collisionGroup = this.physics.add.staticGroup();
 
     const addCollisionObjects = (layerName) => {
@@ -205,14 +202,18 @@ export default class PhaserGameScene extends Phaser.Scene {
       if (!objectLayer) return;
 
       objectLayer.objects.forEach(obj => {
-        let cx, cy, w, h;
-
         if (obj.ellipse) {
-          cx = obj.x + obj.width / 2;
-          cy = obj.y + obj.height / 2;
-          w = obj.width;
-          h = obj.height;
+          // Ellipse: represented as a rectangle body
+          const body = this.collisionGroup.create(
+            obj.x + obj.width / 2,
+            obj.y + obj.height / 2,
+            null
+          );
+          body.setVisible(false);
+          body.body.setSize(obj.width, obj.height);
+          body.body.setOffset(-obj.width / 2, -obj.height / 2);
         } else if (obj.polygon) {
+          // Polygon: approximate with bounding box
           let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
           obj.polygon.forEach(p => {
             minX = Math.min(minX, p.x);
@@ -220,23 +221,29 @@ export default class PhaserGameScene extends Phaser.Scene {
             maxX = Math.max(maxX, p.x);
             maxY = Math.max(maxY, p.y);
           });
-          w = maxX - minX;
-          h = maxY - minY;
-          if (w <= 0 || h <= 0) return;
-          cx = obj.x + minX + w / 2;
-          cy = obj.y + minY + h / 2;
+          const w = maxX - minX;
+          const h = maxY - minY;
+          if (w > 0 && h > 0) {
+            const body = this.collisionGroup.create(
+              obj.x + minX + w / 2,
+              obj.y + minY + h / 2,
+              null
+            );
+            body.setVisible(false);
+            body.body.setSize(w, h);
+            body.body.setOffset(-w / 2, -h / 2);
+          }
         } else if (obj.width > 0 && obj.height > 0) {
-          cx = obj.x + obj.width / 2;
-          cy = obj.y + obj.height / 2;
-          w = obj.width;
-          h = obj.height;
-        } else {
-          return; // skip point objects or zero-size objects
+          // Rectangle
+          const body = this.collisionGroup.create(
+            obj.x + obj.width / 2,
+            obj.y + obj.height / 2,
+            null
+          );
+          body.setVisible(false);
+          body.body.setSize(obj.width, obj.height);
+          body.body.setOffset(-obj.width / 2, -obj.height / 2);
         }
-
-        const zone = this.add.zone(cx, cy, w, h);
-        this.physics.add.existing(zone, true); // true = static body
-        this.collisionGroup.add(zone);
       });
     };
 
@@ -287,7 +294,7 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.playerBody.body.setSize(16, 16);
     this.playerBody.setCollideWorldBounds(true);
 
-    // Collide player with all collision zones (single call, Phaser handles the rest)
+    // Collide player with collision objects
     this.physics.add.collider(this.playerBody, this.collisionGroup);
 
     // ── Checkpoint markers ───────────────────────────────────────────

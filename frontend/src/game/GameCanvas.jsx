@@ -6,18 +6,16 @@ const SAVE_INTERVAL = 5000;
 
 const GameCanvas = ({ player, progress, onCheckpointReached }) => {
   const containerRef = useRef(null);
-  const gameRef = useRef(null);          // Phaser.Game instance
-  const sceneRef = useRef(null);         // live PhaserGameScene instance
+  const gameRef = useRef(null);
+  const sceneRef = useRef(null);
   const lastSave = useRef(Date.now());
 
-  // Keep latest progress accessible to the scene without restarting Phaser.
-  // The scene calls getProgress() and getIsCheckpointUnlocked() every frame —
-  // exposing them as stable refs means progress updates never re-boot the game.
+  // Keep latest progress in a ref so the scene can read it every frame
+  // without needing Phaser to restart when React re-renders.
   const progressRef = useRef(progress);
   useEffect(() => { progressRef.current = progress; }, [progress]);
 
   const getProgress = useCallback(() => progressRef.current, []);
-
   const getIsCheckpointUnlocked = useCallback((cpId) => {
     if (cpId === 1) return true;
     return progressRef.current.find(p => p.checkpoint_number === cpId - 1)?.completed ?? false;
@@ -35,21 +33,22 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
       pos_x: x,
       pos_y: y,
       last_checkpoint: lastCP,
-    }).catch(() => { });
+    }).catch(() => {});
   }, [player.id]);
 
   // ── Boot Phaser ────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!containerRef.current) return;
-    if (gameRef.current) return; // guard against StrictMode double-mount
+    if (!containerRef.current || gameRef.current) return;
 
     let cancelled = false;
 
-    // Load saved position first, boot Phaser once we have it
+    // Fetch saved position FIRST — only boot Phaser once we have it.
+    // This guarantees init(data) receives the correct position before
+    // create() runs, so the player always spawns in the right place.
     api.get(`/game/position/${player.id}`)
       .then(res => {
         if (cancelled) return;
-        let initialPos = null;
+        let initialPos = { x: START_X, y: START_Y };
         if (res.data?.position) {
           const { pos_x, pos_y } = res.data.position;
           if (pos_x > 50 && pos_x < 10000 && pos_y > 50 && pos_y < 10000) {
@@ -58,15 +57,29 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         }
         bootPhaser(initialPos);
       })
-      .catch(() => { if (!cancelled) bootPhaser(null); });
+      .catch(() => {
+        if (!cancelled) bootPhaser({ x: START_X, y: START_Y });
+      });
 
     function bootPhaser(initialPos) {
-      // Dynamic import keeps the ~1 MB Phaser bundle out of the initial page load.
       import('phaser').then(({ default: Phaser }) => {
         if (cancelled || !containerRef.current) return;
 
         const viewW = window.innerWidth - 32;
         const viewH = window.innerHeight - 130;
+
+        // The scene data object is passed to init(data) before create() runs.
+        // This is the ONLY reliable way to get data into a scene at startup.
+        const sceneData = {
+          onCheckpointReached,
+          getProgress,
+          getIsCheckpointUnlocked,
+          playerNickname: player.nickname,
+          initialPos,                       // ← player spawns here, not (0,0)
+          onNearCheckpoint: () => {},
+          onLoadProgress: () => {},
+          onLoadComplete: () => {},
+        };
 
         const game = new Phaser.Game({
           type: Phaser.AUTO,
@@ -78,31 +91,26 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
             default: 'arcade',
             arcade: { gravity: { y: 0 }, debug: false },
           },
-          scene: PhaserGameScene,
+          // Don't put the scene in the config array — start it manually below
+          // so we can pass sceneData into init(data) before create() runs.
+          scene: [],
         });
 
         gameRef.current = game;
 
-        // scene.init(data) is called before create(), so we inject callbacks
-        // by patching the scene instance as soon as it exists.
         game.events.on('ready', () => {
-          const scene = game.scene.getScene('PhaserGameScene');
-          if (!scene) return;
-          scene.onCheckpointReached = onCheckpointReached;
-          scene.getProgress = getProgress;
-          scene.getIsCheckpointUnlocked = getIsCheckpointUnlocked;
-          scene.playerNickname = player.nickname;
-          scene.initialPos = initialPos || { x: START_X, y: START_Y };
-          sceneRef.current = scene;
+          // Add and start the scene with data in one atomic call.
+          // Phaser calls init(sceneData) → preload() → create() in that order,
+          // so initialPos is available when create() places the player.
+          game.scene.add('PhaserGameScene', PhaserGameScene, true, sceneData);
 
-          // If create() already ran before 'ready' fired (can happen on fast
-          // hardware), apply the saved position now.
-          if (scene.playerBody && initialPos) {
-            scene.setPlayerPosition(initialPos.x, initialPos.y);
-          }
+          // Grab the live scene reference for savePosition / pause / resume
+          // (scene exists immediately after add(..., true, ...))
+          const scene = game.scene.getScene('PhaserGameScene');
+          if (scene) sceneRef.current = scene;
         });
 
-        // Resize Phaser canvas when window resizes
+        // Handle window resize
         const onResize = () => {
           game.scale.resize(window.innerWidth - 32, window.innerHeight - 130);
         };
@@ -132,13 +140,8 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         sceneRef.current = null;
       }
     };
-    // player.id is the only thing that should restart the whole game engine
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [player.id]);
-
-  // ── Pause/resume when a modal opens (called from GamePage if needed) ────────
-  // Usage: add a ref to GameCanvas and call ref.current.pauseGame() / resumeGame()
-  // Currently GamePage doesn't use this but the wiring is ready.
 
   return (
     <div
