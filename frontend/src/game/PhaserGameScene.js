@@ -17,52 +17,52 @@ import Phaser from 'phaser';
 // Phaser requires unique *keys* – two tilesets share the name "plants" and
 // "Checkpoint1" in the JSON, so we suffix duplicates with _2.
 const TILESET_ASSETS = [
-  { key: 'terrain', file: 'terrain.png' },
-  { key: 'Video', file: 'Video.png' },
-  { key: 'plant repack', file: 'plant repack.png' },
-  { key: 'plants', file: 'plants.png' },
-  { key: 'rocks', file: 'rocks.png' },
-  { key: 'terrain_atlas', file: 'terrain_atlas.png' },
-  { key: 'base_out_atlas', file: 'base_out_atlas.png' },
-  { key: 'farming_fishing', file: 'farming_fishing.png' },
-  { key: 'fence', file: 'fence.png' },
-  { key: 'plants_2', file: 'plants.png' },           // duplicate
-  { key: 'PathAndObjects', file: 'PathAndObjects.png' },
-  { key: 'town', file: 'town.png' },
-  { key: 'tileset_preview', file: 'tileset_preview.png' },
-  { key: 'trees_plants', file: 'trees_plants.png' },
+  { key: 'terrain',           file: 'terrain.png' },
+  { key: 'Video',             file: 'Video.png' },
+  { key: 'plant repack',      file: 'plant repack.png' },
+  { key: 'plants',            file: 'plants.png' },
+  { key: 'rocks',             file: 'rocks.png' },
+  { key: 'terrain_atlas',     file: 'terrain_atlas.png' },
+  { key: 'base_out_atlas',    file: 'base_out_atlas.png' },
+  { key: 'farming_fishing',   file: 'farming_fishing.png' },
+  { key: 'fence',             file: 'fence.png' },
+  { key: 'plants_2',          file: 'plants.png' },           // duplicate
+  { key: 'PathAndObjects',    file: 'PathAndObjects.png' },
+  { key: 'town',              file: 'town.png' },
+  { key: 'tileset_preview',   file: 'tileset_preview.png' },
+  { key: 'trees_plants',      file: 'trees_plants.png' },
   { key: 'transparent-bg-tiles', file: 'transparent-bg-tiles.png' },
-  { key: 'forrestup', file: 'forrestup.png' },
-  { key: 'chicken_walk', file: 'chicken_walk.png' },
-  { key: 'cow_walk', file: 'cow_walk.png' },
-  { key: 'sheep_eat', file: 'sheep_eat.png' },
-  { key: 'llama_walk', file: 'llama_walk.png' },
+  { key: 'forrestup',         file: 'forrestup.png' },
+  { key: 'chicken_walk',      file: 'chicken_walk.png' },
+  { key: 'cow_walk',          file: 'cow_walk.png' },
+  { key: 'sheep_eat',         file: 'sheep_eat.png' },
+  { key: 'llama_walk',        file: 'llama_walk.png' },
   { key: 'decorations-medieval', file: 'decorations-medieval.png' },
-  { key: 'foodfromcts1a', file: 'foodfromcts1a.png' },
-  { key: 'fence_alt', file: 'fence_alt.png' },
-  { key: 'fence_medieval', file: 'fence_medieval.png' },
-  { key: 'fruit-trees', file: 'fruit-trees.png' },
-  { key: 'thatched-roof', file: 'thatched-roof.png' },
-  { key: 'cottage', file: 'cottage.png' },
+  { key: 'foodfromcts1a',     file: 'foodfromcts1a.png' },
+  { key: 'fence_alt',         file: 'fence_alt.png' },
+  { key: 'fence_medieval',    file: 'fence_medieval.png' },
+  { key: 'fruit-trees',       file: 'fruit-trees.png' },
+  { key: 'thatched-roof',     file: 'thatched-roof.png' },
+  { key: 'cottage',           file: 'cottage.png' },
   { key: 'window_w_shutters', file: 'window_w_shutters.png' },
-  { key: 'castledoors', file: 'castledoors.png' },
-  { key: 'monkeywin', file: 'monkeywin.png' },
-  { key: 'frm', file: 'frm.png' },
+  { key: 'castledoors',       file: 'castledoors.png' },
+  { key: 'monkeywin',         file: 'monkeywin.png' },
+  { key: 'frm',               file: 'frm.png' },
   { key: 'fossils3-Photoroom', file: 'fossils3-Photoroom.png' },
-  { key: 'horse-brown', file: 'horse-brown.png' },
-  { key: 'horse-white', file: 'horse-white.png' },
-  { key: 'horse-black', file: 'horse-black.png' },
-  { key: 'bunnysheet5', file: 'bunnysheet5.png' },
-  { key: '16oga (1)', file: '16oga (1).png' },
-  { key: 'Checkpoint1', file: 'Checkpoint1.png' },
-  { key: 'Checkpoint2', file: 'Checkpoint2.png' },
-  { key: 'Checkpoint3', file: 'Checkpoint3.png' },
+  { key: 'horse-brown',       file: 'horse-brown.png' },
+  { key: 'horse-white',       file: 'horse-white.png' },
+  { key: 'horse-black',       file: 'horse-black.png' },
+  { key: 'bunnysheet5',       file: 'bunnysheet5.png' },
+  { key: '16oga (1)',         file: '16oga (1).png' },
+  { key: 'Checkpoint1',       file: 'Checkpoint1.png' },
+  { key: 'Checkpoint2',       file: 'Checkpoint2.png' },
+  { key: 'Checkpoint3',       file: 'Checkpoint3.png' },
   { key: 'start-sign-means-don-t-wait-and-action-Photoroom', file: 'start-sign-means-don-t-wait-and-action-Photoroom.png' },
-  { key: 'Checkpoint1_2', file: 'Checkpoint1.png' },      // duplicate
-  { key: 'forest_tiles', file: 'forest_tiles.png' },
-  { key: 'Try', file: 'Try.png' },
-  { key: 'A', file: 'A.png' },
-  { key: 'B', file: 'B.png' },
+  { key: 'Checkpoint1_2',     file: 'Checkpoint1.png' },      // duplicate
+  { key: 'forest_tiles',      file: 'forest_tiles.png' },
+  { key: 'Try',               file: 'Try.png' },
+  { key: 'A',                 file: 'A.png' },
+  { key: 'B',                 file: 'B.png' },
 ];
 
 // The order above matches the order of tilesets in map.json — this is critical
@@ -77,7 +77,7 @@ const TILESET_ASSETS = [
 const CHECKPOINT_DEFS = [
   { id: 1, x: 3296, y: 6880, radius: 60, color: 0x7B2FBE, label: 'Checkpoint 1' },
   { id: 2, x: 2880, y: 4832, radius: 60, color: 0xCC3380, label: 'Checkpoint 2' },
-  { id: 3, x: 2752, y: 624, radius: 60, color: 0xE85D04, label: 'Checkpoint 3' },
+  { id: 3, x: 2752, y: 624,  radius: 60, color: 0xE85D04, label: 'Checkpoint 3' },
 ];
 
 // Player start position — near the bottom of the map (near CP1)
@@ -110,24 +110,24 @@ export default class PhaserGameScene extends Phaser.Scene {
     // Callbacks arrive either via scene.start(key, data) or patched directly
     // onto the instance by GameCanvas after the Phaser 'ready' event fires.
     // We only overwrite if data actually provides a value.
-    if (data?.onNearCheckpoint) this.onNearCheckpoint = data.onNearCheckpoint;
-    if (data?.onCheckpointReached) this.onCheckpointReached = data.onCheckpointReached;
-    if (data?.onLoadProgress) this.onLoadProgress = data.onLoadProgress;
-    if (data?.onLoadComplete) this.onLoadComplete = data.onLoadComplete;
-    if (data?.getProgress) this.getProgress = data.getProgress;
+    if (data?.onNearCheckpoint)        this.onNearCheckpoint = data.onNearCheckpoint;
+    if (data?.onCheckpointReached)     this.onCheckpointReached = data.onCheckpointReached;
+    if (data?.onLoadProgress)          this.onLoadProgress = data.onLoadProgress;
+    if (data?.onLoadComplete)          this.onLoadComplete = data.onLoadComplete;
+    if (data?.getProgress)             this.getProgress = data.getProgress;
     if (data?.getIsCheckpointUnlocked) this.getIsCheckpointUnlocked = data.getIsCheckpointUnlocked;
-    if (data?.playerNickname) this.playerNickname = data.playerNickname;
-    if (data?.initialPos) this.initialPos = data.initialPos;
+    if (data?.playerNickname)          this.playerNickname = data.playerNickname;
+    if (data?.initialPos)              this.initialPos = data.initialPos;
 
     // Safe defaults so create() never crashes on undefined callbacks
-    this.onNearCheckpoint = this.onNearCheckpoint || (() => { });
-    this.onCheckpointReached = this.onCheckpointReached || (() => { });
-    this.onLoadProgress = this.onLoadProgress || (() => { });
-    this.onLoadComplete = this.onLoadComplete || (() => { });
-    this.getProgress = this.getProgress || (() => []);
+    this.onNearCheckpoint        = this.onNearCheckpoint        || (() => {});
+    this.onCheckpointReached     = this.onCheckpointReached     || (() => {});
+    this.onLoadProgress          = this.onLoadProgress          || (() => {});
+    this.onLoadComplete          = this.onLoadComplete          || (() => {});
+    this.getProgress             = this.getProgress             || (() => []);
     this.getIsCheckpointUnlocked = this.getIsCheckpointUnlocked || (() => true);
-    this.playerNickname = this.playerNickname || 'Player';
-    this.initialPos = this.initialPos || null;
+    this.playerNickname          = this.playerNickname          || 'Player';
+    this.initialPos              = this.initialPos              || null;
   }
 
   preload() {
@@ -200,54 +200,40 @@ export default class PhaserGameScene extends Phaser.Scene {
     // World boundary is enforced by setCollideWorldBounds(true) on the player.
 
     // ── Collision bodies from object layers ───────────────────────────
-    this.collisionGroup = this.physics.add.staticGroup();
+    // Collect all static collision zones in a plain array so we can pass
+    // them to physics.add.collider() individually after creation.
+    this.collisionZones = [];
 
     const addCollisionObjects = (layerName) => {
       const objectLayer = map.getObjectLayer(layerName);
       if (!objectLayer) return;
 
       objectLayer.objects.forEach(obj => {
+        // Helper: create an invisible static physics zone at world-space centre.
+        const addRect = (cx, cy, w, h) => {
+          if (w <= 0 || h <= 0) return;
+          const zone = this.add.zone(cx, cy, w, h);
+          this.physics.add.existing(zone, true); // true = static body
+          this.collisionZones.push(zone);
+        };
+
         if (obj.ellipse) {
-          // Ellipse: represented as a rectangle body
-          const body = this.collisionGroup.create(
-            obj.x + obj.width / 2,
-            obj.y + obj.height / 2,
-            null
-          );
-          body.setVisible(false);
-          body.body.setSize(obj.width, obj.height);
-          body.body.setOffset(-obj.width / 2, -obj.height / 2);
+          // Tiled ellipse origin = top-left; centre = origin + half-size
+          addRect(obj.x + obj.width / 2, obj.y + obj.height / 2, obj.width, obj.height);
         } else if (obj.polygon) {
-          // Polygon: approximate with bounding box
+          // Polygon: use bounding box (adequate for arcade physics)
           let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
           obj.polygon.forEach(p => {
-            minX = Math.min(minX, p.x);
-            minY = Math.min(minY, p.y);
-            maxX = Math.max(maxX, p.x);
-            maxY = Math.max(maxY, p.y);
+            minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+            maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
           });
           const w = maxX - minX;
           const h = maxY - minY;
-          if (w > 0 && h > 0) {
-            const body = this.collisionGroup.create(
-              obj.x + minX + w / 2,
-              obj.y + minY + h / 2,
-              null
-            );
-            body.setVisible(false);
-            body.body.setSize(w, h);
-            body.body.setOffset(-w / 2, -h / 2);
-          }
+          // Polygon points are relative to obj.x / obj.y (Tiled convention)
+          addRect(obj.x + minX + w / 2, obj.y + minY + h / 2, w, h);
         } else if (obj.width > 0 && obj.height > 0) {
-          // Rectangle
-          const body = this.collisionGroup.create(
-            obj.x + obj.width / 2,
-            obj.y + obj.height / 2,
-            null
-          );
-          body.setVisible(false);
-          body.body.setSize(obj.width, obj.height);
-          body.body.setOffset(-obj.width / 2, -obj.height / 2);
+          // Rectangle: Tiled stores top-left, zone needs centre
+          addRect(obj.x + obj.width / 2, obj.y + obj.height / 2, obj.width, obj.height);
         }
       });
     };
@@ -305,7 +291,10 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.playerBody.setPosition(startX, startY);
 
     // Collide player with collision objects (trees, fences, etc.)
-    this.physics.add.collider(this.playerBody, this.collisionGroup);
+    // Add colliders for all static collision zones
+    this.collisionZones.forEach(zone => {
+      this.physics.add.collider(this.playerBody, zone);
+    });
 
     // NOTE: We intentionally do NOT add a collider against the base tile layer.
     // The setCollisionByExclusion approach marks almost every tile as solid,
