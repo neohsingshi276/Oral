@@ -16,9 +16,9 @@ const app = express();
 const { generalLimiter } = require('./middleware/rateLimiter');
 
 // ============================================
-// CORS — FIX: Handle OPTIONS preflight BEFORE rate limiter,
-// and support wildcard Vercel preview URLs via regex
+// CORS
 // ============================================
+app.use(generalLimiter);
 
 const allowedOrigins = [
   process.env.STUDENT_URL,
@@ -27,30 +27,26 @@ const allowedOrigins = [
   'http://localhost:5174',
 ].filter(Boolean);
 
-// Allow any *.vercel.app subdomain for preview deployments
-const vercelPreviewRegex = /^https:\/\/[a-zA-Z0-9-]+-[a-zA-Z0-9]+-[a-zA-Z0-9-]+\.vercel\.app$/;
-
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, Postman)
+    // Allow requests with no origin (mobile apps, curl, Postman, server-to-server)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    // Allow Vercel preview deployment URLs
-    if (vercelPreviewRegex.test(origin)) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
+    // Trim trailing slashes to avoid mismatch
+    const normalised = origin.replace(/\/$/, '');
+    if (allowedOrigins.map(o => o.replace(/\/$/, '')).includes(normalised)) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200, // Some browsers (IE11) choke on 204
 };
 
-// FIX: Handle preflight OPTIONS requests BEFORE the rate limiter
-// so CORS headers are always sent on preflight
+// Handle OPTIONS preflight for all routes BEFORE other middleware
 app.options('*', cors(corsOptions));
-
-// Apply rate limiter AFTER OPTIONS handling
-app.use(generalLimiter);
 app.use(cors(corsOptions));
 
 app.use(express.json({ limit: '1mb' }));
@@ -94,10 +90,6 @@ app.use((req, res) => {
 // ============================================
 app.use((err, req, res, next) => {
   console.error('Server error:', err.message);
-  // FIX: Return CORS error as JSON not plain text
-  if (err.message === 'Not allowed by CORS') {
-    return res.status(403).json({ error: 'CORS: Origin not allowed' });
-  }
   res.status(500).json({ error: 'Internal server error' });
 });
 
