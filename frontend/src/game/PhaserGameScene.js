@@ -69,15 +69,16 @@ const TILESET_ASSETS = [
 // because addTilesetImage must be called in the same order as the JSON declares them.
 
 // ── Checkpoint definitions ───────────────────────────────────────────────────
-// Positions taken directly from the triggervideocheckpoint object layer in map.json.
-//   id=13  x=3296  y=6880  → bottom of map   → CP1
-//   id=14  x=2880  y=4832  → middle of map    → CP2
-//   id=15  x=2752  y=624   → top of map       → CP3
-// Radius enlarged to 80px so the player can reliably trigger them.
+// Positions matched to the actual Checkpoint1/2/3 TILESET GRAPHICS on the
+// checkpointroad layer (verified from map.json tile scan):
+//   Checkpoint1 graphic centre: (3040, 4800) — nearest trigger id=14 (2880,4832)
+//   Checkpoint2 graphic centre: (2808, 2800) — nearest trigger id=10 (2640,2832)
+//   Checkpoint3 graphic centre: (2880,  624) — nearest trigger id=15 (2752, 624)
+// Trigger points snapped to graphic centres so the marker sits on the sign.
 const CHECKPOINT_DEFS = [
-  { id: 1, x: 3296, y: 6880, radius: 80, color: 0x7B2FBE, label: 'Checkpoint 1' },
-  { id: 2, x: 2880, y: 4832, radius: 80, color: 0xCC3380, label: 'Checkpoint 2' },
-  { id: 3, x: 2752, y: 624,  radius: 80, color: 0xE85D04, label: 'Checkpoint 3' },
+  { id: 1, x: 3040, y: 4800, radius: 80, color: 0x7B2FBE, label: 'Checkpoint 1' },
+  { id: 2, x: 2808, y: 2800, radius: 80, color: 0xCC3380, label: 'Checkpoint 2' },
+  { id: 3, x: 2880, y: 624,  radius: 80, color: 0xE85D04, label: 'Checkpoint 3' },
 ];
 
 // Player start position — at the START SIGN on the checkpointroad layer.
@@ -202,72 +203,77 @@ export default class PhaserGameScene extends Phaser.Scene {
     // World boundary is enforced by setCollideWorldBounds(true) on the player.
 
     // ── Collision bodies from object layers ───────────────────────────
-    // Collect all static collision zones in a plain array so we can pass
-    // them to physics.add.collider() individually after creation.
-    this.collisionZones = [];
+    // ONE StaticGroup for all collision shapes.  A single physics.add.collider()
+    // call against a group is O(1) setup instead of O(N) individual calls,
+    // which is what caused the black-screen freeze on load.
+    this.collisionGroup = this.physics.add.staticGroup();
 
-    const addCollisionObjects = (layerName) => {
+    // ── Collision filter helpers ─────────────────────────────────────────
+    // collisionbelowplayer  = ground-level items (fences, rocks, bushes)
+    // collisionupperplayer  = upper items drawn above the player (tree trunks)
+    //
+    // Per design:
+    //   • Tree SHADOWS (ellipses in below-layer)  → skip (walk through)
+    //   • Small STONES  (≤32×16 rects in below)   → skip (walk through)
+    //   • Tree TRUNKS   (upper-layer polygons)     → keep (solid)
+    //   • Fences/walls  (larger rects/polygons)    → keep (solid)
+
+    const shouldSkipBelowObj = (obj) => {
+      // Skip all ellipses (tree shadows / canopy footprints)
+      if (obj.ellipse) return true;
+      // Skip tiny flat rects that are small stones / pebbles
+      const w = obj.width || 0;
+      const h = obj.height || 0;
+      if (!obj.ellipse && !obj.polygon && w <= 32 && h <= 16) return true;
+      if (!obj.ellipse && !obj.polygon && w <= 16 && h <= 32) return true;
+      return false;
+    };
+
+    const buildCollisionLayer = (layerName) => {
       const objectLayer = map.getObjectLayer(layerName);
       if (!objectLayer) return;
 
-      // Helper: create an invisible static physics zone at world-space centre.
-      const addRect = (cx, cy, w, h) => {
-        if (w <= 0 || h <= 0) return;
-        const zone = this.add.zone(cx, cy, w, h);
-        this.physics.add.existing(zone, true); // true = static body
-        this.collisionZones.push(zone);
-      };
+      const isBelowLayer = layerName === 'collisionbelowplayer';
 
-      // Tiled sometimes places TWO polygons at the exact same origin to represent
-      // a single tile with a sloped top (one trapezoid + one rectangle).
-      // If we create them as separate collision bodies the result is inconsistent.
-      // Solution: group all objects that share the same (x,y) origin and merge
-      // their bounding boxes before creating the physics body.
+      // Group objects at the same (x,y) — Tiled splits sloped tiles into
+      // two polygons at the same origin. Merge their bboxes into one body.
       const byPos = new Map();
       objectLayer.objects.forEach(obj => {
+        if (isBelowLayer && shouldSkipBelowObj(obj)) return; // skip shadows/stones
         const key = `${obj.x},${obj.y}`;
         if (!byPos.has(key)) byPos.set(key, []);
         byPos.get(key).push(obj);
       });
 
-      byPos.forEach((objs) => {
-        // Compute merged bounding box across all objects at this origin.
-        let absMinX = Infinity, absMinY = Infinity, absMaxX = -Infinity, absMaxY = -Infinity;
-
+      byPos.forEach(objs => {
+        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
         objs.forEach(obj => {
           if (obj.ellipse) {
-            // Ellipse: top-left origin in Tiled
-            absMinX = Math.min(absMinX, obj.x);
-            absMinY = Math.min(absMinY, obj.y);
-            absMaxX = Math.max(absMaxX, obj.x + obj.width);
-            absMaxY = Math.max(absMaxY, obj.y + obj.height);
+            x0 = Math.min(x0, obj.x);             y0 = Math.min(y0, obj.y);
+            x1 = Math.max(x1, obj.x + obj.width); y1 = Math.max(y1, obj.y + obj.height);
           } else if (obj.polygon) {
-            // Polygon points are relative to obj.x / obj.y
             obj.polygon.forEach(p => {
-              absMinX = Math.min(absMinX, obj.x + p.x);
-              absMinY = Math.min(absMinY, obj.y + p.y);
-              absMaxX = Math.max(absMaxX, obj.x + p.x);
-              absMaxY = Math.max(absMaxY, obj.y + p.y);
+              x0 = Math.min(x0, obj.x + p.x); y0 = Math.min(y0, obj.y + p.y);
+              x1 = Math.max(x1, obj.x + p.x); y1 = Math.max(y1, obj.y + p.y);
             });
           } else if (obj.width > 0 && obj.height > 0) {
-            // Rectangle: top-left origin
-            absMinX = Math.min(absMinX, obj.x);
-            absMinY = Math.min(absMinY, obj.y);
-            absMaxX = Math.max(absMaxX, obj.x + obj.width);
-            absMaxY = Math.max(absMaxY, obj.y + obj.height);
+            x0 = Math.min(x0, obj.x);             y0 = Math.min(y0, obj.y);
+            x1 = Math.max(x1, obj.x + obj.width); y1 = Math.max(y1, obj.y + obj.height);
           }
         });
 
-        const w = absMaxX - absMinX;
-        const h = absMaxY - absMinY;
+        const w = x1 - x0;
+        const h = y1 - y0;
         if (w > 0 && h > 0) {
-          addRect(absMinX + w / 2, absMinY + h / 2, w, h);
+          const zone = this.add.zone(x0 + w / 2, y0 + h / 2, w, h);
+          this.collisionGroup.add(zone, true);
         }
       });
     };
 
-    addCollisionObjects('collisionbelowplayer');
-    addCollisionObjects('collisionupperplayer');
+    buildCollisionLayer('collisionbelowplayer');
+    buildCollisionLayer('collisionupperplayer');
+    this.collisionGroup.refresh();
 
     // ── Player sprite ────────────────────────────────────────────────
     const startX = this.initialPos?.x || START_X;
@@ -312,17 +318,18 @@ export default class PhaserGameScene extends Phaser.Scene {
     // of the requested position and breaks movement registration).
     this.playerBody = this.physics.add.image(startX, startY, '__DEFAULT');
     this.playerBody.setVisible(false);
-    this.playerBody.setDisplaySize(16, 16);
-    this.playerBody.body.setSize(16, 16);
+    // Hitbox = only the lower body (legs/feet area).
+    // The visible character is ~28px tall; we set a 14×8 hitbox offset
+    // downward (+10px) so only feet collide — the player can overlap
+    // tree canopies, signs and upper decorations without getting stuck.
+    this.playerBody.setDisplaySize(14, 8);
+    this.playerBody.body.setSize(14, 8);
+    this.playerBody.body.setOffset(0, 10);
     this.playerBody.setCollideWorldBounds(true);
-    // Ensure the body starts exactly at the spawn position
     this.playerBody.setPosition(startX, startY);
 
-    // Collide player with collision objects (trees, fences, etc.)
-    // Add colliders for all static collision zones
-    this.collisionZones.forEach(zone => {
-      this.physics.add.collider(this.playerBody, zone);
-    });
+    // ONE collider call covers every shape in the group — O(1) not O(N).
+    this.physics.add.collider(this.playerBody, this.collisionGroup);
 
     // NOTE: We intentionally do NOT add a collider against the base tile layer.
     // The setCollisionByExclusion approach marks almost every tile as solid,
