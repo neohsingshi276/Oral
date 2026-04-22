@@ -33,7 +33,7 @@ const YouTubePlayer = ({ videoId, onVideoEnd }) => {
         videoId,
         playerVars: {
           autoplay: 0,
-          controls: 0,          // ⛔ HIDE all YouTube controls (no seek bar!)
+          //controls: 0,          // ⛔ HIDE all YouTube controls (no seek bar!)
           disablekb: 1,         // disable keyboard shortcuts
           fs: 0,                // disable fullscreen
           modestbranding: 1,
