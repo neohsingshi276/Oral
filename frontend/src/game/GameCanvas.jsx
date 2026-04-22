@@ -10,7 +10,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
   const sceneRef = useRef(null);
   const lastSave = useRef(Date.now());
   const [loadPct, setLoadPct] = useState(0);   // 0–100
-  const [ready, setReady]     = useState(false);
+  const [ready, setReady] = useState(false);
 
   const progressRef = useRef(progress);
   useEffect(() => { progressRef.current = progress; }, [progress]);
@@ -33,7 +33,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
       pos_x: x,
       pos_y: y,
       last_checkpoint: lastCP,
-    }).catch(() => {});
+    }).catch(() => { });
   }, [player.id]);
 
   // ── Boot Phaser ───────────────────────────────────────────────────────────
@@ -73,7 +73,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
           getIsCheckpointUnlocked,
           playerNickname: player.nickname,
           initialPos,
-          onNearCheckpoint: () => {},
+          onNearCheckpoint: () => { },
           // Wire progress callbacks to React state
           onLoadProgress: (v) => setLoadPct(Math.round(v * 100)),
           onLoadComplete: () => setReady(true),
@@ -87,7 +87,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
           backgroundColor: '#1a1a2e',
           physics: {
             default: 'arcade',
-            arcade: { gravity: { y: 0 }, debug: false },
+            arcade: { gravity: { y: 0 }, debug: true },
           },
           scene: [],
         });
@@ -128,7 +128,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         sceneRef.current = null;
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [player.id]);
 
   return (
