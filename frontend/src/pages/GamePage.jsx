@@ -98,6 +98,7 @@ const GamePage = () => {
   const [quizKey, setQuizKey] = useState(0);
   const [showTutorial, setShowTutorial] = useState(() => !localStorage.getItem('tutorial_seen'));
   const [showConfetti, setShowConfetti] = useState(false);
+  const [crosswordKey, setCrosswordKey] = useState(0);
 
   const getPlayerChatConfig = useCallback(() => (
     player?.chat_token
@@ -369,7 +370,9 @@ const GamePage = () => {
               <h2 style={s.modalTitle}>
                 {activeCP === 1 ? '🟣' : activeCP === 2 ? '🟤' : '🟠'} Checkpoint {activeCP}
               </h2>
-              <button style={s.closeBtn} onClick={handleCloseCPModal}>✕</button>
+              {cpStep === 'video' && (
+                <button style={s.closeBtn} onClick={handleCloseCPModal}>✕</button>
+              )}
             </div>
 
             <div style={s.steps}>
@@ -390,8 +393,12 @@ const GamePage = () => {
 
             {cpStep === 'activity' && activeCP === 2 && (
               <CrosswordGame
+                key={crosswordKey}
                 onComplete={handleActivityDone}
-                onRetry={() => { setActiveCP(null); setCpStep('video'); }}
+                onRetry={() => {
+                  api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }).catch(console.error);
+                  setCrosswordKey(prev => prev + 1);
+                }}
                 playerId={player.id}
                 sessionId={player.session_id}
               />
@@ -478,16 +485,16 @@ const GamePage = () => {
 };
 
 const s = {
-  page: { minHeight: '100vh', background: '#0f172a', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', alignItems: 'center' },
+  page: { height: '100vh', background: '#0f172a', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
   loading: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.2rem', background: '#0f172a' },
-  header: { width: '100%', background: '#1e3a5f', padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' },
+  header: { width: '100%', background: '#1e3a5f', padding: '0.5rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', flexShrink: 0 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '1rem' },
   logo: { color: '#FFD700', fontWeight: '800', fontSize: '1.1rem' },
   playerBadge: { background: 'rgba(255,255,255,0.15)', color: '#fff', padding: '0.3rem 0.75rem', borderRadius: '20px', fontSize: '0.85rem' },
   headerRight: { display: 'flex', alignItems: 'center', gap: '0.5rem' },
   cpBadge: { width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '800', fontSize: '0.82rem' },
-  controls: { color: '#94a3b8', fontSize: '0.82rem', padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)', width: '100%', textAlign: 'center' },
-  canvasWrap: { flex: 1, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: '0.5rem', boxSizing: 'border-box' },
+  controls: { color: '#94a3b8', fontSize: '0.78rem', padding: '0.35rem 1rem', background: 'rgba(255,255,255,0.05)', width: '100%', textAlign: 'center', flexShrink: 0 },
+  canvasWrap: { flex: 1, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'stretch', padding: '0.25rem', boxSizing: 'border-box', overflow: 'hidden' },
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' },
   modal: { background: '#fff', borderRadius: '20px', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflow: 'auto', animation: 'fadeIn 0.3s ease' },
   modalHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0' },

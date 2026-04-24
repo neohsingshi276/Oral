@@ -129,16 +129,15 @@ const getCrosswordLeaderboard = async (req, res) => {
 // Absolute marking scheme — scores based on actual performance, not relative
 // to best player in session:
 //
-//  CP1 Quiz      /33 = (correct_answers / total_questions) * 33
-//                      e.g. 2/9 correct → 7/33
+//  CP1 Quiz      /33.33 = (correct_answers / total_questions) × (100/3)
+//  CP2 Crossword /33.33 = (words_correct / total_words)       × (100/3)
+//  CP3 Food Game /33.33 = (score / target_or_max)             × (100/3)
 //
-//  CP2 Crossword /33 = (words_correct / total_words) * 33  (partial credit)
-//                      e.g. 3 out of 6 words → 17/33
+//  Total = /100  (rounded: >= 99.5 → 100, otherwise floor)
 //
-//  CP3 Food Game /33 = if admin set target_score → (score / target) * 33, capped 33
-//                      else fallback to relative  → (score / session_max) * 33
-//
-//  Total = /99
+// Each CP mark is rounded to nearest integer for display.
+const CP_WEIGHT = 100 / 3; // 33.333...
+
 const getFinalLeaderboard = async (req, res) => {
   const sessionId = parseInt(req.params.session_id, 10);
   if (!sessionId || sessionId <= 0)
@@ -189,18 +188,24 @@ const getFinalLeaderboard = async (req, res) => {
       // CP1: absolute — based on how many they got right
       const cp1Correct = quiz?.correct || 0;
       const cp1Total   = quiz?.total   || 0;
-      const cp1Mark    = cp1Total > 0 ? Math.round((cp1Correct / cp1Total) * 33) : 0;
+      const cp1Exact   = cp1Total > 0 ? (cp1Correct / cp1Total) * CP_WEIGHT : 0;
+      const cp1Mark    = Math.round(cp1Exact); // rounded for display
 
       // CP2: partial credit — based on words solved
       const cwCorrect = cw?.words_correct || 0;
       const cwTotal   = cw?.total_words   || 0;
-      const cp2Mark   = cwTotal > 0 ? Math.round((cwCorrect / cwTotal) * 33) : 0;
+      const cp2Exact  = cwTotal > 0 ? (cwCorrect / cwTotal) * CP_WEIGHT : 0;
+      const cp2Mark   = Math.round(cp2Exact);
 
-      // CP3: based on target or session max, capped at 33
-      const cp3Raw  = cp3?.score || 0;
-      const cp3Mark = cp3Raw > 0 ? Math.min(33, Math.round((cp3Raw / Math.max(1, cp3Denom)) * 33)) : 0;
+      // CP3: based on target or session max, capped at 33.33
+      const cp3Raw   = cp3?.score || 0;
+      const cp3Exact = cp3Raw > 0 ? Math.min(CP_WEIGHT, (cp3Raw / Math.max(1, cp3Denom)) * CP_WEIGHT) : 0;
+      const cp3Mark  = Math.round(cp3Exact);
 
-      const total = cp1Mark + cp2Mark + cp3Mark;
+      // Total: sum exact values, then round properly
+      // >= 99.5 → 100, otherwise floor
+      const totalExact = cp1Exact + cp2Exact + cp3Exact;
+      const totalMark  = totalExact >= 99.5 ? 100 : Math.floor(totalExact);
 
       return {
         player_id:     player.id,
@@ -215,7 +220,7 @@ const getFinalLeaderboard = async (req, res) => {
         cp3_raw:       cp3Raw,
         cp3_target:    cp3Denom,
         cp3_mark:      cp3Mark,
-        total_mark:    total,
+        total_mark:    totalMark,
       };
     }).sort((a, b) => b.total_mark - a.total_mark);
 

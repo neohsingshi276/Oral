@@ -64,8 +64,8 @@ const GameCanvas = ({ player, progress, onCheckpointReached, paused = false }) =
       import('phaser').then(({ default: Phaser }) => {
         if (cancelled || !containerRef.current) return;
 
-        const viewW = window.innerWidth - 32;
-        const viewH = window.innerHeight - 130;
+        const viewW = containerRef.current.clientWidth || (window.innerWidth - 8);
+        const viewH = containerRef.current.clientHeight || (window.innerHeight - 90);
 
         const sceneData = {
           onCheckpointReached,
@@ -101,7 +101,9 @@ const GameCanvas = ({ player, progress, onCheckpointReached, paused = false }) =
         });
 
         const onResize = () => {
-          game.scale.resize(window.innerWidth - 32, window.innerHeight - 130);
+          const w = containerRef.current?.clientWidth || (window.innerWidth - 8);
+          const h = containerRef.current?.clientHeight || (window.innerHeight - 90);
+          game.scale.resize(w, h);
         };
         window.addEventListener('resize', onResize);
 
@@ -139,7 +141,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, paused = false }) =
   }, [paused, ready]);
 
   return (
-    <div style={{ position: 'relative', width: '100%', margin: '0 auto' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Loading overlay — shown until Phaser fires onLoadComplete */}
       {!ready && (
         <div style={{
@@ -184,10 +186,11 @@ const GameCanvas = ({ player, progress, onCheckpointReached, paused = false }) =
         ref={containerRef}
         style={{
           width: '100%',
+          height: '100%',
           lineHeight: 0,
-          borderRadius: '12px',
+          borderRadius: '8px',
           overflow: 'hidden',
-          border: ready ? '3px solid #1e3a5f' : '3px solid transparent',
+          border: ready ? '2px solid #1e3a5f' : '2px solid transparent',
           opacity: ready ? 1 : 0,
           transition: 'opacity 0.4s ease',
         }}

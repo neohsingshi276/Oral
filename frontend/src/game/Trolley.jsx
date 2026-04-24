@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../services/api';
 
 const DEFAULT_DURATION = 60;
-const TROLLEY_SPEED = 4;
-const TROLLEY_ACCELERATION = 0.3;
+const TROLLEY_SPEED = 2.5;
+const TROLLEY_ACCELERATION = 0.18;
 const FOOD_FALL_SPEED = 2.5;
 const SPAWN_INTERVAL = 1200;
 
@@ -14,6 +14,14 @@ const GOOD_FOODS = [
   { emoji: '🥦', name: 'Broccoli', points: 10, color: '#90EE90' },
   { emoji: '🍎', name: 'Apple', points: 10, color: '#FF6B6B' },
   { emoji: '🥬', name: 'Leafy Greens', points: 10, color: '#7FFF7F' },
+  { emoji: '🥚', name: 'Egg', points: 10, color: '#FFEFD5' },
+  { emoji: '🐟', name: 'Fish', points: 10, color: '#87CEFA' },
+  { emoji: '🍌', name: 'Banana', points: 10, color: '#FFE135' },
+  { emoji: '🌽', name: 'Corn', points: 10, color: '#F0C040' },
+  { emoji: '🥜', name: 'Nuts', points: 10, color: '#D2A679' },
+  { emoji: '🍇', name: 'Grapes', points: 10, color: '#9B59B6' },
+  { emoji: '💧', name: 'Water', points: 10, color: '#B0E0E6' },
+  { emoji: '🍊', name: 'Orange', points: 10, color: '#FFA500' },
 ];
 
 const BAD_FOODS = [
@@ -23,6 +31,12 @@ const BAD_FOODS = [
   { emoji: '🍩', name: 'Donut', points: -5, color: '#FFB6C1' },
   { emoji: '🧁', name: 'Cupcake', points: -5, color: '#FF99CC' },
   { emoji: '🥤', name: 'Soda', points: -5, color: '#87CEEB' },
+  { emoji: '🍪', name: 'Cookie', points: -5, color: '#D2691E' },
+  { emoji: '🎂', name: 'Cake', points: -5, color: '#FFB7C5' },
+  { emoji: '🍿', name: 'Caramel Popcorn', points: -5, color: '#DAA520' },
+  { emoji: '🧃', name: 'Juice Box', points: -5, color: '#FFA07A' },
+  { emoji: '🍦', name: 'Ice Cream', points: -5, color: '#FFFDD0' },
+  { emoji: '🍡', name: 'Cotton Candy', points: -5, color: '#FFB6D9' },
 ];
 
 const CP3Game = ({ player, onComplete }) => {
@@ -120,7 +134,7 @@ const CP3Game = ({ player, onComplete }) => {
         let velocity = trolleyVelocity.current;
         if (keysPressed.current['ArrowLeft']) velocity -= TROLLEY_ACCELERATION * deltaTime;
         else if (keysPressed.current['ArrowRight']) velocity += TROLLEY_ACCELERATION * deltaTime;
-        else velocity *= 0.85;
+        else velocity *= 0.9;
         velocity = Math.max(-TROLLEY_SPEED, Math.min(TROLLEY_SPEED, velocity));
         trolleyVelocity.current = velocity;
         const nextPos = Math.max(5, Math.min(95, prev + velocity * deltaTime));
@@ -133,8 +147,8 @@ const CP3Game = ({ player, onComplete }) => {
         return prev.map(item => {
           const newY = item.y + FOOD_FALL_SPEED * deltaTime;
           if (newY >= trolleyY && newY <= trolleyY + 40 && !item.caught) {
-            const trolleyLeft = trolleyPosRef.current - 8;
-            const trolleyRight = trolleyPosRef.current + 8;
+            const trolleyLeft = trolleyPosRef.current - 10;
+            const trolleyRight = trolleyPosRef.current + 10;
             if (item.x >= trolleyLeft && item.x <= trolleyRight) {
               setScore(s => {
                 const ns = Math.max(0, s + item.points);
@@ -256,9 +270,9 @@ const CP3Game = ({ player, onComplete }) => {
       <div style={s.lbCard}>
         <div style={{ fontSize: '4rem', textAlign: 'center' }}>🏆</div>
         <h2 style={s.lbTitle}>Papan Markah Akhir!</h2>
-        <p style={{ textAlign: 'center', color: '#64748b', marginBottom: '0.5rem', fontSize: '0.88rem' }}>CP1 Quiz + CP2 Crossword + CP3 Food Game (masing-masing 33%)</p>
+        <p style={{ textAlign: 'center', color: '#64748b', marginBottom: '0.5rem', fontSize: '0.88rem' }}>CP1 Quiz + CP2 Crossword + CP3 Food Game (masing-masing 33.33%)</p>
         <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.78rem', color: '#475569', textAlign: 'center' }}>
-          Formula: (Skor CP / Skor Max) × 33 = Markah
+          Formula: (Skor CP / Skor Max) × 33.33 = Markah (Jumlah /100)
         </div>
         <div style={s.lbList}>
           {finalLeaderboard.map((entry, i) => (
@@ -272,7 +286,7 @@ const CP3Game = ({ player, onComplete }) => {
                   <span>CP3: {entry.cp3_mark}/33</span>
                 </div>
               </div>
-              <div style={{ ...s.lbScore, fontSize: '1.2rem' }}>{entry.total_mark}<span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>/99</span></div>
+              <div style={{ ...s.lbScore, fontSize: '1.2rem' }}>{entry.total_mark}<span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>/100</span></div>
             </div>
           ))}
         </div>
@@ -335,6 +349,12 @@ const CP3Game = ({ player, onComplete }) => {
             </div>
             {combo > 1 && <span style={s.combo}>🔥 {combo}x!</span>}
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff', padding: '0.35rem 0.75rem', borderRadius: '10px', border: '2px solid #e2e8f0' }}>
+            <span style={{ fontSize: '0.72rem', color: '#888', fontWeight: '600' }}>✅</span>
+            <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#16a34a' }}>{GOOD_FOODS.map(f => f.emoji).slice(0, 4).join('')} +10</span>
+            <span style={{ fontSize: '0.72rem', color: '#888', margin: '0 0.25rem' }}>|</span>
+            <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#e11d48' }}>{BAD_FOODS.map(f => f.emoji).slice(0, 4).join('')} -5</span>
+          </div>
           <div style={s.timerPanel}>
             <span style={{ ...s.timerVal, color: timeLeft <= 10 ? '#e11d48' : '#4ECDC4' }}>{timeLeft}</span>
             <span style={{ fontSize: '0.75rem', color: '#666' }}>saat</span>
@@ -376,7 +396,7 @@ const animStyles = `
 `;
 
 const s = {
-  fullPage: { position: 'fixed', inset: 0, background: 'linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', padding: '1rem', overflowY: 'auto' },
+  fullPage: { position: 'fixed', inset: 0, background: 'linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', padding: '0.5rem', overflowY: 'auto' },
   startCard: { background: '#fff', borderRadius: '24px', padding: '2rem', maxWidth: '700px', width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', textAlign: 'center' },
   title: { fontSize: '2.5rem', fontWeight: '900', color: '#FF6B35', margin: '0 0 0.5rem', textShadow: '3px 3px 0 #FFE66D' },
   badge: { display: 'inline-block', background: 'linear-gradient(135deg,#FF6B35,#F7931E)', color: '#fff', padding: '0.4rem 1.5rem', borderRadius: '50px', fontSize: '0.9rem', fontWeight: '700', marginBottom: '1.5rem' },
@@ -389,14 +409,14 @@ const s = {
   foodRow: { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' },
   foodChip: { fontSize: '1.8rem' },
   startBtn: { width: '100%', padding: '1rem', fontSize: '1.3rem', fontWeight: '900', background: 'linear-gradient(135deg,#FF6B35,#F7931E)', color: '#fff', border: 'none', borderRadius: '16px', cursor: 'pointer', boxShadow: '0 8px 25px rgba(255,107,53,0.4)' },
-  gameWrap: { width: '100%', maxWidth: '900px', display: 'flex', flexDirection: 'column' },
-  gameHeader: { display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', flexShrink: 0 },
-  scorePanel: { flex: 1, background: '#fff', padding: '0.5rem 1rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.75rem', border: '3px solid #FFD93D', minWidth: 0 },
-  scoreVal: { fontSize: '2rem', fontWeight: '900', color: '#FF6B35', lineHeight: 1 },
+  gameWrap: { width: '100%', maxWidth: '100%', display: 'flex', flexDirection: 'column', height: '100%', padding: '0 0.5rem' },
+  gameHeader: { display: 'flex', gap: '0.75rem', marginBottom: '0.5rem', flexShrink: 0, flexWrap: 'wrap', alignItems: 'center' },
+  scorePanel: { background: '#fff', padding: '0.5rem 1rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.75rem', border: '3px solid #FFD93D', minWidth: 0 },
+  scoreVal: { fontSize: '2.2rem', fontWeight: '900', color: '#FF6B35', lineHeight: 1 },
   combo: { fontSize: '0.9rem', fontWeight: '800', color: '#FF6B35', animation: 'pulse 0.5s infinite' },
   timerPanel: { background: '#fff', padding: '0.5rem 1rem', borderRadius: '12px', textAlign: 'center', border: '3px solid #4ECDC4', minWidth: '80px', flexShrink: 0 },
   timerVal: { fontSize: '2rem', fontWeight: '900', display: 'block', lineHeight: 1 },
-  gameArea: { position: 'relative', height: '500px', background: 'linear-gradient(180deg,#FFF9E6 0%,#FFE66D 100%)', borderRadius: '20px', overflow: 'hidden', border: '4px solid #fff', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' },
+  gameArea: { position: 'relative', flex: 1, minHeight: '300px', background: 'linear-gradient(180deg,#FFF9E6 0%,#FFE66D 100%)', borderRadius: '20px', overflow: 'hidden', border: '4px solid #fff', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' },
   shelf: { position: 'absolute', top: '25%', left: 0, right: 0, height: '10px', background: '#8B6F47', opacity: 0.3 },
   shelf2: { position: 'absolute', top: '55%', left: 0, right: 0, height: '10px', background: '#8B6F47', opacity: 0.3 },
   particle: { position: 'absolute', width: '8px', height: '8px', borderRadius: '50%', pointerEvents: 'none' },
