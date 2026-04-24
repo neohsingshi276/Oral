@@ -19,6 +19,11 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
   const [totalScore, setTotalScore] = useState(0);
   const [startTime] = useState(Date.now());
   const timerRef = useRef(null);
+  const answersRef = useRef([]);
+
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
 
   useEffect(() => {
     api.get(`/quiz/session/${player.session_id}`)
@@ -54,8 +59,10 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     if (answeredRef.current) return; // FIX: ref is immune to stale closure — state would be stale here
     const q = questions[currentQ];
     markAnswered();
-    setAnswers(prev => [...prev, { question_id: q.id, selected_indexes: [], timed_out: true }]);
-    setTimeout(() => nextQuestion(), 2000);
+    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: [], timed_out: true }];
+    answersRef.current = nextAnswers;
+    setAnswers(nextAnswers);
+    setTimeout(() => nextQuestion(nextAnswers), 2000);
   };
 
   const handleMCSelect = (idx) => {
@@ -64,8 +71,10 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     setSelected([idx]);
     markAnswered();
     const q = questions[currentQ];
-    setAnswers(prev => [...prev, { question_id: q.id, selected_indexes: [idx] }]);
-    setTimeout(() => nextQuestion(), 1800);
+    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: [idx] }];
+    answersRef.current = nextAnswers;
+    setAnswers(nextAnswers);
+    setTimeout(() => nextQuestion(nextAnswers), 1800);
   };
 
   const handleMultiToggle = (idx) => {
@@ -78,8 +87,10 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     clearInterval(timerRef.current);
     markAnswered();
     const q = questions[currentQ];
-    setAnswers(prev => [...prev, { question_id: q.id, selected_indexes: selected }]);
-    setTimeout(() => nextQuestion(), 1800);
+    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: selected }];
+    answersRef.current = nextAnswers;
+    setAnswers(nextAnswers);
+    setTimeout(() => nextQuestion(nextAnswers), 1800);
   };
 
   const handleMatchLeft = (idx) => {
@@ -103,31 +114,33 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     clearInterval(timerRef.current);
     markAnswered();
     const q = questions[currentQ];
-    setAnswers(prev => [...prev, { question_id: q.id, selected_indexes: matchLines }]);
-    setTimeout(() => nextQuestion(), 2000);
+    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: matchLines }];
+    answersRef.current = nextAnswers;
+    setAnswers(nextAnswers);
+    setTimeout(() => nextQuestion(nextAnswers), 2000);
   };
 
-  const nextQuestion = () => {
+  const nextQuestion = (submittedAnswers = answersRef.current) => {
     answeredRef.current = false; // FIX: reset ref before state so next render is correct
     setSelected([]);
     setMatchLines([]);
     setLeftSelected(null);
     setAnswered(false);
     if (currentQ + 1 >= questions.length) {
-      submitQuiz();
+      submitQuiz(submittedAnswers);
     } else {
       setCurrentQ(prev => prev + 1);
     }
   };
 
-  const submitQuiz = async () => {
+  const submitQuiz = async (submittedAnswers = answersRef.current) => {
     setPhase('loading');
     try {
       const timeTaken = Math.round((Date.now() - startTime) / 1000);
       const res = await api.post('/quiz/submit', {
         player_id: player.id,
         session_id: player.session_id,
-        answers,
+        answers: submittedAnswers,
         time_taken: timeTaken,
       });
       setResult(res.data);

@@ -23,7 +23,12 @@ const StaffChat = () => {
   const fetchContacts = async () => {
     try {
       const res = await api.get('/staff-chat/contacts');
-      setContacts(res.data.contacts || []);
+      const nextContacts = res.data.contacts || [];
+      setContacts(nextContacts);
+      setSelected(prev => {
+        if (!prev) return prev;
+        return nextContacts.find(c => c.id === prev.id) || null;
+      });
       setLoadingContacts(false);
     } catch (err) {
       console.error('Failed to load contacts:', err);
@@ -83,15 +88,24 @@ const StaffChat = () => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
+  const visibleContacts = me?.role === 'main_admin'
+    ? contacts
+    : contacts.filter(c => c.role === 'main_admin');
+
+  useEffect(() => {
+    if (!selected && visibleContacts.length === 1) {
+      setSelected(visibleContacts[0]);
+      return;
+    }
+    if (selected && !visibleContacts.some(c => c.id === selected.id)) {
+      setSelected(visibleContacts[0] || null);
+    }
+  }, [selected, visibleContacts]);
+
   // ── total unread badge for nav ───────────────────────────
   const totalUnread = contacts.reduce((sum, c) => sum + (c.unread || 0), 0);
 
   if (loadingContacts) return <div style={s.loading}>Loading staff chat… 💬</div>;
-
-  // For regular admins: contacts are just Main Admins (filtered below for clarity)
-  const visibleContacts = me?.role === 'main_admin'
-    ? contacts
-    : contacts.filter(c => c.role === 'main_admin');
 
   return (
     <div style={s.wrap}>

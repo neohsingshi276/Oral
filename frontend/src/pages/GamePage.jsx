@@ -99,6 +99,12 @@ const GamePage = () => {
   const [showTutorial, setShowTutorial] = useState(() => !localStorage.getItem('tutorial_seen'));
   const [showConfetti, setShowConfetti] = useState(false);
 
+  const getPlayerChatConfig = useCallback(() => (
+    player?.chat_token
+      ? { headers: { Authorization: `Bearer ${player.chat_token}` } }
+      : null
+  ), [player]);
+
   // FIX: Validate the player object from localStorage before using it.
   // A missing, malformed, or tampered value used to throw an unhandled error
   // and crash the entire page. Now we redirect cleanly instead.
@@ -188,14 +194,12 @@ const GamePage = () => {
   };
 
   const sendChat = async () => {
-    if (!chatInput.trim()) return;
+    const chatConfig = getPlayerChatConfig();
+    if (!chatInput.trim() || !chatConfig) return;
     try {
       await api.post('/chat', {
-        player_id: player.id,
-        session_id: player.session_id,
-        sender_type: 'player',
         message: chatInput.trim()
-      });
+      }, chatConfig);
       setChatMessages(prev => [...prev, {
         sender_type: 'player',
         message: chatInput.trim(),
@@ -208,8 +212,10 @@ const GamePage = () => {
   };
 
   const fetchChat = async () => {
+    const chatConfig = getPlayerChatConfig();
+    if (!chatConfig) return;
     try {
-      const res = await api.get(`/chat/${player.id}?session_id=${player.session_id}`);
+      const res = await api.get(`/chat/${player.id}`, chatConfig);
       setChatMessages(res.data.messages || []);
     } catch (err) {
       console.error(err);
@@ -222,7 +228,7 @@ const GamePage = () => {
       const t = setInterval(fetchChat, 5000);
       return () => clearInterval(t);
     }
-  }, [showChat, player]);
+  }, [showChat, player, getPlayerChatConfig]);
 
   if (!player) return <div style={s.loading}>Loading game... 🎮</div>;
 
@@ -433,10 +439,16 @@ const GamePage = () => {
               onChange={e => setChatInput(e.target.value)}
               placeholder="Ask a question..."
               maxLength={200}
+              disabled={!player?.chat_token}
               onKeyDown={e => e.key === 'Enter' && sendChat()}
             />
-            <button style={s.chatSendBtn} onClick={sendChat}>Send</button>
+            <button style={{ ...s.chatSendBtn, opacity: player?.chat_token ? 1 : 0.5 }} onClick={sendChat} disabled={!player?.chat_token}>Send</button>
           </div>
+          {!player?.chat_token && (
+            <div style={{ padding: '0 0.75rem 0.75rem', color: '#e11d48', fontSize: '0.78rem' }}>
+              Chat needs a fresh join token. Rejoin the session to use chat securely.
+            </div>
+          )}
         </div>
       )}
 

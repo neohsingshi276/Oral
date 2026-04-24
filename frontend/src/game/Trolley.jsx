@@ -48,9 +48,11 @@ const CP3Game = ({ player, onComplete }) => {
   const trolleyVelocity = useRef(0);
   const lastComboTime = useRef(0);
   const scoreRef = useRef(0);
+  const trolleyPosRef = useRef(50);
 
   // Keep scoreRef in sync
   useEffect(() => { scoreRef.current = score; }, [score]);
+  useEffect(() => { trolleyPosRef.current = trolleyPos; }, [trolleyPos]);
 
   // Fetch admin settings on mount
   useEffect(() => {
@@ -71,6 +73,7 @@ const CP3Game = ({ player, onComplete }) => {
     scoreRef.current = 0;
     setTimeLeft(gameDuration);
     setTrolleyPos(50);
+    trolleyPosRef.current = 50;
     setFallingItems([]);
     setParticles([]);
     setCombo(0);
@@ -120,7 +123,9 @@ const CP3Game = ({ player, onComplete }) => {
         else velocity *= 0.85;
         velocity = Math.max(-TROLLEY_SPEED, Math.min(TROLLEY_SPEED, velocity));
         trolleyVelocity.current = velocity;
-        return Math.max(5, Math.min(95, prev + velocity * deltaTime));
+        const nextPos = Math.max(5, Math.min(95, prev + velocity * deltaTime));
+        trolleyPosRef.current = nextPos;
+        return nextPos;
       });
       setFallingItems(prev => {
         const gameAreaHeight = gameAreaRef.current?.clientHeight || 600;
@@ -128,9 +133,8 @@ const CP3Game = ({ player, onComplete }) => {
         return prev.map(item => {
           const newY = item.y + FOOD_FALL_SPEED * deltaTime;
           if (newY >= trolleyY && newY <= trolleyY + 40 && !item.caught) {
-            const tPos = trolleyVelocity.current;
-            const trolleyLeft = trolleyPos - 8;
-            const trolleyRight = trolleyPos + 8;
+            const trolleyLeft = trolleyPosRef.current - 8;
+            const trolleyRight = trolleyPosRef.current + 8;
             if (item.x >= trolleyLeft && item.x <= trolleyRight) {
               setScore(s => {
                 const ns = Math.max(0, s + item.points);
@@ -161,7 +165,7 @@ const CP3Game = ({ player, onComplete }) => {
     };
     animationFrameRef.current = requestAnimationFrame(gameLoop);
     return () => { if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current); };
-  }, [gameState, trolleyPos, createParticles]);
+  }, [gameState, createParticles]);
 
   useEffect(() => {
     if (gameState !== 'playing') return;

@@ -1,10 +1,30 @@
 const db = require('../db');
+const jwt = require('jsonwebtoken');
+
+const MAP_MIN_X = 0;
+const MAP_MAX_X = 5600;
+const MAP_MIN_Y = 0;
+const MAP_MAX_Y = 7600;
+const START_X = 1376;
+const START_Y = 6784;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const safeId = (val) => {
   const n = parseInt(val, 10);
   return isNaN(n) || n <= 0 ? null : n;
 };
+
+const createPlayerChatToken = (player) =>
+  jwt.sign(
+    {
+      type: 'player_chat',
+      player_id: player.id,
+      session_id: player.session_id,
+      nickname: player.nickname,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '30d' }
+  );
 
 // ─── joinGame ─────────────────────────────────────────────────────────────────
 // FIX: Added duplicate-nickname check so the same nickname cannot join twice
@@ -50,8 +70,15 @@ const joinGame = async (req, res) => {
 
     await db.query(
       'INSERT INTO player_positions (player_id, pos_x, pos_y, last_checkpoint) VALUES (?, ?, ?, ?)',
-      [playerId, 3296, 7100, 0]   // START_X=3296, START_Y=7200 (near Checkpoint 1)
+      [playerId, START_X, START_Y, 0]
     );
+
+    const player = {
+      id: playerId,
+      nickname: cleanNick,
+      session_id: session.id,
+      session_name: session.session_name,
+    };
 
     for (let cp = 1; cp <= 3; cp++) {
       await db.query(
@@ -63,10 +90,8 @@ const joinGame = async (req, res) => {
     res.status(201).json({
       message: 'Joined successfully',
       player: {
-        id: playerId,
-        nickname: cleanNick,
-        session_id: session.id,
-        session_name: session.session_name
+        ...player,
+        chat_token: createPlayerChatToken(player),
       }
     });
   } catch (err) {
@@ -85,9 +110,9 @@ const savePosition = async (req, res) => {
   if (!player_id || isNaN(pos_x) || isNaN(pos_y) || isNaN(last_checkpoint))
     return res.status(400).json({ error: 'Invalid position data' });
 
-  // Clamp coordinates to reasonable game-world bounds to prevent garbage data
-  const clampedX = Math.max(-5000, Math.min(5000, pos_x));
-  const clampedY = Math.max(-5000, Math.min(5000, pos_y));
+  // Clamp coordinates to the actual playable map bounds.
+  const clampedX = Math.max(MAP_MIN_X, Math.min(MAP_MAX_X, pos_x));
+  const clampedY = Math.max(MAP_MIN_Y, Math.min(MAP_MAX_Y, pos_y));
   const clampedCP = Math.max(0, Math.min(3, last_checkpoint));
 
   try {

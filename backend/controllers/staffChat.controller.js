@@ -23,6 +23,11 @@ const ensureTable = async () => {
   `);
 };
 
+const getAdminById = async (id) => {
+  const [rows] = await db.query('SELECT id, name, role FROM admins WHERE id = ?', [id]);
+  return rows[0] || null;
+};
+
 // ─── getConversation ─────────────────────────────────────────
 // Returns all messages between the requesting admin and a target admin.
 // Both participants can fetch the thread.
@@ -33,6 +38,13 @@ const getConversation = async (req, res) => {
   if (!otherId || isNaN(otherId)) return res.status(400).json({ error: 'Invalid admin_id' });
 
   try {
+    const me = await getAdminById(myId);
+    const other = await getAdminById(otherId);
+    if (!me || !other) return res.status(404).json({ error: 'Admin not found' });
+    if (me.role !== 'main_admin' && other.role !== 'main_admin') {
+      return res.status(403).json({ error: 'Regular admins can only chat with Main Admin' });
+    }
+
     const [rows] = await db.query(`
       SELECT sm.*, 
              a_sender.name   AS sender_name,
@@ -74,9 +86,12 @@ const sendMessage = async (req, res) => {
     return res.status(400).json({ error: 'Cannot message yourself' });
 
   try {
-    // Verify receiver exists
-    const [recv] = await db.query('SELECT id FROM admins WHERE id = ?', [receiver_id]);
-    if (recv.length === 0) return res.status(404).json({ error: 'Admin not found' });
+    const sender = await getAdminById(senderId);
+    const receiver = await getAdminById(parseInt(receiver_id, 10));
+    if (!sender || !receiver) return res.status(404).json({ error: 'Admin not found' });
+    if (sender.role !== 'main_admin' && receiver.role !== 'main_admin') {
+      return res.status(403).json({ error: 'Regular admins can only message Main Admin' });
+    }
 
     await db.query(
       'INSERT INTO staff_messages (sender_id, receiver_id, message) VALUES (?, ?, ?)',
@@ -97,11 +112,14 @@ const getContacts = async (req, res) => {
   const myId = req.admin.id;
 
   try {
-    // All other admins
-    const [admins] = await db.query(
-      'SELECT id, name, role FROM admins WHERE id != ? ORDER BY role DESC, name ASC',
-      [myId]
-    );
+    const me = await getAdminById(myId);
+    if (!me) return res.status(404).json({ error: 'Admin not found' });
+
+    const contactQuery = me.role === 'main_admin'
+      ? 'SELECT id, name, role FROM admins WHERE id != ? ORDER BY name ASC'
+      : 'SELECT id, name, role FROM admins WHERE id != ? AND role = ? ORDER BY name ASC';
+    const contactParams = me.role === 'main_admin' ? [myId] : [myId, 'main_admin'];
+    const [admins] = await db.query(contactQuery, contactParams);
 
     // Unread counts (messages sent to me, unread, grouped by sender)
     const [unreads] = await db.query(`

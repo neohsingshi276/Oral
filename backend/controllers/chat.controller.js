@@ -3,8 +3,10 @@ const db = require('../db');
 // ─── sendMessage (players only) ───────────────────────────────────────────────
 // sender_type is always forced to 'player' — players cannot spoof admin messages.
 const sendMessage = async (req, res) => {
-  const { player_id, session_id, message } = req.body;
-  if (!player_id || !session_id) return res.status(400).json({ error: 'player_id and session_id required' });
+  const player_id = parseInt(req.playerChat?.player_id, 10);
+  const session_id = parseInt(req.playerChat?.session_id, 10);
+  const { message } = req.body;
+  if (!player_id || !session_id) return res.status(401).json({ error: 'Invalid player chat token' });
   if (!message) return res.status(400).json({ error: 'Message required' });
   if (typeof message !== 'string' || message.trim().length === 0) return res.status(400).json({ error: 'Message cannot be empty' });
   if (message.length > 200) return res.status(400).json({ error: 'Message too long (max 200 characters)' });
@@ -28,8 +30,11 @@ const adminSendMessage = async (req, res) => {
   if (typeof message !== 'string' || message.trim().length === 0) return res.status(400).json({ error: 'Message cannot be empty' });
   if (message.length > 200) return res.status(400).json({ error: 'Message too long (max 200 characters)' });
   try {
-    const [playerRows] = await db.query('SELECT id FROM players WHERE id = ?', [player_id]);
-    if (playerRows.length === 0) return res.status(404).json({ error: 'Player not found' });
+    const [playerRows] = await db.query(
+      'SELECT id FROM players WHERE id = ? AND session_id = ?',
+      [player_id, session_id]
+    );
+    if (playerRows.length === 0) return res.status(404).json({ error: 'Player not found in this session' });
 
     await db.query(
       'INSERT INTO chat_messages (player_id, session_id, sender_type, message) VALUES (?, ?, ?, ?)',
@@ -40,14 +45,13 @@ const adminSendMessage = async (req, res) => {
 };
 
 // ─── getMessages (player self-read only) ─────────────────────────────────────
-// Players identify themselves by player_id + session_id passed as query params.
-// This prevents one player from reading another player's messages.
+// Players authenticate with a signed chat token that binds them to one player_id.
 const getMessages = async (req, res) => {
   const player_id = parseInt(req.params.player_id, 10);
-  const { session_id } = req.query;
-
-  if (!session_id) {
-    return res.status(400).json({ error: 'session_id query param required' });
+  const session_id = parseInt(req.playerChat?.session_id, 10);
+  const tokenPlayerId = parseInt(req.playerChat?.player_id, 10);
+  if (!player_id || player_id !== tokenPlayerId || !session_id) {
+    return res.status(403).json({ error: 'Access denied' });
   }
 
   try {

@@ -8,6 +8,7 @@ const {
   getAllChats,
 } = require('../controllers/chat.controller');
 const verifyToken = require('../middleware/verifyToken');
+const verifyPlayerChatToken = require('../middleware/verifyPlayerChatToken');
 
 // ── IMPORTANT: specific /admin/* routes MUST be registered BEFORE /:player_id
 // otherwise Express matches "admin" as a player_id parameter and returns 404.
@@ -18,7 +19,7 @@ router.get('/admin/messages/:player_id',     verifyToken, adminGetMessages);
 router.get('/',                              verifyToken, getAllChats);
 
 // Player routes (no JWT — players don't have tokens)
-router.post('/',        sendMessage);
-router.get('/:player_id', getMessages);
+router.post('/', verifyPlayerChatToken, sendMessage);
+router.get('/:player_id', verifyPlayerChatToken, getMessages);
 
 module.exports = router;

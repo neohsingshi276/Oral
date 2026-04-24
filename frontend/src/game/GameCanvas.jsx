@@ -4,7 +4,7 @@ import api from '../services/api';
 
 const SAVE_INTERVAL = 5000;
 
-const GameCanvas = ({ player, progress, onCheckpointReached }) => {
+const GameCanvas = ({ player, progress, onCheckpointReached, paused = false }) => {
   const containerRef = useRef(null);
   const gameRef = useRef(null);
   const sceneRef = useRef(null);
@@ -87,7 +87,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
           backgroundColor: '#1a1a2e',
           physics: {
             default: 'arcade',
-            arcade: { gravity: { y: 0 }, debug: true },
+            arcade: { gravity: { y: 0 }, debug: false },
           },
           scene: [],
         });
@@ -130,6 +130,13 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [player.id]);
+
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    if (paused) scene.pauseGame();
+    else scene.resumeGame();
+  }, [paused, ready]);
 
   return (
     <div style={{ position: 'relative', width: '100%', margin: '0 auto' }}>
