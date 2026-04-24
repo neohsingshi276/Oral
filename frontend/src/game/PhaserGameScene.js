@@ -87,6 +87,11 @@ const CHECKPOINT_DEFS = [
 const START_X = 1376;
 const START_Y = 6784;
 const PLAYER_SPEED = 180;
+const TREE_FADE_ALPHA = 0.45;
+const WATER_TILE_GIDS = [
+  1067, 1387, 1392, 1515, 1516, 2480,
+  10659, 10907, 11227, 11355,
+];
 
 // Tile layer names from Tiled (the order determines z-order)
 const TILE_LAYER_NAMES = [
@@ -185,10 +190,12 @@ export default class PhaserGameScene extends Phaser.Scene {
 
     // ── Create tile layers ───────────────────────────────────────────
     this.tileLayers = [];
+    this.tileLayerMap = {};
     TILE_LAYER_NAMES.forEach(name => {
       const layer = map.createLayer(name, tilesets);
       if (layer) {
         this.tileLayers.push(layer);
+        this.tileLayerMap[name] = layer;
       }
     });
 
@@ -197,10 +204,15 @@ export default class PhaserGameScene extends Phaser.Scene {
     const mapHeightPx = map.heightInPixels;
     this.physics.world.setBounds(0, 0, mapWidthPx, mapHeightPx);
 
-    // NOTE: Sea tile collision (setCollisionByExclusion) has been removed.
-    // It was marking nearly every tile as solid because the WALKABLE_GIDS list
-    // was incomplete, blocking the player at spawn and preventing movement.
-    // World boundary is enforced by setCollideWorldBounds(true) on the player.
+    this.baseLayer = this.tileLayerMap.map || null;
+    this.smallTreeLayer = this.tileLayerMap.smalltree || null;
+    this.bigTreeLayer = this.tileLayerMap.bigtree || null;
+
+    if (this.baseLayer) {
+      // The sea is painted directly onto the base map layer using a small set
+      // of blue water tile GIDs. Only those tiles should be non-walkable.
+      this.baseLayer.setCollision(WATER_TILE_GIDS);
+    }
 
     // ── Collision bodies from object layers ───────────────────────────
     // ONE StaticGroup for all collision shapes.  A single physics.add.collider()
@@ -210,13 +222,38 @@ export default class PhaserGameScene extends Phaser.Scene {
 
     // ── Collision filter helpers ─────────────────────────────────────────
     // collisionbelowplayer  = ground-level items (fences, rocks, bushes)
-    // collisionupperplayer  = upper items drawn above the player (tree trunks)
+    // collisionupperplayer  = upper items drawn above the player (trees / roofs)
     //
     // Per design:
     //   • Tree SHADOWS (ellipses in below-layer)  → skip (walk through)
     //   • Small STONES  (≤32×16 rects in below)   → skip (walk through)
-    //   • Tree TRUNKS   (upper-layer polygons)     → keep (solid)
-    //   • Fences/walls  (larger rects/polygons)    → keep (solid)
+    //   • Small upper tree helpers                → skip (walk under + fade)
+    //   • Large structures / furniture blockers   → keep (solid)
+
+    const getObjectBounds = (obj) => {
+      if (obj.ellipse || (obj.width > 0 && obj.height > 0 && !obj.polygon)) {
+        return {
+          x0: obj.x,
+          y0: obj.y,
+          x1: obj.x + (obj.width || 0),
+          y1: obj.y + (obj.height || 0),
+        };
+      }
+      if (obj.polygon) {
+        let x0 = Infinity;
+        let y0 = Infinity;
+        let x1 = -Infinity;
+        let y1 = -Infinity;
+        obj.polygon.forEach(p => {
+          x0 = Math.min(x0, obj.x + p.x);
+          y0 = Math.min(y0, obj.y + p.y);
+          x1 = Math.max(x1, obj.x + p.x);
+          y1 = Math.max(y1, obj.y + p.y);
+        });
+        return { x0, y0, x1, y1 };
+      }
+      return null;
+    };
 
     const shouldSkipBelowObj = (obj) => {
       // Skip all ellipses (tree shadows / canopy footprints)
@@ -229,17 +266,61 @@ export default class PhaserGameScene extends Phaser.Scene {
       return false;
     };
 
+    const objectOverlapsTreeTiles = (bounds) => {
+      const layers = [this.smallTreeLayer, this.bigTreeLayer].filter(Boolean);
+      if (layers.length === 0) return false;
+
+      const sampleXs = [
+        bounds.x0 + 8,
+        (bounds.x0 + bounds.x1) / 2,
+        bounds.x1 - 8,
+      ];
+      const sampleYs = [
+        bounds.y0 + 8,
+        (bounds.y0 + bounds.y1) / 2,
+        bounds.y1 - 8,
+      ];
+
+      return sampleXs.some(worldX =>
+        sampleYs.some(worldY =>
+          layers.some(layer => {
+            const tile = layer.getTileAtWorldXY(worldX, worldY, true);
+            return !!tile && tile.index !== -1;
+          })
+        )
+      );
+    };
+
+    const shouldSkipUpperObj = (obj) => {
+      // Upper-layer ellipses are decorative overlap helpers, not blockers.
+      if (obj.ellipse) return true;
+      if (!obj.polygon) return false;
+
+      const bounds = getObjectBounds(obj);
+      if (!bounds) return false;
+
+      const w = bounds.x1 - bounds.x0;
+      const h = bounds.y1 - bounds.y0;
+
+      // Most tree-top and trunk helper polygons live in the upper collision
+      // layer and are relatively compact. We keep larger structural pieces,
+      // but only skip them when they actually overlap the rendered tree tiles.
+      return w <= 128 && h <= 128 && objectOverlapsTreeTiles(bounds);
+    };
+
     const buildCollisionLayer = (layerName) => {
       const objectLayer = map.getObjectLayer(layerName);
       if (!objectLayer) return;
 
       const isBelowLayer = layerName === 'collisionbelowplayer';
+      const isUpperLayer = layerName === 'collisionupperplayer';
 
       // Group objects at the same (x,y) — Tiled splits sloped tiles into
       // two polygons at the same origin. Merge their bboxes into one body.
       const byPos = new Map();
       objectLayer.objects.forEach(obj => {
         if (isBelowLayer && shouldSkipBelowObj(obj)) return; // skip shadows/stones
+        if (isUpperLayer && shouldSkipUpperObj(obj)) return; // skip tree overlap helpers
         const key = `${obj.x},${obj.y}`;
         if (!byPos.has(key)) byPos.set(key, []);
         byPos.get(key).push(obj);
@@ -248,17 +329,10 @@ export default class PhaserGameScene extends Phaser.Scene {
       byPos.forEach(objs => {
         let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
         objs.forEach(obj => {
-          if (obj.ellipse) {
-            x0 = Math.min(x0, obj.x); y0 = Math.min(y0, obj.y);
-            x1 = Math.max(x1, obj.x + obj.width); y1 = Math.max(y1, obj.y + obj.height);
-          } else if (obj.polygon) {
-            obj.polygon.forEach(p => {
-              x0 = Math.min(x0, obj.x + p.x); y0 = Math.min(y0, obj.y + p.y);
-              x1 = Math.max(x1, obj.x + p.x); y1 = Math.max(y1, obj.y + p.y);
-            });
-          } else if (obj.width > 0 && obj.height > 0) {
-            x0 = Math.min(x0, obj.x); y0 = Math.min(y0, obj.y);
-            x1 = Math.max(x1, obj.x + obj.width); y1 = Math.max(y1, obj.y + obj.height);
+          const bounds = getObjectBounds(obj);
+          if (bounds) {
+            x0 = Math.min(x0, bounds.x0); y0 = Math.min(y0, bounds.y0);
+            x1 = Math.max(x1, bounds.x1); y1 = Math.max(y1, bounds.y1);
           }
         });
 
@@ -330,11 +404,12 @@ export default class PhaserGameScene extends Phaser.Scene {
 
     // ONE collider call covers every shape in the group — O(1) not O(N).
     this.physics.add.collider(this.playerBody, this.collisionGroup);
+    if (this.baseLayer) {
+      this.physics.add.collider(this.playerBody, this.baseLayer);
+    }
 
-    // NOTE: We intentionally do NOT add a collider against the base tile layer.
-    // The setCollisionByExclusion approach marks almost every tile as solid,
-    // which blocks the player at the spawn position and prevents walking.
-    // Collision is already handled by the explicit object layers above.
+    // Sea collision now comes from the base map layer, while furniture and
+    // structure collision still comes from the explicit object layers above.
 
     // ── Checkpoint markers ───────────────────────────────────────────
     this.checkpointGraphics = [];
@@ -448,6 +523,7 @@ export default class PhaserGameScene extends Phaser.Scene {
 
     // Sync the visible graphic to the physics body
     this.playerGraphic.setPosition(this.playerBody.x, this.playerBody.y);
+    this.updateTreeTransparency();
 
     // Leg animation
     const isMoving = vx !== 0 || vy !== 0;
@@ -514,6 +590,31 @@ export default class PhaserGameScene extends Phaser.Scene {
         this.onCheckpointReached(near);
       }
     }
+  }
+
+  updateTreeTransparency() {
+    if (!this.smallTreeLayer && !this.bigTreeLayer) return;
+
+    const x = this.playerBody?.x || START_X;
+    const probeYs = [
+      (this.playerBody?.y || START_Y) - 24,
+      (this.playerBody?.y || START_Y) - 8,
+    ];
+
+    const isTreeTileAt = (layer, worldX, worldY) => {
+      if (!layer) return false;
+      const tile = layer.getTileAtWorldXY(worldX, worldY, true);
+      return !!tile && tile.index !== -1;
+    };
+
+    const underTree = probeYs.some(worldY =>
+      isTreeTileAt(this.smallTreeLayer, x, worldY) ||
+      isTreeTileAt(this.bigTreeLayer, x, worldY)
+    );
+
+    const nextAlpha = underTree ? TREE_FADE_ALPHA : 1;
+    if (this.smallTreeLayer) this.smallTreeLayer.setAlpha(nextAlpha);
+    if (this.bigTreeLayer) this.bigTreeLayer.setAlpha(nextAlpha);
   }
 
   // Called from React when a modal opens
