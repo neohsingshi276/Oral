@@ -208,6 +208,12 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, mapWidthPx, mapHeightPx);
 
     this.baseLayer = this.tileLayerMap.map || null;
+    this.checkpointRoadLayer = this.tileLayerMap.checkpointroad || null;
+    this.fenceBackLayer = this.tileLayerMap.fenceback || null;
+    this.fenceMidLayer = this.tileLayerMap.fencemid || null;
+    this.layer1CollisionHint = this.tileLayerMap.layer1 || null;
+    this.layer2CollisionHint = this.tileLayerMap.layer2 || null;
+    this.fenceFrontLayer = this.tileLayerMap.fencefrontlayer3 || null;
     this.smallTreeLayer = this.tileLayerMap.smalltree || null;
     this.bigTreeLayer = this.tileLayerMap.bigtree || null;
 
@@ -258,39 +264,62 @@ export default class PhaserGameScene extends Phaser.Scene {
       return null;
     };
 
+    const objectOverlapsLayers = (bounds, layers) =>
+      layers.some(layer => {
+        if (!layer) return false;
+        const sampleXs = [
+          bounds.x0 + 4,
+          (bounds.x0 + bounds.x1) / 2,
+          bounds.x1 - 4,
+        ];
+        const sampleYs = [
+          bounds.y0 + 4,
+          (bounds.y0 + bounds.y1) / 2,
+          bounds.y1 - 4,
+        ];
+        return sampleXs.some(worldX =>
+          sampleYs.some(worldY => {
+            const tile = layer.getTileAtWorldXY(worldX, worldY, true);
+            return !!tile && tile.index !== -1;
+          })
+        );
+      });
+
+    const objectOverlapsProtectedLayers = (bounds) =>
+      objectOverlapsLayers(bounds, [
+        this.fenceBackLayer,
+        this.fenceMidLayer,
+        this.fenceFrontLayer,
+        this.checkpointRoadLayer,
+      ]);
+
     const shouldSkipBelowObj = (obj) => {
       // Skip all ellipses (tree shadows / canopy footprints)
       if (obj.ellipse) return true;
+
+      const bounds = getObjectBounds(obj);
+      if (!bounds) return false;
+
+      const w = bounds.x1 - bounds.x0;
+      const h = bounds.y1 - bounds.y0;
+
       // Skip tiny flat rects that are small stones / pebbles
-      const w = obj.width || 0;
-      const h = obj.height || 0;
-      if (!obj.ellipse && !obj.polygon && w <= 16 && h <= 16) return true;
+      if (!obj.polygon && w <= 16 && h <= 16) return true;
+
+      const overlapsTree = objectOverlapsLayers(bounds, [this.smallTreeLayer, this.bigTreeLayer]);
+      if (overlapsTree && w <= 64 && h <= 64) return true;
+
+      const overlapsBridgeDecor = objectOverlapsLayers(bounds, [this.layer1CollisionHint, this.layer2CollisionHint]);
+      const isBridgeLikeStrip = (w >= 64 && h <= 32) || (h >= 64 && w <= 32);
+      if (overlapsBridgeDecor && isBridgeLikeStrip && !objectOverlapsProtectedLayers(bounds)) {
+        return true;
+      }
+
       return false;
     };
 
     const objectOverlapsTreeTiles = (bounds) => {
-      const layers = [this.smallTreeLayer, this.bigTreeLayer].filter(Boolean);
-      if (layers.length === 0) return false;
-
-      const sampleXs = [
-        bounds.x0 + 8,
-        (bounds.x0 + bounds.x1) / 2,
-        bounds.x1 - 8,
-      ];
-      const sampleYs = [
-        bounds.y0 + 8,
-        (bounds.y0 + bounds.y1) / 2,
-        bounds.y1 - 8,
-      ];
-
-      return sampleXs.some(worldX =>
-        sampleYs.some(worldY =>
-          layers.some(layer => {
-            const tile = layer.getTileAtWorldXY(worldX, worldY, true);
-            return !!tile && tile.index !== -1;
-          })
-        )
-      );
+      return objectOverlapsLayers(bounds, [this.smallTreeLayer, this.bigTreeLayer]);
     };
 
     const shouldSkipUpperObj = (obj) => {
