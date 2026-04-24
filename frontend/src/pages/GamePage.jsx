@@ -235,6 +235,7 @@ const GamePage = () => {
   const showFullQuiz = activeCP === 1 && cpStep === 'activity';
   const showFullCP3 = activeCP === 3 && cpStep === 'activity';
   const showModal = activeCP && !showFullQuiz && !showFullCP3;
+  const isWorldPaused = showTutorial || !!allDone || !!showModal || !!showFullQuiz || !!showFullCP3;
 
   return (
     <div style={s.page}>
@@ -266,7 +267,7 @@ const GamePage = () => {
 
       {/* Game Canvas */}
       <div style={s.canvasWrap}>
-        <GameCanvas player={player} progress={progress} onCheckpointReached={handleCheckpointReached} />
+        <GameCanvas player={player} progress={progress} onCheckpointReached={handleCheckpointReached} paused={isWorldPaused} />
       </div>
 
       {/* Tutorial Overlay */}

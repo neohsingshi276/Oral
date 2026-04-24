@@ -91,21 +91,33 @@ const getCrosswordLeaderboard = async (req, res) => {
     const [players] = await db.query(
       'SELECT id, nickname FROM players WHERE session_id = ?', [sessionId]
     );
-    const [done] = await db.query(`
-      SELECT DISTINCT ca.player_id FROM checkpoint_attempts ca
-      JOIN players p ON ca.player_id = p.id
-      WHERE ca.checkpoint_number = 2 AND ca.completed = 1 AND p.session_id = ?
+    const [scores] = await db.query(`
+      SELECT player_id, MAX(words_correct) AS words_correct, MAX(total_words) AS total_words
+      FROM crossword_scores
+      WHERE session_id = ?
+      GROUP BY player_id
     `, [sessionId]);
+    const [done] = await db.query(
+      'SELECT player_id FROM checkpoint_attempts WHERE session_id = ? AND checkpoint_number = 2 AND completed = 1',
+      [sessionId]
+    );
 
+    const scoreMap = Object.fromEntries(scores.map(s => [s.player_id, s]));
     const doneSet = new Set(done.map(d => d.player_id));
     const leaderboard = players
       .map(p => ({
         player_id: p.id,
         nickname:  p.nickname,
+        words_correct: scoreMap[p.id]?.words_correct || 0,
+        total_words: scoreMap[p.id]?.total_words || 0,
         completed: doneSet.has(p.id),
-        score:     doneSet.has(p.id) ? 100 : 0,
+        score: scoreMap[p.id]?.words_correct || 0,
       }))
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => {
+        if (b.completed !== a.completed) return Number(b.completed) - Number(a.completed);
+        if (b.words_correct !== a.words_correct) return b.words_correct - a.words_correct;
+        return a.nickname.localeCompare(b.nickname);
+      });
 
     res.json({ leaderboard });
   } catch (err) {
