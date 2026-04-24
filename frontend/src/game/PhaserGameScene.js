@@ -87,11 +87,14 @@ const CHECKPOINT_DEFS = [
 const START_X = 1376;
 const START_Y = 6784;
 const PLAYER_SPEED = 180;
-const TREE_FADE_ALPHA = 0.45;
+const PLAYER_UNDER_TREE_ALPHA = 0.6;
+const PLAYER_BODY_WIDTH = 18;
+const PLAYER_BODY_HEIGHT = 24;
 const WATER_TILE_GIDS = [
   1067, 1387, 1392, 1515, 1516, 2480,
   10659, 10907, 11227, 11355,
 ];
+const WATER_TILE_SET = new Set(WATER_TILE_GIDS);
 
 // Tile layer names from Tiled (the order determines z-order)
 const TILE_LAYER_NAMES = [
@@ -261,8 +264,7 @@ export default class PhaserGameScene extends Phaser.Scene {
       // Skip tiny flat rects that are small stones / pebbles
       const w = obj.width || 0;
       const h = obj.height || 0;
-      if (!obj.ellipse && !obj.polygon && w <= 32 && h <= 16) return true;
-      if (!obj.ellipse && !obj.polygon && w <= 16 && h <= 32) return true;
+      if (!obj.ellipse && !obj.polygon && w <= 16 && h <= 16) return true;
       return false;
     };
 
@@ -302,10 +304,9 @@ export default class PhaserGameScene extends Phaser.Scene {
       const w = bounds.x1 - bounds.x0;
       const h = bounds.y1 - bounds.y0;
 
-      // Most tree-top and trunk helper polygons live in the upper collision
-      // layer and are relatively compact. We keep larger structural pieces,
-      // but only skip them when they actually overlap the rendered tree tiles.
-      return w <= 128 && h <= 128 && objectOverlapsTreeTiles(bounds);
+      // Only skip compact upper collision helpers that truly belong to tree
+      // tiles. Furniture, stalls, fences, fire, and structures stay solid.
+      return w <= 96 && h <= 96 && objectOverlapsTreeTiles(bounds);
     };
 
     const buildCollisionLayer = (layerName) => {
@@ -392,13 +393,11 @@ export default class PhaserGameScene extends Phaser.Scene {
     // of the requested position and breaks movement registration).
     this.playerBody = this.physics.add.image(startX, startY, '__DEFAULT');
     this.playerBody.setVisible(false);
-    // Hitbox = only the lower body (legs/feet area).
-    // The visible character is ~28px tall; we set a 14×8 hitbox offset
-    // downward (+10px) so only feet collide — the player can overlap
-    // tree canopies, signs and upper decorations without getting stuck.
-    this.playerBody.setDisplaySize(14, 8);
-    this.playerBody.body.setSize(14, 8);
-    this.playerBody.body.setOffset(0, 10);
+    // Use a near full-body hitbox so props feel solid and the player cannot
+    // squeeze through narrow gaps or drift onto sea edges.
+    this.playerBody.setDisplaySize(PLAYER_BODY_WIDTH, PLAYER_BODY_HEIGHT);
+    this.playerBody.body.setSize(PLAYER_BODY_WIDTH, PLAYER_BODY_HEIGHT);
+    this.playerBody.body.setOffset(0, 0);
     this.playerBody.setCollideWorldBounds(true);
     this.playerBody.setPosition(startX, startY);
 
@@ -492,6 +491,7 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.nearCheckpointId = null;
     this.walkFrame = 0;
     this.isPaused = false;
+    this.lastWalkablePosition = { x: startX, y: startY };
 
     // Store map reference for position saving
     this.mapWidthPx = mapWidthPx;
@@ -523,7 +523,17 @@ export default class PhaserGameScene extends Phaser.Scene {
 
     // Sync the visible graphic to the physics body
     this.playerGraphic.setPosition(this.playerBody.x, this.playerBody.y);
-    this.updateTreeTransparency();
+    if (this.isPlayerTouchingWater()) {
+      this.playerBody.setVelocity(0, 0);
+      this.playerBody.setPosition(this.lastWalkablePosition.x, this.lastWalkablePosition.y);
+      this.playerGraphic.setPosition(this.lastWalkablePosition.x, this.lastWalkablePosition.y);
+    } else {
+      this.lastWalkablePosition = {
+        x: this.playerBody.x,
+        y: this.playerBody.y,
+      };
+    }
+    this.updatePlayerVisibilityUnderTrees();
 
     // Leg animation
     const isMoving = vx !== 0 || vy !== 0;
@@ -592,13 +602,17 @@ export default class PhaserGameScene extends Phaser.Scene {
     }
   }
 
-  updateTreeTransparency() {
-    if (!this.smallTreeLayer && !this.bigTreeLayer) return;
+  updatePlayerVisibilityUnderTrees() {
+    if (!this.smallTreeLayer && !this.bigTreeLayer) {
+      this.playerGraphic.setAlpha(1);
+      return;
+    }
 
     const x = this.playerBody?.x || START_X;
     const probeYs = [
-      (this.playerBody?.y || START_Y) - 24,
-      (this.playerBody?.y || START_Y) - 8,
+      (this.playerBody?.y || START_Y) - 26,
+      (this.playerBody?.y || START_Y) - 12,
+      this.playerBody?.y || START_Y,
     ];
 
     const isTreeTileAt = (layer, worldX, worldY) => {
@@ -612,9 +626,26 @@ export default class PhaserGameScene extends Phaser.Scene {
       isTreeTileAt(this.bigTreeLayer, x, worldY)
     );
 
-    const nextAlpha = underTree ? TREE_FADE_ALPHA : 1;
-    if (this.smallTreeLayer) this.smallTreeLayer.setAlpha(nextAlpha);
-    if (this.bigTreeLayer) this.bigTreeLayer.setAlpha(nextAlpha);
+    this.playerGraphic.setAlpha(underTree ? PLAYER_UNDER_TREE_ALPHA : 1);
+  }
+
+  isPlayerTouchingWater() {
+    if (!this.baseLayer || !this.playerBody) return false;
+
+    const halfW = PLAYER_BODY_WIDTH / 2;
+    const halfH = PLAYER_BODY_HEIGHT / 2;
+    const samplePoints = [
+      [this.playerBody.x, this.playerBody.y],
+      [this.playerBody.x - halfW + 2, this.playerBody.y - halfH + 2],
+      [this.playerBody.x + halfW - 2, this.playerBody.y - halfH + 2],
+      [this.playerBody.x - halfW + 2, this.playerBody.y + halfH - 2],
+      [this.playerBody.x + halfW - 2, this.playerBody.y + halfH - 2],
+    ];
+
+    return samplePoints.some(([worldX, worldY]) => {
+      const tile = this.baseLayer.getTileAtWorldXY(worldX, worldY, true);
+      return !!tile && WATER_TILE_SET.has(tile.index);
+    });
   }
 
   // Called from React when a modal opens
