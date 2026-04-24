@@ -70,9 +70,9 @@ const ManageStudents = () => {
                 <tr style={s.thead}>
                   <th style={s.th}>Nickname</th>
                   <th style={s.th}>Session</th>
-                  <th style={s.th}>CP1</th>
-                  <th style={s.th}>CP2</th>
-                  <th style={s.th}>CP3</th>
+                  <th style={s.th}>CP1 Quiz</th>
+                  <th style={s.th}>CP2 Crossword</th>
+                  <th style={s.th}>CP3 Food Game</th>
                   <th style={s.th}>Joined</th>
                   {isMainAdmin && <th style={s.th}>Actions</th>}
                 </tr>
@@ -90,19 +90,34 @@ const ManageStudents = () => {
                       <span style={s.sessionBadge}>{p.session_name || '—'}</span>
                     </td>
                     <td style={s.td}>
-                      <span style={p.cp1_completed ? s.badgeGreen : s.badgeGray}>
-                        {p.cp1_completed ? '✅ Done' : '—'}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <span style={p.cp1_completed ? s.badgeGreen : s.badgeGray}>
+                          {p.cp1_completed ? '✅ Done' : '❌ Not Done'}
+                        </span>
+                        <span style={s.attemptBadge}>
+                          🔄 {p.cp1_attempts || 0} attempt{(p.cp1_attempts || 0) !== 1 ? 's' : ''}
+                        </span>
+                      </div>
                     </td>
                     <td style={s.td}>
-                      <span style={p.cp2_completed ? s.badgeGreen : s.badgeGray}>
-                        {p.cp2_completed ? '✅ Done' : '—'}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <span style={p.cp2_completed ? s.badgeGreen : s.badgeGray}>
+                          {p.cp2_completed ? '✅ Done' : '❌ Not Done'}
+                        </span>
+                        <span style={s.attemptBadge}>
+                          🔄 {p.cp2_attempts || 0} attempt{(p.cp2_attempts || 0) !== 1 ? 's' : ''}
+                        </span>
+                      </div>
                     </td>
                     <td style={s.td}>
-                      <span style={p.cp3_completed ? s.badgeGreen : s.badgeGray}>
-                        {p.cp3_completed ? '✅ Done' : '—'}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <span style={p.cp3_completed ? s.badgeGreen : s.badgeGray}>
+                          {p.cp3_completed ? '✅ Done' : '❌ Not Done'}
+                        </span>
+                        <span style={s.attemptBadge}>
+                          🔄 {p.cp3_attempts || 0} attempt{(p.cp3_attempts || 0) !== 1 ? 's' : ''}
+                        </span>
+                      </div>
                     </td>
                     <td style={s.td}>
                       <span style={s.dateText}>
@@ -158,6 +173,7 @@ const s = {
   dateText: { color: '#64748b', fontSize: '0.82rem' },
   muted: { color: '#94a3b8', fontSize: '0.9rem' },
   btnDelete: { background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', borderRadius: '7px', padding: '0.35rem 0.8rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.8rem', whiteSpace: 'nowrap', transition: 'opacity 0.2s' },
+  attemptBadge: { background: '#f1f5f9', color: '#64748b', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: '600', whiteSpace: 'nowrap' },
 };
 
 export default ManageStudents;

@@ -8,29 +8,32 @@ import {
 const COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#e11d48', '#9333ea', '#0d9488'];
 
 // ── Compute marks for a player — absolute, based on actual performance ────────
-// CP1: (quiz_correct / quiz_total) * 33
-// CP2: (crossword_correct / crossword_total) * 33  — needs crossword data, fallback to cp2_completed
-// CP3: relative to session max since we don't have target_score client-side
+// Each checkpoint contributes up to 100/3 = 33.33 marks.
+// Total = /100 (same formula as backend cp3.controller.js)
+const CP_WEIGHT = 100 / 3; // 33.333...
+
 const computeMarks = (players) => {
   const maxCP3 = Math.max(1, ...players.map(p => p.cp3_score || 0));
   return players.map(p => {
     // CP1: absolute based on correct/total
-    const cp1Mark = (p.quiz_total > 0)
-      ? Math.round((p.quiz_correct / p.quiz_total) * 33)
-      : (p.quiz_score > 0 ? Math.round((p.quiz_score / Math.max(1, ...players.map(x => x.quiz_score || 0))) * 33) : 0);
+    const cp1Exact = (p.quiz_total > 0)
+      ? (p.quiz_correct / p.quiz_total) * CP_WEIGHT
+      : (p.quiz_score > 0 ? (p.quiz_score / Math.max(1, ...players.map(x => x.quiz_score || 0))) * CP_WEIGHT : 0);
 
     // CP2: pass/fail from checkpoint (partial data not available at analytics level)
-    const cp2Mark = p.cp2_completed ? 33 : 0;
+    const cp2Exact = p.cp2_completed ? CP_WEIGHT : 0;
 
     // CP3: relative to session max (no target available client-side)
-    const cp3Mark = p.cp3_score ? Math.round((p.cp3_score / maxCP3) * 33) : 0;
+    const cp3Exact = p.cp3_score ? Math.min(CP_WEIGHT, (p.cp3_score / maxCP3) * CP_WEIGHT) : 0;
+
+    const totalExact = cp1Exact + cp2Exact + cp3Exact;
 
     return {
       ...p,
-      cp1_mark:   cp1Mark,
-      cp2_mark:   cp2Mark,
-      cp3_mark:   cp3Mark,
-      total_mark: cp1Mark + cp2Mark + cp3Mark,
+      cp1_mark:   Math.round(cp1Exact),
+      cp2_mark:   Math.round(cp2Exact),
+      cp3_mark:   Math.round(cp3Exact),
+      total_mark: totalExact >= 99.5 ? 100 : Math.floor(totalExact),
     };
   });
 };
@@ -185,7 +188,7 @@ const Analytics = () => {
     { key: 'leaderboard',  label: '🏆 Leaderboard' },
   ];
 
-  const markColor = (mark, max = 99) => {
+  const markColor = (mark, max = 100) => {
     const pct = mark / max;
     if (pct >= 0.66) return { bg: '#f0fdf4', color: '#16a34a' };
     if (pct >= 0.33) return { bg: '#fffbeb', color: '#b45309' };
@@ -220,7 +223,7 @@ const Analytics = () => {
           { label: 'Avg CP1 Mark',   value: displayPlayers.length ? `${avgCP1Mark}/33` : '—',                        icon: '❓', color: '#fdf4ff', accent: '#9333ea' },
           { label: 'Avg CP2 Mark',   value: displayPlayers.length ? `${avgCP2Mark}/33` : '—',                        icon: '🧩', color: '#fff7ed', accent: '#ea580c' },
           { label: 'Avg CP3 Mark',   value: displayPlayers.length ? `${avgCP3Mark}/33` : '—',                        icon: '🎮', color: '#f0fdfa', accent: '#0d9488' },
-          { label: 'Avg Total',      value: displayPlayers.length ? `${avgTotal}/99` : '—',                          icon: '🏆', color: '#fefce8', accent: '#ca8a04' },
+          { label: 'Avg Total',      value: displayPlayers.length ? `${avgTotal}/100` : '—',                         icon: '🏆', color: '#fefce8', accent: '#ca8a04' },
         ].map((stat, i) => (
           <div key={i} style={{ ...s.statCard, background: stat.color }}>
             <div style={s.statIcon}>{stat.icon}</div>
@@ -270,7 +273,7 @@ const Analytics = () => {
 
           {/* Average Marks Overview */}
           <div style={s.card}>
-            <h3 style={s.cardTitle}>📋 Average Marks per Checkpoint (out of 33 each)</h3>
+            <h3 style={s.cardTitle}>📋 Average Marks per Checkpoint (total /100)</h3>
             <div style={s.markOverview}>
               {completionData.map((cp, i) => {
                 const pct = (cp.avgMark / 33) * 100;
@@ -295,10 +298,10 @@ const Analytics = () => {
                 <div style={s.markCardTitle}>🏆 Total Average</div>
                 <div style={{ ...s.markCircle, borderColor: '#2563eb', color: '#2563eb' }}>
                   <span style={s.markNum}>{avgTotal}</span>
-                  <span style={s.markDen}>/99</span>
+                  <span style={s.markDen}>/100</span>
                 </div>
                 <div style={s.markBar}>
-                  <div style={{ ...s.markBarFill, width: `${(avgTotal / 99) * 100}%`, background: '#2563eb' }} />
+                  <div style={{ ...s.markBarFill, width: `${avgTotal}%`, background: '#2563eb' }} />
                 </div>
                 <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.25rem' }}>
                   across {displayPlayers.length} player{displayPlayers.length !== 1 ? 's' : ''}
@@ -332,7 +335,7 @@ const Analytics = () => {
                 <div style={s.cpBar}><div style={{ ...s.cpBarFill, width: `${cp.rate}%`, background: COLORS[i] }} /></div>
                 <div style={s.cpRate}>{cp.rate}% ({cp.completed}/{cp.total})</div>
                 <div style={{ ...s.avgMarkBadge, background: markColor(cp.avgMark, 33).bg, color: markColor(cp.avgMark, 33).color }}>
-                  avg {cp.avgMark}/33
+                  avg {cp.avgMark}/33 ({Math.round((cp.avgMark / 33) * 100)}%)
                 </div>
               </div>
             ))}
@@ -382,7 +385,7 @@ const Analytics = () => {
                   <Bar dataKey="cp1"      name="CP1 Done"      fill="#2563eb" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="cp2"      name="CP2 Done"      fill="#9333ea" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="cp3"      name="CP3 Done"      fill="#16a34a" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="avgMark"  name="Avg Mark /99"  fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="avgMark"  name="Avg Mark /100" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
               {/* Session mark summary table */}
@@ -393,7 +396,7 @@ const Analytics = () => {
                   <th style={s.th}>CP1 Done</th>
                   <th style={s.th}>CP2 Done</th>
                   <th style={s.th}>CP3 Done</th>
-                  <th style={s.th}>Avg Mark /99</th>
+                  <th style={s.th}>Avg Mark /100</th>
                 </tr></thead>
                 <tbody>
                   {sessionData.map((sess, i) => (
@@ -405,7 +408,7 @@ const Analytics = () => {
                       <td style={s.td}>{sess.cp3}/{sess.players}</td>
                       <td style={s.td}>
                         <span style={{ ...s.totalBadge, ...markColor(sess.avgMark) }}>
-                          {sess.avgMark}/99
+                          {sess.avgMark}/100
                         </span>
                       </td>
                     </tr>
@@ -447,8 +450,7 @@ const Analytics = () => {
             // All sessions — show marks computed per-session (fair comparison within each session)
             <>
               <p style={s.hint}>
-                Scores normalised per session: CP1 Quiz /33 + CP2 Crossword /33 + CP3 Food Game /33 = total /99.
-                Marks are relative to the best scorer within each player's own session.
+                Each checkpoint is scored /33.33 — total /100. Marks are based on actual performance.
               </p>
               <table style={s.table}>
                 <thead><tr style={s.thead}>
@@ -458,7 +460,7 @@ const Analytics = () => {
                   <th style={s.th}>CP1 Quiz</th>
                   <th style={s.th}>CP2 Crossword</th>
                   <th style={s.th}>CP3 Food Game</th>
-                  <th style={s.th}>Total / 99</th>
+                  <th style={s.th}>Total / 100</th>
                 </tr></thead>
                 <tbody>
                   {allSessionsLeaderboard.map((p, i) => (
@@ -467,7 +469,7 @@ const Analytics = () => {
                       <td style={s.td}><strong>{p.nickname}</strong></td>
                       <td style={s.td}><span style={s.sessionTag}>{p.session_name}</span></td>
                       <td style={s.td}>
-                        <span style={{ fontWeight: '700', color: '#2563eb' }}>{p.cp1_mark}/33</span>
+                        <span style={{ fontWeight: '700', color: '#2563eb' }}>{p.cp1_mark}</span>
                         {p.quiz_correct != null && (
                           <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                             ({p.quiz_correct}/{p.quiz_total || '?'} correct)
@@ -476,11 +478,11 @@ const Analytics = () => {
                       </td>
                       <td style={s.td}>
                         <span style={p.cp2_completed ? s.badgeGreen : s.badgeGray}>
-                          {p.cp2_completed ? `✅ ${p.cp2_mark}/33` : '❌ 0/33'}
+                          {p.cp2_completed ? `✅ ${p.cp2_mark}` : '❌ 0'}
                         </span>
                       </td>
                       <td style={s.td}>
-                        <span style={{ fontWeight: '700', color: '#0d9488' }}>{p.cp3_mark}/33</span>
+                        <span style={{ fontWeight: '700', color: '#0d9488' }}>{p.cp3_mark}</span>
                         {p.cp3_score != null && (
                           <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                             ({p.cp3_score} pts)
@@ -489,7 +491,7 @@ const Analytics = () => {
                       </td>
                       <td style={s.td}>
                         <span style={{ ...s.totalBadge, ...markColor(p.total_mark) }}>
-                          {p.total_mark}/99
+                          {p.total_mark}/100
                         </span>
                       </td>
                     </tr>
@@ -506,7 +508,7 @@ const Analytics = () => {
             // Specific session — use backend-computed leaderboard (most accurate)
             <>
               <p style={s.hint}>
-                Scores normalised per session: CP1 Quiz /33 + CP2 Crossword /33 + CP3 Food Game /33 = total /99.
+                Each checkpoint is scored /33.33 — total /100. Marks are based on actual performance.
               </p>
               <table style={s.table}>
                 <thead><tr style={s.thead}>
@@ -515,7 +517,7 @@ const Analytics = () => {
                   <th style={s.th}>CP1 Quiz</th>
                   <th style={s.th}>CP2 Crossword</th>
                   <th style={s.th}>CP3 Food Game</th>
-                  <th style={s.th}>Total / 99</th>
+                  <th style={s.th}>Total / 100</th>
                 </tr></thead>
                 <tbody>
                   {finalLeaderboard.map((p, i) => (
@@ -523,14 +525,14 @@ const Analytics = () => {
                       <td style={s.td}><span style={s.rank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span></td>
                       <td style={s.td}><strong>{p.nickname}</strong></td>
                       <td style={s.td}>
-                        <span style={{ fontWeight: '700', color: '#2563eb' }}>{p.cp1_mark}/33</span>
+                        <span style={{ fontWeight: '700', color: '#2563eb' }}>{p.cp1_mark}</span>
                         <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                           ({p.cp1_correct}/{p.cp1_total} correct)
                         </span>
                       </td>
                       <td style={s.td}>
                         <span style={p.cp2_completed ? s.badgeGreen : p.cp2_mark > 0 ? s.badgeYellow : s.badgeGray}>
-                          {p.cp2_completed ? `✅ ${p.cp2_mark}/33` : p.cp2_mark > 0 ? `⚠️ ${p.cp2_mark}/33` : '❌ 0/33'}
+                          {p.cp2_completed ? `✅ ${p.cp2_mark}` : p.cp2_mark > 0 ? `⚠️ ${p.cp2_mark}` : '❌ 0'}
                         </span>
                         {p.cp2_total > 0 && (
                           <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
@@ -539,14 +541,14 @@ const Analytics = () => {
                         )}
                       </td>
                       <td style={s.td}>
-                        <span style={{ fontWeight: '700', color: '#0d9488' }}>{p.cp3_mark}/33</span>
+                        <span style={{ fontWeight: '700', color: '#0d9488' }}>{p.cp3_mark}</span>
                         <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                           ({p.cp3_raw}/{p.cp3_target} pts)
                         </span>
                       </td>
                       <td style={s.td}>
                         <span style={{ ...s.totalBadge, ...markColor(p.total_mark) }}>
-                          {p.total_mark}/99
+                          {p.total_mark}/100
                         </span>
                       </td>
                     </tr>
