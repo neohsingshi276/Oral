@@ -281,9 +281,9 @@ const CP3Game = ({ player, onComplete }) => {
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: '700', color: '#1e3a5f', marginBottom: '0.25rem' }}>{entry.nickname}{entry.player_id === player?.id && <span style={s.youBadge}>Anda</span>}</div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', gap: '0.75rem' }}>
-                  <span>CP1: {entry.cp1_mark}/33</span>
-                  <span>CP2: {entry.cp2_mark}/33</span>
-                  <span>CP3: {entry.cp3_mark}/33</span>
+                  <span>CP1: {Math.round(entry.cp1_mark / 33 * 100)}/100</span>
+                  <span>CP2: {Math.round(entry.cp2_mark / 33 * 100)}/100</span>
+                  <span>CP3: {Math.round(entry.cp3_mark / 33 * 100)}/100</span>
                 </div>
               </div>
               <div style={{ ...s.lbScore, fontSize: '1.2rem' }}>{entry.total_mark}<span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>/100</span></div>

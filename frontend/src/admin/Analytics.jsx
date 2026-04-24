@@ -220,9 +220,9 @@ const Analytics = () => {
         {[
           { label: 'Total Players',  value: displayPlayers.length,                                                   icon: '👥', color: '#eff6ff', accent: '#2563eb' },
           { label: 'Total Sessions', value: selectedSession === 'all' ? (data?.total_sessions || 0) : 1,             icon: '🎮', color: '#f0fdf4', accent: '#16a34a' },
-          { label: 'Avg CP1 Mark',   value: displayPlayers.length ? `${avgCP1Mark}/33` : '—',                        icon: '❓', color: '#fdf4ff', accent: '#9333ea' },
-          { label: 'Avg CP2 Mark',   value: displayPlayers.length ? `${avgCP2Mark}/33` : '—',                        icon: '🧩', color: '#fff7ed', accent: '#ea580c' },
-          { label: 'Avg CP3 Mark',   value: displayPlayers.length ? `${avgCP3Mark}/33` : '—',                        icon: '🎮', color: '#f0fdfa', accent: '#0d9488' },
+          { label: 'Avg CP1 Mark',   value: displayPlayers.length ? `${Math.round(avgCP1Mark / 33 * 100)}/100` : '—',  icon: '❓', color: '#fdf4ff', accent: '#9333ea' },
+          { label: 'Avg CP2 Mark',   value: displayPlayers.length ? `${Math.round(avgCP2Mark / 33 * 100)}/100` : '—',  icon: '🧩', color: '#fff7ed', accent: '#ea580c' },
+          { label: 'Avg CP3 Mark',   value: displayPlayers.length ? `${Math.round(avgCP3Mark / 33 * 100)}/100` : '—',  icon: '🎮', color: '#f0fdfa', accent: '#0d9488' },
           { label: 'Avg Total',      value: displayPlayers.length ? `${avgTotal}/100` : '—',                         icon: '🏆', color: '#fefce8', accent: '#ca8a04' },
         ].map((stat, i) => (
           <div key={i} style={{ ...s.statCard, background: stat.color }}>
@@ -277,13 +277,14 @@ const Analytics = () => {
             <div style={s.markOverview}>
               {completionData.map((cp, i) => {
                 const pct = (cp.avgMark / 33) * 100;
+                const scaledMark = Math.round(pct);
                 const col = pct >= 66 ? '#16a34a' : pct >= 33 ? '#f59e0b' : '#e11d48';
                 return (
                   <div key={i} style={s.markCard}>
                     <div style={s.markCardTitle}>{cp.name}</div>
                     <div style={{ ...s.markCircle, borderColor: col, color: col }}>
-                      <span style={s.markNum}>{cp.avgMark}</span>
-                      <span style={s.markDen}>/33</span>
+                      <span style={s.markNum}>{scaledMark}</span>
+                      <span style={s.markDen}>/100</span>
                     </div>
                     <div style={s.markBar}>
                       <div style={{ ...s.markBarFill, width: `${pct}%`, background: col }} />
@@ -335,7 +336,7 @@ const Analytics = () => {
                 <div style={s.cpBar}><div style={{ ...s.cpBarFill, width: `${cp.rate}%`, background: COLORS[i] }} /></div>
                 <div style={s.cpRate}>{cp.rate}% ({cp.completed}/{cp.total})</div>
                 <div style={{ ...s.avgMarkBadge, background: markColor(cp.avgMark, 33).bg, color: markColor(cp.avgMark, 33).color }}>
-                  avg {cp.avgMark}/33 ({Math.round((cp.avgMark / 33) * 100)}%)
+                  avg {Math.round(cp.avgMark / 33 * 100)}/100
                 </div>
               </div>
             ))}
@@ -469,7 +470,7 @@ const Analytics = () => {
                       <td style={s.td}><strong>{p.nickname}</strong></td>
                       <td style={s.td}><span style={s.sessionTag}>{p.session_name}</span></td>
                       <td style={s.td}>
-                        <span style={{ fontWeight: '700', color: '#2563eb' }}>{p.cp1_mark}</span>
+                        <span style={{ fontWeight: '700', color: '#2563eb' }}>{Math.round(p.cp1_mark / 33 * 100)}/100</span>
                         {p.quiz_correct != null && (
                           <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                             ({p.quiz_correct}/{p.quiz_total || '?'} correct)
@@ -478,11 +479,11 @@ const Analytics = () => {
                       </td>
                       <td style={s.td}>
                         <span style={p.cp2_completed ? s.badgeGreen : s.badgeGray}>
-                          {p.cp2_completed ? `✅ ${p.cp2_mark}` : '❌ 0'}
+                          {p.cp2_completed ? `✅ ${Math.round(p.cp2_mark / 33 * 100)}/100` : '❌ 0/100'}
                         </span>
                       </td>
                       <td style={s.td}>
-                        <span style={{ fontWeight: '700', color: '#0d9488' }}>{p.cp3_mark}</span>
+                        <span style={{ fontWeight: '700', color: '#0d9488' }}>{Math.round(p.cp3_mark / 33 * 100)}/100</span>
                         {p.cp3_score != null && (
                           <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                             ({p.cp3_score} pts)
@@ -525,14 +526,14 @@ const Analytics = () => {
                       <td style={s.td}><span style={s.rank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span></td>
                       <td style={s.td}><strong>{p.nickname}</strong></td>
                       <td style={s.td}>
-                        <span style={{ fontWeight: '700', color: '#2563eb' }}>{p.cp1_mark}</span>
+                        <span style={{ fontWeight: '700', color: '#2563eb' }}>{Math.round(p.cp1_mark / 33 * 100)}/100</span>
                         <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                           ({p.cp1_correct}/{p.cp1_total} correct)
                         </span>
                       </td>
                       <td style={s.td}>
                         <span style={p.cp2_completed ? s.badgeGreen : p.cp2_mark > 0 ? s.badgeYellow : s.badgeGray}>
-                          {p.cp2_completed ? `✅ ${p.cp2_mark}` : p.cp2_mark > 0 ? `⚠️ ${p.cp2_mark}` : '❌ 0'}
+                          {p.cp2_completed ? `✅ ${Math.round(p.cp2_mark / 33 * 100)}/100` : p.cp2_mark > 0 ? `⚠️ ${Math.round(p.cp2_mark / 33 * 100)}/100` : '❌ 0/100'}
                         </span>
                         {p.cp2_total > 0 && (
                           <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
@@ -541,7 +542,7 @@ const Analytics = () => {
                         )}
                       </td>
                       <td style={s.td}>
-                        <span style={{ fontWeight: '700', color: '#0d9488' }}>{p.cp3_mark}</span>
+                        <span style={{ fontWeight: '700', color: '#0d9488' }}>{Math.round(p.cp3_mark / 33 * 100)}/100</span>
                         <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                           ({p.cp3_raw}/{p.cp3_target} pts)
                         </span>
