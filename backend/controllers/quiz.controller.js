@@ -168,7 +168,7 @@ const getAllQuestions = async (req, res) => {
 
 // Save image as Base64 into DB — no disk storage (Railway ephemeral filesystem fix)
 const addQuestion = async (req, res) => {
-  const { question, question_type, options, correct_answer, timer_seconds } = req.body;
+  let { question, question_type, options, correct_answer, timer_seconds } = req.body;
 
   if (!question || typeof question !== 'string' || question.trim().length === 0)
     return res.status(400).json({ error: 'Question text is required' });
@@ -176,6 +176,11 @@ const addQuestion = async (req, res) => {
     return res.status(400).json({ error: 'Question too long (max 500 characters)' });
   if (!question_type || !['multiple_choice','true_false','multi_select','match'].includes(question_type))
     return res.status(400).json({ error: 'Invalid question type' });
+
+  // Parse JSON strings from FormData
+  if (typeof options === 'string') { try { options = JSON.parse(options); } catch (e) { return res.status(400).json({ error: 'Invalid options format' }); } }
+  if (typeof correct_answer === 'string') { try { correct_answer = JSON.parse(correct_answer); } catch (e) { return res.status(400).json({ error: 'Invalid correct_answer format' }); } }
+
   if (!Array.isArray(options) || !Array.isArray(correct_answer))
     return res.status(400).json({ error: 'Options and correct_answer must be arrays' });
   if (options.length > 8)
@@ -197,7 +202,7 @@ const addQuestion = async (req, res) => {
 };
 
 const updateQuestion = async (req, res) => {
-  const { question, question_type, options, correct_answer, timer_seconds } = req.body;
+  let { question, question_type, options, correct_answer, timer_seconds } = req.body;
 
   if (!question || typeof question !== 'string' || question.trim().length === 0)
     return res.status(400).json({ error: 'Question text is required' });
@@ -205,6 +210,11 @@ const updateQuestion = async (req, res) => {
     return res.status(400).json({ error: 'Question too long (max 500 characters)' });
   if (!question_type || !['multiple_choice','true_false','multi_select','match'].includes(question_type))
     return res.status(400).json({ error: 'Invalid question type' });
+
+  // Parse JSON strings from FormData
+  if (typeof options === 'string') { try { options = JSON.parse(options); } catch (e) { return res.status(400).json({ error: 'Invalid options format' }); } }
+  if (typeof correct_answer === 'string') { try { correct_answer = JSON.parse(correct_answer); } catch (e) { return res.status(400).json({ error: 'Invalid correct_answer format' }); } }
+
   if (!Array.isArray(options) || !Array.isArray(correct_answer))
     return res.status(400).json({ error: 'Options and correct_answer must be arrays' });
   if (options.length > 8)
