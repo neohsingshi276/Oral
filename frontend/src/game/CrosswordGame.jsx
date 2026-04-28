@@ -415,7 +415,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       )}
 
       {/* Congrats overlay */}
-      {showCongrats && !showLB && (
+      {showCongrats && !showLB && !reviewingAnswers && (
         <div style={s.overlay}>
           <div style={s.congratsCard}>
             <div style={{ fontSize: '4rem' }}>🎉</div>
@@ -423,13 +423,18 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
             <p style={{ color: '#64748b', margin: '0 0 0.5rem' }}>Kamu berjaya melengkapkan semua perkataan! 🧩</p>
             <p style={{ color: '#2563eb', fontWeight: '700', margin: '0 0 0.25rem' }}>⏱️ Masa berbaki: {formatTime(timeLeft)}</p>
             <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '0 0 1rem' }}>💡 Petunjuk digunakan: {hintsUsed}/{MAX_HINTS}</p>
-            <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={async () => {
-              try {
-                const res = await api.get(`/cp3/crossword-leaderboard/${sessionId}`);
-                setLbData(res.data.leaderboard || []);
-              } catch (err) { console.error(err); }
-              setShowLB(true);
-            }}>Lihat Papan Markah 🏆 & Teruskan</button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+              <button style={{ ...s.doneBtn, background: '#f59e0b' }} onClick={() => {
+                setReviewingAnswers(true);
+              }}>👁️ Lihat Jawapan di Papan</button>
+              <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={async () => {
+                try {
+                  const res = await api.get(`/cp3/crossword-leaderboard/${sessionId}`);
+                  setLbData(res.data.leaderboard || []);
+                } catch (err) { console.error(err); }
+                setShowLB(true);
+              }}>Teruskan ke Papan Markah 🏆</button>
+            </div>
           </div>
         </div>
       )}
