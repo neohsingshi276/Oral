@@ -29,6 +29,8 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   const [showGiveUp, setShowGiveUp] = useState(false);
   const [showCheckResult, setShowCheckResult] = useState(false);
   const [checkResult, setCheckResult] = useState({ correct: 0, wrong: 0, total: 0 });
+  const [reviewingAnswers, setReviewingAnswers] = useState(false);
+  const [reviewPhase, setReviewPhase] = useState('viewing'); // 'viewing' | 'leaderboard'
   const inputRefs = useRef({});
   const timerRef = useRef(null);
   const [showLB, setShowLB] = useState(false);
@@ -304,6 +306,9 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     const ng = grid.map(r => r.map(c => c || ''));
     setUserGrid(ng);
     checkWords(ng);
+    // Close overlay and let user see the answers on the grid
+    setReviewingAnswers(true);
+    setReviewPhase('viewing');
   };
 
   const handleGiveUp = () => {
@@ -410,7 +415,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       )}
 
       {/* Congrats overlay */}
-      {showCongrats && (
+      {showCongrats && !showLB && (
         <div style={s.overlay}>
           <div style={s.congratsCard}>
             <div style={{ fontSize: '4rem' }}>🎉</div>
@@ -418,47 +423,19 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
             <p style={{ color: '#64748b', margin: '0 0 0.5rem' }}>Kamu berjaya melengkapkan semua perkataan! 🧩</p>
             <p style={{ color: '#2563eb', fontWeight: '700', margin: '0 0 0.25rem' }}>⏱️ Masa berbaki: {formatTime(timeLeft)}</p>
             <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '0 0 1rem' }}>💡 Petunjuk digunakan: {hintsUsed}/{MAX_HINTS}</p>
-            {showLeaderboard && leaderboard.length > 0 && (
-              <div style={s.lbBox}>
-                <h3 style={s.lbTitle}>🏆 Leaderboard</h3>
-                {leaderboard.slice(0, 5).map((p, i) => (
-                  <div key={i} style={s.lbRow}>
-                    <span style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
-                    <span style={s.lbName}>{p.nickname}</span>
-                    <span style={s.lbScore}>{p.score}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {!showLB ? (
-              <button style={s.doneBtn} onClick={async () => {
-                try {
-                  const res = await api.get(`/cp3/crossword-leaderboard/${sessionId}`);
-                  setLbData(res.data.leaderboard || []);
-                } catch (err) { console.error(err); }
-                setShowLB(true);
-              }}>Lihat Papan Markah 🏆</button>
-            ) : (
-              <>
-                <div style={{ ...s.lbBox, margin: '0 0 1rem' }}>
-                  <h3 style={s.lbTitle}>🏆 Papan Markah Crossword</h3>
-                  {lbData.map((entry, i) => (
-                    <div key={entry.player_id} style={s.lbRow}>
-                      <span style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
-                      <span style={s.lbName}>{entry.nickname}</span>
-                      <span style={{ ...s.lbScore, color: entry.completed ? '#16a34a' : '#e11d48' }}>{entry.completed ? '✅ Selesai' : `${entry.words_correct || 0}/${words.length}`}</span>
-                    </div>
-                  ))}
-                </div>
-                <button style={s.doneBtn} onClick={onComplete}>Teruskan Pengembaraan! 🗺️</button>
-              </>
-            )}
+            <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={async () => {
+              try {
+                const res = await api.get(`/cp3/crossword-leaderboard/${sessionId}`);
+                setLbData(res.data.leaderboard || []);
+              } catch (err) { console.error(err); }
+              setShowLB(true);
+            }}>Lihat Papan Markah 🏆 & Teruskan</button>
           </div>
         </div>
       )}
 
-      {/* Time's up / Game Over overlay */}
-      {isGameOver && !showCongrats && (
+      {/* Time's up / Game Over overlay — hidden when reviewing answers */}
+      {isGameOver && !showCongrats && !reviewingAnswers && (
         <div style={s.overlay}>
           <div style={s.congratsCard}>
             <div style={{ fontSize: '4rem' }}>{passed ? '⭐' : '😢'}</div>
@@ -476,56 +453,67 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                 ⚠️ Perlu sekurang-kurangnya <strong>{minCorrect} perkataan</strong> untuk lulus.
               </p>
             )}
-            {showLeaderboard && leaderboard.length > 0 && passed && (
-              <div style={s.lbBox}>
-                <h3 style={s.lbTitle}>🏆 Leaderboard</h3>
-                {leaderboard.slice(0, 5).map((p, i) => (
-                  <div key={i} style={s.lbRow}>
-                    <span style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
-                    <span style={s.lbName}>{p.nickname}</span>
-                    <span style={s.lbScore}>{p.score}</span>
-                  </div>
-                ))}
-              </div>
-            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem', width: '100%' }}>
-              {!revealAll && (
-                <button style={{ ...s.doneBtn, background: '#f59e0b' }} onClick={handleReveal}>
-                  👁️ Tunjuk Semua Jawapan
-                </button>
-              )}
+              <button style={{ ...s.doneBtn, background: '#f59e0b' }} onClick={handleReveal}>
+                👁️ Tunjuk Semua Jawapan
+              </button>
               {passed ? (
-                <>
-                  {!showLB ? (
-                    <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={async () => {
-                      try {
-                        const res = await api.get(`/cp3/crossword-leaderboard/${sessionId}`);
-                        setLbData(res.data.leaderboard || []);
-                      } catch (err) { console.error(err); }
-                      setShowLB(true);
-                    }}>Lihat Papan Markah 🏆</button>
-                  ) : (
-                    <>
-                      <div style={{ ...s.lbBox, margin: '0 0 0.5rem' }}>
-                        <h3 style={s.lbTitle}>🏆 Papan Markah</h3>
-                        {lbData.map((entry, i) => (
-                          <div key={entry.player_id} style={s.lbRow}>
-                            <span style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
-                            <span style={s.lbName}>{entry.nickname}</span>
-                            <span style={{ ...s.lbScore, color: entry.completed ? '#16a34a' : '#e11d48' }}>{entry.completed ? '✅' : `${entry.words_correct || 0}/${words.length}`}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <button style={s.doneBtn} onClick={onComplete}>Teruskan Pengembaraan! 🗺️</button>
-                    </>
-                  )}
-                </>
+                <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={async () => {
+                  try {
+                    const res = await api.get(`/cp3/crossword-leaderboard/${sessionId}`);
+                    setLbData(res.data.leaderboard || []);
+                  } catch (err) { console.error(err); }
+                  setShowLB(true);
+                }}>Lihat Papan Markah 🏆 & Teruskan</button>
               ) : (
                 <button style={{ ...s.doneBtn, background: '#e11d48' }} onClick={onRetry}>
                   🔄 Cuba Semula
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Leaderboard overlay — shown when user skips reveal or clicks proceed from review */}
+      {showLB && (
+        <div style={s.overlay}>
+          <div style={s.congratsCard}>
+            <div style={{ fontSize: '3rem' }}>🏆</div>
+            <h2 style={{ color: '#7c3aed', fontSize: '1.4rem', fontWeight: '800', margin: '0.5rem 0' }}>Papan Markah</h2>
+            <div style={{ ...s.lbBox, margin: '0.5rem 0 1rem' }}>
+              {lbData.length > 0 ? lbData.map((entry, i) => (
+                <div key={entry.player_id} style={s.lbRow}>
+                  <span style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
+                  <span style={s.lbName}>{entry.nickname}</span>
+                  <span style={{ ...s.lbScore, color: entry.completed ? '#16a34a' : '#e11d48' }}>{entry.completed ? '✅ Selesai' : `${entry.words_correct || 0}/${words.length}`}</span>
+                </div>
+              )) : (
+                <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem', fontSize: '0.85rem' }}>Tiada data papan markah lagi.</p>
+              )}
+            </div>
+            <button style={s.doneBtn} onClick={onComplete}>Teruskan Pengembaraan! 🗺️</button>
+          </div>
+        </div>
+      )}
+
+      {/* Floating bottom bar when reviewing answers */}
+      {reviewingAnswers && !showLB && (
+        <div style={s.reviewBar}>
+          <div style={s.reviewBarInner}>
+            <span style={{ color: '#16a34a', fontWeight: '700', fontSize: '0.95rem' }}>👁️ Semua jawapan ditunjukkan — Semak jawapan anda!</span>
+            <button
+              style={{ ...s.doneBtn, width: 'auto', padding: '0.7rem 2rem', background: '#7c3aed', fontSize: '0.95rem', borderRadius: '12px', boxShadow: '0 4px 15px rgba(124,58,237,0.4)' }}
+              onClick={async () => {
+                try {
+                  const res = await api.get(`/cp3/crossword-leaderboard/${sessionId}`);
+                  setLbData(res.data.leaderboard || []);
+                } catch (err) { console.error(err); }
+                setShowLB(true);
+              }}
+            >
+              Teruskan → Lihat Papan Markah 🏆
+            </button>
           </div>
         </div>
       )}
@@ -704,6 +692,8 @@ const s = {
   lbRank: { fontSize: '1rem', minWidth: '24px' },
   lbName: { flex: 1, fontSize: '0.82rem', fontWeight: '600', color: '#334155' },
   lbScore: { fontSize: '0.82rem', fontWeight: '700', color: '#2563eb' },
+  reviewBar: { position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, background: 'linear-gradient(to top, rgba(15,23,42,0.98), rgba(15,23,42,0.9))', backdropFilter: 'blur(10px)', borderTop: '2px solid #334155', padding: '1rem 1.5rem', animation: 'slideIn 0.4s ease' },
+  reviewBarInner: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', maxWidth: '900px', margin: '0 auto', flexWrap: 'wrap' },
 };
 
 export default CrosswordGame;
