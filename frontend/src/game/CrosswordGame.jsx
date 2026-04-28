@@ -171,6 +171,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   }, [isGameOver]);
 
   const handleInput = (row, col, e) => {
+    // Fallback: still handle onChange for mobile/IME input
     if (isGameOver) return;
     const val = e.target.value;
     if (!grid[row]?.[col]) return;
@@ -194,6 +195,29 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
 
   const handleKeyDown = (row, col, e) => {
     if (isGameOver) return;
+
+    // Handle letter keys directly via keyDown for reliable input
+    if (e.key.length === 1 && /^[a-zA-Z]$/.test(e.key)) {
+      e.preventDefault();
+      if (!grid[row]?.[col]) return;
+      const letter = e.key.toUpperCase();
+      const ng = userGrid.map(r => [...r]);
+      ng[row][col] = letter;
+      setUserGrid(ng);
+      setChecked(false);
+      checkWords(ng);
+      if (selectedWord) {
+        const next = selectedWord.direction === 'across'
+          ? { row, col: col + 1 }
+          : { row: row + 1, col };
+        if (next.row < gridSize && next.col < gridSize && grid[next.row]?.[next.col]) {
+          setSelectedCell(next);
+          setTimeout(() => inputRefs.current[`${next.row}-${next.col}`]?.focus(), 10);
+        }
+      }
+      return;
+    }
+
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
       e.preventDefault();
       let nR = row, nC = col;
