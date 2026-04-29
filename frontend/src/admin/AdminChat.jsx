@@ -128,7 +128,7 @@ const AdminChat = () => {
 
   const totalUnread = players.reduce((s, p) => s + (p.unread || 0), 0);
 
-  if (loading) return <div style={s.loading}>Loading chats… 💬</div>;
+  if (loading) return <div style={s.loading}>Memuatkan sembang… 💬</div>;
 
   return (
     <div style={s.wrap}>
@@ -136,13 +136,13 @@ const AdminChat = () => {
       {/* ── Sidebar ── */}
       <div style={s.sidebar}>
         <div style={s.sidebarHeader}>
-          <span style={s.sidebarTitle}>💬 Player Chats</span>
+          <span style={s.sidebarTitle}>💬 Sembang Pemain</span>
           {totalUnread > 0 && <span style={s.totalBadge}>{totalUnread}</span>}
         </div>
 
         <div style={s.contactList}>
           {players.length === 0 && (
-            <p style={s.emptyContacts}>No player messages yet.</p>
+            <p style={s.emptyContacts}>Belum ada mesej pemain.</p>
           )}
           {players.map(p => (
             <div
@@ -159,7 +159,7 @@ const AdminChat = () => {
                 <div style={s.contactLast}>
                   {p.lastMessage
                     ? (p.lastMessage.length > 34 ? p.lastMessage.slice(0, 34) + '…' : p.lastMessage)
-                    : 'No messages yet'}
+                    : 'Belum ada mesej'}
                 </div>
               </div>
               <div style={s.contactMeta}>
@@ -182,9 +182,9 @@ const AdminChat = () => {
         {!selected ? (
           <div style={s.noChat}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💬</div>
-            <p style={{ color: '#475569', fontWeight: '700' }}>Select a player to start chatting</p>
+            <p style={{ color: '#475569', fontWeight: '700' }}>Pilih pemain untuk mula bersembang</p>
             <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-              You can reply to any player message here
+              Anda boleh membalas mana-mana mesej pemain di sini
             </p>
           </div>
         ) : (
@@ -194,14 +194,14 @@ const AdminChat = () => {
               <div style={s.avatar}>{selected.nickname?.[0]?.toUpperCase()}</div>
               <div style={{ flex: 1 }}>
                 <div style={s.chatName}>{selected.nickname}</div>
-                <div style={s.chatSub}>Player ID: {selected.player_id} · Session: {selected.session_id}</div>
+                <div style={s.chatSub}>ID Pemain: {selected.player_id} · Sesi: {selected.session_id}</div>
               </div>
             </div>
 
             {/* Messages */}
             <div style={s.messages}>
               {messages.length === 0 && (
-                <p style={s.emptyMessages}>No messages yet. Waiting for the player to write first.</p>
+                <p style={s.emptyMessages}>Belum ada mesej. Menunggu pemain menulis dahulu.</p>
               )}
               {messages.map((m, i) => {
                 const isAdmin = m.sender_type === 'admin';
@@ -210,7 +210,7 @@ const AdminChat = () => {
                     {!isAdmin && <div style={s.msgAvatar}>{selected.nickname?.[0]?.toUpperCase()}</div>}
                     <div style={{ ...s.bubble, ...(isAdmin ? s.bubbleAdmin : s.bubblePlayer) }}>
                       <span style={{ ...s.bubbleSender, color: isAdmin ? 'rgba(255,255,255,0.65)' : '#94a3b8' }}>
-                        {isAdmin ? '👤 You (Admin)' : `🎮 ${selected.nickname}`}
+                        {isAdmin ? '👤 Anda (Pentadbir)' : `🎮 ${selected.nickname}`}
                       </span>
                       <p style={{ ...s.bubbleText, color: isAdmin ? '#fff' : '#1e293b' }}>{m.message}</p>
                       <span style={{ ...s.bubbleTime, color: isAdmin ? 'rgba(255,255,255,0.55)' : '#94a3b8' }}>
@@ -230,7 +230,7 @@ const AdminChat = () => {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={`Reply to ${selected.nickname}…`}
+                placeholder={`Balas kepada ${selected.nickname}…`}
                 maxLength={200}
                 disabled={sending}
               />
@@ -239,7 +239,7 @@ const AdminChat = () => {
                 onClick={handleSend}
                 disabled={!input.trim() || sending}
               >
-                {sending ? '…' : 'Send ➤'}
+                {sending ? '…' : 'Hantar ➤'}
               </button>
             </div>
           </>

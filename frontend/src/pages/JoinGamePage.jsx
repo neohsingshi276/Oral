@@ -20,7 +20,7 @@ const JoinGamePage = () => {
           setSession(res.data.session);
           setStep('nickname');
         })
-        .catch(() => setError('Invalid code! Please try again.'));
+        .catch(() => setError('Kod tidak sah! Sila cuba lagi.'));
     }
   }, [urlCode]);
 
@@ -43,7 +43,7 @@ const JoinGamePage = () => {
   const handleCodeSubmit = async (e) => {
     e.preventDefault();
     const fullCode = code.join('');
-    if (fullCode.length !== 4) return setError('Please enter the full 4-digit code!');
+    if (fullCode.length !== 4) return setError('Sila masukkan kod 4 digit penuh!');
     setLoading(true);
     setError('');
     try {
@@ -51,7 +51,7 @@ const JoinGamePage = () => {
       setSession(res.data.session);
       setStep('nickname');
     } catch (err) {
-      setError(err.response?.data?.error || 'Invalid code! Please try again.');
+      setError(err.response?.data?.error || 'Kod tidak sah! Sila cuba lagi.');
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,7 @@ const JoinGamePage = () => {
 
   const handleNicknameSubmit = async (e) => {
     e.preventDefault();
-    if (!nickname.trim()) return setError('Please enter a nickname!');
+    if (!nickname.trim()) return setError('Sila masukkan nama samaran!');
     setLoading(true);
     setError('');
     try {
@@ -69,7 +69,7 @@ const JoinGamePage = () => {
       localStorage.setItem('player', JSON.stringify(res.data.player));
       navigate(`/game/${session.unique_token}`);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to join. Please try again!');
+      setError(err.response?.data?.error || 'Gagal menyertai. Sila cuba lagi!');
     } finally {
       setLoading(false);
     }
@@ -78,20 +78,21 @@ const JoinGamePage = () => {
   return (
     <div style={s.page}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
         @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
         @keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
         @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
-        .code-input:focus { border-color: #3b82f6 !important; background: #fff !important; box-shadow: 0 0 0 4px rgba(59,130,246,0.15) !important; }
-        .join-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(59,130,246,0.4) !important; }
+        .code-input:focus { border-color: #D4A843 !important; background: #fff !important; box-shadow: 0 0 0 4px rgba(212,168,67,0.15) !important; }
+        .join-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(1,48,107,0.4) !important; }
       `}</style>
 
       {/* Background decorations */}
       <div style={s.bg}>
-        <div style={{ ...s.bgShape, width: '300px', height: '300px', top: '-80px', right: '-80px', background: 'rgba(59,130,246,0.08)' }}></div>
-        <div style={{ ...s.bgShape, width: '200px', height: '200px', bottom: '-60px', left: '-60px', background: 'rgba(245,158,11,0.08)' }}></div>
+        <div style={{ ...s.bgShape, width: '300px', height: '300px', top: '-80px', right: '-80px', background: 'rgba(212,168,67,0.08)' }}></div>
+        <div style={{ ...s.bgShape, width: '200px', height: '200px', bottom: '-60px', left: '-60px', background: 'rgba(212,168,67,0.08)' }}></div>
         <div style={s.bubble1}>🦷</div>
         <div style={s.bubble2}>⭐</div>
-        <div style={s.bubble3}>🌟</div>
+        <div style={s.bubble3}>🌺</div>
         <div style={s.bubble4}>🪥</div>
       </div>
 
@@ -105,7 +106,7 @@ const JoinGamePage = () => {
           </div>
         </div>
         <h1 style={s.title}>Dental Quest!</h1>
-        <p style={s.tagline}>Your dental adventure awaits</p>
+        <p style={s.tagline}>Pengembaraan pergigian anda menanti</p>
 
         {error && <div style={s.error}><span>⚠️</span> {error}</div>}
 
@@ -114,9 +115,9 @@ const JoinGamePage = () => {
           <>
             <div style={s.stepBadge}>
               <span style={s.stepNum}>1</span>
-              <span>Enter Game Code</span>
+              <span>Masukkan Kod Permainan</span>
             </div>
-            <p style={s.subtitle}>Enter the 4-digit code from your teacher</p>
+            <p style={s.subtitle}>Masukkan kod 4 digit daripada guru anda</p>
             <form onSubmit={handleCodeSubmit}>
               <div style={s.codeRow}>
                 {code.map((digit, idx) => (
@@ -136,12 +137,12 @@ const JoinGamePage = () => {
                 ))}
               </div>
               <button className="join-btn" style={s.btn} type="submit" disabled={loading || code.join('').length !== 4}>
-                {loading ? '🔍 Checking...' : '🔍 Check Code'}
+                {loading ? '🔍 Memeriksa...' : '🔍 Semak Kod'}
               </button>
             </form>
             <div style={s.tips}>
               <div style={s.tipIcon}>💡</div>
-              <p style={s.tipText}>Ask your teacher for the 4-digit game code to join!</p>
+              <p style={s.tipText}>Minta kod permainan 4 digit daripada guru anda untuk menyertai!</p>
             </div>
           </>
         )}
@@ -151,19 +152,19 @@ const JoinGamePage = () => {
           <>
             <div style={s.sessionFound}>
               <div style={s.sessionFoundIcon}>✅</div>
-              <p style={s.sessionFoundText}>Joined: <strong>{session.session_name}</strong></p>
+              <p style={s.sessionFoundText}>Berjaya: <strong>{session.session_name}</strong></p>
             </div>
 
             <div style={s.stepBadge}>
               <span style={s.stepNum}>2</span>
-              <span>Pick a Nickname</span>
+              <span>Pilih Nama Samaran</span>
             </div>
-            <p style={s.subtitle}>Now enter your nickname to start!</p>
+            <p style={s.subtitle}>Masukkan nama samaran anda untuk mula!</p>
             <form onSubmit={handleNicknameSubmit}>
               <input
                 style={s.input}
                 type="text"
-                placeholder="e.g. SuperBrusher 🦷"
+                placeholder="cth. PemberusHebat 🦷"
                 value={nickname}
                 onChange={e => setNickname(e.target.value)}
                 maxLength={20}
@@ -176,18 +177,18 @@ const JoinGamePage = () => {
                 <span style={s.charText}>{nickname.length}/20</span>
               </div>
               <button className="join-btn" style={s.btn} type="submit" disabled={loading}>
-                {loading ? '🚀 Joining...' : '🚀 Start Adventure!'}
+                {loading ? '🚀 Menyertai...' : '🚀 Mula Pengembaraan!'}
               </button>
               <button style={s.backBtn} type="button" onClick={() => { setStep('code'); setError(''); }}>
-                ← Change Code
+                ← Tukar Kod
               </button>
             </form>
             <div style={s.tips}>
-              <p style={s.tipTitle}>🎮 How to play:</p>
-              <p style={s.tipText}>Use <strong>W A S D</strong> or <strong>Arrow Keys</strong> to move</p>
-              <p style={s.tipText}>Walk to each checkpoint and press <strong>E</strong> to enter!</p>
-              <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#eff6ff', borderRadius: '10px', border: '1px solid #bfdbfe' }}>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#2563eb', fontWeight: '600' }}>🔄 Accidentally closed? Don't worry — your progress is saved automatically!</p>
+              <p style={s.tipTitle}>🎮 Cara bermain:</p>
+              <p style={s.tipText}>Gunakan <strong>W A S D</strong> atau <strong>Anak Panah</strong> untuk bergerak</p>
+              <p style={s.tipText}>Jalan ke setiap pusat pemeriksaan dan tekan <strong>E</strong> untuk masuk!</p>
+              <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#FEF9EE', borderRadius: '10px', border: '1px solid rgba(212,168,67,0.3)' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#B45309', fontWeight: '600' }}>🔄 Tertutup secara tidak sengaja? Jangan risau — kemajuan anda disimpan secara automatik!</p>
               </div>
             </div>
           </>
@@ -198,7 +199,7 @@ const JoinGamePage = () => {
 };
 
 const s = {
-  page: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1e40af 100%)', padding: '1rem', position: 'relative', overflow: 'hidden' },
+  page: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #01306B 0%, #012550 50%, #1e5aad 100%)', padding: '1rem', position: 'relative', overflow: 'hidden', fontFamily: '"Outfit", sans-serif' },
   bg: { position: 'absolute', inset: 0, pointerEvents: 'none' },
   bgShape: { position: 'absolute', borderRadius: '50%' },
   bubble1: { position: 'absolute', top: '10%', left: '8%', fontSize: '3rem', animation: 'float 3s ease-in-out infinite', opacity: 0.3 },
@@ -206,31 +207,31 @@ const s = {
   bubble3: { position: 'absolute', bottom: '20%', left: '12%', fontSize: '2rem', animation: 'float 2s ease-in-out infinite 1s', opacity: 0.3 },
   bubble4: { position: 'absolute', bottom: '15%', right: '8%', fontSize: '3rem', animation: 'float 3.5s ease-in-out infinite 0.3s', opacity: 0.3 },
   card: { background: 'rgba(255,255,255,0.97)', borderRadius: '28px', padding: '2.5rem', width: '100%', maxWidth: '440px', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.3)', animation: 'fadeIn 0.6s ease', position: 'relative', zIndex: 1, overflow: 'hidden' },
-  accentBar: { position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #f59e0b)', borderRadius: '28px 28px 0 0' },
+  accentBar: { position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #01306B, #D4A843, #CC0000, #D4A843, #01306B)', borderRadius: '28px 28px 0 0' },
   iconWrap: { marginBottom: '0.75rem' },
-  iconBg: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '80px', height: '80px', borderRadius: '24px', background: 'linear-gradient(135deg, #eff6ff, #dbeafe)', border: '2px solid #bfdbfe' },
+  iconBg: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '80px', height: '80px', borderRadius: '24px', background: 'linear-gradient(135deg, #FFF9F0, #FEF3C7)', border: '2px solid rgba(212,168,67,0.3)' },
   icon: { fontSize: '3rem', animation: 'float 3s ease-in-out infinite', display: 'block' },
-  title: { fontSize: '2.2rem', fontWeight: '900', color: '#0f172a', margin: '0 0 0.25rem', letterSpacing: '-0.02em' },
-  tagline: { color: '#94a3b8', fontSize: '0.95rem', fontWeight: '500', margin: '0 0 1.5rem' },
-  stepBadge: { display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#eff6ff', color: '#2563eb', padding: '0.4rem 1rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.75rem', border: '1px solid #bfdbfe' },
-  stepNum: { width: '22px', height: '22px', borderRadius: '50%', background: '#2563eb', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '800' },
+  title: { fontSize: '2.2rem', fontWeight: '900', color: '#01306B', margin: '0 0 0.25rem', letterSpacing: '-0.02em' },
+  tagline: { color: '#D4A843', fontSize: '0.95rem', fontWeight: '600', margin: '0 0 1.5rem' },
+  stepBadge: { display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#FEF9EE', color: '#01306B', padding: '0.4rem 1rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.75rem', border: '1px solid rgba(212,168,67,0.3)' },
+  stepNum: { width: '22px', height: '22px', borderRadius: '50%', background: '#01306B', color: '#FFD700', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '800' },
   subtitle: { color: '#64748b', fontSize: '1rem', margin: '0 0 1.5rem', lineHeight: 1.5, fontWeight: '500' },
   error: { background: 'linear-gradient(135deg, #fff1f2, #fee2e2)', color: '#e11d48', padding: '0.85rem', borderRadius: '14px', marginBottom: '1rem', fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', border: '1px solid #fecdd3' },
   codeRow: { display: 'flex', gap: '0.75rem', justifyContent: 'center', marginBottom: '1.5rem' },
-  codeInput: { width: '68px', height: '78px', textAlign: 'center', fontSize: '2.2rem', fontWeight: '900', borderRadius: '18px', border: '3px solid #e2e8f0', background: '#f8fafc', color: '#0f172a', outline: 'none', transition: 'all 0.2s' },
-  input: { width: '100%', padding: '1rem 1.2rem', borderRadius: '14px', border: '2px solid #e2e8f0', fontSize: '1.1rem', outline: 'none', boxSizing: 'border-box', textAlign: 'center', fontWeight: '600', color: '#0f172a', marginBottom: '0.5rem', background: '#f8fafc', transition: 'all 0.2s' },
+  codeInput: { width: '68px', height: '78px', textAlign: 'center', fontSize: '2.2rem', fontWeight: '900', borderRadius: '18px', border: '3px solid #e2e8f0', background: '#FAFAF5', color: '#01306B', outline: 'none', transition: 'all 0.2s' },
+  input: { width: '100%', padding: '1rem 1.2rem', borderRadius: '14px', border: '2px solid #e2e8f0', fontSize: '1.1rem', outline: 'none', boxSizing: 'border-box', textAlign: 'center', fontWeight: '600', color: '#01306B', marginBottom: '0.5rem', background: '#FAFAF5', transition: 'all 0.2s' },
   charCount: { display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' },
   charBar: { flex: 1, height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden' },
-  charFill: { height: '100%', background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', borderRadius: '2px', transition: 'width 0.2s' },
+  charFill: { height: '100%', background: 'linear-gradient(90deg, #01306B, #D4A843)', borderRadius: '2px', transition: 'width 0.2s' },
   charText: { color: '#94a3b8', fontSize: '0.78rem', fontWeight: '600', minWidth: '40px', textAlign: 'right' },
-  btn: { width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.1rem', fontWeight: '700', cursor: 'pointer', marginBottom: '0.75rem', boxShadow: '0 8px 20px rgba(59,130,246,0.3)', transition: 'all 0.2s' },
+  btn: { width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #01306B, #1e5aad)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.1rem', fontWeight: '700', cursor: 'pointer', marginBottom: '0.75rem', boxShadow: '0 8px 20px rgba(1,48,107,0.3)', transition: 'all 0.2s' },
   backBtn: { width: '100%', padding: '0.75rem', background: 'transparent', color: '#64748b', border: '2px solid #e2e8f0', borderRadius: '14px', fontSize: '0.95rem', cursor: 'pointer', fontWeight: '600', transition: 'all 0.2s' },
   sessionFound: { background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)', borderRadius: '14px', padding: '0.85rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', border: '1px solid #bbf7d0' },
   sessionFoundIcon: { fontSize: '1.2rem' },
   sessionFoundText: { color: '#15803d', fontSize: '0.95rem', margin: 0, fontWeight: '600' },
-  tips: { background: '#f8fafc', borderRadius: '16px', padding: '1.25rem', textAlign: 'left', marginTop: '1rem', border: '1px solid #e2e8f0' },
+  tips: { background: '#FAFAF5', borderRadius: '16px', padding: '1.25rem', textAlign: 'left', marginTop: '1rem', border: '1px solid rgba(212,168,67,0.2)' },
   tipIcon: { fontSize: '1.5rem', marginBottom: '0.5rem' },
-  tipTitle: { fontWeight: '700', color: '#0f172a', margin: '0 0 0.5rem', fontSize: '0.95rem' },
+  tipTitle: { fontWeight: '700', color: '#01306B', margin: '0 0 0.5rem', fontSize: '0.95rem' },
   tipText: { color: '#64748b', fontSize: '0.9rem', margin: '0.3rem 0', lineHeight: 1.6 },
 };
 

@@ -6,10 +6,10 @@ import api from '../services/api';
 const CARD_COLORS = [
   { bg: '#fff7ed', border: '#fed7aa', accent: '#ea580c' },
   { bg: '#f0fdf4', border: '#bbf7d0', accent: '#16a34a' },
-  { bg: '#eff6ff', border: '#bfdbfe', accent: '#2563eb' },
+  { bg: '#eff6ff', border: '#bfdbfe', accent: '#01306B' },
   { bg: '#fdf4ff', border: '#e9d5ff', accent: '#9333ea' },
-  { bg: '#fff1f2', border: '#fecdd3', accent: '#e11d48' },
-  { bg: '#f0fdfa', border: '#99f6e4', accent: '#0d9488' },
+  { bg: '#fff1f2', border: '#fecdd3', accent: '#CC0000' },
+  { bg: '#FEF9EE', border: '#FDE68A', accent: '#D4A843' },
 ];
 
 const FACT_IMAGES = [
@@ -65,7 +65,7 @@ const DidYouKnowPage = () => {
       <Navbar />
       <div style={styles.loadingWrap}>
         <div style={styles.loadingSpinner}></div>
-        <p style={styles.loadingText}>Loading fun facts... 💡</p>
+        <p style={styles.loadingText}>Memuatkan fakta menarik... 💡</p>
         <style>{`
           @keyframes spin { to { transform: rotate(360deg); } }
           @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
@@ -100,7 +100,7 @@ const DidYouKnowPage = () => {
         @keyframes spin { to { transform: rotate(360deg); } }
         .fact-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 12px 32px rgba(0,0,0,0.13) !important; }
         .stat-card:hover { transform: scale(1.08); }
-        .search-input:focus { border-color: #2563eb !important; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+        .search-input:focus { border-color: #D4A843 !important; box-shadow: 0 0 0 3px rgba(212,168,67,0.15); }
       `}</style>
 
       <Navbar />
@@ -108,25 +108,25 @@ const DidYouKnowPage = () => {
       {/* Hero */}
       <div style={styles.hero}>
         <div style={styles.heroLeft}>
-          <div style={styles.heroBadge}>💡 Did You Know?</div>
-          <h1 style={styles.heroTitle}>Cool Tooth Facts<br />You Never Knew! 🦷</h1>
+          <div style={styles.heroBadge}>💡 Tahukah Anda?</div>
+          <h1 style={styles.heroTitle}>Fakta Gigi Menarik<br />Yang Anda Tidak Tahu! 🦷</h1>
           <p style={styles.heroText}>
-            Get ready to be amazed! Discover super fun and surprising facts about teeth, mouths, and oral health. Click any card to reveal the full fact!
+            Bersedialah untuk terkejut! Temui fakta yang sangat menyeronokkan dan mengejutkan tentang gigi, mulut, dan kesihatan mulut. Klik mana-mana kad untuk mendedahkan fakta penuh!
           </p>
           <div style={styles.heroStats}>
-            <div style={styles.heroStat}><strong style={{ color: '#f59e0b' }}>{facts.length}</strong> fun facts</div>
+            <div style={styles.heroStat}><strong style={{ color: '#FFD700' }}>{facts.length}</strong> fakta menarik</div>
             <div style={styles.heroDot}></div>
-            <div style={styles.heroStat}>Click cards to <strong style={{ color: '#f59e0b' }}>flip!</strong></div>
+            <div style={styles.heroStat}>Klik kad untuk <strong style={{ color: '#FFD700' }}>terbalik!</strong></div>
           </div>
         </div>
         <div style={styles.heroImgWrap}>
           <img
             src={FACT_IMAGES[heroIndex]}
-            alt="dental"
+            alt="pergigian"
             style={styles.heroImg}
           />
           <div style={styles.heroBubble1}>🦷</div>
-          <div style={styles.heroBubble2}>✨</div>
+          <div style={styles.heroBubble2}>🌺</div>
           <div style={styles.heroBubble3}>😁</div>
         </div>
       </div>
@@ -134,12 +134,12 @@ const DidYouKnowPage = () => {
       {/* Stats Banner */}
       <div style={styles.statsBanner}>
         {[
-          { icon: '🦷', value: '32', label: 'Adult Teeth' },
-          { icon: '🦠', value: '700+', label: 'Bacteria Types' },
-          { icon: '💧', value: '1 Litre', label: 'Saliva Per Day' },
-          { icon: '⏱️', value: '2 Min', label: 'Brush Time' },
-          { icon: '📅', value: '2x', label: 'Brush Per Day' },
-          { icon: '🏥', value: '6 Mo', label: 'Dentist Visit' },
+          { icon: '🦷', value: '32', label: 'Gigi Dewasa' },
+          { icon: '🦠', value: '700+', label: 'Jenis Bakteria' },
+          { icon: '💧', value: '1 Liter', label: 'Air Liur Sehari' },
+          { icon: '⏱️', value: '2 Min', label: 'Masa Memberus' },
+          { icon: '📅', value: '2x', label: 'Memberus Sehari' },
+          { icon: '🏥', value: '6 Bln', label: 'Lawatan Doktor Gigi' },
         ].map((s, i) => (
           <div key={i} className="stat-card" style={{ ...styles.statCard, animationDelay: `${i * 0.1}s` }}>
             <div style={styles.statIcon}>{s.icon}</div>
@@ -156,7 +156,7 @@ const DidYouKnowPage = () => {
           <input
             className="search-input"
             style={styles.searchInput}
-            placeholder="Search for a fact..."
+            placeholder="Cari fakta..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -165,11 +165,11 @@ const DidYouKnowPage = () => {
           )}
         </div>
         <p style={styles.searchHint}>
-          {search ? `Found ${filtered.length} fact${filtered.length !== 1 ? 's' : ''}` : `${facts.length} amazing facts to discover!`}
+          {search ? `Dijumpai ${filtered.length} fakta` : `${facts.length} fakta menakjubkan untuk diterokai!`}
         </p>
       </div>
 
-      <p style={styles.flipHint}>👆 Tap any card to flip and read the full fact!</p>
+      <p style={styles.flipHint}>👆 Ketik mana-mana kad untuk terbalik dan baca fakta penuh!</p>
 
       {/* Facts Grid */}
       <div style={styles.grid}>
@@ -207,21 +207,21 @@ const DidYouKnowPage = () => {
                     <div style={{ ...styles.cardImgOverlay, background: `${color.accent}22` }}></div>
                   </div>
                   <div style={styles.cardBody}>
-                    <div style={{ ...styles.cardBadge, background: color.accent }}>💡 Did You Know?</div>
+                    <div style={{ ...styles.cardBadge, background: color.accent }}>💡 Tahukah Anda?</div>
                     <h3 style={{ ...styles.cardTitle, color: color.accent }}>{fact.title}</h3>
                     <div style={styles.cardFlipHint}>
-                      <span>Tap to read more</span>
+                      <span>Ketik untuk baca lagi</span>
                       <span style={{ marginLeft: '4px' }}>→</span>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div style={styles.cardBackFace}>
-                  <div style={{ ...styles.cardBadgeBack, background: color.accent }}>💡 Fact!</div>
+                  <div style={{ ...styles.cardBadgeBack, background: color.accent }}>💡 Fakta!</div>
                   <h3 style={{ ...styles.cardTitleBack, color: color.accent }}>{fact.title}</h3>
                   <p style={styles.cardContent}>{fact.content}</p>
                   {fact.author && <p style={styles.cardAuthor}>— {fact.author}</p>}
-                  <div style={styles.cardFlipHint}>↩ Tap to flip back</div>
+                  <div style={styles.cardFlipHint}>↩ Ketik untuk terbalik semula</div>
                 </div>
               )}
             </div>
@@ -231,21 +231,21 @@ const DidYouKnowPage = () => {
         {filtered.length === 0 && (
           <div style={styles.empty}>
             <div style={{ fontSize: '5rem', marginBottom: '1rem', animation: 'bounce 1s infinite' }}>🔍</div>
-            <p style={{ color: '#64748b', fontSize: '1.2rem', fontWeight: '600' }}>No facts found!</p>
-            <p style={{ color: '#94a3b8' }}>Try a different search term</p>
+            <p style={{ color: '#64748b', fontSize: '1.2rem', fontWeight: '600' }}>Tiada fakta dijumpai!</p>
+            <p style={{ color: '#94a3b8' }}>Cuba istilah carian yang berbeza</p>
           </div>
         )}
       </div>
 
       {/* Photo Banner */}
       <div style={styles.photoBanner}>
-        <h2 style={styles.bannerTitle}>Keep Your Smile Shining! ✨</h2>
+        <h2 style={styles.bannerTitle}>Kekalkan Senyuman Anda Bersinar! 🌺</h2>
         <div style={styles.photoGrid}>
           {[
-            { src: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&q=80', label: 'Visit Your Dentist' },
-            { src: 'https://images.unsplash.com/photo-1571772996211-2f02c9727629?w=400&q=80', label: 'Brush Every Day' },
-            { src: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&q=80', label: 'Healthy Habits' },
-            { src: 'https://images.unsplash.com/photo-1588776814546-daab30f310ce?w=400&q=80', label: 'Bright Smile' },
+            { src: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&q=80', label: 'Lawati Doktor Gigi' },
+            { src: 'https://images.unsplash.com/photo-1571772996211-2f02c9727629?w=400&q=80', label: 'Memberus Setiap Hari' },
+            { src: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&q=80', label: 'Tabiat Sihat' },
+            { src: 'https://images.unsplash.com/photo-1588776814546-daab30f310ce?w=400&q=80', label: 'Senyuman Cerah' },
           ].map((item, i) => (
             <div key={i} style={styles.photoCard}>
               <img
@@ -264,41 +264,41 @@ const DidYouKnowPage = () => {
 
       {/* CTA */}
       <div style={styles.cta}>
-        <h2 style={styles.ctaTitle}>Want to Learn Even More? 📚</h2>
-        <p style={styles.ctaText}>Head over to our Learning Module for videos and tips!</p>
-        <a href="/learning" style={styles.ctaBtn}>Go to Learning Module →</a>
+        <h2 style={styles.ctaTitle}>Mahu Belajar Lebih Lanjut? 📚</h2>
+        <p style={styles.ctaText}>Pergi ke Modul Pembelajaran kami untuk video dan petua!</p>
+        <a href="/learning" style={styles.ctaBtn}>Pergi ke Modul Pembelajaran →</a>
       </div>
     </div>
   );
 };
 
 const styles = {
-  page: { minHeight: '100vh', background: '#f8fafc', fontFamily: 'sans-serif' },
+  page: { minHeight: '100vh', background: '#FFF9F0', fontFamily: '"Outfit", sans-serif' },
   loadingWrap: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '1rem' },
-  loadingSpinner: { width: '48px', height: '48px', border: '4px solid #e2e8f0', borderTop: '4px solid #2563eb', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
+  loadingSpinner: { width: '48px', height: '48px', border: '4px solid #e2e8f0', borderTop: '4px solid #01306B', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
   loadingText: { color: '#64748b', fontSize: '1.1rem' },
-  hero: { background: 'linear-gradient(135deg, #fef9ee 0%, #fff7ed 50%, #fdf4ff 100%)', padding: '3rem clamp(1rem, 5vw, 4rem)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '2rem', overflow: 'hidden' },
+  hero: { background: 'linear-gradient(135deg, #FEF9EE 0%, #FFF7ED 50%, #FEF3C7 100%)', padding: '3rem clamp(1rem, 5vw, 4rem)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '2rem', overflow: 'hidden' },
   heroLeft: { maxWidth: '560px', animation: 'slideInLeft 0.7s ease' },
-  heroBadge: { display: 'inline-block', background: '#f59e0b', color: '#fff', padding: '0.35rem 1.1rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', marginBottom: '1rem' },
-  heroTitle: { fontSize: 'clamp(1.8rem, 5vw, 2.8rem)', fontWeight: '800', color: '#1e3a5f', margin: '0 0 1rem', lineHeight: 1.2 },
+  heroBadge: { display: 'inline-block', background: '#D4A843', color: '#fff', padding: '0.35rem 1.1rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', marginBottom: '1rem' },
+  heroTitle: { fontSize: 'clamp(1.8rem, 5vw, 2.8rem)', fontWeight: '800', color: '#01306B', margin: '0 0 1rem', lineHeight: 1.2 },
   heroText: { fontSize: '1.05rem', color: '#475569', lineHeight: 1.7, margin: '0 0 1.5rem' },
   heroStats: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
   heroStat: { color: '#475569', fontSize: '0.95rem' },
-  heroDot: { width: '5px', height: '5px', borderRadius: '50%', background: '#cbd5e1' },
+  heroDot: { width: '5px', height: '5px', borderRadius: '50%', background: '#D4A843' },
   heroImgWrap: { position: 'relative', width: 'clamp(180px, 40vw, 300px)', height: 'clamp(180px, 40vw, 300px)', flexShrink: 0 },
-  heroImg: { width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', animation: 'float 3s ease-in-out infinite', transition: 'opacity 0.8s ease' },
+  heroImg: { width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', animation: 'float 3s ease-in-out infinite', transition: 'opacity 0.8s ease', border: '4px solid rgba(212,168,67,0.3)' },
   heroBubble1: { position: 'absolute', top: '10px', right: '-10px', fontSize: '2.5rem', animation: 'bounce 2s infinite' },
   heroBubble2: { position: 'absolute', bottom: '20px', right: '10px', fontSize: '2rem', animation: 'bounce 2.5s infinite 0.5s' },
   heroBubble3: { position: 'absolute', top: '50%', left: '-20px', fontSize: '2rem', animation: 'bounce 2s infinite 1s' },
-  statsBanner: { display: 'flex', justifyContent: 'center', gap: '0.5rem', padding: '1.5rem 2rem', background: '#1e3a5f', flexWrap: 'wrap' },
+  statsBanner: { display: 'flex', justifyContent: 'center', gap: '0.5rem', padding: '1.5rem 2rem', background: '#01306B', flexWrap: 'wrap' },
   statCard: { textAlign: 'center', color: '#fff', minWidth: '90px', padding: '0.5rem', borderRadius: '12px', cursor: 'default', transition: 'transform 0.2s', animation: 'fadeInUp 0.5s ease both' },
   statIcon: { fontSize: '1.6rem', marginBottom: '0.25rem' },
-  statValue: { fontSize: '1.4rem', fontWeight: '800', color: '#fbbf24' },
-  statLabel: { fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.2rem' },
+  statValue: { fontSize: '1.4rem', fontWeight: '800', color: '#FFD700' },
+  statLabel: { fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)', marginTop: '0.2rem' },
   searchSection: { padding: '2rem clamp(1rem, 5vw, 4rem) 0', maxWidth: '700px', margin: '0 auto' },
-  searchWrap: { display: 'flex', alignItems: 'center', background: '#fff', border: '2px solid #e2e8f0', borderRadius: '50px', padding: '0.5rem 1rem', gap: '0.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
+  searchWrap: { display: 'flex', alignItems: 'center', background: '#fff', border: '2px solid rgba(212,168,67,0.3)', borderRadius: '50px', padding: '0.5rem 1rem', gap: '0.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
   searchIcon: { fontSize: '1.1rem', flexShrink: 0 },
-  searchInput: { flex: 1, border: 'none', outline: 'none', fontSize: '1rem', background: 'transparent', color: '#1e293b' },
+  searchInput: { flex: 1, border: 'none', outline: 'none', fontSize: '1rem', background: 'transparent', color: '#01306B' },
   clearBtn: { background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', color: '#64748b', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   searchHint: { textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.5rem' },
   flipHint: { textAlign: 'center', color: '#64748b', fontSize: '0.9rem', margin: '1rem 0 0', fontStyle: 'italic' },
@@ -318,17 +318,17 @@ const styles = {
   cardContent: { color: '#475569', fontSize: '0.9rem', lineHeight: 1.7, margin: '0 0 auto', flex: 1 },
   cardAuthor: { color: '#94a3b8', fontSize: '0.78rem', fontStyle: 'italic', margin: '0.75rem 0 0.25rem' },
   empty: { gridColumn: '1/-1', textAlign: 'center', padding: '4rem' },
-  photoBanner: { background: 'linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%)', padding: '3rem clamp(1rem, 5vw, 4rem)', textAlign: 'center' },
-  bannerTitle: { fontSize: '1.8rem', fontWeight: '800', color: '#fff', marginBottom: '2rem' },
+  photoBanner: { background: 'linear-gradient(135deg, #01306B 0%, #1e5aad 100%)', padding: '3rem clamp(1rem, 5vw, 4rem)', textAlign: 'center' },
+  bannerTitle: { fontSize: '1.8rem', fontWeight: '800', color: '#FFD700', marginBottom: '2rem' },
   photoGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', maxWidth: '1000px', margin: '0 auto' },
   photoCard: { position: 'relative', borderRadius: '16px', overflow: 'hidden', aspectRatio: '4/3', cursor: 'pointer' },
   photoImg: { width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s' },
   photoOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.6))', padding: '1rem 0.75rem 0.75rem' },
   photoLabel: { color: '#fff', fontWeight: '700', margin: 0, fontSize: '0.9rem' },
-  cta: { background: '#0f172a', padding: '3rem 2rem', textAlign: 'center' },
-  ctaTitle: { fontSize: '1.8rem', fontWeight: '800', color: '#fff', margin: '0 0 0.75rem' },
-  ctaText: { color: '#94a3b8', fontSize: '1rem', margin: '0 0 1.5rem' },
-  ctaBtn: { display: 'inline-block', background: '#f59e0b', color: '#fff', padding: '0.85rem 2rem', borderRadius: '10px', textDecoration: 'none', fontWeight: '700', fontSize: '1rem' },
+  cta: { background: '#012550', padding: '3rem 2rem', textAlign: 'center' },
+  ctaTitle: { fontSize: '1.8rem', fontWeight: '800', color: '#FFD700', margin: '0 0 0.75rem' },
+  ctaText: { color: 'rgba(255,255,255,0.7)', fontSize: '1rem', margin: '0 0 1.5rem' },
+  ctaBtn: { display: 'inline-block', background: '#D4A843', color: '#fff', padding: '0.85rem 2rem', borderRadius: '10px', textDecoration: 'none', fontWeight: '700', fontSize: '1rem' },
 };
 
 export default DidYouKnowPage;

@@ -139,7 +139,8 @@ const getAllAdmins = async (req, res) => {
 
 // ─── inviteAdmin ──────────────────────────────────────────────────────────────
 const inviteAdmin = async (req, res) => {
-  const { email } = req.body;
+  const { email, role } = req.body;
+  const inviteRole = ['admin', 'teacher'].includes(role) ? role : 'admin';
   if (!email || typeof email !== 'string')
     return res.status(400).json({ error: 'Email required' });
   if (email.length > 120)
@@ -158,7 +159,7 @@ const inviteAdmin = async (req, res) => {
     if (existingInvite.length > 0)
       return res.status(400).json({ error: 'An invitation has already been sent to this email' });
 
-    const token = jwt.sign({ email, type: 'admin_invite' }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ email, type: 'admin_invite', role: inviteRole }, process.env.JWT_SECRET, { expiresIn: '7d' });
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     await db.query(
@@ -213,10 +214,11 @@ const completeRegistration = async (req, res) => {
     if (existing.length > 0)
       return res.status(400).json({ error: 'This email is already registered' });
 
+    const inviteRole = decoded.role || 'admin';
     const password_hash = await bcrypt.hash(password, 10);
     await db.query(
       'INSERT INTO admins (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-      [name.trim(), email, password_hash, 'admin']
+      [name.trim(), email, password_hash, inviteRole]
     );
     await db.query('UPDATE admin_invitations SET used = TRUE WHERE token = ?', [token]);
 

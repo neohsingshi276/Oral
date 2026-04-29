@@ -5,6 +5,7 @@ const ManageAdmins = ({ currentAdmin }) => {
   const [admins, setAdmins] = useState([]);
   const [pendingInvites, setPendingInvites] = useState([]);
   const [email, setEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('admin');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -19,11 +20,12 @@ const ManageAdmins = ({ currentAdmin }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await api.post('/admin/invite', { email });
+      const res = await api.post('/admin/invite', { email, role: inviteRole });
       setMsg('✅ ' + res.data.message);
       setEmail('');
+      setInviteRole('admin');
       fetchAdmins();
-    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Failed to send invitation')); }
+    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal menghantar jemputan')); }
     finally { setLoading(false); setTimeout(() => setMsg(''), 4000); }
   };
 
@@ -32,46 +34,53 @@ const ManageAdmins = ({ currentAdmin }) => {
       const res = await api.post(`/admin/invitations/${id}/resend`);
       setMsg('✅ ' + res.data.message);
       fetchAdmins();
-    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Failed to resend')); }
+    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal menghantar semula')); }
     finally { setTimeout(() => setMsg(''), 4000); }
   };
 
   const handleCancel = async (id) => {
-    if (!confirm('Cancel this invitation?')) return;
+    if (!confirm('Batalkan jemputan ini?')) return;
     try {
       await api.delete(`/admin/invitations/${id}`);
       fetchAdmins();
-    } catch (err) { alert(err.response?.data?.error || 'Failed'); }
+    } catch (err) { alert(err.response?.data?.error || 'Gagal'); }
   };
 
   const handleDelete = async (id, name) => {
-    if (!confirm(`Remove admin "${name}"? This cannot be undone!`)) return;
+    if (!confirm(`Keluarkan pentadbir "${name}"? Tindakan ini tidak boleh dibatalkan!`)) return;
     try {
       await api.delete(`/admin/admins/${id}`);
       fetchAdmins();
-    } catch (err) { alert(err.response?.data?.error || 'Failed'); }
+    } catch (err) { alert(err.response?.data?.error || 'Gagal'); }
   };
 
   return (
     <div>
       <div style={s.card}>
-        <h2 style={s.cardTitle}>✉️ Invite New Admin</h2>
-        <p style={s.hint}>Enter the email address of the person you want to invite. They will receive an email with a link to set up their account.</p>
+        <h2 style={s.cardTitle}>✉️ Jemput Pentadbir / Guru Baru</h2>
+        <p style={s.hint}>Masukkan alamat e-mel orang yang ingin anda jemput. Mereka akan menerima e-mel dengan pautan untuk menyediakan akaun mereka.</p>
         {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: '200px' }}>
-            <label style={s.label}>Email Address</label>
-            <input style={s.input} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="teacher@school.com" maxLength={120} />
+            <label style={s.label}>Alamat E-mel</label>
+            <input style={s.input} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="guru@sekolah.com" maxLength={120} />
+          </div>
+          <div style={{ minWidth: '140px' }}>
+            <label style={s.label}>Peranan</label>
+            <select style={s.input} value={inviteRole} onChange={e => setInviteRole(e.target.value)}>
+              <option value="admin">Pentadbir</option>
+              <option value="teacher">Guru</option>
+            </select>
           </div>
           <button style={s.btnPrimary} onClick={handleInvite} disabled={loading}>
-            {loading ? 'Sending...' : '📧 Send Invitation'}
+            {loading ? 'Menghantar...' : '📧 Hantar Jemputan'}
           </button>
         </div>
       </div>
 
       {pendingInvites.length > 0 && (
         <div style={s.card}>
-          <h2 style={s.cardTitle}>⏳ Pending Invitations ({pendingInvites.length})</h2>
+          <h2 style={s.cardTitle}>⏳ Jemputan Tertangguh ({pendingInvites.length})</h2>
           <div style={s.inviteList}>
             {pendingInvites.map(invite => (
               <div key={invite.id} style={s.inviteItem}>
@@ -79,13 +88,13 @@ const ManageAdmins = ({ currentAdmin }) => {
                 <div style={s.inviteInfo}>
                   <div style={s.inviteEmail}>{invite.email}</div>
                   <div style={s.inviteMeta}>
-                    Sent {new Date(invite.created_at).toLocaleDateString()} ·
-                    Expires {new Date(invite.expires_at).toLocaleDateString()}
+                    Dihantar {new Date(invite.created_at).toLocaleDateString()} ·
+                    Tamat tempoh {new Date(invite.expires_at).toLocaleDateString()}
                   </div>
                 </div>
-                <span style={s.pendingBadge}>⏳ Pending</span>
-                <button style={s.btnResend} onClick={() => handleResend(invite.id)}>📧 Resend</button>
-                <button style={s.btnCancel} onClick={() => handleCancel(invite.id)}>✕ Cancel</button>
+                <span style={s.pendingBadge}>⏳ Tertangguh</span>
+                <button style={s.btnResend} onClick={() => handleResend(invite.id)}>📧 Hantar Semula</button>
+                <button style={s.btnCancel} onClick={() => handleCancel(invite.id)}>✕ Batal</button>
               </div>
             ))}
           </div>
@@ -93,7 +102,7 @@ const ManageAdmins = ({ currentAdmin }) => {
       )}
 
       <div style={s.card}>
-        <h2 style={s.cardTitle}>👨‍💼 All Admins ({admins.length})</h2>
+        <h2 style={s.cardTitle}>👨‍💼 Semua Pentadbir ({admins.length})</h2>
         <div style={s.adminList}>
           {admins.map(admin => (
             <div key={admin.id} style={s.adminItem}>
@@ -101,16 +110,16 @@ const ManageAdmins = ({ currentAdmin }) => {
               <div style={s.adminInfo}>
                 <div style={s.adminName}>
                   {admin.name}
-                  {admin.id === currentAdmin?.id && <span style={s.youBadge}>You</span>}
-                  <span style={{ ...s.roleBadge, background: admin.role === 'main_admin' ? '#7c3aed' : '#2563eb' }}>
-                    {admin.role === 'main_admin' ? '⭐ Main Admin' : 'Admin'}
+                  {admin.id === currentAdmin?.id && <span style={s.youBadge}>Anda</span>}
+                  <span style={{ ...s.roleBadge, background: admin.role === 'main_admin' ? '#7c3aed' : admin.role === 'teacher' ? '#D4A843' : '#2563eb' }}>
+                    {admin.role === 'main_admin' ? '⭐ Pentadbir Utama' : admin.role === 'teacher' ? '👩‍🏫 Guru' : 'Pentadbir'}
                   </span>
                 </div>
                 <div style={s.adminEmail}>{admin.email}</div>
-                <div style={s.adminDate}>Joined {new Date(admin.created_at).toLocaleDateString()}</div>
+                <div style={s.adminDate}>Sertai {new Date(admin.created_at).toLocaleDateString()}</div>
               </div>
               {currentAdmin?.role === 'main_admin' && admin.id !== currentAdmin?.id && admin.role !== 'main_admin' && (
-                <button style={s.btnDelete} onClick={() => handleDelete(admin.id, admin.name)}>🗑️ Remove</button>
+                <button style={s.btnDelete} onClick={() => handleDelete(admin.id, admin.name)}>🗑️ Keluarkan</button>
               )}
             </div>
           ))}

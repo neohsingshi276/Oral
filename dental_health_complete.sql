@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS admins (
   name VARCHAR(100) NOT NULL,
   email VARCHAR(100) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  role ENUM('admin', 'main_admin') DEFAULT 'admin',
+  role ENUM('admin', 'main_admin', 'teacher') DEFAULT 'admin',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -148,9 +148,9 @@ CREATE TABLE IF NOT EXISTS crossword_data (
   id INT AUTO_INCREMENT PRIMARY KEY,
   word VARCHAR(50) NOT NULL,
   clue TEXT NOT NULL,
-  direction ENUM('across', 'down') NOT NULL,
-  start_row INT NOT NULL,
-  start_col INT NOT NULL,
+  direction ENUM('across', 'down') DEFAULT 'across',
+  start_row INT DEFAULT 0,
+  start_col INT DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -297,3 +297,11 @@ SELECT 'DentalQuest database setup complete!' as Status;
 
 ALTER TABLE facts MODIFY COLUMN image_url LONGTEXT NULL;
 ALTER TABLE quiz_questions MODIFY COLUMN image_url LONGTEXT NULL;
+
+-- Migration: Fix crossword_data columns to have defaults (auto-layout makes stored values unused)
+ALTER TABLE crossword_data MODIFY COLUMN direction ENUM('across','down') DEFAULT 'across';
+ALTER TABLE crossword_data MODIFY COLUMN start_row INT DEFAULT 0;
+ALTER TABLE crossword_data MODIFY COLUMN start_col INT DEFAULT 0;
+
+-- Migration: Add teacher role to admins
+ALTER TABLE admins MODIFY COLUMN role ENUM('admin', 'main_admin', 'teacher') DEFAULT 'admin';

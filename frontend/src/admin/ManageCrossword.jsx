@@ -45,15 +45,15 @@ const ManageCrossword = () => {
       <div style={s.infoBanner}>
         <span style={{ fontSize: '1.2rem' }}>🧩</span>
         <div>
-          <strong>Auto Layout</strong> — The crossword grid is generated automatically! Just add words and clues.
-          The system picks 8 random words per game and arranges them by finding intersecting letters.
+          <strong>Susun Atur Automatik</strong> — Grid teka silang kata dijana secara automatik! Hanya tambah perkataan dan pembayang.
+          Sistem memilih 8 perkataan rawak setiap permainan dan menyusunnya dengan mencari huruf yang bersilang.
         </div>
       </div>
 
       <div style={s.twoCol}>
         {/* Add/Edit Form */}
         <div style={s.card}>
-          <h2 style={s.cardTitle}>{editing ? '✏️ Edit Word' : '➕ Add Word'}</h2>
+          <h2 style={s.cardTitle}>{editing ? '✏️ Sunting Perkataan' : '➕ Tambah Perkataan'}</h2>
           {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
           <form onSubmit={handleSubmit}>
             <div style={s.field}>
@@ -80,10 +80,10 @@ const ManageCrossword = () => {
               />
             </div>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button style={s.btnPrimary} type="submit">{editing ? 'Update Word' : 'Add Word'}</button>
+              <button style={s.btnPrimary} type="submit">{editing ? 'Kemaskini' : 'Tambah'}</button>
               {editing && (
                 <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm({ word: '', clue: '' }); }}>
-                  Cancel
+                  Batal
                 </button>
               )}
             </div>
@@ -92,24 +92,24 @@ const ManageCrossword = () => {
 
         {/* Stats panel */}
         <div style={s.card}>
-          <h2 style={s.cardTitle}>📊 Word Bank Stats</h2>
+          <h2 style={s.cardTitle}>📊 Statistik Bank Perkataan</h2>
           <div style={s.statsGrid}>
             <div style={s.statCard}>
               <div style={s.statValue}>{words.length}</div>
-              <div style={s.statLabel}>Total Words</div>
+              <div style={s.statLabel}>Jumlah Perkataan</div>
             </div>
             <div style={s.statCard}>
               <div style={{ ...s.statValue, color: words.length >= 8 ? '#16a34a' : '#e11d48' }}>{words.length >= 8 ? '✅' : '❌'}</div>
-              <div style={s.statLabel}>{words.length >= 8 ? 'Ready to play!' : `Need ${8 - words.length} more`}</div>
+              <div style={s.statLabel}>{words.length >= 8 ? 'Sedia untuk dimain!' : `Perlu ${8 - words.length} lagi`}</div>
             </div>
           </div>
           <div style={s.infoBox}>
-            <p style={s.infoText}><strong>How it works:</strong></p>
+            <p style={s.infoText}><strong>Cara ia berfungsi:</strong></p>
             <ul style={s.infoList}>
-              <li>Each game picks <strong>8 random words</strong> from the word bank</li>
-              <li>The system <strong>auto-arranges</strong> them into a crossword grid</li>
-              <li>Players need <strong>80%</strong> correct to pass</li>
-              <li>More words = more variety for each game!</li>
+              <li>Setiap permainan memilih <strong>8 perkataan rawak</strong> daripada bank perkataan</li>
+              <li>Sistem <strong>menyusun secara automatik</strong> ke dalam grid teka silang kata</li>
+              <li>Pemain perlu <strong>80%</strong> betul untuk lulus</li>
+              <li>Lebih banyak perkataan = lebih pelbagai untuk setiap permainan!</li>
             </ul>
           </div>
         </div>
@@ -117,14 +117,14 @@ const ManageCrossword = () => {
 
       {/* Words table */}
       <div style={s.card}>
-        <h2 style={s.cardTitle}>📋 Word Bank ({words.length} words)</h2>
+        <h2 style={s.cardTitle}>📋 Bank Perkataan ({words.length} perkataan)</h2>
         <table style={s.table}>
           <thead><tr style={s.thead}>
             <th style={s.th}>#</th>
-            <th style={s.th}>Word</th>
-            <th style={s.th}>Clue</th>
-            <th style={s.th}>Letters</th>
-            <th style={s.th}>Actions</th>
+            <th style={s.th}>Perkataan</th>
+            <th style={s.th}>Pembayang</th>
+            <th style={s.th}>Huruf</th>
+            <th style={s.th}>Tindakan</th>
           </tr></thead>
           <tbody>
             {words.map((w, i) => (
@@ -139,7 +139,7 @@ const ManageCrossword = () => {
                 </td>
               </tr>
             ))}
-            {words.length === 0 && <tr><td colSpan="5" style={{ ...s.td, textAlign: 'center', color: '#94a3b8' }}>No words yet. Add your first word above!</td></tr>}
+            {words.length === 0 && <tr><td colSpan="5" style={{ ...s.td, textAlign: 'center', color: '#94a3b8' }}>Belum ada perkataan. Tambah perkataan pertama anda di atas!</td></tr>}
           </tbody>
         </table>
       </div>

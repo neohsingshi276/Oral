@@ -7,7 +7,7 @@ const NotFoundPage = () => {
         @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes wiggle { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
-        .home-btn:hover { transform: translateY(-3px) !important; box-shadow: 0 12px 30px rgba(59,130,246,0.4) !important; }
+        .home-btn:hover { transform: translateY(-3px) !important; box-shadow: 0 12px 30px rgba(1,48,107,0.4) !important; }
       `}</style>
 
       <div style={s.card}>
@@ -18,24 +18,24 @@ const NotFoundPage = () => {
         </div>
 
         <h1 style={s.code}>404</h1>
-        <h2 style={s.title}>Oops! Page Not Found</h2>
+        <h2 style={s.title}>Alamak! Halaman Tidak Dijumpai</h2>
         <p style={s.text}>
-          This page seems to have fallen out like a baby tooth! 🪥
+          Halaman ini seolah-olah telah tercabut seperti gigi susu! 🪥
           <br />
-          Let's get you back on track.
+          Jom kembali ke landasan yang betul.
         </p>
 
         <div style={s.funFact}>
-          <span style={{ fontWeight: '700', color: '#f59e0b' }}>💡 Did You Know?</span>
+          <span style={{ fontWeight: '700', color: '#D4A843' }}>💡 Tahukah Anda?</span>
           <br />
-          Humans only get two sets of teeth in their lifetime — baby teeth and adult teeth. Take care of them!
+          Manusia hanya mendapat dua set gigi dalam seumur hidup — gigi susu dan gigi kekal. Jaga gigi anda!
         </div>
 
         <Link to="/" className="home-btn" style={s.btn}>
-          🏠 Go Back Home
+          🏠 Kembali ke Utama
         </Link>
         <Link to="/learning" style={s.secondaryBtn}>
-          📚 Go to Learning
+          📚 Pergi ke Pembelajaran
         </Link>
       </div>
     </div>
@@ -48,7 +48,7 @@ const s = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(135deg, #fef9ee 0%, #fff7ed 50%, #fdf4ff 100%)',
+    background: 'linear-gradient(135deg, #FFF9F0 0%, #FEF9EE 50%, #FEF3C7 100%)',
     padding: '1rem',
   },
   card: {
@@ -71,7 +71,7 @@ const s = {
   code: {
     fontSize: '6rem',
     fontWeight: '900',
-    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+    background: 'linear-gradient(135deg, #01306B, #D4A843)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     margin: '0',
@@ -80,7 +80,7 @@ const s = {
   title: {
     fontSize: '1.5rem',
     fontWeight: '800',
-    color: '#0f172a',
+    color: '#01306B',
     margin: '0.5rem 0 1rem',
   },
   text: {
@@ -104,7 +104,7 @@ const s = {
     display: 'block',
     width: '100%',
     padding: '1rem',
-    background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+    background: 'linear-gradient(135deg, #01306B, #1e5aad)',
     color: '#fff',
     border: 'none',
     borderRadius: '14px',
@@ -112,7 +112,7 @@ const s = {
     fontWeight: '700',
     textDecoration: 'none',
     textAlign: 'center',
-    boxShadow: '0 8px 20px rgba(59,130,246,0.3)',
+    boxShadow: '0 8px 20px rgba(1,48,107,0.3)',
     transition: 'all 0.2s',
     marginBottom: '0.75rem',
     boxSizing: 'border-box',
@@ -122,7 +122,7 @@ const s = {
     width: '100%',
     padding: '0.85rem',
     background: 'transparent',
-    color: '#3b82f6',
+    color: '#01306B',
     border: '2px solid #e2e8f0',
     borderRadius: '14px',
     fontSize: '1rem',

@@ -1,5 +1,5 @@
 // ============================================
-// src/pages/HomePage.jsx
+// src/pages/HomePage.jsx — Malaysian Theme + Full BM
 // ============================================
 
 import { Link } from 'react-router-dom';
@@ -14,9 +14,9 @@ const HomePage = () => {
 
         .homepage-container {
           min-height: 100vh;
-          background-color: #f8fafc;
+          background-color: #FFF9F0;
           font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          color: #0f172a;
+          color: #1a1a2e;
           overflow: hidden;
           position: relative;
         }
@@ -26,7 +26,7 @@ const HomePage = () => {
           border-radius: 50%;
           filter: blur(80px);
           z-index: 0;
-          opacity: 0.6;
+          opacity: 0.5;
         }
 
         .bg-shape-1 {
@@ -34,7 +34,7 @@ const HomePage = () => {
           left: -5%;
           width: 500px;
           height: 500px;
-          background: linear-gradient(135deg, #38bdf8, #818cf8);
+          background: linear-gradient(135deg, #01306B, #1e5aad);
         }
 
         .bg-shape-2 {
@@ -42,7 +42,7 @@ const HomePage = () => {
           right: -10%;
           width: 600px;
           height: 600px;
-          background: linear-gradient(135deg, #f472b6, #fb7185);
+          background: linear-gradient(135deg, #D4A843, #FFD700);
         }
 
         .bg-shape-3 {
@@ -50,8 +50,8 @@ const HomePage = () => {
           left: 20%;
           width: 800px;
           height: 800px;
-          background: linear-gradient(135deg, #a78bfa, #38bdf8);
-          opacity: 0.4;
+          background: linear-gradient(135deg, #01306B, #2563eb);
+          opacity: 0.3;
         }
 
         .homepage-main {
@@ -92,16 +92,16 @@ const HomePage = () => {
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
-          background: rgba(255, 255, 255, 0.6);
+          background: rgba(255, 255, 255, 0.7);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
           padding: 0.5rem 1rem;
           border-radius: 9999px;
-          border: 1px solid rgba(255, 255, 255, 0.8);
+          border: 1px solid rgba(212,168,67,0.3);
           width: fit-content;
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
           font-weight: 600;
-          color: #4f46e5;
+          color: #01306B;
           font-size: 0.9rem;
         }
 
@@ -111,11 +111,11 @@ const HomePage = () => {
           line-height: 1;
           letter-spacing: -0.04em;
           margin: 0;
-          color: #0f172a;
+          color: #01306B;
         }
 
         .text-gradient {
-          background: linear-gradient(135deg, #ec4899, #8b5cf6, #3b82f6);
+          background: linear-gradient(135deg, #D4A843, #FFD700, #D4A843);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -152,23 +152,23 @@ const HomePage = () => {
         }
 
         .btn-primary {
-          background: #3b82f6;
+          background: linear-gradient(135deg, #01306B, #1e5aad);
           color: white;
-          box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+          box-shadow: 0 10px 25px -5px rgba(1, 48, 107, 0.4);
         }
 
         .btn-primary:hover {
-          background: #2563eb;
+          background: linear-gradient(135deg, #012550, #01306B);
           transform: translateY(-3px);
-          box-shadow: 0 15px 30px -5px rgba(59, 130, 246, 0.6);
+          box-shadow: 0 15px 30px -5px rgba(1, 48, 107, 0.5);
         }
 
         .btn-secondary {
           background: rgba(255, 255, 255, 0.7);
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
-          color: #1e293b;
-          border: 1px solid rgba(255, 255, 255, 0.8);
+          color: #01306B;
+          border: 2px solid rgba(212,168,67,0.4);
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
@@ -176,6 +176,7 @@ const HomePage = () => {
           background: white;
           transform: translateY(-3px);
           box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+          border-color: #D4A843;
         }
 
         .hero-graphic {
@@ -193,11 +194,11 @@ const HomePage = () => {
           aspect-ratio: 4/5;
           border-radius: 40px;
           padding: 1rem;
-          background: rgba(255, 255, 255, 0.4);
+          background: rgba(255, 255, 255, 0.5);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.6);
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+          border: 2px solid rgba(212,168,67,0.3);
+          box-shadow: 0 25px 50px -12px rgba(1,48,107,0.15);
           display: flex;
         }
 
@@ -210,10 +211,10 @@ const HomePage = () => {
 
         .floating-card {
           position: absolute;
-          background: rgba(255, 255, 255, 0.85);
+          background: rgba(255, 255, 255, 0.9);
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 1);
+          border: 2px solid rgba(212,168,67,0.3);
           border-radius: 20px;
           padding: 1rem 1.5rem;
           display: flex;
@@ -240,7 +241,7 @@ const HomePage = () => {
         .stat-value {
           font-size: 1.5rem;
           font-weight: 800;
-          color: #0f172a;
+          color: #01306B;
           line-height: 1.1;
         }
 
@@ -252,7 +253,7 @@ const HomePage = () => {
 
         .emoji {
           font-size: 2rem;
-          background: #f1f5f9;
+          background: linear-gradient(135deg, #FFF9F0, #FEF3C7);
           width: 50px;
           height: 50px;
           display: flex;
@@ -269,21 +270,33 @@ const HomePage = () => {
         }
 
         .feature-nav-card {
-          background: rgba(255, 255, 255, 0.7);
+          background: rgba(255, 255, 255, 0.75);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.8);
+          border: 2px solid rgba(212,168,67,0.2);
           border-radius: 32px;
           padding: 2.5rem;
           transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           cursor: pointer;
           box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .feature-nav-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: linear-gradient(90deg, #01306B, #D4A843, #CC0000);
         }
 
         .feature-nav-card:hover {
           transform: translateY(-15px) scale(1.02);
           background: rgba(255, 255, 255, 1);
-          box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+          box-shadow: 0 25px 50px -12px rgba(1,48,107,0.15);
         }
 
         .nav-card-icon {
@@ -298,15 +311,15 @@ const HomePage = () => {
           box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
         }
 
-        .bg-blue { background: linear-gradient(135deg, #60a5fa, #3b82f6); color: white; }
-        .bg-pink { background: linear-gradient(135deg, #f472b6, #ec4899); color: white; }
-        .bg-yellow { background: linear-gradient(135deg, #fcd34d, #f59e0b); color: white; }
+        .bg-blue { background: linear-gradient(135deg, #01306B, #1e5aad); color: white; }
+        .bg-gold { background: linear-gradient(135deg, #D4A843, #FFD700); color: white; }
+        .bg-red { background: linear-gradient(135deg, #CC0000, #e53e3e); color: white; }
 
         .feature-nav-card h3 {
           font-size: 1.5rem;
           font-weight: 700;
           margin: 0 0 0.5rem 0;
-          color: #1e293b;
+          color: #01306B;
         }
 
         .feature-nav-card p {
@@ -321,7 +334,7 @@ const HomePage = () => {
           grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
           gap: 3rem;
           padding: 4rem 0;
-          border-top: 1px solid rgba(0,0,0,0.05);
+          border-top: 2px solid rgba(212,168,67,0.2);
           margin-bottom: 4rem;
         }
 
@@ -345,12 +358,13 @@ const HomePage = () => {
           background: white;
           border-radius: 24px;
           box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+          border: 1px solid rgba(212,168,67,0.2);
         }
 
         .feature-title {
           font-size: 1.6rem;
           font-weight: 800;
-          color: #0f172a;
+          color: #01306B;
           margin: 0 0 0.5rem 0;
           letter-spacing: -0.02em;
         }
@@ -437,8 +451,8 @@ const HomePage = () => {
           <section className="hero-section">
             <div className="hero-content">
               <div className="hero-badge">
-                <span className="badge-icon">✨</span>
-                <span className="badge-text">Trusted Educational Platform for Kids</span>
+                <span className="badge-icon">🌺</span>
+                <span className="badge-text">Platform Pendidikan Pergigian Kanak-kanak</span>
               </div>
 
               <h1 className="hero-title">
@@ -447,18 +461,18 @@ const HomePage = () => {
               </h1>
 
               <p className="hero-subtitle">
-                We wish to provide fun, engaging dental education that matches modern technology. We believe in the power of your smile.
+                Kami menyediakan pendidikan pergigian yang menyeronokkan dan interaktif dengan teknologi moden. Kami percaya pada kekuatan senyuman anda! 😁
               </p>
 
               <div className="hero-actions">
                 <Link to="/learning" className="btn btn-primary">
-                  <span>Start Learning</span>
+                  <span>Mula Belajar</span>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </Link>
                 <Link to="/join" className="btn btn-secondary">
-                  Join Game
+                  Sertai Permainan
                 </Link>
               </div>
             </div>
@@ -467,21 +481,21 @@ const HomePage = () => {
               <div className="glass-panel main-glass">
                 <img
                   src={heroImage}
-                  alt="Modern Dental Clinic"
+                  alt="Klinik Pergigian Moden"
                   className="hero-image"
                 />
                 <div className="floating-card stat-card card-1">
                   <span className="emoji">🦷</span>
                   <div className="stat-info">
                     <span className="stat-value">100%</span>
-                    <span className="stat-label">Fun Learning</span>
+                    <span className="stat-label">Belajar Sambil Bermain</span>
                   </div>
                 </div>
                 <div className="floating-card stat-card card-2">
                   <span className="emoji">⭐</span>
                   <div className="stat-info">
-                    <span className="stat-value">Top</span>
-                    <span className="stat-label">Rated Minigames</span>
+                    <span className="stat-value">Terbaik</span>
+                    <span className="stat-label">Permainan Mini</span>
                   </div>
                 </div>
               </div>
@@ -491,18 +505,18 @@ const HomePage = () => {
           <section className="features-nav">
             <div className="feature-nav-card">
               <div className="nav-card-icon bg-blue">📘</div>
-              <h3>Interactive Learning Modules</h3>
-              <p>Dive into detailed animated lessons.</p>
+              <h3>Modul Pembelajaran Interaktif</h3>
+              <p>Selami pelajaran animasi terperinci tentang kesihatan gigi.</p>
             </div>
             <div className="feature-nav-card">
-              <div className="nav-card-icon bg-pink">🎮</div>
-              <h3>Fun Dental Minigames</h3>
-              <p>Play quizzes, crosswords, and more.</p>
+              <div className="nav-card-icon bg-gold">🎮</div>
+              <h3>Permainan Mini Pergigian</h3>
+              <p>Main kuiz, teka silang kata, dan banyak lagi!</p>
             </div>
             <div className="feature-nav-card">
-              <div className="nav-card-icon bg-yellow">🌱</div>
-              <h3>Build Healthy Habits</h3>
-              <p>Track your daily brushing progress.</p>
+              <div className="nav-card-icon bg-red">🌱</div>
+              <h3>Bina Tabiat Sihat</h3>
+              <p>Jejaki kemajuan memberus gigi harian anda.</p>
             </div>
           </section>
 
@@ -512,8 +526,8 @@ const HomePage = () => {
                 <span className="feature-icon">📚</span>
               </div>
               <div className="feature-text">
-                <h3 className="feature-title">Video Lessons</h3>
-                <p className="feature-desc">Watch high-quality animated videos teaching proper brushing, flossing, and the science of cavities.</p>
+                <h3 className="feature-title">Pelajaran Video</h3>
+                <p className="feature-desc">Tonton video animasi berkualiti tinggi tentang cara memberus gigi, menggunakan benang gigi, dan sains gigi berlubang.</p>
               </div>
             </div>
             <div className="feature-box">
@@ -521,8 +535,8 @@ const HomePage = () => {
                 <span className="feature-icon">🕹️</span>
               </div>
               <div className="feature-text">
-                <h3 className="feature-title">Quest Minigames</h3>
-                <p className="feature-desc">Join the food game, race the clock in interactive quizzes, and conquer dental crosswords.</p>
+                <h3 className="feature-title">Permainan Mini Quest</h3>
+                <p className="feature-desc">Sertai permainan makanan, berlumba melawan masa dalam kuiz interaktif, dan takluki teka silang kata pergigian.</p>
               </div>
             </div>
             <div className="feature-box">
@@ -530,8 +544,8 @@ const HomePage = () => {
                 <span className="feature-icon">💡</span>
               </div>
               <div className="feature-text">
-                <h3 className="feature-title">Did You Know?</h3>
-                <p className="feature-desc">Explore amazing facts about your teeth that will blow your mind and keep your smile bright.</p>
+                <h3 className="feature-title">Tahukah Anda?</h3>
+                <p className="feature-desc">Teroka fakta menakjubkan tentang gigi anda yang akan mengagumkan anda dan memastikan senyuman anda kekal cerah.</p>
               </div>
             </div>
           </section>

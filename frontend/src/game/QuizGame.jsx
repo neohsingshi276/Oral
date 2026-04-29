@@ -25,16 +25,60 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     answersRef.current = answers;
   }, [answers]);
 
+  // Shuffle helper (Fisher-Yates)
+  const shuffleArray = (arr) => {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
   useEffect(() => {
     api.get(`/quiz/session/${player.session_id}`)
       .then(res => {
-        setQuestions(res.data.questions);
+        // Shuffle options for each question so answers appear in different positions
+        const shuffled = res.data.questions.map(q => {
+          const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]');
+          const ca = Array.isArray(q.correct_answer) ? q.correct_answer : JSON.parse(q.correct_answer || '[]');
+
+          if (q.question_type === 'match') {
+            // For match: shuffle the right-side order, remap correct_answer pairs
+            const rightIndexes = opts.map((_, i) => i);
+            const shuffledRight = shuffleArray(rightIndexes);
+            // Build reverse map: old index -> new index
+            const rightMap = {};
+            shuffledRight.forEach((oldIdx, newIdx) => { rightMap[oldIdx] = newIdx; });
+            // Reorder right values in each option pair
+            const newOpts = opts.map((pair, i) => ({
+              left: pair.left || pair,
+              right: opts[shuffledRight[i]]?.right || opts[shuffledRight[i]],
+              _origRightIdx: shuffledRight[i],
+            }));
+            // Remap correct_answer pairs: [leftIdx, oldRightIdx] -> [leftIdx, newRightIdx]
+            const newCA = ca.map(pair => [pair[0], rightMap[pair[1]]]);
+            return { ...q, options: newOpts, correct_answer: newCA };
+          } else {
+            // For MC, true_false, multi_select: shuffle all options, remap correct indexes
+            const indexMap = opts.map((_, i) => i);
+            const shuffledIndexes = shuffleArray(indexMap);
+            const newOpts = shuffledIndexes.map(i => opts[i]);
+            // Build reverse map: old index -> new position
+            const reverseMap = {};
+            shuffledIndexes.forEach((oldIdx, newIdx) => { reverseMap[oldIdx] = newIdx; });
+            const newCA = ca.map(oldIdx => reverseMap[oldIdx]);
+            return { ...q, options: newOpts, correct_answer: newCA };
+          }
+        });
+        setQuestions(shuffled);
         setSettings(res.data.settings);
         setTimeLeft(res.data.settings.timer_seconds || 15);
         setPhase('playing');
       })
       .catch(() => setPhase('error'));
   }, [player.session_id]);
+
 
   useEffect(() => {
     if (phase !== 'playing' || answered) return;

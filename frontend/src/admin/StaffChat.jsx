@@ -90,7 +90,9 @@ const StaffChat = () => {
 
   const visibleContacts = me?.role === 'main_admin'
     ? contacts
-    : contacts.filter(c => c.role === 'main_admin');
+    : me?.role === 'teacher'
+      ? contacts  // teachers can message everyone
+      : contacts.filter(c => c.role === 'main_admin');
 
   useEffect(() => {
     if (!selected && visibleContacts.length === 1) {
@@ -105,24 +107,26 @@ const StaffChat = () => {
   // ── total unread badge for nav ───────────────────────────
   const totalUnread = contacts.reduce((sum, c) => sum + (c.unread || 0), 0);
 
-  if (loadingContacts) return <div style={s.loading}>Loading staff chat… 💬</div>;
+  if (loadingContacts) return <div style={s.loading}>Memuatkan sembang staf… 💬</div>;
 
   return (
     <div style={s.wrap}>
       {/* ── Sidebar ── */}
       <div style={s.sidebar}>
         <div style={s.sidebarHeader}>
-          <span style={s.sidebarTitle}>🏢 Staff Chat</span>
+          <span style={s.sidebarTitle}>🏢 Sembang Staf</span>
           {totalUnread > 0 && <span style={s.totalUnread}>{totalUnread}</span>}
         </div>
         <div style={s.sidebarSub}>
           {me?.role === 'main_admin'
-            ? 'Messages from your admins'
-            : 'Report issues to Main Admin'}
+            ? 'Mesej daripada pentadbir anda'
+            : me?.role === 'teacher'
+              ? 'Hubungi pentadbir dan staf'
+              : 'Laporkan isu kepada Pentadbir Utama'}
         </div>
         <div style={s.contactList}>
           {visibleContacts.length === 0 && (
-            <p style={s.empty}>No other admins yet.</p>
+            <p style={s.empty}>Belum ada pentadbir lain.</p>
           )}
           {visibleContacts.map(c => (
             <div
@@ -140,7 +144,7 @@ const StaffChat = () => {
                 <div style={s.contactName}>
                   {c.name}
                   <span style={{ ...s.rolePill, background: c.role === 'main_admin' ? '#7c3aed' : '#2563eb' }}>
-                    {c.role === 'main_admin' ? '⭐' : 'Admin'}
+                    {c.role === 'main_admin' ? '⭐' : c.role === 'teacher' ? 'Guru' : 'Pentadbir'}
                   </span>
                 </div>
                 {c.lastMessage && (
@@ -167,11 +171,11 @@ const StaffChat = () => {
         {!selected ? (
           <div style={s.noChat}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏢</div>
-            <p style={{ color: '#475569', fontWeight: '700', marginBottom: '0.25rem' }}>Staff Chat</p>
+            <p style={{ color: '#475569', fontWeight: '700', marginBottom: '0.25rem' }}>Sembang Staf</p>
             <p style={{ color: '#94a3b8', fontSize: '0.85rem', textAlign: 'center', maxWidth: '260px' }}>
               {me?.role === 'main_admin'
-                ? 'Select an admin from the list to view their messages.'
-                : 'Select Main Admin to send a technical report or question.'}
+                ? 'Pilih pentadbir dari senarai untuk melihat mesej mereka.'
+                : 'Pilih pentadbir untuk menghantar laporan atau soalan.'}
             </p>
           </div>
         ) : (
@@ -184,11 +188,11 @@ const StaffChat = () => {
               <div style={{ flex: 1 }}>
                 <div style={s.chatName}>{selected.name}</div>
                 <div style={s.chatSub}>
-                  {selected.role === 'main_admin' ? '⭐ Main Admin' : 'Admin'}
+                  {selected.role === 'main_admin' ? '⭐ Pentadbir Utama' : selected.role === 'teacher' ? '👩‍🏫 Guru' : 'Pentadbir'}
                 </div>
               </div>
               {me?.role !== 'main_admin' && (
-                <div style={s.reportHint}>📋 Technical Report Channel</div>
+                <div style={s.reportHint}>📋 Saluran Laporan</div>
               )}
             </div>
 
@@ -198,7 +202,7 @@ const StaffChat = () => {
                 <div style={s.emptyMsg}>
                   <p>No messages yet.</p>
                   <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                    {me?.role !== 'main_admin' ? 'Send a message to report an issue.' : 'No messages from this admin yet.'}
+                    {me?.role !== 'main_admin' ? 'Hantar mesej untuk melaporkan isu.' : 'Belum ada mesej daripada pentadbir ini.'}
                   </p>
                 </div>
               )}
@@ -213,7 +217,7 @@ const StaffChat = () => {
                     )}
                     <div style={{ ...s.bubble, ...(isMine ? s.bubbleMine : s.bubbleTheirs) }}>
                       <span style={{ ...s.bubbleSender, color: isMine ? 'rgba(255,255,255,0.65)' : '#94a3b8' }}>
-                        {isMine ? 'You' : m.sender_name}
+                        {isMine ? 'Anda' : m.sender_name}
                       </span>
                       <p style={{ ...s.bubbleText, color: isMine ? '#fff' : '#1e293b' }}>{m.message}</p>
                       <span style={{ ...s.bubbleTime, color: isMine ? 'rgba(255,255,255,0.55)' : '#94a3b8' }}>
@@ -234,7 +238,7 @@ const StaffChat = () => {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKey}
-                placeholder={`Message ${selected.name}…`}
+                placeholder={`Mesej kepada ${selected.name}…`}
                 maxLength={500}
                 disabled={sending}
               />
@@ -243,7 +247,7 @@ const StaffChat = () => {
                 onClick={handleSend}
                 disabled={!input.trim() || sending}
               >
-                {sending ? '…' : 'Send ➤'}
+                {sending ? '…' : 'Hantar ➤'}
               </button>
             </div>
           </>
