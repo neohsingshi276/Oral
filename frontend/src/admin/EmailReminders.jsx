@@ -2,22 +2,23 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 
 const EmailReminders = ({ currentAdmin }) => {
-  const [tab, setTab] = useState(currentAdmin?.role === 'main_admin' ? 'compose' : 'inbox');
+  const [tab, setTab] = useState(currentAdmin?.role === 'teacher' ? 'inbox' : 'compose');
   const [admins, setAdmins] = useState([]);
   const [inbox, setInbox] = useState([]);
   const [sent, setSent] = useState([]);
   const [form, setForm] = useState({ to_admin_id: 'all', to_email: '', to_name: '', subject: '', message: '' });
   const [msg, setMsg] = useState('');
   const isMainAdmin = currentAdmin?.role === 'main_admin';
+  const canCompose  = currentAdmin?.role === 'main_admin' || currentAdmin?.role === 'admin';
 
   useEffect(() => {
     fetchInbox();
-    if (isMainAdmin) { fetchAdmins(); fetchSent(); }
+    if (canCompose) { fetchAdmins(); fetchSent(); }
   }, []);
 
   const fetchAdmins = () => api.get('/admin/admins').then(res => setAdmins(res.data.admins.filter(a => a.id !== currentAdmin?.id)));
   const fetchInbox = () => api.get('/email/inbox').then(res => setInbox(res.data.reminders));
-  const fetchSent = () => api.get('/email/sent').then(res => setSent(res.data.reminders));
+  const fetchSent  = () => api.get('/email/sent').then(res => setSent(res.data.reminders));
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -38,7 +39,7 @@ const EmailReminders = ({ currentAdmin }) => {
   const unreadCount = inbox.filter(r => !r.is_read).length;
 
   const TABS = [
-    ...(isMainAdmin ? [{ key: 'compose', label: '✉️ Compose' }, { key: 'sent', label: '📤 Sent' }] : []),
+    ...(canCompose ? [{ key: 'compose', label: '✉️ Compose' }, { key: 'sent', label: '📤 Sent' }] : []),
     { key: 'inbox', label: `📥 Inbox${unreadCount > 0 ? ` (${unreadCount})` : ''}` },
   ];
 
@@ -60,14 +61,14 @@ const EmailReminders = ({ currentAdmin }) => {
       {msg && <div style={{ ...s.msg, ...(msg.includes('✅') ? s.success : s.error) }}>{msg}</div>}
 
       {/* COMPOSE */}
-      {tab === 'compose' && isMainAdmin && (
+      {tab === 'compose' && canCompose && (
         <div style={s.card}>
           <h2 style={s.cardTitle}>✉️ Send Email to Staff</h2>
 
           {/* Quick templates */}
           <div style={s.templateRow}>
             <span style={s.templateLabel}>Quick Templates:</span>
-            {TEMPLATES.slice(0, 2).map((t, i) => (
+            {(isMainAdmin ? TEMPLATES.slice(0, 2) : TEMPLATES.slice(2)).map((t, i) => (
               <button key={i} style={s.templateBtn} onClick={() => setForm({ ...form, subject: t.subject, message: t.message })}>{t.label}</button>
             ))}
           </div>
@@ -76,8 +77,8 @@ const EmailReminders = ({ currentAdmin }) => {
             <div style={s.field}>
               <label style={s.label}>Send To</label>
               <select style={s.input} value={form.to_admin_id} onChange={e => setForm({ ...form, to_admin_id: e.target.value })}>
-                <option value="all">📢 All Staff</option>
-                {admins.map(a => <option key={a.id} value={a.id}>{a.name} ({a.email})</option>)}
+                {isMainAdmin && <option value="all">📢 All Staff</option>}
+                {admins.map(a => <option key={a.id} value={a.id}>{a.name} ({a.role === 'main_admin' ? '⭐ Main Admin' : a.role === 'teacher' ? '👩‍🏫 Teacher' : '👨‍💼 Admin'}) — {a.email}</option>)}
                 <option value="custom">Other Email Address</option>
               </select>
             </div>
@@ -107,7 +108,7 @@ const EmailReminders = ({ currentAdmin }) => {
       )}
 
       {/* SENT */}
-      {tab === 'sent' && isMainAdmin && (
+      {tab === 'sent' && canCompose && (
         <div style={s.card}>
           <h2 style={s.cardTitle}>📤 Sent Reminders ({sent.length})</h2>
           <div style={s.emailList}>

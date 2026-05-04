@@ -41,6 +41,7 @@ const ManageStudents = () => {
   );
 
   const isMainAdmin = admin?.role === 'main_admin';
+  const canDelete = ['main_admin', 'admin', 'teacher'].includes(admin?.role);
 
   return (
     <div>
@@ -55,9 +56,9 @@ const ManageStudents = () => {
           />
         </div>
 
-        {isMainAdmin && (
+        {canDelete && (
           <div style={s.hint}>
-            🔒 As Main Admin you can delete players. This permanently removes all their data.
+            🗑️ You can delete players. This permanently removes all their data.
           </div>
         )}
 
@@ -74,7 +75,7 @@ const ManageStudents = () => {
                   <th style={s.th}>CP2 Crossword</th>
                   <th style={s.th}>CP3 Food Game</th>
                   <th style={s.th}>Joined</th>
-                  {isMainAdmin && <th style={s.th}>Actions</th>}
+                  {canDelete && <th style={s.th}>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -124,7 +125,7 @@ const ManageStudents = () => {
                         {new Date(p.joined_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     </td>
-                    {isMainAdmin && (
+                    {canDelete && (
                       <td style={s.td}>
                         <button
                           style={{ ...s.btnDelete, opacity: deleting === p.id ? 0.5 : 1 }}
@@ -140,7 +141,7 @@ const ManageStudents = () => {
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={isMainAdmin ? 7 : 6} style={{ ...s.td, textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
+                    <td colSpan={canDelete ? 7 : 6} style={{ ...s.td, textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
                       No players found
                     </td>
                   </tr>

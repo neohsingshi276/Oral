@@ -25,7 +25,7 @@ const AdminDashboard = () => {
   const ALL_MENU = [
     { key: 'overview', icon: '📊', label: 'Gambaran Keseluruhan', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'sessions', icon: '🎮', label: 'Sesi Permainan', roles: ['main_admin', 'admin'] },
-    { key: 'students', icon: '👥', label: 'Pemain', roles: ['main_admin', 'admin'] },
+    { key: 'students', icon: '👥', label: 'Pemain', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'chat', icon: '💬', label: 'Sembang Pemain', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'staffchat', icon: '🏢', label: 'Sembang Staf', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'videos', icon: '📹', label: 'Video Pembelajaran', roles: ['main_admin', 'admin'] },

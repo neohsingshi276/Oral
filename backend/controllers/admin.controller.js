@@ -400,10 +400,10 @@ const cancelInvite = async (req, res) => {
 };
 
 // ─── deletePlayer ─────────────────────────────────────────────────────────────
-// Only main_admin can permanently remove a player and all their data.
+// main_admin, admin, and teacher can all remove players and their data.
 const deletePlayer = async (req, res) => {
-  if (req.admin.role !== 'main_admin')
-    return res.status(403).json({ error: 'Only the Main Admin can delete players' });
+  if (!['main_admin', 'admin', 'teacher'].includes(req.admin.role))
+    return res.status(403).json({ error: 'You do not have permission to delete players' });
 
   const targetId = parseInt(req.params.id, 10);
   if (!targetId || targetId <= 0)
