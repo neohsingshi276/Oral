@@ -231,6 +231,27 @@ const GamePage = () => {
     }
   }, [showChat, player, getPlayerChatConfig]);
 
+  // ─── Real-time kick detection ─────────────────────────────────────────────
+  // Poll every 5 s while a player is active. If the admin deletes the player
+  // the endpoint returns { exists: false } and we boot them back to the join
+  // page immediately, clearing any local state so they cannot rejoin silently.
+  useEffect(() => {
+    if (!player) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await api.get(`/game/player-exists/${player.id}`);
+        if (!res.data.exists) {
+          clearInterval(interval);
+          localStorage.removeItem('player');
+          navigate(`/join/${token}`);
+        }
+      } catch {
+        // Network blip — keep polling, do not redirect on transient errors
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [player, token, navigate]);
+
   if (!player) return <div style={s.loading}>Permainan sedang dimuatkan...</div>;
 
   const showFullQuiz = activeCP === 1 && cpStep === 'activity';
