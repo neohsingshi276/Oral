@@ -6,7 +6,7 @@ const EmailReminders = ({ currentAdmin }) => {
   const [admins, setAdmins] = useState([]);
   const [inbox, setInbox] = useState([]);
   const [sent, setSent] = useState([]);
-  const [form, setForm] = useState({ to_admin_id: 'all', subject: '', message: '' });
+  const [form, setForm] = useState({ to_admin_id: 'all', to_email: '', to_name: '', subject: '', message: '' });
   const [msg, setMsg] = useState('');
   const isMainAdmin = currentAdmin?.role === 'main_admin';
 
@@ -24,7 +24,7 @@ const EmailReminders = ({ currentAdmin }) => {
     try {
       const res = await api.post('/email/send', form);
       setMsg('✅ ' + res.data.message);
-      setForm({ to_admin_id: 'all', subject: '', message: '' });
+      setForm({ to_admin_id: 'all', to_email: '', to_name: '', subject: '', message: '' });
       fetchSent();
     } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Failed')); }
     setTimeout(() => setMsg(''), 3000);
@@ -62,7 +62,7 @@ const EmailReminders = ({ currentAdmin }) => {
       {/* COMPOSE */}
       {tab === 'compose' && isMainAdmin && (
         <div style={s.card}>
-          <h2 style={s.cardTitle}>✉️ Send Reminder to Admin</h2>
+          <h2 style={s.cardTitle}>✉️ Send Email to Staff</h2>
 
           {/* Quick templates */}
           <div style={s.templateRow}>
@@ -76,10 +76,23 @@ const EmailReminders = ({ currentAdmin }) => {
             <div style={s.field}>
               <label style={s.label}>Send To</label>
               <select style={s.input} value={form.to_admin_id} onChange={e => setForm({ ...form, to_admin_id: e.target.value })}>
-                <option value="all">📢 All Admins</option>
+                <option value="all">📢 All Staff</option>
                 {admins.map(a => <option key={a.id} value={a.id}>{a.name} ({a.email})</option>)}
+                <option value="custom">Other Email Address</option>
               </select>
             </div>
+            {form.to_admin_id === 'custom' && (
+              <>
+                <div style={s.field}>
+                  <label style={s.label}>Recipient Email</label>
+                  <input style={s.input} type="email" value={form.to_email} onChange={e => setForm({ ...form, to_email: e.target.value })} required placeholder="staff@example.com" maxLength={120} />
+                </div>
+                <div style={s.field}>
+                  <label style={s.label}>Recipient Name</label>
+                  <input style={s.input} value={form.to_name} onChange={e => setForm({ ...form, to_name: e.target.value })} placeholder="Optional" maxLength={80} />
+                </div>
+              </>
+            )}
             <div style={s.field}>
               <label style={s.label}>Subject</label>
               <input style={s.input} value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} required placeholder="e.g. 3-Month Session Reminder" />
@@ -88,7 +101,7 @@ const EmailReminders = ({ currentAdmin }) => {
               <label style={s.label}>Message</label>
               <textarea style={{ ...s.input, height: '180px', resize: 'vertical' }} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} required placeholder="Write your reminder message here..." />
             </div>
-            <button style={s.btnPrimary} type="submit">📤 Send Reminder</button>
+            <button style={s.btnPrimary} type="submit">📤 Send Email</button>
           </form>
         </div>
       )}

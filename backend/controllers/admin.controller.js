@@ -162,12 +162,21 @@ const inviteAdmin = async (req, res) => {
     const token = jwt.sign({ email, type: 'admin_invite', role: inviteRole }, process.env.JWT_SECRET, { expiresIn: '7d' });
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    await db.query(
-      'INSERT INTO admin_invitations (email, token, expires_at) VALUES (?, ?, ?)',
-      [email, token, expiresAt]
-    );
+    try {
+      await db.query(
+        'INSERT INTO admin_invitations (email, token, role, expires_at) VALUES (?, ?, ?, ?)',
+        [email, token, inviteRole, expiresAt]
+      );
+    } catch (insertErr) {
+      if (insertErr.code !== 'ER_BAD_FIELD_ERROR') throw insertErr;
+      await db.query(
+        'INSERT INTO admin_invitations (email, token, expires_at) VALUES (?, ?, ?)',
+        [email, token, expiresAt]
+      );
+    }
 
-    const inviteLink = `${process.env.CLIENT_URL}/admin/register?token=${token}`;
+    const inviteBaseUrl = process.env.ADMIN_URL || process.env.CLIENT_URL;
+    const inviteLink = `${inviteBaseUrl}/admin/register?token=${token}`;
     try {
       await sendInviteEmail(email, inviteLink);
     } catch (emailErr) {
@@ -214,7 +223,7 @@ const completeRegistration = async (req, res) => {
     if (existing.length > 0)
       return res.status(400).json({ error: 'This email is already registered' });
 
-    const inviteRole = decoded.role || 'admin';
+    const inviteRole = invites[0].role || decoded.role || 'admin';
     const password_hash = await bcrypt.hash(password, 10);
     await db.query(
       'INSERT INTO admins (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
@@ -247,7 +256,7 @@ const verifyInviteToken = async (req, res) => {
     if (invites.length === 0)
       return res.status(400).json({ error: 'Invitation expired or already used' });
 
-    res.json({ email: invites[0].email, valid: true });
+    res.json({ email: invites[0].email, role: invites[0].role || decoded.role || 'admin', valid: true });
   } catch (err) {
     res.status(400).json({ error: 'Invalid or expired invitation link' });
   }
@@ -351,14 +360,16 @@ const resendInvite = async (req, res) => {
 
     const invite = invites[0];
     const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const token = jwt.sign({ email: invite.email, type: 'admin_invite' }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const inviteRole = invite.role || 'admin';
+    const token = jwt.sign({ email: invite.email, type: 'admin_invite', role: inviteRole }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
     await db.query(
       'UPDATE admin_invitations SET token = ?, expires_at = ? WHERE id = ?',
       [token, newExpiry, invite.id]
     );
 
-    const inviteLink = `${process.env.CLIENT_URL}/admin/register?token=${token}`;
+    const inviteBaseUrl = process.env.ADMIN_URL || process.env.CLIENT_URL;
+    const inviteLink = `${inviteBaseUrl}/admin/register?token=${token}`;
     try {
       await sendInviteEmail(invite.email, inviteLink);
     } catch (e) {

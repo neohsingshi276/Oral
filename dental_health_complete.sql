@@ -233,7 +233,7 @@ CREATE TABLE IF NOT EXISTS admin_invitations (
 CREATE TABLE IF NOT EXISTS otp_tokens (
   id          INT AUTO_INCREMENT PRIMARY KEY,
   email       VARCHAR(120) NOT NULL UNIQUE,
-  otp         VARCHAR(6)   NOT NULL,
+  otp         VARCHAR(255) NOT NULL,
   admin_id    INT          NOT NULL,
   expires_at  DATETIME     NOT NULL,
   created_at  DATETIME     DEFAULT NOW(),
@@ -305,3 +305,5 @@ ALTER TABLE crossword_data MODIFY COLUMN start_col INT DEFAULT 0;
 
 -- Migration: Add teacher role to admins
 ALTER TABLE admins MODIFY COLUMN role ENUM('admin', 'main_admin', 'teacher') DEFAULT 'admin';
+ALTER TABLE admin_invitations ADD COLUMN role ENUM('admin', 'teacher') DEFAULT 'admin' AFTER token;
+ALTER TABLE otp_tokens MODIFY COLUMN otp VARCHAR(255) NOT NULL;

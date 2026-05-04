@@ -262,10 +262,19 @@ const addWord = async (req, res) => {
     return res.status(400).json({ error: 'Perkataan hanya boleh mengandungi huruf tanpa ruang atau simbol' });
 
   try {
-    const [result] = await db.query(
-      'INSERT INTO crossword_data (word, clue, direction, start_row, start_col) VALUES (?,?,?,?,?)',
-      [word.trim().toUpperCase(), clue.trim(), 'across', 0, 0]
-    );
+    let result;
+    try {
+      [result] = await db.query(
+        'INSERT INTO crossword_data (word, clue, direction, start_row, start_col) VALUES (?,?,?,?,?)',
+        [word.trim().toUpperCase(), clue.trim(), 'across', 0, 0]
+      );
+    } catch (insertErr) {
+      if (insertErr.code !== 'ER_BAD_FIELD_ERROR') throw insertErr;
+      [result] = await db.query(
+        'INSERT INTO crossword_data (word, clue) VALUES (?, ?)',
+        [word.trim().toUpperCase(), clue.trim()]
+      );
+    }
     res.status(201).json({ message: 'Perkataan ditambah', id: result.insertId });
   } catch (err) {
     console.error('Add crossword word error:', err.message);

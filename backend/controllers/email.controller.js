@@ -2,12 +2,15 @@ const db = require('../db');
 const { sendReminderEmail } = require('../services/email.service');
 
 const sendReminder = async (req, res) => {
-  const { to_admin_id, subject, message } = req.body;
+  const { to_admin_id, to_email, to_name, subject, message } = req.body;
   if (!to_admin_id || !subject || !message) return res.status(400).json({ error: 'All fields required' });
   if (typeof subject !== 'string' || subject.trim().length === 0) return res.status(400).json({ error: 'Subject cannot be empty' });
   if (subject.length > 150) return res.status(400).json({ error: 'Subject too long (max 150 characters)' });
   if (typeof message !== 'string' || message.trim().length === 0) return res.status(400).json({ error: 'Message cannot be empty' });
   if (message.length > 2000) return res.status(400).json({ error: 'Message too long (max 2000 characters)' });
+  if (to_admin_id === 'custom' && (!to_email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to_email))) {
+    return res.status(400).json({ error: 'Valid recipient email required' });
+  }
   try {
     const [sender] = await db.query('SELECT name, role FROM admins WHERE id = ?', [req.admin.id]);
     if (sender[0]?.role !== 'main_admin') return res.status(403).json({ error: 'Only Main Admin can send reminders' });
@@ -24,6 +27,14 @@ const sendReminder = async (req, res) => {
         catch (e) { console.error('Email send failed for', admin.email, e.message); }
       }
       res.json({ message: `Reminder sent to ${admins.length} admin(s)!` });
+    } else if (to_admin_id === 'custom') {
+      try {
+        await sendReminderEmail(to_email, to_name || 'Staff', subject, message, sender[0].name);
+      } catch (e) {
+        console.error('Email send failed:', e.message);
+        return res.status(500).json({ error: 'Failed to send email' });
+      }
+      res.json({ message: 'Email sent!' });
     } else {
       const [toAdmin] = await db.query('SELECT name, email FROM admins WHERE id = ?', [to_admin_id]);
       if (toAdmin.length === 0) return res.status(404).json({ error: 'Admin not found' });
