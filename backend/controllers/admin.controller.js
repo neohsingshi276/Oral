@@ -162,18 +162,10 @@ const inviteAdmin = async (req, res) => {
     const token = jwt.sign({ email, type: 'admin_invite', role: inviteRole }, process.env.JWT_SECRET, { expiresIn: '7d' });
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    try {
-      await db.query(
-        'INSERT INTO admin_invitations (email, token, role, expires_at) VALUES (?, ?, ?, ?)',
-        [email, token, inviteRole, expiresAt]
-      );
-    } catch (insertErr) {
-      if (insertErr.code !== 'ER_BAD_FIELD_ERROR') throw insertErr;
-      await db.query(
-        'INSERT INTO admin_invitations (email, token, expires_at) VALUES (?, ?, ?)',
-        [email, token, expiresAt]
-      );
-    }
+    await db.query(
+      'INSERT INTO admin_invitations (email, token, role, expires_at) VALUES (?, ?, ?, ?)',
+      [email, token, inviteRole, expiresAt]
+    );
 
     const inviteBaseUrl = process.env.ADMIN_URL || process.env.CLIENT_URL;
     const inviteLink = `${inviteBaseUrl}/admin/register?token=${token}`;
@@ -186,8 +178,8 @@ const inviteAdmin = async (req, res) => {
     await logActivity(req.admin.id, 'Sent admin invitation', `Invited: ${email}`);
     res.json({ message: 'Invitation sent to ' + email });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Invite admin error:', err.code, err.message, err.sqlMessage || '');
+    res.status(500).json({ error: err.sqlMessage || 'Server error' });
   }
 };
 
@@ -236,8 +228,8 @@ const completeRegistration = async (req, res) => {
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
       return res.status(400).json({ error: 'Invalid or expired invitation link' });
     }
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Complete registration error:', err.code, err.message, err.sqlMessage || '');
+    res.status(500).json({ error: err.sqlMessage || 'Server error' });
   }
 };
 
