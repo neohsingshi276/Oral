@@ -13,7 +13,6 @@ const sendReminder = async (req, res) => {
   }
   try {
     const [sender] = await db.query('SELECT name, role FROM admins WHERE id = ?', [req.admin.id]);
-    if (sender[0]?.role !== 'main_admin') return res.status(403).json({ error: 'Only Main Admin can send reminders' });
 
     if (to_admin_id === 'all') {
       const [admins] = await db.query('SELECT id, name, email FROM admins WHERE id != ?', [req.admin.id]);
