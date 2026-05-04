@@ -40,7 +40,7 @@ const ManageStudents = () => {
     p.session_name?.toLowerCase().includes(search.toLowerCase())
   );
 
-
+  const isMainAdmin = admin?.role === 'main_admin';
 
   return (
     <div>
@@ -55,9 +55,11 @@ const ManageStudents = () => {
           />
         </div>
 
-        <div style={s.hint}>
-          🗑️ As staff, you can delete players. This permanently removes all their data.
-        </div>
+        {isMainAdmin && (
+          <div style={s.hint}>
+            🔒 As Main Admin you can delete players. This permanently removes all their data.
+          </div>
+        )}
 
         {loading ? (
           <p style={s.muted}>Loading players…</p>
@@ -72,7 +74,7 @@ const ManageStudents = () => {
                   <th style={s.th}>CP2 Crossword</th>
                   <th style={s.th}>CP3 Food Game</th>
                   <th style={s.th}>Joined</th>
-                  <th style={s.th}>Actions</th>
+                  {isMainAdmin && <th style={s.th}>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -122,21 +124,23 @@ const ManageStudents = () => {
                         {new Date(p.joined_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     </td>
-                    <td style={s.td}>
-                      <button
-                        style={{ ...s.btnDelete, opacity: deleting === p.id ? 0.5 : 1 }}
-                        onClick={() => handleDelete(p)}
-                        disabled={deleting === p.id}
-                        title={`Remove ${p.nickname}`}
-                      >
-                        {deleting === p.id ? '…' : '🗑️ Remove'}
-                      </button>
-                    </td>
+                    {isMainAdmin && (
+                      <td style={s.td}>
+                        <button
+                          style={{ ...s.btnDelete, opacity: deleting === p.id ? 0.5 : 1 }}
+                          onClick={() => handleDelete(p)}
+                          disabled={deleting === p.id}
+                          title={`Remove ${p.nickname}`}
+                        >
+                          {deleting === p.id ? '…' : '🗑️ Remove'}
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={7} style={{ ...s.td, textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
+                    <td colSpan={isMainAdmin ? 7 : 6} style={{ ...s.td, textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
                       No players found
                     </td>
                   </tr>

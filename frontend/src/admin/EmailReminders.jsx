@@ -2,18 +2,17 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 
 const EmailReminders = ({ currentAdmin }) => {
-  const [tab, setTab] = useState('compose');
+  const [tab, setTab] = useState(currentAdmin?.role === 'main_admin' ? 'compose' : 'inbox');
   const [admins, setAdmins] = useState([]);
   const [inbox, setInbox] = useState([]);
   const [sent, setSent] = useState([]);
   const [form, setForm] = useState({ to_admin_id: 'all', to_email: '', to_name: '', subject: '', message: '' });
   const [msg, setMsg] = useState('');
-
+  const isMainAdmin = currentAdmin?.role === 'main_admin';
 
   useEffect(() => {
     fetchInbox();
-    fetchAdmins();
-    fetchSent();
+    if (isMainAdmin) { fetchAdmins(); fetchSent(); }
   }, []);
 
   const fetchAdmins = () => api.get('/admin/admins').then(res => setAdmins(res.data.admins.filter(a => a.id !== currentAdmin?.id)));
@@ -38,9 +37,10 @@ const EmailReminders = ({ currentAdmin }) => {
 
   const unreadCount = inbox.filter(r => !r.is_read).length;
 
-    { key: 'compose', label: '✉️ Compose' },
-    { key: 'sent', label: '📤 Sent' },
+  const TABS = [
+    ...(isMainAdmin ? [{ key: 'compose', label: '✉️ Compose' }, { key: 'sent', label: '📤 Sent' }] : []),
     { key: 'inbox', label: `📥 Inbox${unreadCount > 0 ? ` (${unreadCount})` : ''}` },
+  ];
 
   // Quick templates for 3-month reminders
   const TEMPLATES = [
@@ -60,7 +60,7 @@ const EmailReminders = ({ currentAdmin }) => {
       {msg && <div style={{ ...s.msg, ...(msg.includes('✅') ? s.success : s.error) }}>{msg}</div>}
 
       {/* COMPOSE */}
-      {tab === 'compose' && (
+      {tab === 'compose' && isMainAdmin && (
         <div style={s.card}>
           <h2 style={s.cardTitle}>✉️ Send Email to Staff</h2>
 
@@ -107,7 +107,7 @@ const EmailReminders = ({ currentAdmin }) => {
       )}
 
       {/* SENT */}
-      {tab === 'sent' && (
+      {tab === 'sent' && isMainAdmin && (
         <div style={s.card}>
           <h2 style={s.cardTitle}>📤 Sent Reminders ({sent.length})</h2>
           <div style={s.emailList}>
