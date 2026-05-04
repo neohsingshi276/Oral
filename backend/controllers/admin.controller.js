@@ -423,9 +423,44 @@ const deletePlayer = async (req, res) => {
   }
 };
 
+// ─── updateAdminRole ──────────────────────────────────────────────────────────
+// Only main_admin can change another admin's role (admin ↔ teacher).
+const updateAdminRole = async (req, res) => {
+  if (req.admin.role !== 'main_admin')
+    return res.status(403).json({ error: 'Only the Main Admin can change roles' });
+
+  const targetId = parseInt(req.params.id, 10);
+  if (!targetId || targetId <= 0)
+    return res.status(400).json({ error: 'Invalid admin ID' });
+  if (targetId === req.admin.id)
+    return res.status(400).json({ error: 'Cannot change your own role' });
+
+  const { role } = req.body;
+  if (!['admin', 'teacher'].includes(role))
+    return res.status(400).json({ error: 'Role must be "admin" or "teacher"' });
+
+  try {
+    const [rows] = await db.query('SELECT name, email, role FROM admins WHERE id = ?', [targetId]);
+    if (rows.length === 0)
+      return res.status(404).json({ error: 'Admin not found' });
+    if (rows[0].role === 'main_admin')
+      return res.status(403).json({ error: 'Cannot change the role of another main admin' });
+    if (rows[0].role === role)
+      return res.json({ message: `${rows[0].name} is already a ${role}` });
+
+    await db.query('UPDATE admins SET role = ? WHERE id = ?', [role, targetId]);
+    await logActivity(req.admin.id, 'Changed admin role', `Changed ${rows[0].email} from ${rows[0].role} to ${role}`);
+    res.json({ message: `${rows[0].name}'s role changed to ${role === 'teacher' ? 'Teacher' : 'Admin'}` });
+  } catch (err) {
+    console.error('Update role error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 module.exports = {
   getPlayers, downloadCSV, getAnalytics,
   getAllAdmins, inviteAdmin, resendInvite, cancelInvite,
   completeRegistration, verifyInviteToken,
-  deleteAdmin, deletePlayer, updateProfile, changePassword
+  deleteAdmin, deletePlayer, updateProfile, changePassword,
+  updateAdminRole
 };

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getPlayers, downloadCSV, getAnalytics, getAllAdmins, inviteAdmin, resendInvite, cancelInvite, completeRegistration, verifyInviteToken, deleteAdmin, deletePlayer, updateProfile, changePassword } = require('../controllers/admin.controller');
+const { getPlayers, downloadCSV, getAnalytics, getAllAdmins, inviteAdmin, resendInvite, cancelInvite, completeRegistration, verifyInviteToken, deleteAdmin, deletePlayer, updateProfile, changePassword, updateAdminRole } = require('../controllers/admin.controller');
 const verifyToken = require('../middleware/verifyToken');
 
 router.get('/players', verifyToken, getPlayers);
@@ -13,6 +13,7 @@ router.delete('/invitations/:id', verifyToken, cancelInvite);
 router.post('/complete-registration', completeRegistration);
 router.get('/verify-invite/:token', verifyInviteToken);
 router.delete('/admins/:id', verifyToken, deleteAdmin);
+router.put('/admins/:id/role', verifyToken, updateAdminRole);
 router.delete('/players/:id', verifyToken, deletePlayer);
 router.put('/profile', verifyToken, updateProfile);
 router.put('/password', verifyToken, changePassword);

@@ -13,8 +13,12 @@ const sendReminder = async (req, res) => {
   }
   try {
     const [sender] = await db.query('SELECT name, role FROM admins WHERE id = ?', [req.admin.id]);
-    if (!['main_admin', 'admin'].includes(sender[0]?.role))
-      return res.status(403).json({ error: 'Only Main Admin or Admin can send emails' });
+    if (!['main_admin', 'admin', 'teacher'].includes(sender[0]?.role))
+      return res.status(403).json({ error: 'You do not have permission to send emails' });
+
+    if (to_admin_id === 'all' && sender[0]?.role !== 'main_admin') {
+      return res.status(403).json({ error: 'Only Main Admin can send to all staff' });
+    }
 
     if (to_admin_id === 'all') {
       const [admins] = await db.query('SELECT id, name, email FROM admins WHERE id != ?', [req.admin.id]);

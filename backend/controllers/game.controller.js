@@ -212,8 +212,24 @@ const getCheckpointVideos = async (req, res) => {
   }
 };
 
+// ─── checkPlayerExists ────────────────────────────────────────────────────────
+// Lightweight endpoint for the game client to poll and detect if the player
+// has been deleted by an admin while the game is still running.
+const checkPlayerExists = async (req, res) => {
+  const player_id = safeId(req.params.player_id);
+  if (!player_id) return res.status(400).json({ exists: false });
+
+  try {
+    const [rows] = await db.query('SELECT id FROM players WHERE id = ?', [player_id]);
+    res.json({ exists: rows.length > 0 });
+  } catch (err) {
+    res.status(500).json({ exists: false });
+  }
+};
+
 module.exports = {
   joinGame, savePosition, getPosition,
   recordAttempt, completeCheckpoint,
-  getProgress, getCheckpointVideos
+  getProgress, getCheckpointVideos,
+  checkPlayerExists
 };

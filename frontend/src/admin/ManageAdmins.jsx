@@ -54,6 +54,15 @@ const ManageAdmins = ({ currentAdmin }) => {
     } catch (err) { alert(err.response?.data?.error || 'Gagal'); }
   };
 
+  const handleRoleChange = async (id, newRole) => {
+    try {
+      const res = await api.put(`/admin/admins/${id}/role`, { role: newRole });
+      setMsg('✅ ' + res.data.message);
+      fetchAdmins();
+    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal menukar peranan')); }
+    finally { setTimeout(() => setMsg(''), 4000); }
+  };
+
   return (
     <div>
       <div style={s.card}>
@@ -118,6 +127,19 @@ const ManageAdmins = ({ currentAdmin }) => {
                 <div style={s.adminEmail}>{admin.email}</div>
                 <div style={s.adminDate}>Sertai {new Date(admin.created_at).toLocaleDateString()}</div>
               </div>
+              {/* Role change dropdown — only main_admin can see, and only for non-main_admin users */}
+              {currentAdmin?.role === 'main_admin' && admin.id !== currentAdmin?.id && admin.role !== 'main_admin' && (
+                <div style={s.roleChangeWrap}>
+                  <select
+                    style={s.roleSelect}
+                    value={admin.role}
+                    onChange={e => handleRoleChange(admin.id, e.target.value)}
+                  >
+                    <option value="admin">Pentadbir</option>
+                    <option value="teacher">Guru</option>
+                  </select>
+                </div>
+              )}
               {currentAdmin?.role === 'main_admin' && admin.id !== currentAdmin?.id && admin.role !== 'main_admin' && (
                 <button style={s.btnDelete} onClick={() => handleDelete(admin.id, admin.name)}>🗑️ Keluarkan</button>
               )}
@@ -157,6 +179,8 @@ const s = {
   adminEmail: { color: '#64748b', fontSize: '0.85rem', margin: '0.15rem 0' },
   adminDate: { color: '#94a3b8', fontSize: '0.78rem' },
   btnDelete: { background: '#fff1f2', color: '#e11d48', border: 'none', borderRadius: '8px', padding: '0.5rem 0.9rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.82rem', flexShrink: 0 },
+  roleChangeWrap: { flexShrink: 0 },
+  roleSelect: { padding: '0.4rem 0.6rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.82rem', fontWeight: '600', color: '#1e3a5f', cursor: 'pointer', background: '#f8fafc', outline: 'none' },
 };
 
 export default ManageAdmins;

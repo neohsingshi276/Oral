@@ -9,7 +9,7 @@ const EmailReminders = ({ currentAdmin }) => {
   const [form, setForm] = useState({ to_admin_id: 'all', to_email: '', to_name: '', subject: '', message: '' });
   const [msg, setMsg] = useState('');
   const isMainAdmin = currentAdmin?.role === 'main_admin';
-  const canCompose  = currentAdmin?.role === 'main_admin' || currentAdmin?.role === 'admin';
+  const canCompose  = ['main_admin', 'admin', 'teacher'].includes(currentAdmin?.role);
 
   useEffect(() => {
     fetchInbox();
@@ -43,12 +43,19 @@ const EmailReminders = ({ currentAdmin }) => {
     { key: 'inbox', label: `📥 Inbox${unreadCount > 0 ? ` (${unreadCount})` : ''}` },
   ];
 
-  // Quick templates for 3-month reminders
-  const TEMPLATES = [
+  // Quick templates — role-aware visibility
+  const REMINDER_TEMPLATES = [
     { label: '3-Month Reminder', subject: '3-Month Session Reminder — DentalQuest', message: 'Dear Teacher,\n\nThis is a reminder that it has been approximately 3 months since the last DentalQuest session. Please schedule a new game session for your students to reinforce their oral health knowledge and behaviours.\n\nPlease log in to the DentalQuest admin portal to create a new session and share the game code with your students.\n\nThank you for your continued support!\n\nBest regards,\nDentalQuest Research Team' },
     { label: 'First Session', subject: 'Welcome to DentalQuest!', message: 'Dear Teacher,\n\nWelcome to DentalQuest! Please log in to the admin portal to create your first game session and share the 4-digit code with your students.\n\nIf you need any assistance, please do not hesitate to contact us.\n\nBest regards,\nDentalQuest Research Team' },
-    { label: 'Technical Issue', subject: 'Technical Issue Report', message: 'Dear Main Admin,\n\nI would like to report a technical issue with DentalQuest.\n\nIssue description:\n[Please describe the issue here]\n\nThank you for your assistance.\n\nBest regards,' },
   ];
+  const TECH_TEMPLATE = { label: 'Technical Issue', subject: 'Technical Issue Report', message: 'Dear Admin,\n\nI would like to report a technical issue with DentalQuest.\n\nIssue description:\n[Please describe the issue here]\n\nSteps to reproduce:\n1. \n2. \n3. \n\nExpected behaviour:\n[What should happen]\n\nActual behaviour:\n[What actually happens]\n\nThank you for your assistance.\n\nBest regards,' };
+
+  // Main admin: reminder templates only | Admin: all 3 | Teacher: technical issue only
+  const TEMPLATES = currentAdmin?.role === 'main_admin'
+    ? REMINDER_TEMPLATES
+    : currentAdmin?.role === 'admin'
+      ? [...REMINDER_TEMPLATES, TECH_TEMPLATE]
+      : [TECH_TEMPLATE];
 
   return (
     <div>
@@ -63,12 +70,12 @@ const EmailReminders = ({ currentAdmin }) => {
       {/* COMPOSE */}
       {tab === 'compose' && canCompose && (
         <div style={s.card}>
-          <h2 style={s.cardTitle}>✉️ Send Email to Staff</h2>
+          <h2 style={s.cardTitle}>✉️ {currentAdmin?.role === 'teacher' ? 'Send Email to Admin' : 'Send Email to Staff'}</h2>
 
           {/* Quick templates */}
           <div style={s.templateRow}>
             <span style={s.templateLabel}>Quick Templates:</span>
-            {(isMainAdmin ? TEMPLATES.slice(0, 2) : TEMPLATES.slice(2)).map((t, i) => (
+            {TEMPLATES.map((t, i) => (
               <button key={i} style={s.templateBtn} onClick={() => setForm({ ...form, subject: t.subject, message: t.message })}>{t.label}</button>
             ))}
           </div>
@@ -79,7 +86,7 @@ const EmailReminders = ({ currentAdmin }) => {
               <select style={s.input} value={form.to_admin_id} onChange={e => setForm({ ...form, to_admin_id: e.target.value })}>
                 {isMainAdmin && <option value="all">📢 All Staff</option>}
                 {admins.map(a => <option key={a.id} value={a.id}>{a.name} ({a.role === 'main_admin' ? '⭐ Main Admin' : a.role === 'teacher' ? '👩‍🏫 Teacher' : '👨‍💼 Admin'}) — {a.email}</option>)}
-                <option value="custom">Other Email Address</option>
+                {currentAdmin?.role !== 'teacher' && <option value="custom">Other Email Address</option>}
               </select>
             </div>
             {form.to_admin_id === 'custom' && (
