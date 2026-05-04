@@ -1,21 +1,23 @@
 const db = require('../db');
 
-const ignoreDuplicateColumn = (err) => {
-  if (err?.code !== 'ER_DUP_FIELDNAME') throw err;
+const safeAlter = async (sql) => {
+  try {
+    await db.query(sql);
+  } catch (err) {
+    // Ignore duplicate column / duplicate key errors; log everything else as a warning
+    if (err?.code !== 'ER_DUP_FIELDNAME' && err?.code !== 'ER_DUP_ENTRY') {
+      console.warn('Schema migration skipped:', err.message);
+    }
+  }
 };
 
 const ensureSchema = async () => {
-  try {
-    await db.query("ALTER TABLE admins MODIFY COLUMN role ENUM('admin', 'main_admin', 'teacher') DEFAULT 'admin'");
-    await db.query("ALTER TABLE crossword_data MODIFY COLUMN direction ENUM('across','down') DEFAULT 'across'");
-    await db.query('ALTER TABLE crossword_data MODIFY COLUMN start_row INT DEFAULT 0');
-    await db.query('ALTER TABLE crossword_data MODIFY COLUMN start_col INT DEFAULT 0');
-    await db.query("ALTER TABLE otp_tokens MODIFY COLUMN otp VARCHAR(255) NOT NULL");
-    await db.query("ALTER TABLE admin_invitations ADD COLUMN role ENUM('admin', 'teacher') DEFAULT 'admin' AFTER token")
-      .catch(ignoreDuplicateColumn);
-  } catch (err) {
-    console.error('Schema check failed:', err.message);
-  }
+  await safeAlter("ALTER TABLE admins MODIFY COLUMN role ENUM('admin', 'main_admin', 'teacher') DEFAULT 'admin'");
+  await safeAlter("ALTER TABLE crossword_data MODIFY COLUMN direction ENUM('across','down') DEFAULT 'across'");
+  await safeAlter('ALTER TABLE crossword_data MODIFY COLUMN start_row INT DEFAULT 0');
+  await safeAlter('ALTER TABLE crossword_data MODIFY COLUMN start_col INT DEFAULT 0');
+  await safeAlter("ALTER TABLE otp_tokens MODIFY COLUMN otp VARCHAR(255) NOT NULL");
+  await safeAlter("ALTER TABLE admin_invitations ADD COLUMN role ENUM('admin', 'teacher') DEFAULT 'admin' AFTER token");
 };
 
 module.exports = { ensureSchema };
