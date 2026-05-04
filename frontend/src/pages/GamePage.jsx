@@ -231,7 +231,7 @@ const GamePage = () => {
     }
   }, [showChat, player, getPlayerChatConfig]);
 
-  if (!player) return <div style={s.loading}>Loading game... 🎮</div>;
+  if (!player) return <div style={s.loading}>Permainan sedang dimuatkan...</div>;
 
   const showFullQuiz = activeCP === 1 && cpStep === 'activity';
   const showFullCP3 = activeCP === 3 && cpStep === 'activity';
@@ -262,8 +262,8 @@ const GamePage = () => {
 
       {/* Controls hint */}
       <div style={s.controls}>
-        <span>🕹️ Move: <strong>Keyboard WASD</strong> or <strong>Arrow Keys</strong></span>
-        <span style={{ marginLeft: '1.5rem' }}>🎯 Enter zone: <strong>Press E</strong></span>
+        <span>Gerak: <strong>W A S D</strong> atau <strong>Anak Panah</strong></span>
+        <span style={{ marginLeft: '1.5rem' }}>Masuk zon: <strong>Tekan E</strong></span>
       </div>
 
       {/* Game Canvas */}
@@ -276,27 +276,27 @@ const GamePage = () => {
         <div style={s.overlay}>
           <div style={{ ...s.doneCard, maxWidth: '500px' }}>
             <div style={{ fontSize: '4rem', marginBottom: '0.5rem' }}>🗺️</div>
-            <h2 style={{ ...s.doneTitle, fontSize: '1.5rem' }}>Welcome to Dental Quest!</h2>
+            <h2 style={{ ...s.doneTitle, fontSize: '1.5rem' }}>Selamat Datang ke Dental Quest!</h2>
             <div style={{ textAlign: 'left', margin: '1.5rem 0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#eff6ff', padding: '1rem', borderRadius: '12px' }}>
                 <span style={{ fontSize: '2rem' }}>🕹️</span>
                 <div>
-                  <strong style={{ color: '#1e3a5f' }}>Move your character</strong>
-                  <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.9rem' }}>Use <strong>W A S D</strong> or <strong>Arrow Keys</strong></p>
+                  <strong style={{ color: '#1e3a5f' }}>Gerakkan watak anda</strong>
+                  <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.9rem' }}>Guna <strong>W A S D</strong> atau <strong>Anak Panah</strong></p>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f0fdf4', padding: '1rem', borderRadius: '12px' }}>
                 <span style={{ fontSize: '2rem' }}>🎯</span>
                 <div>
-                  <strong style={{ color: '#1e3a5f' }}>Enter checkpoints</strong>
-                  <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.9rem' }}>Walk to a glowing circle and press <strong>E</strong></p>
+                  <strong style={{ color: '#1e3a5f' }}>Masuk pusat pemeriksaan</strong>
+                  <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.9rem' }}>Pergi ke bulatan bercahaya dan tekan <strong>E</strong></p>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#fff7ed', padding: '1rem', borderRadius: '12px' }}>
                 <span style={{ fontSize: '2rem' }}>📋</span>
                 <div>
-                  <strong style={{ color: '#1e3a5f' }}>Complete all 3 checkpoints</strong>
-                  <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.9rem' }}>Watch video → Do activity → Move to next!</p>
+                  <strong style={{ color: '#1e3a5f' }}>Lengkapkan semua 3 pusat</strong>
+                  <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.9rem' }}>Tonton video, buat aktiviti, kemudian teruskan!</p>
                 </div>
               </div>
             </div>
@@ -304,7 +304,7 @@ const GamePage = () => {
               style={{ ...s.continueBtn, background: '#2563eb' }}
               onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}
             >
-              🚀 Let's Go!
+              Mula!
             </button>
           </div>
         </div>
@@ -315,11 +315,11 @@ const GamePage = () => {
         <div style={s.overlay}>
           <div style={s.doneCard}>
             <div style={{ fontSize: '5rem', animation: 'popIn 0.5s ease' }}>🏆</div>
-            <h2 style={s.doneTitle}>Congratulations!</h2>
-            <p style={s.doneText}>You completed all 3 checkpoints!</p>
-            <p style={s.doneText}>You are a Dental Quest Champion! 🦷⭐</p>
+            <h2 style={s.doneTitle}>Tahniah!</h2>
+            <p style={s.doneText}>Anda telah lengkapkan semua 3 pusat pemeriksaan!</p>
+            <p style={s.doneText}>Anda ialah Juara Dental Quest!</p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', margin: '1.5rem 0', background: '#f8fafc', borderRadius: '16px', padding: '1.25rem' }}>
-              {[{ label: 'Quiz', cp: 1 }, { label: 'Crossword', cp: 2 }, { label: 'Food Game', cp: 3 }].map(({ label, cp }) => {
+              {[{ label: 'Kuiz', cp: 1 }, { label: 'Teka Silang Kata', cp: 2 }, { label: 'Permainan Makanan', cp: 3 }].map(({ label, cp }) => {
                 const done = progress.find(p => p.checkpoint_number === cp)?.completed;
                 return (
                   <div key={cp} style={{ textAlign: 'center' }}>
@@ -333,7 +333,7 @@ const GamePage = () => {
               style={{ ...s.continueBtn, background: '#16a34a', marginTop: '0.5rem' }}
               onClick={() => { localStorage.removeItem('player'); navigate('/'); }}
             >
-              🏠 Back to Home
+              Kembali ke Utama
             </button>
           </div>
         </div>
@@ -343,7 +343,7 @@ const GamePage = () => {
       {showFullQuiz && (
         <div style={s.fullQuiz}>
           <div style={s.fullQuizHeader}>
-            <span style={s.fullQuizTitle}>🎯 Checkpoint 1 — Quiz</span>
+            <span style={s.fullQuizTitle}>Pusat Pemeriksaan 1 - Kuiz</span>
             <span style={s.fullQuizPlayer}>👤 {player.nickname}</span>
           </div>
           <div style={s.fullQuizBody}>
@@ -368,7 +368,7 @@ const GamePage = () => {
           <div style={s.modal}>
             <div style={s.modalHeader}>
               <h2 style={s.modalTitle}>
-                {activeCP === 1 ? '🟣' : activeCP === 2 ? '🟤' : '🟠'} Checkpoint {activeCP}
+                {activeCP === 1 ? '🟣' : activeCP === 2 ? '🟤' : '🟠'} Pusat Pemeriksaan {activeCP}
               </h2>
               {cpStep === 'video' && (
                 <button style={s.closeBtn} onClick={handleCloseCPModal}>✕</button>
@@ -376,7 +376,7 @@ const GamePage = () => {
             </div>
 
             <div style={s.steps}>
-              {['Watch Video', 'Activity', 'Done!'].map((label, i) => (
+              {['Tonton Video', 'Aktiviti', 'Selesai!'].map((label, i) => (
                 <div key={i} style={{ ...s.step, ...((['video', 'activity', 'done'][i] === cpStep) ? s.stepActive : {}) }}>
                   <div style={s.stepDot}>{i + 1}</div>
                   <span>{label}</span>
@@ -386,7 +386,7 @@ const GamePage = () => {
 
             {cpStep === 'video' && (
               <div style={s.modalBody}>
-                <p style={s.modalHint}>🎬 Watch the full video to unlock the next activity!</p>
+                <p style={s.modalHint}>Tonton video penuh untuk membuka aktiviti seterusnya!</p>
                 <YouTubePlayer videoId={CHECKPOINT_VIDEO_IDS[activeCP]} onVideoEnd={handleVideoWatched} />
               </div>
             )}
@@ -408,13 +408,13 @@ const GamePage = () => {
               <div style={{ ...s.modalBody, textAlign: 'center' }}>
                 <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎉</div>
                 <h3 style={{ color: '#16a34a', fontSize: '1.4rem', fontWeight: '800' }}>
-                  Checkpoint {activeCP} Complete!
+                  Pusat Pemeriksaan {activeCP} Selesai!
                 </h3>
                 <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
-                  Great job! Walk to the next checkpoint!
+                  Bagus! Jalan ke pusat pemeriksaan seterusnya!
                 </p>
                 <button style={{ ...s.continueBtn, background: '#16a34a' }} onClick={handleCloseCPModal}>
-                  Continue Adventure! 🗺️
+                  Teruskan Pengembaraan!
                 </button>
               </div>
             )}
@@ -426,16 +426,16 @@ const GamePage = () => {
       {showChat && (
         <div style={s.chatBox}>
           <div style={s.chatHeader}>
-            <span>💬 Chat with Teacher</span>
+            <span>Sembang dengan Guru</span>
             <button style={s.chatClose} onClick={() => setShowChat(false)}>✕</button>
           </div>
           <div style={s.chatMessages}>
             {chatMessages.length === 0 && (
-              <p style={s.chatEmpty}>No messages yet. Ask your teacher for help!</p>
+              <p style={s.chatEmpty}>Belum ada mesej. Tanya guru jika perlukan bantuan!</p>
             )}
             {chatMessages.map((m, i) => (
               <div key={i} style={{ ...s.chatMsg, ...(m.sender_type === 'player' ? s.chatMsgPlayer : s.chatMsgAdmin) }}>
-                <span style={s.chatSender}>{m.sender_type === 'player' ? player.nickname : 'Teacher'}</span>
+                <span style={s.chatSender}>{m.sender_type === 'player' ? player.nickname : 'Guru'}</span>
                 <p style={{ ...s.chatText, color: m.sender_type === 'admin' ? '#1e293b' : '#2563eb' }}>{m.message}</p>
               </div>
             ))}
@@ -445,16 +445,16 @@ const GamePage = () => {
               style={s.chatInputField}
               value={chatInput}
               onChange={e => setChatInput(e.target.value)}
-              placeholder="Ask a question..."
+              placeholder="Tanya soalan..."
               maxLength={200}
               disabled={!player?.chat_token}
               onKeyDown={e => e.key === 'Enter' && sendChat()}
             />
-            <button style={{ ...s.chatSendBtn, opacity: player?.chat_token ? 1 : 0.5 }} onClick={sendChat} disabled={!player?.chat_token}>Send</button>
+            <button style={{ ...s.chatSendBtn, opacity: player?.chat_token ? 1 : 0.5 }} onClick={sendChat} disabled={!player?.chat_token}>Hantar</button>
           </div>
           {!player?.chat_token && (
             <div style={{ padding: '0 0.75rem 0.75rem', color: '#e11d48', fontSize: '0.78rem' }}>
-              Chat needs a fresh join token. Rejoin the session to use chat securely.
+              Sembang perlukan token baharu. Sertai semula sesi untuk guna sembang dengan selamat.
             </div>
           )}
         </div>

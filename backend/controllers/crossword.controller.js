@@ -259,15 +259,16 @@ const addWord = async (req, res) => {
   if (clue.trim().length > 200)
     return res.status(400).json({ error: 'Clue too long (max 200 characters)' });
   if (!/^[a-zA-Z]+$/.test(word.trim()))
-    return res.status(400).json({ error: 'Word must contain letters only (no spaces or symbols)' });
+    return res.status(400).json({ error: 'Perkataan hanya boleh mengandungi huruf tanpa ruang atau simbol' });
 
   try {
     const [result] = await db.query(
-      'INSERT INTO crossword_data (word, clue) VALUES (?,?)',
-      [word.trim().toUpperCase(), clue.trim()]
+      'INSERT INTO crossword_data (word, clue, direction, start_row, start_col) VALUES (?,?,?,?,?)',
+      [word.trim().toUpperCase(), clue.trim(), 'across', 0, 0]
     );
-    res.status(201).json({ message: 'Word added', id: result.insertId });
+    res.status(201).json({ message: 'Perkataan ditambah', id: result.insertId });
   } catch (err) {
+    console.error('Add crossword word error:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -285,15 +286,16 @@ const updateWord = async (req, res) => {
   if (clue.trim().length > 200)
     return res.status(400).json({ error: 'Clue too long (max 200 characters)' });
   if (!/^[a-zA-Z]+$/.test(word.trim()))
-    return res.status(400).json({ error: 'Word must contain letters only (no spaces or symbols)' });
+    return res.status(400).json({ error: 'Perkataan hanya boleh mengandungi huruf tanpa ruang atau simbol' });
 
   try {
     await db.query(
       'UPDATE crossword_data SET word=?, clue=? WHERE id=?',
       [word.trim().toUpperCase(), clue.trim(), req.params.id]
     );
-    res.json({ message: 'Word updated' });
+    res.json({ message: 'Perkataan dikemaskini' });
   } catch (err) {
+    console.error('Update crossword word error:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 };

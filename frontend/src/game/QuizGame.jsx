@@ -35,40 +35,56 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     return a;
   };
 
+  const parseMaybeJsonArray = (value, fallback = []) => {
+    if (Array.isArray(value)) return value;
+    try {
+      const parsed = JSON.parse(value || '[]');
+      return Array.isArray(parsed) ? parsed : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const getSubmittedIndexes = (q, displayIndexes) =>
+    displayIndexes.map(idx => q.answer_index_map?.[idx] ?? idx);
+
+  const getSubmittedMatches = (q, displayPairs) =>
+    displayPairs.map(([leftIdx, rightIdx]) => [
+      q.match_left_map?.[leftIdx] ?? leftIdx,
+      q.match_right_map?.[rightIdx] ?? rightIdx,
+    ]);
+
   useEffect(() => {
     api.get(`/quiz/session/${player.session_id}`)
       .then(res => {
         // Shuffle options for each question so answers appear in different positions
         const shuffled = res.data.questions.map(q => {
-          const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]');
-          const ca = Array.isArray(q.correct_answer) ? q.correct_answer : JSON.parse(q.correct_answer || '[]');
+          const opts = parseMaybeJsonArray(q.options);
+          const ca = parseMaybeJsonArray(q.correct_answer);
 
           if (q.question_type === 'match') {
-            // For match: shuffle the right-side order, remap correct_answer pairs
-            const rightIndexes = opts.map((_, i) => i);
-            const shuffledRight = shuffleArray(rightIndexes);
-            // Build reverse map: old index -> new index
-            const rightMap = {};
-            shuffledRight.forEach((oldIdx, newIdx) => { rightMap[oldIdx] = newIdx; });
-            // Reorder right values in each option pair
+            const rightOrder = shuffleArray(opts.map((_, i) => i));
+            const rightDisplayMap = {};
+            rightOrder.forEach((oldIdx, newIdx) => { rightDisplayMap[oldIdx] = newIdx; });
             const newOpts = opts.map((pair, i) => ({
               left: pair.left || pair,
-              right: opts[shuffledRight[i]]?.right || opts[shuffledRight[i]],
-              _origRightIdx: shuffledRight[i],
+              right: opts[rightOrder[i]]?.right || opts[rightOrder[i]],
             }));
-            // Remap correct_answer pairs: [leftIdx, oldRightIdx] -> [leftIdx, newRightIdx]
-            const newCA = ca.map(pair => [pair[0], rightMap[pair[1]]]);
-            return { ...q, options: newOpts, correct_answer: newCA };
+            const displayCorrect = ca.map(pair => [pair[0], rightDisplayMap[pair[1]]]);
+            return {
+              ...q,
+              options: newOpts,
+              correct_answer: displayCorrect,
+              match_left_map: opts.map((_, i) => i),
+              match_right_map: rightOrder,
+            };
           } else {
-            // For MC, true_false, multi_select: shuffle all options, remap correct indexes
-            const indexMap = opts.map((_, i) => i);
-            const shuffledIndexes = shuffleArray(indexMap);
+            const shuffledIndexes = shuffleArray(opts.map((_, i) => i));
             const newOpts = shuffledIndexes.map(i => opts[i]);
-            // Build reverse map: old index -> new position
             const reverseMap = {};
             shuffledIndexes.forEach((oldIdx, newIdx) => { reverseMap[oldIdx] = newIdx; });
             const newCA = ca.map(oldIdx => reverseMap[oldIdx]);
-            return { ...q, options: newOpts, correct_answer: newCA };
+            return { ...q, options: newOpts, correct_answer: newCA, answer_index_map: shuffledIndexes };
           }
         });
         setQuestions(shuffled);
@@ -115,7 +131,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     setSelected([idx]);
     markAnswered();
     const q = questions[currentQ];
-    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: [idx] }];
+    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: getSubmittedIndexes(q, [idx]) }];
     answersRef.current = nextAnswers;
     setAnswers(nextAnswers);
     setTimeout(() => nextQuestion(nextAnswers), 1800);
@@ -131,7 +147,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     clearInterval(timerRef.current);
     markAnswered();
     const q = questions[currentQ];
-    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: selected }];
+    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: getSubmittedIndexes(q, selected) }];
     answersRef.current = nextAnswers;
     setAnswers(nextAnswers);
     setTimeout(() => nextQuestion(nextAnswers), 1800);
@@ -158,7 +174,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     clearInterval(timerRef.current);
     markAnswered();
     const q = questions[currentQ];
-    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: matchLines }];
+    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: getSubmittedMatches(q, matchLines) }];
     answersRef.current = nextAnswers;
     setAnswers(nextAnswers);
     setTimeout(() => nextQuestion(nextAnswers), 2000);
@@ -212,14 +228,14 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
   if (phase === 'loading') return (
     <div style={s.center}>
       <div style={s.spinner} />
-      <p style={{ color: '#64748b', marginTop: '1rem', fontSize: '0.95rem' }}>Loading quiz...</p>
+      <p style={{ color: '#64748b', marginTop: '1rem', fontSize: '0.95rem' }}>Kuiz sedang dimuatkan...</p>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 
   if (phase === 'error') return (
     <div style={s.center}>
-      <p style={{ color: '#e11d48', fontSize: '1rem' }}>❌ Failed to load quiz. Please try again.</p>
+      <p style={{ color: '#e11d48', fontSize: '1rem' }}>Gagal memuatkan kuiz. Sila cuba lagi.</p>
     </div>
   );
 
@@ -228,7 +244,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
       <style>{`@keyframes pop{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={s.scoreCard}>
         <div style={s.scoreTrophy}>{result.correct === result.total ? '🏆' : result.correct >= result.total / 2 ? '⭐' : '💪'}</div>
-        <h2 style={s.scoreTitle}>Tahniah! Quiz Selesai!</h2>
+        <h2 style={s.scoreTitle}>Tahniah! Kuiz Selesai!</h2>
         <div style={s.scoreBig}>{result.score}</div>
         <p style={s.scorePoints}>mata</p>
         <div style={s.scoreStats}>
@@ -270,7 +286,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
               Kamu betulkan <strong>{result.correct}/{result.total}</strong>.
             </p>
             <button style={s.retryBtn} onClick={onRetry}>
-              🔄 Cuba Semula Quiz
+              Cuba Semula Kuiz
             </button>
           </div>
         </div>

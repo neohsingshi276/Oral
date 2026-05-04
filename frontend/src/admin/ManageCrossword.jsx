@@ -24,7 +24,7 @@ const ManageCrossword = () => {
       setForm({ word: '', clue: '' });
       setEditing(null);
       fetchWords();
-    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Failed')); }
+    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal')); }
     setTimeout(() => setMsg(''), 3000);
   };
 
@@ -34,7 +34,7 @@ const ManageCrossword = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this word?')) return;
+    if (!confirm('Padam perkataan ini?')) return;
     await api.delete(`/crossword/admin/${id}`);
     fetchWords();
   };
@@ -57,25 +57,25 @@ const ManageCrossword = () => {
           {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
           <form onSubmit={handleSubmit}>
             <div style={s.field}>
-              <label style={s.label}>Perkataan (Word)</label>
+              <label style={s.label}>Perkataan</label>
               <input
                 style={s.input}
                 value={form.word}
                 onChange={e => setForm({ ...form, word: e.target.value.toUpperCase() })}
                 required
-                placeholder="e.g. GIGI"
+                placeholder="cth. GIGI"
                 maxLength={15}
               />
-              <p style={s.hint}>Max 15 letters. Current: {form.word.length} letters</p>
+              <p style={s.hint}>Maksimum 15 huruf. Sekarang: {form.word.length} huruf</p>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Pembayang (Clue)</label>
+              <label style={s.label}>Pembayang</label>
               <textarea
                 style={{ ...s.input, height: '80px', resize: 'vertical' }}
                 value={form.clue}
                 onChange={e => setForm({ ...form, clue: e.target.value })}
                 required
-                placeholder="e.g. Organ keras dalam mulut untuk mengunyah"
+                placeholder="cth. Organ keras dalam mulut untuk mengunyah"
                 maxLength={200}
               />
             </div>
