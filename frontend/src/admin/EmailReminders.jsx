@@ -30,7 +30,7 @@ const EmailReminders = ({ currentAdmin }) => {
       setMsg('✅ ' + res.data.message);
       setForm({ to_admin_id: defaultToAdminId, to_email: '', to_name: '', subject: '', message: '' });
       fetchSent();
-    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Failed')); }
+    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal menghantar')); }
     setTimeout(() => setMsg(''), 3000);
   };
 
@@ -42,18 +42,18 @@ const EmailReminders = ({ currentAdmin }) => {
   const unreadCount = inbox.filter(r => !r.is_read).length;
 
   const TABS = [
-    ...(canCompose ? [{ key: 'compose', label: '✉️ Compose' }, { key: 'sent', label: '📤 Sent' }] : []),
-    { key: 'inbox', label: `📥 Inbox${unreadCount > 0 ? ` (${unreadCount})` : ''}` },
+    ...(canCompose ? [{ key: 'compose', label: '✉️ Karang' }, { key: 'sent', label: '📤 Dihantar' }] : []),
+    { key: 'inbox', label: `📥 Peti Masuk${unreadCount > 0 ? ` (${unreadCount})` : ''}` },
   ];
 
-  // Quick templates — role-aware visibility
+  // Templat pantas — paparan mengikut peranan
   const REMINDER_TEMPLATES = [
-    { label: '3-Month Reminder', subject: '3-Month Session Reminder — DentalQuest', message: 'Dear Teacher,\n\nThis is a reminder that it has been approximately 3 months since the last DentalQuest session. Please schedule a new game session for your students to reinforce their oral health knowledge and behaviours.\n\nPlease log in to the DentalQuest admin portal to create a new session and share the game code with your students.\n\nThank you for your continued support!\n\nBest regards,\nDentalQuest Research Team' },
-    { label: 'First Session', subject: 'Welcome to DentalQuest!', message: 'Dear Teacher,\n\nWelcome to DentalQuest! Please log in to the admin portal to create your first game session and share the 4-digit code with your students.\n\nIf you need any assistance, please do not hesitate to contact us.\n\nBest regards,\nDentalQuest Research Team' },
+    { label: 'Peringatan 3 Bulan', subject: 'Peringatan Sesi 3 Bulan — DentalQuest', message: 'Guru yang dihormati,\n\nIni adalah peringatan bahawa sudah kira-kira 3 bulan sejak sesi DentalQuest yang terakhir. Sila jadualkan sesi permainan baru untuk pelajar anda bagi mengukuhkan pengetahuan dan amalan kesihatan mulut mereka.\n\nSila log masuk ke portal pentadbir DentalQuest untuk mencipta sesi baru dan kongsi kod permainan dengan pelajar anda.\n\nTerima kasih atas sokongan berterusan anda!\n\nSalam hormat,\nPasukan Penyelidik DentalQuest' },
+    { label: 'Sesi Pertama', subject: 'Selamat Datang ke DentalQuest!', message: 'Guru yang dihormati,\n\nSelamat datang ke DentalQuest! Sila log masuk ke portal pentadbir untuk mencipta sesi permainan pertama anda dan kongsi kod 4 digit dengan pelajar anda.\n\nJika anda memerlukan sebarang bantuan, jangan teragak-agak untuk menghubungi kami.\n\nSalam hormat,\nPasukan Penyelidik DentalQuest' },
   ];
-  const TECH_TEMPLATE = { label: 'Technical Issue', subject: 'Technical Issue Report', message: 'Dear Admin,\n\nI would like to report a technical issue with DentalQuest.\n\nIssue description:\n[Please describe the issue here]\n\nSteps to reproduce:\n1. \n2. \n3. \n\nExpected behaviour:\n[What should happen]\n\nActual behaviour:\n[What actually happens]\n\nThank you for your assistance.\n\nBest regards,' };
+  const TECH_TEMPLATE = { label: 'Isu Teknikal', subject: 'Laporan Isu Teknikal', message: 'Pentadbir yang dihormati,\n\nSaya ingin melaporkan isu teknikal dengan DentalQuest.\n\nPenerangan isu:\n[Sila terangkan isu di sini]\n\nLangkah untuk menghasilkan semula:\n1. \n2. \n3. \n\nTingkah laku yang dijangka:\n[Apa yang sepatutnya berlaku]\n\nTingkah laku sebenar:\n[Apa yang sebenarnya berlaku]\n\nTerima kasih atas bantuan anda.\n\nSalam hormat,' };
 
-  // Main admin: reminder templates only | Admin: all 3 | Teacher: technical issue only
+  // Pentadbir utama: templat peringatan sahaja | Pentadbir: semua 3 | Guru: isu teknikal sahaja
   const TEMPLATES = currentAdmin?.role === 'main_admin'
     ? REMINDER_TEMPLATES
     : currentAdmin?.role === 'admin'
@@ -70,14 +70,14 @@ const EmailReminders = ({ currentAdmin }) => {
 
       {msg && <div style={{ ...s.msg, ...(msg.includes('✅') ? s.success : s.error) }}>{msg}</div>}
 
-      {/* COMPOSE */}
+      {/* KARANG */}
       {tab === 'compose' && canCompose && (
         <div style={s.card}>
-          <h2 style={s.cardTitle}>✉️ {currentAdmin?.role === 'teacher' ? 'Send Email to Admin' : 'Send Email to Staff'}</h2>
+          <h2 style={s.cardTitle}>✉️ {currentAdmin?.role === 'teacher' ? 'Hantar E-mel kepada Pentadbir' : 'Hantar E-mel kepada Staf'}</h2>
 
-          {/* Quick templates */}
+          {/* Templat pantas */}
           <div style={s.templateRow}>
-            <span style={s.templateLabel}>Quick Templates:</span>
+            <span style={s.templateLabel}>Templat Pantas:</span>
             {TEMPLATES.map((t, i) => (
               <button key={i} style={s.templateBtn} onClick={() => setForm({ ...form, subject: t.subject, message: t.message })}>{t.label}</button>
             ))}
@@ -85,80 +85,80 @@ const EmailReminders = ({ currentAdmin }) => {
 
           <form onSubmit={handleSend}>
             <div style={s.field}>
-              <label style={s.label}>Send To</label>
+              <label style={s.label}>Hantar Kepada</label>
               <select style={s.input} value={form.to_admin_id} onChange={e => setForm({ ...form, to_admin_id: e.target.value })}>
-                {isMainAdmin && <option value="all">📢 All Staff</option>}
-                {admins.map(a => <option key={a.id} value={a.id}>{a.name} ({a.role === 'main_admin' ? '⭐ Main Admin' : a.role === 'teacher' ? '👩‍🏫 Teacher' : '👨‍💼 Admin'}) — {a.email}</option>)}
-                {currentAdmin?.role !== 'teacher' && <option value="custom">Other Email Address</option>}
+                {isMainAdmin && <option value="all">📢 Semua Staf</option>}
+                {admins.map(a => <option key={a.id} value={a.id}>{a.name} ({a.role === 'main_admin' ? '⭐ Pentadbir Utama' : a.role === 'teacher' ? '👩‍🏫 Guru' : '👨‍💼 Pentadbir'}) — {a.email}</option>)}
+                {currentAdmin?.role !== 'teacher' && <option value="custom">Alamat E-mel Lain</option>}
               </select>
             </div>
             {form.to_admin_id === 'custom' && (
               <>
                 <div style={s.field}>
-                  <label style={s.label}>Recipient Email</label>
-                  <input style={s.input} type="email" value={form.to_email} onChange={e => setForm({ ...form, to_email: e.target.value })} required placeholder="staff@example.com" maxLength={120} />
+                  <label style={s.label}>E-mel Penerima</label>
+                  <input style={s.input} type="email" value={form.to_email} onChange={e => setForm({ ...form, to_email: e.target.value })} required placeholder="staf@contoh.com" maxLength={120} />
                 </div>
                 <div style={s.field}>
-                  <label style={s.label}>Recipient Name</label>
-                  <input style={s.input} value={form.to_name} onChange={e => setForm({ ...form, to_name: e.target.value })} placeholder="Optional" maxLength={80} />
+                  <label style={s.label}>Nama Penerima</label>
+                  <input style={s.input} value={form.to_name} onChange={e => setForm({ ...form, to_name: e.target.value })} placeholder="Pilihan" maxLength={80} />
                 </div>
               </>
             )}
             <div style={s.field}>
-              <label style={s.label}>Subject</label>
-              <input style={s.input} value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} required placeholder="e.g. 3-Month Session Reminder" />
+              <label style={s.label}>Subjek</label>
+              <input style={s.input} value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} required placeholder="cth. Peringatan Sesi 3 Bulan" />
             </div>
             <div style={s.field}>
-              <label style={s.label}>Message</label>
-              <textarea style={{ ...s.input, height: '180px', resize: 'vertical' }} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} required placeholder="Write your reminder message here..." />
+              <label style={s.label}>Mesej</label>
+              <textarea style={{ ...s.input, height: '180px', resize: 'vertical' }} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} required placeholder="Tulis mesej peringatan anda di sini..." />
             </div>
-            <button style={s.btnPrimary} type="submit">📤 Send Email</button>
+            <button style={s.btnPrimary} type="submit">📤 Hantar E-mel</button>
           </form>
         </div>
       )}
 
-      {/* SENT */}
+      {/* DIHANTAR */}
       {tab === 'sent' && canCompose && (
         <div style={s.card}>
-          <h2 style={s.cardTitle}>📤 Sent Reminders ({sent.length})</h2>
+          <h2 style={s.cardTitle}>📤 Peringatan Dihantar ({sent.length})</h2>
           <div style={s.emailList}>
             {sent.map(r => (
               <div key={r.id} style={s.emailItem}>
                 <div style={s.emailTop}>
-                  <span style={s.emailTo}>To: {r.to_name}</span>
+                  <span style={s.emailTo}>Kepada: {r.to_name}</span>
                   <span style={s.emailDate}>{new Date(r.created_at).toLocaleDateString()}</span>
                 </div>
                 <div style={s.emailSubject}>{r.subject}</div>
                 <div style={s.emailPreview}>{r.message.slice(0, 100)}...</div>
                 <div style={{ ...s.readBadge, ...(r.is_read ? s.readBadgeRead : s.readBadgeUnread) }}>
-                  {r.is_read ? '✅ Read' : '⏳ Unread'}
+                  {r.is_read ? '✅ Dibaca' : '⏳ Belum Dibaca'}
                 </div>
               </div>
             ))}
-            {sent.length === 0 && <p style={s.empty}>No reminders sent yet</p>}
+            {sent.length === 0 && <p style={s.empty}>Tiada peringatan dihantar lagi</p>}
           </div>
         </div>
       )}
 
-      {/* INBOX */}
+      {/* PETI MASUK */}
       {tab === 'inbox' && (
         <div style={s.card}>
-          <h2 style={s.cardTitle}>📥 Inbox ({inbox.length})</h2>
+          <h2 style={s.cardTitle}>📥 Peti Masuk ({inbox.length})</h2>
           <div style={s.emailList}>
             {inbox.map(r => (
               <div key={r.id} style={{ ...s.emailItem, ...(r.is_read ? {} : s.emailItemUnread) }}>
                 <div style={s.emailTop}>
-                  <span style={s.emailTo}>From: {r.from_name}</span>
+                  <span style={s.emailTo}>Daripada: {r.from_name}</span>
                   <span style={s.emailDate}>{new Date(r.created_at).toLocaleDateString()}</span>
                 </div>
                 <div style={s.emailSubject}>{r.subject}</div>
                 <div style={s.emailBody}>{r.message}</div>
                 {!r.is_read && (
-                  <button style={s.markReadBtn} onClick={() => handleMarkRead(r.id)}>Mark as Read ✓</button>
+                  <button style={s.markReadBtn} onClick={() => handleMarkRead(r.id)}>Tandai Sudah Dibaca ✓</button>
                 )}
               </div>
             ))}
-            {inbox.length === 0 && <p style={s.empty}>No messages in inbox</p>}
+            {inbox.length === 0 && <p style={s.empty}>Tiada mesej dalam peti masuk</p>}
           </div>
         </div>
       )}
