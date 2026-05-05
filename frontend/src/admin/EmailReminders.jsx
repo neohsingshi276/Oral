@@ -6,7 +6,8 @@ const EmailReminders = ({ currentAdmin }) => {
   const [admins, setAdmins] = useState([]);
   const [inbox, setInbox] = useState([]);
   const [sent, setSent] = useState([]);
-  const [form, setForm] = useState({ to_admin_id: 'all', to_email: '', to_name: '', subject: '', message: '' });
+  const defaultToAdminId = currentAdmin?.role === 'main_admin' ? 'all' : '';
+  const [form, setForm] = useState({ to_admin_id: defaultToAdminId, to_email: '', to_name: '', subject: '', message: '' });
   const [msg, setMsg] = useState('');
   const isMainAdmin = currentAdmin?.role === 'main_admin';
   const canCompose  = ['main_admin', 'admin', 'teacher'].includes(currentAdmin?.role);
@@ -27,7 +28,7 @@ const EmailReminders = ({ currentAdmin }) => {
     try {
       const res = await api.post('/email/send', form);
       setMsg('✅ ' + res.data.message);
-      setForm({ to_admin_id: 'all', to_email: '', to_name: '', subject: '', message: '' });
+      setForm({ to_admin_id: defaultToAdminId, to_email: '', to_name: '', subject: '', message: '' });
       fetchSent();
     } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Failed')); }
     setTimeout(() => setMsg(''), 3000);

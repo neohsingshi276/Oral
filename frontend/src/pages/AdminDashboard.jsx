@@ -34,7 +34,7 @@ const AdminDashboard = () => {
     { key: 'crossword', icon: '🧩', label: 'Teka Silang Kata', roles: ['main_admin', 'admin'] },
     { key: 'analytics', icon: '📈', label: 'Analitik', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'admins', icon: '👨‍💼', label: 'Urus Pentadbir', roles: ['main_admin', 'admin'] },
-    { key: 'email', icon: '✉️', label: admin?.role === 'main_admin' ? 'E-mel Peringatan' : 'Peti Masuk', roles: ['main_admin', 'admin', 'teacher'] },
+    { key: 'email', icon: '✉️', label: admin?.role === 'main_admin' ? 'E-mel Peringatan' : admin?.role === 'admin' ? 'E-mel Staf' : 'Peti Masuk', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'activity', icon: '📋', label: 'Log Aktiviti', roles: ['main_admin'] },
   ];
 

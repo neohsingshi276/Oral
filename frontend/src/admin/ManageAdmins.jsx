@@ -103,7 +103,9 @@ const ManageAdmins = ({ currentAdmin }) => {
                 </div>
                 <span style={s.pendingBadge}>⏳ Tertangguh</span>
                 <button style={s.btnResend} onClick={() => handleResend(invite.id)}>📧 Hantar Semula</button>
-                <button style={s.btnCancel} onClick={() => handleCancel(invite.id)}>✕ Batal</button>
+                {currentAdmin?.role === 'main_admin' && (
+                  <button style={s.btnCancel} onClick={() => handleCancel(invite.id)}>✕ Batal</button>
+                )}
               </div>
             ))}
           </div>
