@@ -2,10 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 
 const TYPES = [
-  { value: 'multiple_choice', label: '🔵 Multiple Choice' },
-  { value: 'true_false', label: '✅ True / False' },
-  { value: 'multi_select', label: '☑️ Multi-Select' },
-  { value: 'match', label: '🔗 Match / Binding' },
+  { value: 'multiple_choice', label: '🔵 Pilihan Berganda' },
+  { value: 'true_false', label: '✅ Betul / Salah' },
+  { value: 'multi_select', label: '☑️ Pelbagai Pilihan' },
+  { value: 'match', label: '🔗 Padanan' },
 ];
 
 const emptyForm = { question: '', question_type: 'multiple_choice', options: ['', '', '', ''], correct_answer: [], match_pairs: [{ left: '', right: '' }, { left: '', right: '' }], timer_seconds: 15 };
@@ -32,7 +32,7 @@ const ManageQuiz = () => {
     if (selSession) {
       api.get(`/quiz/admin/settings/${selSession}`)
         .then(res => setQSettings(res.data.settings))
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [selSession]);
 
@@ -90,7 +90,7 @@ const ManageQuiz = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.correct_answer.length === 0 && form.question_type !== 'match') { setMsg('❌ Please select correct answer!'); setTimeout(() => setMsg(''), 3000); return; }
+    if (form.correct_answer.length === 0 && form.question_type !== 'match') { setMsg('❌ Sila pilih jawapan yang betul!'); setTimeout(() => setMsg(''), 3000); return; }
     try {
       const fd = new FormData();
       fd.append('question', form.question);
@@ -106,10 +106,10 @@ const ManageQuiz = () => {
       }
       if (imageFile) fd.append('image', imageFile);
 
-      if (editing) { await api.put(`/quiz/admin/questions/${editing}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } }); setMsg('✅ Question updated!'); }
-      else { await api.post('/quiz/admin/questions', fd, { headers: { 'Content-Type': 'multipart/form-data' } }); setMsg('✅ Question added!'); }
+      if (editing) { await api.put(`/quiz/admin/questions/${editing}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } }); setMsg('✅ Soalan dikemaskini!'); }
+      else { await api.post('/quiz/admin/questions', fd, { headers: { 'Content-Type': 'multipart/form-data' } }); setMsg('✅ Soalan ditambah!'); }
       resetForm(); fetchQuestions();
-    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Failed')); }
+    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal')); }
     setTimeout(() => setMsg(''), 3000);
   };
 
@@ -125,35 +125,35 @@ const ManageQuiz = () => {
     setTab('questions');
   };
 
-  const handleDelete = async (id) => { if (!confirm('Delete this question?')) return; await api.delete(`/quiz/admin/questions/${id}`); fetchQuestions(); };
+  const handleDelete = async (id) => { if (!confirm('Padam soalan ini?')) return; await api.delete(`/quiz/admin/questions/${id}`); fetchQuestions(); };
 
   const saveSettings = async () => {
-    if (!selSession) { setMsg('❌ Please select a session!'); setTimeout(() => setMsg(''), 3000); return; }
+    if (!selSession) { setMsg('❌ Sila pilih sesi!'); setTimeout(() => setMsg(''), 3000); return; }
     await api.post('/quiz/admin/settings', { session_id: selSession, ...qSettings });
-    setMsg('✅ Settings saved!');
+    setMsg('✅ Tetapan disimpan!');
     setTimeout(() => setMsg(''), 3000);
   };
 
   return (
     <div>
-      {/* Tabs */}
+      {/* Tab navigasi */}
       <div style={s.tabs}>
-        <button style={{ ...s.tab, ...(tab === 'questions' ? s.tabActive : {}) }} onClick={() => setTab('questions')}>❓ Questions ({questions.length})</button>
-        <button style={{ ...s.tab, ...(tab === 'settings' ? s.tabActive : {}) }} onClick={() => setTab('settings')}>⚙️ Quiz Settings</button>
+        <button style={{ ...s.tab, ...(tab === 'questions' ? s.tabActive : {}) }} onClick={() => setTab('questions')}>❓ Soalan ({questions.length})</button>
+        <button style={{ ...s.tab, ...(tab === 'settings' ? s.tabActive : {}) }} onClick={() => setTab('settings')}>⚙️ Tetapan Kuiz</button>
       </div>
 
       {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
 
-      {/* QUESTIONS TAB */}
+      {/* TAB SOALAN */}
       {tab === 'questions' && (
         <>
-          {/* Form */}
+          {/* Borang */}
           <div style={s.card}>
-            <h2 style={s.cardTitle}>{editing ? '✏️ Edit Question' : '➕ Add New Question'}</h2>
+            <h2 style={s.cardTitle}>{editing ? '✏️ Kemaskini Soalan' : '➕ Tambah Soalan Baharu'}</h2>
             <form onSubmit={handleSubmit}>
-              {/* Type selector */}
+              {/* Pemilih jenis soalan */}
               <div style={s.field}>
-                <label style={s.label}>Question Type</label>
+                <label style={s.label}>Jenis Soalan</label>
                 <div style={s.typeBtns}>
                   {TYPES.map(t => (
                     <button key={t.value} type="button" style={{ ...s.typeBtn, ...(form.question_type === t.value ? s.typeBtnActive : {}) }} onClick={() => handleTypeChange(t.value)}>{t.label}</button>
@@ -161,29 +161,29 @@ const ManageQuiz = () => {
                 </div>
               </div>
 
-              {/* Question text */}
+              {/* Teks soalan */}
               <div style={s.field}>
-                <label style={s.label}>Question</label>
+                <label style={s.label}>Soalan</label>
                 <textarea style={{ ...s.input, height: '80px', resize: 'vertical' }} value={form.question} onChange={e => setForm({ ...form, question: e.target.value })} required placeholder="Tulis soalan di sini..." maxLength={500} />
                 <p style={{ color: form.question.length > 450 ? '#e11d48' : '#94a3b8', fontSize: '0.75rem', margin: '0.2rem 0 0', textAlign: 'right' }}>{form.question.length}/500</p>
               </div>
 
-              {/* Image upload */}
+              {/* Muat naik gambar */}
               <div style={s.field}>
-                <label style={s.label}>Image (optional)</label>
+                <label style={s.label}>Gambar (pilihan)</label>
                 <div style={s.uploadArea} onClick={() => fileRef.current.click()}>
-                  {imagePreview ? <img src={imagePreview} alt="preview" style={s.previewImg} /> : <div style={s.uploadPlaceholder}><div style={{ fontSize: '2rem' }}>🖼️</div><p style={{ color: '#64748b', margin: '0.25rem 0 0', fontSize: '0.85rem' }}>Click to upload image</p></div>}
+                  {imagePreview ? <img src={imagePreview} alt="pratonton" style={s.previewImg} /> : <div style={s.uploadPlaceholder}><div style={{ fontSize: '2rem' }}>🖼️</div><p style={{ color: '#64748b', margin: '0.25rem 0 0', fontSize: '0.85rem' }}>Klik untuk muat naik gambar</p></div>}
                 </div>
                 <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageChange} />
-                {imagePreview && <button type="button" style={s.removeBtn} onClick={() => { setImageFile(null); setImagePreview(null); if (fileRef.current) fileRef.current.value = ''; }}>✕ Remove image</button>}
+                {imagePreview && <button type="button" style={s.removeBtn} onClick={() => { setImageFile(null); setImagePreview(null); if (fileRef.current) fileRef.current.value = ''; }}>✕ Buang gambar</button>}
               </div>
 
-              {/* Options — Multiple choice / True False / Multi-select */}
+              {/* Pilihan jawapan — Pilihan Berganda / Betul Salah / Pelbagai Pilihan */}
               {form.question_type !== 'match' && (
                 <div style={s.field}>
                   <label style={s.label}>
-                    Options
-                    <span style={s.labelHint}>{form.question_type === 'multi_select' ? '(click multiple to set correct answers)' : '(click to set correct answer)'}</span>
+                    Pilihan Jawapan
+                    <span style={s.labelHint}>{form.question_type === 'multi_select' ? '(klik beberapa untuk tetapkan jawapan betul)' : '(klik untuk tetapkan jawapan betul)'}</span>
                   </label>
                   <div style={s.optionsList}>
                     {form.options.map((opt, idx) => (
@@ -191,7 +191,7 @@ const ManageQuiz = () => {
                         <button type="button" style={{ ...s.correctBtn, ...(form.correct_answer.includes(idx) ? s.correctBtnActive : {}) }} onClick={() => toggleCorrect(idx)}>
                           {form.correct_answer.includes(idx) ? '✓' : String.fromCharCode(65 + idx)}
                         </button>
-                        <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={opt} onChange={e => handleOptionChange(idx, e.target.value)} placeholder={`Option ${String.fromCharCode(65 + idx)}`} required={form.question_type !== 'true_false'} disabled={form.question_type === 'true_false'} maxLength={200} />
+                        <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={opt} onChange={e => handleOptionChange(idx, e.target.value)} placeholder={`Pilihan ${String.fromCharCode(65 + idx)}`} required={form.question_type !== 'true_false'} disabled={form.question_type === 'true_false'} maxLength={200} />
                         {form.question_type !== 'true_false' && (
                           <button type="button" style={s.removeOptBtn} onClick={() => removeOption(idx)}>✕</button>
                         )}
@@ -199,37 +199,37 @@ const ManageQuiz = () => {
                     ))}
                   </div>
                   {form.question_type !== 'true_false' && form.options.length < 6 && (
-                    <button type="button" style={s.addOptBtn} onClick={addOption}>+ Add Option</button>
+                    <button type="button" style={s.addOptBtn} onClick={addOption}>+ Tambah Pilihan</button>
                   )}
                 </div>
               )}
 
-              {/* Match pairs */}
+              {/* Pasangan padanan */}
               {form.question_type === 'match' && (
                 <div style={s.field}>
-                  <label style={s.label}>Match Pairs <span style={s.labelHint}>(left ↔ right)</span></label>
+                  <label style={s.label}>Pasangan Padanan <span style={s.labelHint}>(kiri ↔ kanan)</span></label>
                   {form.match_pairs.map((pair, idx) => (
                     <div key={idx} style={s.matchPairRow}>
-                      <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={pair.left} onChange={e => handleMatchChange(idx, 'left', e.target.value)} placeholder={`Left ${idx + 1}`} required maxLength={100} />
+                      <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={pair.left} onChange={e => handleMatchChange(idx, 'left', e.target.value)} placeholder={`Kiri ${idx + 1}`} required maxLength={100} />
                       <span style={s.matchArrow}>↔</span>
-                      <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={pair.right} onChange={e => handleMatchChange(idx, 'right', e.target.value)} placeholder={`Right ${idx + 1}`} required maxLength={100} />
+                      <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={pair.right} onChange={e => handleMatchChange(idx, 'right', e.target.value)} placeholder={`Kanan ${idx + 1}`} required maxLength={100} />
                       <button type="button" style={s.removeOptBtn} onClick={() => removeMatchPair(idx)}>✕</button>
                     </div>
                   ))}
-                  <button type="button" style={s.addOptBtn} onClick={addMatchPair}>+ Add Pair</button>
+                  <button type="button" style={s.addOptBtn} onClick={addMatchPair}>+ Tambah Pasangan</button>
                 </div>
               )}
 
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button style={s.btnPrimary} type="submit">{editing ? 'Update' : 'Add Question'}</button>
-                {editing && <button style={s.btnSecondary} type="button" onClick={resetForm}>Cancel</button>}
+                <button style={s.btnPrimary} type="submit">{editing ? 'Kemaskini' : 'Tambah Soalan'}</button>
+                {editing && <button style={s.btnSecondary} type="button" onClick={resetForm}>Batal</button>}
               </div>
             </form>
           </div>
 
-          {/* Questions list */}
+          {/* Senarai soalan */}
           <div style={s.card}>
-            <h2 style={s.cardTitle}>❓ All Questions ({questions.length})</h2>
+            <h2 style={s.cardTitle}>❓ Semua Soalan ({questions.length})</h2>
             <div style={s.qList}>
               {questions.map((q, i) => {
                 const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]');
@@ -269,44 +269,44 @@ const ManageQuiz = () => {
                   </div>
                 );
               })}
-              {questions.length === 0 && <p style={s.muted}>No questions yet. Add some above!</p>}
+              {questions.length === 0 && <p style={s.muted}>Tiada soalan lagi. Tambah soalan di atas!</p>}
             </div>
           </div>
         </>
       )}
 
-      {/* SETTINGS TAB */}
+      {/* TAB TETAPAN */}
       {tab === 'settings' && (
         <div style={s.card}>
-          <h2 style={s.cardTitle}>⚙️ Quiz Settings per Session</h2>
+          <h2 style={s.cardTitle}>⚙️ Tetapan Kuiz Mengikut Sesi</h2>
           <div style={s.field}>
-            <label style={s.label}>Select Session</label>
+            <label style={s.label}>Pilih Sesi</label>
             <select style={s.input} value={selSession} onChange={e => setSelSession(e.target.value)}>
-              <option value="">-- Select session --</option>
+              <option value="">-- Pilih sesi --</option>
               {sessions.map(sess => <option key={sess.id} value={sess.id}>{sess.session_name}</option>)}
             </select>
           </div>
           <div style={s.settingsGrid}>
             <div style={s.field}>
-              <label style={s.label}>Timer per Question (seconds)</label>
+              <label style={s.label}>Masa Setiap Soalan (saat)</label>
               <select style={s.input} value={qSettings.timer_seconds} onChange={e => setQSettings({ ...qSettings, timer_seconds: parseInt(e.target.value) })}>
-                {[10, 15, 20, 30, 45, 60].map(t => <option key={t} value={t}>{t} seconds</option>)}
+                {[10, 15, 20, 30, 45, 60].map(t => <option key={t} value={t}>{t} saat</option>)}
               </select>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Question Order</label>
+              <label style={s.label}>Susunan Soalan</label>
               <select style={s.input} value={qSettings.question_order} onChange={e => setQSettings({ ...qSettings, question_order: e.target.value })}>
-                <option value="shuffle">🔀 Shuffle (random)</option>
-                <option value="fixed">📋 Fixed (in order)</option>
+                <option value="shuffle">🔀 Rawak (acak)</option>
+                <option value="fixed">📋 Tetap (mengikut urutan)</option>
               </select>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Number of Questions</label>
+              <label style={s.label}>Bilangan Soalan</label>
               <input style={s.input} type="number" min="1" max={questions.length || 50} step="1" value={qSettings.question_count} onChange={e => setQSettings({ ...qSettings, question_count: parseInt(e.target.value) })} />
-              <p style={{ color: '#94a3b8', fontSize: '0.78rem', margin: '0.25rem 0 0' }}>Max: {questions.length} questions available</p>
+              <p style={{ color: '#94a3b8', fontSize: '0.78rem', margin: '0.25rem 0 0' }}>Maks: {questions.length} soalan tersedia</p>
             </div>
           </div>
-          <button style={s.btnPrimary} onClick={saveSettings}>💾 Save Settings</button>
+          <button style={s.btnPrimary} onClick={saveSettings}>💾 Simpan Tetapan</button>
         </div>
       )}
     </div>

@@ -47,7 +47,7 @@ const ManageStudents = () => {
     <div>
       <div style={s.card}>
         <div style={s.topRow}>
-          <h2 style={s.cardTitle}>👥 All Players ({players.length})</h2>
+          <h2 style={s.cardTitle}>👥 Semua Pemain ({players.length})</h2>
           <input
             style={s.search}
             placeholder="🔍 Cari dengan nama atau sesi..."
@@ -69,7 +69,7 @@ const ManageStudents = () => {
             <table style={s.table}>
               <thead>
                 <tr style={s.thead}>
-                  <th style={s.th}>Nickname</th>
+                  <th style={s.th}>Nama Samaran</th>
                   <th style={s.th}>Sesi</th>
                   <th style={s.th}>CP1 Kuiz</th>
                   <th style={s.th}>CP2 Teka Silang Kata</th>
@@ -93,30 +93,30 @@ const ManageStudents = () => {
                     <td style={s.td}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                         <span style={p.cp1_completed ? s.badgeGreen : s.badgeGray}>
-                          {p.cp1_completed ? '✅ Done' : '❌ Not Done'}
+                          {p.cp1_completed ? '✅ Selesai' : '❌ Belum Selesai'}
                         </span>
                         <span style={s.attemptBadge}>
-                          🔄 {p.cp1_attempts || 0} attempt{(p.cp1_attempts || 0) !== 1 ? 's' : ''}
+                          🔄 {p.cp1_attempts || 0} Percubaan{(p.cp1_attempts || 0) !== 1 ? 's' : ''}
                         </span>
                       </div>
                     </td>
                     <td style={s.td}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                         <span style={p.cp2_completed ? s.badgeGreen : s.badgeGray}>
-                          {p.cp2_completed ? '✅ Done' : '❌ Not Done'}
+                          {p.cp2_completed ? '✅ Selesai' : '❌  Belum Selesai'}
                         </span>
                         <span style={s.attemptBadge}>
-                          🔄 {p.cp2_attempts || 0} attempt{(p.cp2_attempts || 0) !== 1 ? 's' : ''}
+                          🔄 {p.cp2_attempts || 0} Percubaan{(p.cp2_attempts || 0) !== 1 ? 's' : ''}
                         </span>
                       </div>
                     </td>
                     <td style={s.td}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                         <span style={p.cp3_completed ? s.badgeGreen : s.badgeGray}>
-                          {p.cp3_completed ? '✅ Done' : '❌ Not Done'}
+                          {p.cp3_completed ? '✅ Selesai' : '❌ Belum Selesai'}
                         </span>
                         <span style={s.attemptBadge}>
-                          🔄 {p.cp3_attempts || 0} attempt{(p.cp3_attempts || 0) !== 1 ? 's' : ''}
+                          🔄 {p.cp3_attempts || 0} Percubaan{(p.cp3_attempts || 0) !== 1 ? 's' : ''}
                         </span>
                       </div>
                     </td>

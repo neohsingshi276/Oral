@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 
 // API_BASE removed — images now stored as Base64 in DB, no URL prefix needed
+import { useState, useEffect, useRef } from 'react';
+import api from '../services/api';
 
 const ManageFacts = () => {
   const [facts, setFacts] = useState([]);
@@ -25,7 +27,6 @@ const ManageFacts = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Use FormData to send image + text together
       const formData = new FormData();
       formData.append('title', form.title);
       formData.append('content', form.content);
@@ -35,17 +36,17 @@ const ManageFacts = () => {
         await api.put(`/facts/${editing}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        setMsg('✅ Fact updated!');
+        setMsg('✅ Fakta berjaya dikemas kini!');
       } else {
         await api.post('/facts', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        setMsg('✅ Fact added!');
+        setMsg('✅ Fakta berjaya ditambah!');
       }
       resetForm();
       fetchFacts();
     } catch (err) {
-      setMsg('❌ Error: ' + (err.response?.data?.error || 'Failed'));
+      setMsg('❌ Ralat: ' + (err.response?.data?.error || 'Gagal'));
     }
     setTimeout(() => setMsg(''), 3000);
   };
@@ -66,57 +67,55 @@ const ManageFacts = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this fact?')) return;
+    if (!confirm('Padam fakta ini?')) return;
     await api.delete(`/facts/${id}`);
     fetchFacts();
   };
 
   return (
     <div>
-      {/* Form Card */}
       <div style={s.card}>
-        <h2 style={s.cardTitle}>{editing ? '✏️ Edit Fact' : '➕ Add New Fact'}</h2>
+        <h2 style={s.cardTitle}>{editing ? '✏️ Edit Fakta' : '➕ Tambah Fakta Baru'}</h2>
         {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
         <form onSubmit={handleSubmit}>
           <div style={s.field}>
-            <label style={s.label}>Title</label>
+            <label style={s.label}>Tajuk</label>
             <input
               style={s.input}
               value={form.title}
               onChange={e => setForm({ ...form, title: e.target.value })}
               required
               maxLength={120}
-              placeholder="e.g. Your teeth are unique!"
+              placeholder="Contoh: Gigi anda unik!"
             />
           </div>
           <div style={s.field}>
-            <label style={s.label}>Content</label>
+            <label style={s.label}>Kandungan</label>
             <textarea
               style={{ ...s.input, height: '100px', resize: 'vertical' }}
               value={form.content}
               onChange={e => setForm({ ...form, content: e.target.value })}
               required
               maxLength={1000}
-              placeholder="Write the full fact here..."
+              placeholder="Tulis fakta penuh di sini..."
             />
           </div>
 
-          {/* Image Upload */}
           <div style={s.field}>
-            <label style={s.label}>Image (optional)</label>
+            <label style={s.label}>Imej (pilihan)</label>
             <div style={s.uploadArea} onClick={() => fileRef.current.click()}>
               {imagePreview ? (
                 <div style={s.previewWrap}>
                   <img src={imagePreview} alt="preview" style={s.previewImg} />
                   <div style={s.previewOverlay}>
-                    <span>Click to change image</span>
+                    <span>Klik untuk tukar imej</span>
                   </div>
                 </div>
               ) : (
                 <div style={s.uploadPlaceholder}>
                   <div style={s.uploadIcon}>🖼️</div>
-                  <p style={s.uploadText}>Click to upload image</p>
-                  <p style={s.uploadHint}>JPG, PNG, GIF, WEBP — max 5MB</p>
+                  <p style={s.uploadText}>Klik untuk muat naik imej</p>
+                  <p style={s.uploadHint}>JPG, PNG, GIF, WEBP — maks 5MB</p>
                 </div>
               )}
             </div>
@@ -133,25 +132,24 @@ const ManageFacts = () => {
                 style={s.removeImgBtn}
                 onClick={() => { setImageFile(null); setImagePreview(null); if (fileRef.current) fileRef.current.value = ''; }}
               >
-                ✕ Remove image
+                ✕ Buang imej
               </button>
             )}
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <button style={s.btnPrimary} type="submit">
-              {editing ? 'Update Fact' : 'Add Fact'}
+              {editing ? 'Kemas Kini Fakta' : 'Tambah Fakta'}
             </button>
             {editing && (
-              <button style={s.btnSecondary} type="button" onClick={resetForm}>Cancel</button>
+              <button style={s.btnSecondary} type="button" onClick={resetForm}>Batal</button>
             )}
           </div>
         </form>
       </div>
 
-      {/* Facts List */}
       <div style={s.card}>
-        <h2 style={s.cardTitle}>💡 All Facts ({facts.length})</h2>
+        <h2 style={s.cardTitle}>💡 Semua Fakta ({facts.length})</h2>
         <div style={s.factsList}>
           {facts.map((fact) => (
             <div key={fact.id} style={s.factItem}>
@@ -166,7 +164,7 @@ const ManageFacts = () => {
               <div style={s.factContent}>
                 <h4 style={s.factTitle}>{fact.title}</h4>
                 <p style={s.factText}>{fact.content?.slice(0, 100)}...</p>
-                {!fact.image_url && <span style={s.noImgBadge}>No image</span>}
+                {!fact.image_url && <span style={s.noImgBadge}>Tiada imej</span>}
               </div>
               <div style={s.factActions}>
                 <button style={s.btnEdit} onClick={() => handleEdit(fact)}>✏️ Edit</button>
@@ -174,7 +172,7 @@ const ManageFacts = () => {
               </div>
             </div>
           ))}
-          {facts.length === 0 && <p style={s.muted}>No facts yet. Add one above!</p>}
+          {facts.length === 0 && <p style={s.muted}>Tiada fakta lagi. Tambah di atas!</p>}
         </div>
       </div>
     </div>

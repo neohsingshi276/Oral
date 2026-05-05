@@ -7,25 +7,17 @@ import {
 
 const COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#e11d48', '#9333ea', '#0d9488'];
 
-// ── Compute marks for a player — absolute, based on actual performance ────────
-// Each checkpoint contributes up to 100/3 = 33.33 marks.
-// Total = /100 (same formula as backend cp3.controller.js)
-const CP_WEIGHT = 100 / 3; // 33.333...
+const CP_WEIGHT = 100 / 3;
 
 const computeMarks = (players) => {
   const maxCP3 = Math.max(1, ...players.map(p => p.cp3_score || 0));
   return players.map(p => {
-    // CP1: absolute based on correct/total
     const cp1Exact = (p.quiz_total > 0)
       ? (p.quiz_correct / p.quiz_total) * CP_WEIGHT
       : (p.quiz_score > 0 ? (p.quiz_score / Math.max(1, ...players.map(x => x.quiz_score || 0))) * CP_WEIGHT : 0);
 
-    // CP2: pass/fail from checkpoint (partial data not available at analytics level)
     const cp2Exact = p.cp2_completed ? CP_WEIGHT : 0;
-
-    // CP3: relative to session max (no target available client-side)
     const cp3Exact = p.cp3_score ? Math.min(CP_WEIGHT, (p.cp3_score / maxCP3) * CP_WEIGHT) : 0;
-
     const totalExact = cp1Exact + cp2Exact + cp3Exact;
 
     return {
@@ -53,7 +45,6 @@ const Analytics = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // Fetch session-specific leaderboard when a session is selected
   useEffect(() => {
     if (activeTab === 'leaderboard' && selectedSession !== 'all') {
       setLbLoading(true);
@@ -76,33 +67,28 @@ const Analytics = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'player_data.csv';
+      a.download = 'data_pemain.csv';
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
     } catch {
-      alert('Failed to download CSV. Please try again.');
+      alert('Gagal memuat turun CSV. Sila cuba lagi.');
     }
   };
 
-  if (loading) return <div style={{ color: '#94a3b8', padding: '2rem', textAlign: 'center' }}>Loading analytics... 📊</div>;
+  if (loading) return <div style={{ color: '#94a3b8', padding: '2rem', textAlign: 'center' }}>Memuatkan analitik... 📊</div>;
 
-  // Sessions list
   const sessions = [...new Map(
     (data?.players || []).map(p => [p.session_id, { id: p.session_id, name: p.session_name }])
   ).values()].sort((a, b) => a.name.localeCompare(b.name));
 
-  // Filter players by selected session
   const filteredPlayers = selectedSession === 'all'
     ? (data?.players || [])
     : (data?.players || []).filter(p => String(p.session_id) === selectedSession);
 
-  // Compute marks for filtered players (relative to their own session peers when filtered)
-  // When "all sessions", compute per-session then merge so marks are fair
   let markedPlayers;
   if (selectedSession === 'all') {
-    // Group by session, compute marks per-session, flatten
     const bySession = {};
     (data?.players || []).forEach(p => {
       if (!bySession[p.session_id]) bySession[p.session_id] = [];
@@ -113,7 +99,6 @@ const Analytics = () => {
     markedPlayers = computeMarks(filteredPlayers);
   }
 
-  // For charts/stats, use filteredPlayers with marks attached
   const displayPlayers = selectedSession === 'all'
     ? markedPlayers
     : markedPlayers.filter(p => String(p.session_id) === selectedSession);
@@ -123,28 +108,24 @@ const Analytics = () => {
   const filteredCP3 = displayPlayers.filter(p => p.cp3_completed).length;
 
   const avgCP1Mark = displayPlayers.length
-    ? Math.round(displayPlayers.reduce((s, p) => s + p.cp1_mark, 0) / displayPlayers.length)
-    : 0;
+    ? Math.round(displayPlayers.reduce((s, p) => s + p.cp1_mark, 0) / displayPlayers.length) : 0;
   const avgCP2Mark = displayPlayers.length
-    ? Math.round(displayPlayers.reduce((s, p) => s + p.cp2_mark, 0) / displayPlayers.length)
-    : 0;
+    ? Math.round(displayPlayers.reduce((s, p) => s + p.cp2_mark, 0) / displayPlayers.length) : 0;
   const avgCP3Mark = displayPlayers.length
-    ? Math.round(displayPlayers.reduce((s, p) => s + p.cp3_mark, 0) / displayPlayers.length)
-    : 0;
+    ? Math.round(displayPlayers.reduce((s, p) => s + p.cp3_mark, 0) / displayPlayers.length) : 0;
   const avgTotal = displayPlayers.length
-    ? Math.round(displayPlayers.reduce((s, p) => s + p.total_mark, 0) / displayPlayers.length)
-    : 0;
+    ? Math.round(displayPlayers.reduce((s, p) => s + p.total_mark, 0) / displayPlayers.length) : 0;
 
   const completionData = [
-    { name: 'CP1 Quiz',      completed: filteredCP1, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP1 / displayPlayers.length) * 100) : 0, avgMark: avgCP1Mark },
-    { name: 'CP2 Crossword', completed: filteredCP2, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP2 / displayPlayers.length) * 100) : 0, avgMark: avgCP2Mark },
-    { name: 'CP3 Food Game', completed: filteredCP3, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP3 / displayPlayers.length) * 100) : 0, avgMark: avgCP3Mark },
+    { name: 'CP1 Kuiz',          completed: filteredCP1, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP1 / displayPlayers.length) * 100) : 0, avgMark: avgCP1Mark },
+    { name: 'CP2 Kata Silang',   completed: filteredCP2, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP2 / displayPlayers.length) * 100) : 0, avgMark: avgCP2Mark },
+    { name: 'CP3 Permainan Makanan', completed: filteredCP3, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP3 / displayPlayers.length) * 100) : 0, avgMark: avgCP3Mark },
   ];
 
   const attemptData = [
-    { name: 'CP1 Quiz',      avgAttempts: displayPlayers.length ? (displayPlayers.reduce((s, p) => s + (p.cp1_attempts || 0), 0) / displayPlayers.length).toFixed(1) : 0 },
-    { name: 'CP2 Crossword', avgAttempts: displayPlayers.length ? (displayPlayers.reduce((s, p) => s + (p.cp2_attempts || 0), 0) / displayPlayers.length).toFixed(1) : 0 },
-    { name: 'CP3 Food Game', avgAttempts: displayPlayers.length ? (displayPlayers.reduce((s, p) => s + (p.cp3_attempts || 0), 0) / displayPlayers.length).toFixed(1) : 0 },
+    { name: 'CP1 Kuiz',          avgAttempts: displayPlayers.length ? (displayPlayers.reduce((s, p) => s + (p.cp1_attempts || 0), 0) / displayPlayers.length).toFixed(1) : 0 },
+    { name: 'CP2 Kata Silang',   avgAttempts: displayPlayers.length ? (displayPlayers.reduce((s, p) => s + (p.cp2_attempts || 0), 0) / displayPlayers.length).toFixed(1) : 0 },
+    { name: 'CP3 Permainan Makanan', avgAttempts: displayPlayers.length ? (displayPlayers.reduce((s, p) => s + (p.cp3_attempts || 0), 0) / displayPlayers.length).toFixed(1) : 0 },
   ];
 
   const sessionMap = {};
@@ -171,21 +152,20 @@ const Analytics = () => {
     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
   const pieData = [
-    { name: 'Completed All', value: filteredCP3 },
-    { name: 'In Progress',   value: Math.max(0, displayPlayers.length - filteredCP3) },
+    { name: 'Selesai Semua', value: filteredCP3 },
+    { name: 'Sedang Berjalan', value: Math.max(0, displayPlayers.length - filteredCP3) },
   ];
 
-  // Leaderboard for "all sessions" — use computed marks, sort by total_mark
   const allSessionsLeaderboard = [...displayPlayers]
     .sort((a, b) => b.total_mark - a.total_mark || a.nickname.localeCompare(b.nickname));
 
   const TABS = [
-    { key: 'overview',     label: '📊 Overview' },
-    { key: 'completion',   label: '📈 Completion' },
-    { key: 'attempts',     label: '🔁 Attempts' },
-    { key: 'sessions',     label: '🔀 Sessions' },
-    { key: 'timeline',     label: '📅 Timeline' },
-    { key: 'leaderboard',  label: '🏆 Leaderboard' },
+    { key: 'overview',    label: '📊 Ringkasan' },
+    { key: 'completion',  label: '📈 Penyelesaian' },
+    { key: 'attempts',    label: '🔁 Percubaan' },
+    { key: 'sessions',    label: '🔀 Sesi' },
+    { key: 'timeline',    label: '📅 Garis Masa' },
+    { key: 'leaderboard', label: '🏆 Papan Pendahulu' },
   ];
 
   const markColor = (mark, max = 100) => {
@@ -197,33 +177,33 @@ const Analytics = () => {
 
   return (
     <div>
-      {/* Session Filter */}
+      {/* Penapis Sesi */}
       <div style={s.filterBar}>
-        <span style={s.filterLabel}>📌 Filter by Session:</span>
+        <span style={s.filterLabel}>📌 Tapis mengikut Sesi:</span>
         <select
           style={s.filterSelect}
           value={selectedSession}
           onChange={e => setSelectedSession(e.target.value)}
         >
-          <option value="all">All Sessions (Combined)</option>
+          <option value="all">Semua Sesi (Gabungan)</option>
           {sessions.map(sess => (
             <option key={sess.id} value={String(sess.id)}>{sess.name}</option>
           ))}
         </select>
         {selectedSession !== 'all' && (
-          <button style={s.clearBtn} onClick={() => setSelectedSession('all')}>✕ Clear</button>
+          <button style={s.clearBtn} onClick={() => setSelectedSession('all')}>✕ Kosongkan</button>
         )}
       </div>
 
-      {/* Summary Cards — show marks when data is available */}
+      {/* Kad Ringkasan */}
       <div style={s.statsGrid}>
         {[
-          { label: 'Total Players',  value: displayPlayers.length,                                                   icon: '👥', color: '#eff6ff', accent: '#2563eb' },
-          { label: 'Total Sessions', value: selectedSession === 'all' ? (data?.total_sessions || 0) : 1,             icon: '🎮', color: '#f0fdf4', accent: '#16a34a' },
-          { label: 'Avg CP1 Mark',   value: displayPlayers.length ? `${Math.round(avgCP1Mark / 33 * 100)}/100` : '—',  icon: '❓', color: '#fdf4ff', accent: '#9333ea' },
-          { label: 'Avg CP2 Mark',   value: displayPlayers.length ? `${Math.round(avgCP2Mark / 33 * 100)}/100` : '—',  icon: '🧩', color: '#fff7ed', accent: '#ea580c' },
-          { label: 'Avg CP3 Mark',   value: displayPlayers.length ? `${Math.round(avgCP3Mark / 33 * 100)}/100` : '—',  icon: '🎮', color: '#f0fdfa', accent: '#0d9488' },
-          { label: 'Avg Total',      value: displayPlayers.length ? `${avgTotal}/100` : '—',                         icon: '🏆', color: '#fefce8', accent: '#ca8a04' },
+          { label: 'Jumlah Pemain',  value: displayPlayers.length,                                                      icon: '👥', color: '#eff6ff', accent: '#2563eb' },
+          { label: 'Jumlah Sesi',    value: selectedSession === 'all' ? (data?.total_sessions || 0) : 1,                icon: '🎮', color: '#f0fdf4', accent: '#16a34a' },
+          { label: 'Purata Markah CP1', value: displayPlayers.length ? `${Math.round(avgCP1Mark / 33 * 100)}/100` : '—', icon: '❓', color: '#fdf4ff', accent: '#9333ea' },
+          { label: 'Purata Markah CP2', value: displayPlayers.length ? `${Math.round(avgCP2Mark / 33 * 100)}/100` : '—', icon: '🧩', color: '#fff7ed', accent: '#ea580c' },
+          { label: 'Purata Markah CP3', value: displayPlayers.length ? `${Math.round(avgCP3Mark / 33 * 100)}/100` : '—', icon: '🎮', color: '#f0fdfa', accent: '#0d9488' },
+          { label: 'Purata Jumlah', value: displayPlayers.length ? `${avgTotal}/100` : '—',                             icon: '🏆', color: '#fefce8', accent: '#ca8a04' },
         ].map((stat, i) => (
           <div key={i} style={{ ...s.statCard, background: stat.color }}>
             <div style={s.statIcon}>{stat.icon}</div>
@@ -233,7 +213,7 @@ const Analytics = () => {
         ))}
       </div>
 
-      {/* Tabs */}
+      {/* Tab navigasi */}
       <div style={s.tabs}>
         {TABS.map(tab => (
           <button key={tab.key} style={{ ...s.tab, ...(activeTab === tab.key ? s.tabActive : {}) }} onClick={() => setActiveTab(tab.key)}>
@@ -242,24 +222,24 @@ const Analytics = () => {
         ))}
       </div>
 
-      {/* Overview */}
+      {/* Ringkasan */}
       {activeTab === 'overview' && (
         <>
           <div style={s.grid2}>
             <div style={s.card}>
-              <h3 style={s.cardTitle}>Completion Rate by Checkpoint</h3>
+              <h3 style={s.cardTitle}>Kadar Penyelesaian mengikut Pusat Semak</h3>
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={completionData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="name" fontSize={11} />
                   <YAxis fontSize={12} domain={[0, 100]} />
-                  <Tooltip formatter={(val) => [`${val}%`, 'Completion Rate']} />
+                  <Tooltip formatter={(val) => [`${val}%`, 'Kadar Penyelesaian']} />
                   <Bar dataKey="rate" fill="#2563eb" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div style={s.card}>
-              <h3 style={s.cardTitle}>Overall Progress</h3>
+              <h3 style={s.cardTitle}>Kemajuan Keseluruhan</h3>
               <ResponsiveContainer width="100%" height={240}>
                 <PieChart>
                   <Pie data={pieData} cx="50%" cy="50%" outerRadius={90} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
@@ -271,9 +251,9 @@ const Analytics = () => {
             </div>
           </div>
 
-          {/* Average Marks Overview */}
+          {/* Purata Markah Ringkasan */}
           <div style={s.card}>
-            <h3 style={s.cardTitle}>📋 Average Marks per Checkpoint (total /100)</h3>
+            <h3 style={s.cardTitle}>📋 Purata Markah setiap Pusat Semak (jumlah /100)</h3>
             <div style={s.markOverview}>
               {completionData.map((cp, i) => {
                 const pct = (cp.avgMark / 33) * 100;
@@ -290,13 +270,13 @@ const Analytics = () => {
                       <div style={{ ...s.markBarFill, width: `${pct}%`, background: col }} />
                     </div>
                     <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.25rem' }}>
-                      {cp.completed}/{cp.total} completed ({cp.rate}%)
+                      {cp.completed}/{cp.total} selesai ({cp.rate}%)
                     </div>
                   </div>
                 );
               })}
               <div style={s.markCard}>
-                <div style={s.markCardTitle}>🏆 Total Average</div>
+                <div style={s.markCardTitle}>🏆 Purata Jumlah</div>
                 <div style={{ ...s.markCircle, borderColor: '#2563eb', color: '#2563eb' }}>
                   <span style={s.markNum}>{avgTotal}</span>
                   <span style={s.markDen}>/100</span>
@@ -305,7 +285,7 @@ const Analytics = () => {
                   <div style={{ ...s.markBarFill, width: `${avgTotal}%`, background: '#2563eb' }} />
                 </div>
                 <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.25rem' }}>
-                  across {displayPlayers.length} player{displayPlayers.length !== 1 ? 's' : ''}
+                  daripada {displayPlayers.length} pemain
                 </div>
               </div>
             </div>
@@ -313,10 +293,10 @@ const Analytics = () => {
         </>
       )}
 
-      {/* Completion */}
+      {/* Penyelesaian */}
       {activeTab === 'completion' && (
         <div style={s.card}>
-          <h3 style={s.cardTitle}>📈 Completion Rate per Checkpoint</h3>
+          <h3 style={s.cardTitle}>📈 Kadar Penyelesaian setiap Pusat Semak</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={completionData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -325,8 +305,8 @@ const Analytics = () => {
               <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
               <Tooltip />
               <Legend />
-              <Bar yAxisId="left"  dataKey="completed" name="Players Completed" fill="#2563eb" radius={[6, 6, 0, 0]} />
-              <Bar yAxisId="right" dataKey="rate"      name="Rate %"            fill="#16a34a" radius={[6, 6, 0, 0]} />
+              <Bar yAxisId="left"  dataKey="completed" name="Pemain Selesai" fill="#2563eb" radius={[6, 6, 0, 0]} />
+              <Bar yAxisId="right" dataKey="rate"      name="Kadar %"        fill="#16a34a" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
           <div style={s.completionCards}>
@@ -336,7 +316,7 @@ const Analytics = () => {
                 <div style={s.cpBar}><div style={{ ...s.cpBarFill, width: `${cp.rate}%`, background: COLORS[i] }} /></div>
                 <div style={s.cpRate}>{cp.rate}% ({cp.completed}/{cp.total})</div>
                 <div style={{ ...s.avgMarkBadge, background: markColor(cp.avgMark, 33).bg, color: markColor(cp.avgMark, 33).color }}>
-                  avg {Math.round(cp.avgMark / 33 * 100)}/100
+                  purata {Math.round(cp.avgMark / 33 * 100)}/100
                 </div>
               </div>
             ))}
@@ -344,17 +324,17 @@ const Analytics = () => {
         </div>
       )}
 
-      {/* Attempts */}
+      {/* Percubaan */}
       {activeTab === 'attempts' && (
         <div style={s.card}>
-          <h3 style={s.cardTitle}>🔁 Average Attempts per Checkpoint</h3>
+          <h3 style={s.cardTitle}>🔁 Purata Percubaan setiap Pusat Semak</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={attemptData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="name" fontSize={11} />
               <YAxis />
-              <Tooltip formatter={(val) => [`${val} avg attempts`]} />
-              <Bar dataKey="avgAttempts" name="Avg Attempts" radius={[6, 6, 0, 0]}>
+              <Tooltip formatter={(val) => [`${val} purata percubaan`]} />
+              <Bar dataKey="avgAttempts" name="Purata Percubaan" radius={[6, 6, 0, 0]}>
                 {attemptData.map((entry, i) => (
                   <Cell key={i} fill={parseFloat(entry.avgAttempts) > 2 ? '#e11d48' : parseFloat(entry.avgAttempts) > 1 ? '#f59e0b' : '#16a34a'} />
                 ))}
@@ -362,18 +342,18 @@ const Analytics = () => {
             </BarChart>
           </ResponsiveContainer>
           <div style={s.legend}>
-            <span style={{ ...s.legendDot, background: '#16a34a' }} /> Easy (≤1 attempt)
-            <span style={{ ...s.legendDot, background: '#f59e0b', marginLeft: '1rem' }} /> Medium (1–2)
-            <span style={{ ...s.legendDot, background: '#e11d48', marginLeft: '1rem' }} /> Hard (&gt;2)
+            <span style={{ ...s.legendDot, background: '#16a34a' }} /> Mudah (≤1 percubaan)
+            <span style={{ ...s.legendDot, background: '#f59e0b', marginLeft: '1rem' }} /> Sederhana (1–2)
+            <span style={{ ...s.legendDot, background: '#e11d48', marginLeft: '1rem' }} /> Sukar (&gt;2)
           </div>
         </div>
       )}
 
-      {/* Sessions */}
+      {/* Sesi */}
       {activeTab === 'sessions' && (
         <div style={s.card}>
-          <h3 style={s.cardTitle}>🔀 Session Comparison</h3>
-          {sessionData.length === 0 ? <p style={s.muted}>No session data yet.</p> : (
+          <h3 style={s.cardTitle}>🔀 Perbandingan Sesi</h3>
+          {sessionData.length === 0 ? <p style={s.muted}>Tiada data sesi lagi.</p> : (
             <>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={sessionData} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
@@ -382,22 +362,21 @@ const Analytics = () => {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="players"  name="Total Players" fill="#94a3b8" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="cp1"      name="CP1 Done"      fill="#2563eb" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="cp2"      name="CP2 Done"      fill="#9333ea" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="cp3"      name="CP3 Done"      fill="#16a34a" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="avgMark"  name="Avg Mark /100" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="players"  name="Jumlah Pemain"    fill="#94a3b8" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="cp1"      name="CP1 Selesai"      fill="#2563eb" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="cp2"      name="CP2 Selesai"      fill="#9333ea" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="cp3"      name="CP3 Selesai"      fill="#16a34a" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="avgMark"  name="Purata Markah /100" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-              {/* Session mark summary table */}
               <table style={{ ...s.table, marginTop: '1.5rem' }}>
                 <thead><tr style={s.thead}>
-                  <th style={s.th}>Session</th>
-                  <th style={s.th}>Players</th>
-                  <th style={s.th}>CP1 Done</th>
-                  <th style={s.th}>CP2 Done</th>
-                  <th style={s.th}>CP3 Done</th>
-                  <th style={s.th}>Avg Mark /100</th>
+                  <th style={s.th}>Sesi</th>
+                  <th style={s.th}>Pemain</th>
+                  <th style={s.th}>CP1 Selesai</th>
+                  <th style={s.th}>CP2 Selesai</th>
+                  <th style={s.th}>CP3 Selesai</th>
+                  <th style={s.th}>Purata Markah /100</th>
                 </tr></thead>
                 <tbody>
                   {sessionData.map((sess, i) => (
@@ -421,47 +400,46 @@ const Analytics = () => {
         </div>
       )}
 
-      {/* Timeline */}
+      {/* Garis Masa */}
       {activeTab === 'timeline' && (
         <div style={s.card}>
-          <h3 style={s.cardTitle}>📅 Player Activity Timeline</h3>
-          {timelineData.length === 0 ? <p style={s.muted}>No activity data yet.</p> : (
+          <h3 style={s.cardTitle}>📅 Garis Masa Aktiviti Pemain</h3>
+          {timelineData.length === 0 ? <p style={s.muted}>Tiada data aktiviti lagi.</p> : (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={timelineData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="date" fontSize={11} />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="players" name="Players Joined" stroke="#2563eb" strokeWidth={2} dot={{ fill: '#2563eb', r: 4 }} />
+                <Line type="monotone" dataKey="players" name="Pemain Menyertai" stroke="#2563eb" strokeWidth={2} dot={{ fill: '#2563eb', r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           )}
         </div>
       )}
 
-      {/* Leaderboard */}
+      {/* Papan Pendahulu */}
       {activeTab === 'leaderboard' && (
         <div style={s.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <h3 style={{ ...s.cardTitle, margin: 0 }}>🏆 Leaderboard</h3>
-            <button style={s.downloadBtn} onClick={downloadCSV}>📥 Download Full Report (CSV)</button>
+            <h3 style={{ ...s.cardTitle, margin: 0 }}>🏆 Papan Pendahulu</h3>
+            <button style={s.downloadBtn} onClick={downloadCSV}>📥 Muat Turun Laporan Penuh (CSV)</button>
           </div>
 
           {selectedSession === 'all' ? (
-            // All sessions — show marks computed per-session (fair comparison within each session)
             <>
               <p style={s.hint}>
-                Each checkpoint is scored /33.33 — total /100. Marks are based on actual performance.
+                Setiap pusat semak dinilai /33.33 — jumlah /100. Markah berdasarkan prestasi sebenar.
               </p>
               <table style={s.table}>
                 <thead><tr style={s.thead}>
-                  <th style={s.th}>Rank</th>
-                  <th style={s.th}>Nickname</th>
-                  <th style={s.th}>Session</th>
-                  <th style={s.th}>CP1 Quiz</th>
-                  <th style={s.th}>CP2 Crossword</th>
-                  <th style={s.th}>CP3 Food Game</th>
-                  <th style={s.th}>Total / 100</th>
+                  <th style={s.th}>Kedudukan</th>
+                  <th style={s.th}>Nama Panggilan</th>
+                  <th style={s.th}>Sesi</th>
+                  <th style={s.th}>CP1 Kuiz</th>
+                  <th style={s.th}>CP2 Kata Silang</th>
+                  <th style={s.th}>CP3 Permainan Makanan</th>
+                  <th style={s.th}>Jumlah / 100</th>
                 </tr></thead>
                 <tbody>
                   {allSessionsLeaderboard.map((p, i) => (
@@ -473,7 +451,7 @@ const Analytics = () => {
                         <span style={{ fontWeight: '700', color: '#2563eb' }}>{Math.round(p.cp1_mark / 33 * 100)}/100</span>
                         {p.quiz_correct != null && (
                           <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
-                            ({p.quiz_correct}/{p.quiz_total || '?'} correct)
+                            ({p.quiz_correct}/{p.quiz_total || '?'} betul)
                           </span>
                         )}
                       </td>
@@ -486,7 +464,7 @@ const Analytics = () => {
                         <span style={{ fontWeight: '700', color: '#0d9488' }}>{Math.round(p.cp3_mark / 33 * 100)}/100</span>
                         {p.cp3_score != null && (
                           <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
-                            ({p.cp3_score} pts)
+                            ({p.cp3_score} mata)
                           </span>
                         )}
                       </td>
@@ -498,27 +476,26 @@ const Analytics = () => {
                     </tr>
                   ))}
                   {allSessionsLeaderboard.length === 0 && (
-                    <tr><td colSpan="7" style={{ ...s.td, textAlign: 'center', color: '#94a3b8' }}>No players yet</td></tr>
+                    <tr><td colSpan="7" style={{ ...s.td, textAlign: 'center', color: '#94a3b8' }}>Tiada pemain lagi</td></tr>
                   )}
                 </tbody>
               </table>
             </>
           ) : lbLoading ? (
-            <div style={{ textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>Loading scores... 📊</div>
+            <div style={{ textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>Memuatkan skor... 📊</div>
           ) : (
-            // Specific session — use backend-computed leaderboard (most accurate)
             <>
               <p style={s.hint}>
-                Each checkpoint is scored /33.33 — total /100. Marks are based on actual performance.
+                Setiap pusat semak dinilai /33.33 — jumlah /100. Markah berdasarkan prestasi sebenar.
               </p>
               <table style={s.table}>
                 <thead><tr style={s.thead}>
-                  <th style={s.th}>Rank</th>
-                  <th style={s.th}>Nickname</th>
-                  <th style={s.th}>CP1 Quiz</th>
-                  <th style={s.th}>CP2 Crossword</th>
-                  <th style={s.th}>CP3 Food Game</th>
-                  <th style={s.th}>Total / 100</th>
+                  <th style={s.th}>Kedudukan</th>
+                  <th style={s.th}>Nama Panggilan</th>
+                  <th style={s.th}>CP1 Kuiz</th>
+                  <th style={s.th}>CP2 Kata Silang</th>
+                  <th style={s.th}>CP3 Permainan Makanan</th>
+                  <th style={s.th}>Jumlah / 100</th>
                 </tr></thead>
                 <tbody>
                   {finalLeaderboard.map((p, i) => (
@@ -528,7 +505,7 @@ const Analytics = () => {
                       <td style={s.td}>
                         <span style={{ fontWeight: '700', color: '#2563eb' }}>{Math.round(p.cp1_mark / 33 * 100)}/100</span>
                         <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
-                          ({p.cp1_correct}/{p.cp1_total} correct)
+                          ({p.cp1_correct}/{p.cp1_total} betul)
                         </span>
                       </td>
                       <td style={s.td}>
@@ -537,14 +514,14 @@ const Analytics = () => {
                         </span>
                         {p.cp2_total > 0 && (
                           <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
-                            ({p.cp2_words}/{p.cp2_total} words)
+                            ({p.cp2_words}/{p.cp2_total} perkataan)
                           </span>
                         )}
                       </td>
                       <td style={s.td}>
                         <span style={{ fontWeight: '700', color: '#0d9488' }}>{Math.round(p.cp3_mark / 33 * 100)}/100</span>
                         <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
-                          ({p.cp3_raw}/{p.cp3_target} pts)
+                          ({p.cp3_raw}/{p.cp3_target} mata)
                         </span>
                       </td>
                       <td style={s.td}>
@@ -555,7 +532,7 @@ const Analytics = () => {
                     </tr>
                   ))}
                   {finalLeaderboard.length === 0 && (
-                    <tr><td colSpan="6" style={{ ...s.td, textAlign: 'center', color: '#94a3b8' }}>No players in this session yet</td></tr>
+                    <tr><td colSpan="6" style={{ ...s.td, textAlign: 'center', color: '#94a3b8' }}>Tiada pemain dalam sesi ini lagi</td></tr>
                   )}
                 </tbody>
               </table>
@@ -564,9 +541,9 @@ const Analytics = () => {
         </div>
       )}
 
-      {/* Download Bar */}
+      {/* Bar Muat Turun */}
       <div style={s.downloadBar}>
-        <button style={s.downloadBtn} onClick={downloadCSV}>⬇️ Download Full Report (CSV)</button>
+        <button style={s.downloadBtn} onClick={downloadCSV}>⬇️ Muat Turun Laporan Penuh (CSV)</button>
       </div>
     </div>
   );

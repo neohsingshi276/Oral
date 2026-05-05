@@ -53,7 +53,7 @@ const ManageVideos = () => {
           <div style={s.formGrid}>
             <div style={s.field}>
               <label style={s.label}>Tajuk</label>
-              <input style={s.input} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required placeholder="Video title" maxLength={150} />
+              <input style={s.input} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required placeholder="Tajuk Video" maxLength={150} />
             </div>
             <div style={s.field}>
               <label style={s.label}>Nombor Susunan</label>
@@ -66,10 +66,10 @@ const ManageVideos = () => {
           </div>
           <div style={s.field}>
             <label style={s.label}>Deskripsi</label>
-            <textarea style={{ ...s.input, height: '80px', resize: 'vertical' }} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Short description..." maxLength={500} />
+            <textarea style={{ ...s.input, height: '80px', resize: 'vertical' }} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Deskripsi Pendek..." maxLength={500} />
           </div>
           <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button style={s.btnPrimary} type="submit">{editing ? 'Update Video' : 'Add Video'}</button>
+            <button style={s.btnPrimary} type="submit">{editing ? 'Update Video' : 'Tambah Video'}</button>
             {editing && <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm({ title: '', description: '', youtube_url: '', order_num: '' }); }}>Cancel</button>}
           </div>
         </form>
@@ -92,8 +92,8 @@ const ManageVideos = () => {
                   <td style={s.td}><strong>{v.title}</strong></td>
                   <td style={s.td}>{v.description?.slice(0, 60)}...</td>
                   <td style={s.td}>
-                    <button style={s.btnEdit} onClick={() => handleEdit(v)}>✏️ Edit</button>
-                    <button style={s.btnDelete} onClick={() => handleDelete(v.id)}>🗑️ Delete</button>
+                    <button style={s.btnEdit} onClick={() => handleEdit(v)}>✏️ Ubahsuai</button>
+                    <button style={s.btnDelete} onClick={() => handleDelete(v.id)}>🗑️ Padam</button>
                   </td>
                 </tr>
               ))}
