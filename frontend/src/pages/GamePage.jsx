@@ -106,7 +106,27 @@ const GamePage = () => {
       : null
   ), [player]);
 
-  // FIX: Validate the player object from localStorage before using it.
+  // FIX: fetchProgress must be defined before the useEffect that calls it,
+  // because const declarations are NOT hoisted — calling a const before its
+  // definition throws ReferenceError at runtime.
+  const fetchProgress = async (playerId) => {
+    try {
+      const res = await api.get(`/game/progress/${playerId}`);
+      setProgress(res.data.progress);
+      const allCompleted = res.data.progress.every(p => p.completed);
+      if (allCompleted && res.data.progress.length === 3) {
+        setAllDone(true);
+        // Grand finale — extra confetti burst for completing everything
+        playSuccessChime();
+        setTimeout(() => { playSuccessChime(); }, 600);
+        setShowConfetti(true);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Validate the player object from localStorage before using it.
   // A missing, malformed, or tampered value used to throw an unhandled error
   // and crash the entire page. Now we redirect cleanly instead.
   useEffect(() => {
@@ -135,23 +155,6 @@ const GamePage = () => {
     setPlayer(p);
     fetchProgress(p.id);
   }, [token, navigate]);
-
-  const fetchProgress = async (playerId) => {
-    try {
-      const res = await api.get(`/game/progress/${playerId}`);
-      setProgress(res.data.progress);
-      const allCompleted = res.data.progress.every(p => p.completed);
-      if (allCompleted && res.data.progress.length === 3) {
-        setAllDone(true);
-        // Grand finale — extra confetti burst for completing everything
-        playSuccessChime();
-        setTimeout(() => { playSuccessChime(); }, 600);
-        setShowConfetti(true);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   // FIX: Await the attempt API call so failures are caught and logged.
   // Previously fire-and-forget meant failed attempts were silently swallowed.

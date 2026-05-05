@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 
+// API_BASE removed — images now stored as Base64 in DB, no URL prefix needed
+
 const ManageFacts = () => {
   const [facts, setFacts] = useState([]);
   const [form, setForm] = useState({ title: '', content: '' });
@@ -17,7 +19,11 @@ const ManageFacts = () => {
     const file = e.target.files[0];
     if (!file) return;
     setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    // Revoke the previous object URL to avoid memory leaks
+    setImagePreview(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
   };
 
   const handleSubmit = async (e) => {

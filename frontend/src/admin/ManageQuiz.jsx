@@ -40,7 +40,11 @@ const ManageQuiz = () => {
     const f = e.target.files[0];
     if (!f) return;
     setImageFile(f);
-    setImagePreview(URL.createObjectURL(f));
+    // Revoke the previous object URL to avoid memory leaks
+    setImagePreview(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(f);
+    });
   };
 
   const handleOptionChange = (idx, val) => {
