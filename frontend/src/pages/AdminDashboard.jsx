@@ -178,7 +178,9 @@ const Overview = ({ admin, setActive, menu }) => {
     { icon: '🧩', label: 'Teka Silang Kata', desc: 'Urus perkataan teka silang kata', key: 'crossword', color: '#f5f3ff', accent: '#7c3aed' },
     { icon: '💬', label: 'Sembang Pemain', desc: 'Balas mesej pelajar', key: 'chat', color: '#f0f9ff', accent: '#0284c7' },
     { icon: '🏢', label: 'Sembang Staf', desc: 'Berbual dengan pentadbir lain', key: 'staffchat', color: '#FFF7ED', accent: '#B45309' },
+    { icon: '👨‍💼', label: 'Urus Pentadbir', desc: 'Urus akaun pentadbir dan guru', key: 'admins', color: '#f5f3ff', accent: '#6d28d9' },
     { icon: '✉️', label: 'Peti Masuk', desc: 'Lihat mesej e-mel', key: 'email', color: '#FEF2F2', accent: '#CC0000' },
+    { icon: '📋', label: 'Log Aktiviti', desc: 'Lihat log aktiviti sistem', key: 'activity', color: '#f0f9ff', accent: '#0369a1' },
   ];
 
   // Filter cards to only show items the user has access to
