@@ -90,10 +90,9 @@ const PLAYER_SPEED = 180;
 const PLAYER_UNDER_TREE_ALPHA = 0.6;
 const PLAYER_BODY_WIDTH = 18;
 const PLAYER_BODY_HEIGHT = 24;
-// All water GIDs confirmed from map.json data array (tile.index === GID in Phaser 3)
 const WATER_TILE_GIDS = [
-  1067, 1178, 1387, 1392, 1511, 1515, 1516, 2480,
-  10659, 10907, 11227, 11355, 12438,
+  1067, 1387, 1392, 1515, 1516, 2480,
+  10659, 10907, 11227, 11355,
 ];
 const WATER_TILE_SET = new Set(WATER_TILE_GIDS);
 
@@ -215,7 +214,6 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.layer1CollisionHint = this.tileLayerMap.layer1 || null;
     this.layer2CollisionHint = this.tileLayerMap.layer2 || null;
     this.fenceFrontLayer = this.tileLayerMap.fencefrontlayer3 || null;
-    this.cansitLayer = this.tileLayerMap.cansitstarmushroomcaterpillarrockgrass || null;
     this.smallTreeLayer = this.tileLayerMap.smalltree || null;
     this.bigTreeLayer = this.tileLayerMap.bigtree || null;
 
@@ -232,98 +230,112 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.collisionGroup = this.physics.add.staticGroup();
 
     // ── Collision filter helpers ─────────────────────────────────────────
-    // Adventure-game rules:
-    //   • Ellipse (any layer)      → SKIP — always a shadow/decoration (walkable)
-    //   • Tree trunk/canopy        → SKIP — player walks through trees
-    //   • Bush                     → SKIP — ellipse shadow, already covered above
-    //   • Rock / Stone / Mushroom  → SOLID — sits on cansit layer tiles
-    //   • Fence / Wall / Structure → SOLID
-    //   • Polyline                 → treated same as polygon (bounding box)
+    // collisionbelowplayer  = ground-level items (fences, rocks, bushes)
+    // collisionupperplayer  = upper items drawn above the player (trees / roofs)
+    //
+    // Per design:
+    //   • Tree SHADOWS (ellipses in below-layer)  → skip (walk through)
+    //   • Small STONES  (≤32×16 rects in below)   → skip (walk through)
+    //   • Small upper tree helpers                → skip (walk under + fade)
+    //   • Large structures / furniture blockers   → keep (solid)
 
-    // getBounds: returns world-space bbox {x0,y0,x1,y1} for ANY object type
     const getObjectBounds = (obj) => {
-      // polygon or polyline — iterate all points
-      const pts = obj.polygon || obj.polyline;
-      if (pts) {
-        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-        pts.forEach(p => {
-          const wx = obj.x + p.x; const wy = obj.y + p.y;
-          if (wx < x0) x0 = wx; if (wy < y0) y0 = wy;
-          if (wx > x1) x1 = wx; if (wy > y1) y1 = wy;
+      if (obj.ellipse || (obj.width > 0 && obj.height > 0 && !obj.polygon)) {
+        return {
+          x0: obj.x,
+          y0: obj.y,
+          x1: obj.x + (obj.width || 0),
+          y1: obj.y + (obj.height || 0),
+        };
+      }
+      if (obj.polygon) {
+        let x0 = Infinity;
+        let y0 = Infinity;
+        let x1 = -Infinity;
+        let y1 = -Infinity;
+        obj.polygon.forEach(p => {
+          x0 = Math.min(x0, obj.x + p.x);
+          y0 = Math.min(y0, obj.y + p.y);
+          x1 = Math.max(x1, obj.x + p.x);
+          y1 = Math.max(y1, obj.y + p.y);
         });
         return { x0, y0, x1, y1 };
       }
-      // rect or ellipse — obj.x/y is top-left
-      const w = obj.width || 0; const h = obj.height || 0;
-      return { x0: obj.x, y0: obj.y, x1: obj.x + w, y1: obj.y + h };
+      return null;
     };
 
-    // sampleArea: check 9 points across bbox against a set of tile layers
-    const objectOverlapsLayers = (bounds, layers) => {
-      const { x0, y0, x1, y1 } = bounds;
-      const cx = (x0 + x1) / 2; const cy = (y0 + y1) / 2;
-      const sampleXs = [x0 + 2, cx, x1 - 2];
-      const sampleYs = [y0 + 2, cy, y1 - 2];
-      return layers.some(layer => {
+    const objectOverlapsLayers = (bounds, layers) =>
+      layers.some(layer => {
         if (!layer) return false;
-        return sampleXs.some(wx =>
-          sampleYs.some(wy => {
-            const tile = layer.getTileAtWorldXY(wx, wy, true);
-            return !!tile && tile.index > 0;
+        const sampleXs = [
+          bounds.x0 + 4,
+          (bounds.x0 + bounds.x1) / 2,
+          bounds.x1 - 4,
+        ];
+        const sampleYs = [
+          bounds.y0 + 4,
+          (bounds.y0 + bounds.y1) / 2,
+          bounds.y1 - 4,
+        ];
+        return sampleXs.some(worldX =>
+          sampleYs.some(worldY => {
+            const tile = layer.getTileAtWorldXY(worldX, worldY, true);
+            return !!tile && tile.index !== -1;
           })
         );
       });
-    };
 
-    const treeLayers      = [this.smallTreeLayer, this.bigTreeLayer];
-    const solidLayers     = [
-      this.cansitLayer,       // rocks, mushrooms, caterpillars
-      this.fenceBackLayer, this.fenceMidLayer, this.fenceFrontLayer,
-      this.checkpointRoadLayer,
-    ];
-    const bridgeLayers    = [this.layer1CollisionHint, this.layer2CollisionHint];
+    const objectOverlapsProtectedLayers = (bounds) =>
+      objectOverlapsLayers(bounds, [
+        this.fenceBackLayer,
+        this.fenceMidLayer,
+        this.fenceFrontLayer,
+        this.checkpointRoadLayer,
+      ]);
 
     const shouldSkipBelowObj = (obj) => {
-      // Rule 1: ALL ellipses = shadows/ground decoration → walkable
+      // Skip all ellipses (tree shadows / canopy footprints)
       if (obj.ellipse) return true;
 
       const bounds = getObjectBounds(obj);
+      if (!bounds) return false;
+
       const w = bounds.x1 - bounds.x0;
       const h = bounds.y1 - bounds.y0;
-      if (w <= 0 || h <= 0) return true;
 
-      // Rule 2: Object sits on tree tiles but NOT on any solid (rock/fence) tile
-      //         → it's a tree-root or trunk shape → walkable
-      const onTree  = objectOverlapsLayers(bounds, treeLayers);
-      const onSolid = objectOverlapsLayers(bounds, solidLayers);
-      if (onTree && !onSolid) return true;
+      // Skip tiny flat rects that are small stones / pebbles
+      if (!obj.polygon && w <= 16 && h <= 16) return true;
 
-      // Rule 3: Narrow bridge-decor strips on layer1/layer2 that don't touch
-      //         fences or checkpoint roads → decorative, skip
-      const onBridge    = objectOverlapsLayers(bounds, bridgeLayers);
-      const isStrip     = (w >= 64 && h <= 32) || (h >= 64 && w <= 32);
-      const onProtected = objectOverlapsLayers(bounds, [
-        this.fenceBackLayer, this.fenceMidLayer,
-        this.fenceFrontLayer, this.checkpointRoadLayer,
-      ]);
-      if (onBridge && isStrip && !onProtected) return true;
+      const overlapsTree = objectOverlapsLayers(bounds, [this.smallTreeLayer, this.bigTreeLayer]);
+      if (overlapsTree && w <= 64 && h <= 64) return true;
 
-      return false; // keep as solid
+      const overlapsBridgeDecor = objectOverlapsLayers(bounds, [this.layer1CollisionHint, this.layer2CollisionHint]);
+      const isBridgeLikeStrip = (w >= 64 && h <= 32) || (h >= 64 && w <= 32);
+      if (overlapsBridgeDecor && isBridgeLikeStrip && !objectOverlapsProtectedLayers(bounds)) {
+        return true;
+      }
+
+      return false;
+    };
+
+    const objectOverlapsTreeTiles = (bounds) => {
+      return objectOverlapsLayers(bounds, [this.smallTreeLayer, this.bigTreeLayer]);
     };
 
     const shouldSkipUpperObj = (obj) => {
-      // Rule 1: ALL ellipses = decorative canopy overlap → walkable
+      // Upper-layer ellipses are decorative overlap helpers, not blockers.
       if (obj.ellipse) return true;
+      if (!obj.polygon) return false;
 
-      // Rule 2: Polygon/polyline on tree tiles but not solid tile → canopy helper → skip
-      if (obj.polygon || obj.polyline) {
-        const bounds  = getObjectBounds(obj);
-        const onTree  = objectOverlapsLayers(bounds, treeLayers);
-        const onSolid = objectOverlapsLayers(bounds, solidLayers);
-        if (onTree && !onSolid) return true;
-      }
+      const bounds = getObjectBounds(obj);
+      if (!bounds) return false;
 
-      return false; // keep as solid (roof, upper fence, structure …)
+      const w = bounds.x1 - bounds.x0;
+      const h = bounds.y1 - bounds.y0;
+
+      // Only skip compact upper collision helpers that truly belong to tree
+      // tiles. Furniture, stalls, fences, fire, and structures stay solid.
+      return w <= 96 && h <= 96 && objectOverlapsTreeTiles(bounds);
     };
 
     const buildCollisionLayer = (layerName) => {
@@ -337,8 +349,8 @@ export default class PhaserGameScene extends Phaser.Scene {
       // two polygons at the same origin. Merge their bboxes into one body.
       const byPos = new Map();
       objectLayer.objects.forEach(obj => {
-        if (isBelowLayer && shouldSkipBelowObj(obj)) return;
-        if (isUpperLayer && shouldSkipUpperObj(obj)) return;
+        if (isBelowLayer && shouldSkipBelowObj(obj)) return; // skip shadows/stones
+        if (isUpperLayer && shouldSkipUpperObj(obj)) return; // skip tree overlap helpers
         const key = `${obj.x},${obj.y}`;
         if (!byPos.has(key)) byPos.set(key, []);
         byPos.get(key).push(obj);
