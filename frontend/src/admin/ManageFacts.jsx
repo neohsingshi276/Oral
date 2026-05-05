@@ -1,10 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 
-// API_BASE removed — images now stored as Base64 in DB, no URL prefix needed
-import { useState, useEffect, useRef } from 'react';
-import api from '../services/api';
-
 const ManageFacts = () => {
   const [facts, setFacts] = useState([]);
   const [form, setForm] = useState({ title: '', content: '' });
