@@ -152,7 +152,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       });
       setScoreSubmitted(true);
       fetchLeaderboard();
-    } catch (err) { console.error('Score submit error:', err); }
+    } catch (err) { console.error('Markah Serahan Ralat:', err); }
   };
 
   const fetchLeaderboard = async () => {
@@ -161,7 +161,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       const res = await api.get(`/crossword/leaderboard/${sessionId}`);
       setLeaderboard(res.data.leaderboard || []);
       setShowLeaderboard(true);
-    } catch (err) { console.error('Leaderboard error:', err); }
+    } catch (err) { console.error('Papan Markah Ralat:', err); }
   };
 
   useEffect(() => {

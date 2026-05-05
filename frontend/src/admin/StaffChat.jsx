@@ -9,14 +9,14 @@ import { useAuth } from '../context/AuthContext';
 
 const StaffChat = () => {
   const { admin: me } = useAuth();
-  const [contacts, setContacts]           = useState([]);
-  const [selected, setSelected]           = useState(null);
-  const [messages, setMessages]           = useState([]);
-  const [input, setInput]                 = useState('');
+  const [contacts, setContacts] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
   const [loadingContacts, setLoadingContacts] = useState(true);
-  const [sending, setSending]             = useState(false);
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
-  const msgPollRef     = useRef(null);
+  const msgPollRef = useRef(null);
   const contactPollRef = useRef(null);
 
   // ── fetch contact list ───────────────────────────────────
@@ -43,7 +43,7 @@ const StaffChat = () => {
       setMessages(res.data.messages || []);
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80);
     } catch (err) {
-      console.error('Failed to load messages:', err);
+      console.error('Gagal Untuk Memuatkan Mesej', err);
     }
   };
 

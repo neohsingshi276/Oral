@@ -129,14 +129,14 @@ const YouTubePlayer = ({ videoId, onVideoEnd }) => {
       <div style={styles.playerBox}>
         <div ref={containerRef} style={styles.player} />
         {!playerReady && (
-          <div style={styles.loading}>Loading video... 🎬</div>
+          <div style={styles.loading}>Memuatkan video... 🎬</div>
         )}
       </div>
 
       {/* Custom play/pause button */}
       {playerReady && !videoEnded && (
         <button className="play-btn" style={styles.playBtn} onClick={handlePlayPause}>
-          {isPlaying ? '⏸️ Pause' : '▶️ Play'}
+          {isPlaying ? '⏸️ Hentikan' : '▶️ Mainkan'}
         </button>
       )}
 
@@ -151,18 +151,18 @@ const YouTubePlayer = ({ videoId, onVideoEnd }) => {
       {/* Status message */}
       {!videoEnded && (
         <div style={styles.warningBox}>
-          🔒 Video controls are locked — you must watch the full video without skipping!
+          🔒 Kawalan video dikunci — anda mesti menonton keseluruhan video tanpa melangkau!
         </div>
       )}
 
       {/* Continue button — only shows when video ends */}
       {videoEnded ? (
         <button style={styles.continueBtn} onClick={onVideoEnd}>
-          ✅ Video Complete! Continue →
+          ✅ Video Selesai! Teruskan! →
         </button>
       ) : (
         <button style={styles.lockedBtn} disabled>
-          🔒 Finish watching to continue...
+          🔒 Habiskan video untuk meneruskan
         </button>
       )}
     </div>

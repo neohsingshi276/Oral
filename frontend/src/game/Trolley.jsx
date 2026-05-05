@@ -8,35 +8,35 @@ const FOOD_FALL_SPEED = 2.5;
 const SPAWN_INTERVAL = 1200;
 
 const GOOD_FOODS = [
-  { emoji: '🥛', name: 'Milk', points: 10, color: '#FFE5B4' },
-  { emoji: '🧀', name: 'Cheese', points: 10, color: '#FFD700' },
-  { emoji: '🥕', name: 'Carrot', points: 10, color: '#FF8C42' },
-  { emoji: '🥦', name: 'Broccoli', points: 10, color: '#90EE90' },
-  { emoji: '🍎', name: 'Apple', points: 10, color: '#FF6B6B' },
-  { emoji: '🥬', name: 'Leafy Greens', points: 10, color: '#7FFF7F' },
-  { emoji: '🥚', name: 'Egg', points: 10, color: '#FFEFD5' },
-  { emoji: '🐟', name: 'Fish', points: 10, color: '#87CEFA' },
-  { emoji: '🍌', name: 'Banana', points: 10, color: '#FFE135' },
-  { emoji: '🌽', name: 'Corn', points: 10, color: '#F0C040' },
-  { emoji: '🥜', name: 'Nuts', points: 10, color: '#D2A679' },
-  { emoji: '🍇', name: 'Grapes', points: 10, color: '#9B59B6' },
-  { emoji: '💧', name: 'Water', points: 10, color: '#B0E0E6' },
-  { emoji: '🍊', name: 'Orange', points: 10, color: '#FFA500' },
+  { emoji: '🥛', name: 'Susu', points: 10, color: '#FFE5B4' },
+  { emoji: '🧀', name: 'Keju', points: 10, color: '#FFD700' },
+  { emoji: '🥕', name: 'Lobak Merah', points: 10, color: '#FF8C42' },
+  { emoji: '🥦', name: 'Brokoli', points: 10, color: '#90EE90' },
+  { emoji: '🍎', name: 'Epal', points: 10, color: '#FF6B6B' },
+  { emoji: '🥬', name: 'Sayur Berdaun', points: 10, color: '#7FFF7F' },
+  { emoji: '🥚', name: 'Telur', points: 10, color: '#FFEFD5' },
+  { emoji: '🐟', name: 'Ikan', points: 10, color: '#87CEFA' },
+  { emoji: '🍌', name: 'Pisang', points: 10, color: '#FFE135' },
+  { emoji: '🌽', name: 'Jagung', points: 10, color: '#F0C040' },
+  { emoji: '🥜', name: 'Kekacang', points: 10, color: '#D2A679' },
+  { emoji: '🍇', name: 'Anggur', points: 10, color: '#9B59B6' },
+  { emoji: '💧', name: 'Air', points: 10, color: '#B0E0E6' },
+  { emoji: '🍊', name: 'Oren', points: 10, color: '#FFA500' },
 ];
 
 const BAD_FOODS = [
-  { emoji: '🍭', name: 'Lollipop', points: -5, color: '#FF69B4' },
-  { emoji: '🍬', name: 'Candy', points: -5, color: '#DDA0DD' },
-  { emoji: '🍫', name: 'Chocolate', points: -5, color: '#8B4513' },
-  { emoji: '🍩', name: 'Donut', points: -5, color: '#FFB6C1' },
-  { emoji: '🧁', name: 'Cupcake', points: -5, color: '#FF99CC' },
+  { emoji: '🍭', name: 'Lolipop', points: -5, color: '#FF69B4' },
+  { emoji: '🍬', name: 'Gula-gula', points: -5, color: '#DDA0DD' },
+  { emoji: '🍫', name: 'Coklat', points: -5, color: '#8B4513' },
+  { emoji: '🍩', name: 'Donat', points: -5, color: '#FFB6C1' },
+  { emoji: '🧁', name: 'Kek Cawan', points: -5, color: '#FF99CC' },
   { emoji: '🥤', name: 'Soda', points: -5, color: '#87CEEB' },
-  { emoji: '🍪', name: 'Cookie', points: -5, color: '#D2691E' },
-  { emoji: '🎂', name: 'Cake', points: -5, color: '#FFB7C5' },
-  { emoji: '🍿', name: 'Caramel Popcorn', points: -5, color: '#DAA520' },
-  { emoji: '🧃', name: 'Juice Box', points: -5, color: '#FFA07A' },
-  { emoji: '🍦', name: 'Ice Cream', points: -5, color: '#FFFDD0' },
-  { emoji: '🍡', name: 'Cotton Candy', points: -5, color: '#FFB6D9' },
+  { emoji: '🍪', name: 'Biskut', points: -5, color: '#D2691E' },
+  { emoji: '🎂', name: 'Kek', points: -5, color: '#FFB7C5' },
+  { emoji: '🍿', name: 'Bertih Jagung Karamel', points: -5, color: '#DAA520' },
+  { emoji: '🧃', name: 'Jus Kotak', points: -5, color: '#FFA07A' },
+  { emoji: '🍦', name: 'Aiskrim', points: -5, color: '#FFFDD0' },
+  { emoji: '🍡', name: 'Gula-gula Kapas', points: -5, color: '#FFB6D9' },
 ];
 
 const CP3Game = ({ player, onComplete }) => {
@@ -78,7 +78,7 @@ const CP3Game = ({ player, onComplete }) => {
         if (s.target_score) setTargetScore(s.target_score);
         setTimeLeft(s.timer_seconds || DEFAULT_DURATION);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [player]);
 
   const startGame = () => {
@@ -242,19 +242,19 @@ const CP3Game = ({ player, onComplete }) => {
     <div style={s.fullPage}>
       <style>{animStyles}</style>
       <div style={s.startCard}>
-        <h1 style={s.title}>🛒 Food Catcher!</h1>
-        <div style={s.badge}>Checkpoint 3</div>
+        <h1 style={s.title}>🛒 Penangkap Makanan</h1>
+        <div style={s.badge}>Titik Semak 3</div>
         <div style={s.instrGrid}>
           <div style={s.instrCard}>⌨️<br /><strong>Arrow Keys</strong><br />to move</div>
           <div style={s.instrCard}>⏱️<br /><strong>{gameDuration} seconds</strong><br />of fun!</div>
         </div>
         <div style={s.foodCols}>
           <div style={s.goodCol}>
-            <div style={s.colTitle}>✅ Catch These! (+10)</div>
+            <div style={s.colTitle}>✅ Menangkap Ini! (+10)</div>
             <div style={s.foodRow}>{GOOD_FOODS.map((f, i) => <div key={i} style={s.foodChip}>{f.emoji}</div>)}</div>
           </div>
           <div style={s.badCol}>
-            <div style={s.colTitle}>❌ Avoid These! (-5)</div>
+            <div style={s.colTitle}>❌ Elakkan Ini! (-5)</div>
             <div style={s.foodRow}>{BAD_FOODS.map((f, i) => <div key={i} style={s.foodChip}>{f.emoji}</div>)}</div>
           </div>
         </div>
@@ -316,7 +316,7 @@ const CP3Game = ({ player, onComplete }) => {
       <style>{animStyles}</style>
       <div style={s.lbCard}>
         <div style={{ fontSize: '4rem', textAlign: 'center' }}>🎯</div>
-        <h2 style={s.lbTitle}>Food Catcher Stars!</h2>
+        <h2 style={s.lbTitle}>Penangkap Makanan!</h2>
         <div style={s.yourScore}>
           <div style={{ color: '#fff', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Skor Kamu</div>
           <div style={{ color: '#FFD700', fontSize: '3.5rem', fontWeight: '900' }}>{finalScore}</div>

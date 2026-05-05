@@ -4,9 +4,9 @@ import { useAuth } from '../context/AuthContext';
 
 const ManageStudents = () => {
   const { admin } = useAuth();
-  const [players, setPlayers]   = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [search, setSearch]     = useState('');
+  const [players, setPlayers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
   const [deleting, setDeleting] = useState(null); // id currently being deleted
 
   const fetchPlayers = () => {
@@ -21,7 +21,7 @@ const ManageStudents = () => {
 
   const handleDelete = async (player) => {
     if (!window.confirm(
-      `Remove player "${player.nickname}"?\n\nThis will permanently delete their progress, scores and chat history. This cannot be undone.`
+      `Padamkan Pemain "${player.nickname}"?\n\nTindakan ini akan memadamkan kemajuan, markah dan sejarah sembang mereka secara kekal. Tindakan ini tidak boleh dibatalkan.`
     )) return;
 
     setDeleting(player.id);
@@ -29,7 +29,7 @@ const ManageStudents = () => {
       await api.delete(`/admin/players/${player.id}`);
       setPlayers(prev => prev.filter(p => p.id !== player.id));
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to delete player');
+      alert(err.response?.data?.error || 'Gagal untuk memadamkan pemain');
     } finally {
       setDeleting(null);
     }
@@ -50,7 +50,7 @@ const ManageStudents = () => {
           <h2 style={s.cardTitle}>👥 All Players ({players.length})</h2>
           <input
             style={s.search}
-            placeholder="🔍 Search by name or session…"
+            placeholder="🔍 Cari dengan nama atau sesi..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -58,24 +58,24 @@ const ManageStudents = () => {
 
         {canDelete && (
           <div style={s.hint}>
-            🗑️ You can delete players. This permanently removes all their data.
+            🗑️ Anda boleh memadam pemain. Tindakan ini memadamkan semua data mereka secara kekal.
           </div>
         )}
 
         {loading ? (
-          <p style={s.muted}>Loading players…</p>
+          <p style={s.muted}>Memuatkan data pemain…</p>
         ) : (
           <div style={s.tableWrap}>
             <table style={s.table}>
               <thead>
                 <tr style={s.thead}>
                   <th style={s.th}>Nickname</th>
-                  <th style={s.th}>Session</th>
-                  <th style={s.th}>CP1 Quiz</th>
-                  <th style={s.th}>CP2 Crossword</th>
-                  <th style={s.th}>CP3 Food Game</th>
-                  <th style={s.th}>Joined</th>
-                  {canDelete && <th style={s.th}>Actions</th>}
+                  <th style={s.th}>Sesi</th>
+                  <th style={s.th}>CP1 Kuiz</th>
+                  <th style={s.th}>CP2 Teka Silang Kata</th>
+                  <th style={s.th}>CP3 Permainan Makanan</th>
+                  <th style={s.th}>Disertai Pada</th>
+                  {canDelete && <th style={s.th}>Tindakan</th>}
                 </tr>
               </thead>
               <tbody>
@@ -133,7 +133,7 @@ const ManageStudents = () => {
                           disabled={deleting === p.id}
                           title={`Remove ${p.nickname}`}
                         >
-                          {deleting === p.id ? '…' : '🗑️ Remove'}
+                          {deleting === p.id ? '…' : '🗑️ Padam'}
                         </button>
                       </td>
                     )}
@@ -142,7 +142,7 @@ const ManageStudents = () => {
                 {filtered.length === 0 && (
                   <tr>
                     <td colSpan={canDelete ? 7 : 6} style={{ ...s.td, textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
-                      No players found
+                      Tiada Pemain Ditemui
                     </td>
                   </tr>
                 )}
