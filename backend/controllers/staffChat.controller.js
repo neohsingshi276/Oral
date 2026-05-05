@@ -41,8 +41,9 @@ const getConversation = async (req, res) => {
     const me = await getAdminById(myId);
     const other = await getAdminById(otherId);
     if (!me || !other) return res.status(404).json({ error: 'Admin not found' });
-    if (me.role !== 'main_admin' && other.role !== 'main_admin') {
-      return res.status(403).json({ error: 'Regular admins can only chat with Main Admin' });
+    // Teachers can chat with anyone; regular admins are restricted to Main Admin only
+    if (me.role === 'admin' && other.role !== 'main_admin') {
+      return res.status(403).json({ error: 'Admins can only chat with Main Admin' });
     }
 
     const [rows] = await db.query(`
@@ -89,8 +90,9 @@ const sendMessage = async (req, res) => {
     const sender = await getAdminById(senderId);
     const receiver = await getAdminById(parseInt(receiver_id, 10));
     if (!sender || !receiver) return res.status(404).json({ error: 'Admin not found' });
-    if (sender.role !== 'main_admin' && receiver.role !== 'main_admin') {
-      return res.status(403).json({ error: 'Regular admins can only message Main Admin' });
+    // Teachers can message anyone; regular admins are restricted to Main Admin only
+    if (sender.role === 'admin' && receiver.role !== 'main_admin') {
+      return res.status(403).json({ error: 'Admins can only message Main Admin' });
     }
 
     await db.query(
@@ -115,10 +117,11 @@ const getContacts = async (req, res) => {
     const me = await getAdminById(myId);
     if (!me) return res.status(404).json({ error: 'Admin not found' });
 
-    const contactQuery = me.role === 'main_admin'
+    // main_admin sees everyone; teachers see everyone except self; admins see only main_admin
+    const contactQuery = me.role === 'main_admin' || me.role === 'teacher'
       ? 'SELECT id, name, role FROM admins WHERE id != ? ORDER BY name ASC'
       : 'SELECT id, name, role FROM admins WHERE id != ? AND role = ? ORDER BY name ASC';
-    const contactParams = me.role === 'main_admin' ? [myId] : [myId, 'main_admin'];
+    const contactParams = me.role === 'main_admin' || me.role === 'teacher' ? [myId] : [myId, 'main_admin'];
     const [admins] = await db.query(contactQuery, contactParams);
 
     // Unread counts (messages sent to me, unread, grouped by sender)

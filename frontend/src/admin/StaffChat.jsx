@@ -88,11 +88,9 @@ const StaffChat = () => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-  const visibleContacts = me?.role === 'main_admin'
+  const visibleContacts = me?.role === 'main_admin' || me?.role === 'teacher'
     ? contacts
-    : me?.role === 'teacher'
-      ? contacts  // teachers can message everyone
-      : contacts.filter(c => c.role === 'main_admin');
+    : contacts.filter(c => c.role === 'main_admin');
 
   useEffect(() => {
     if (!selected && visibleContacts.length === 1) {

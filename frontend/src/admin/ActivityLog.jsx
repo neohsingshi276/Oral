@@ -50,8 +50,8 @@ const ActivityLog = () => {
                   <div style={s.monitorInfo}>
                     <div style={s.monitorName}>
                       {admin.name}
-                      <span style={{ ...s.roleBadge, background: admin.role === 'main_admin' ? '#7c3aed' : '#2563eb' }}>
-                        {admin.role === 'main_admin' ? '⭐ Main Admin' : 'Admin'}
+                      <span style={{ ...s.roleBadge, background: admin.role === 'main_admin' ? '#7c3aed' : admin.role === 'teacher' ? '#D4A843' : '#2563eb' }}>
+                        {admin.role === 'main_admin' ? '⭐ Main Admin' : admin.role === 'teacher' ? '👩‍🏫 Teacher' : 'Admin'}
                       </span>
                     </div>
                     <div style={s.monitorEmail}>{admin.email}</div>
@@ -100,8 +100,8 @@ const ActivityLog = () => {
                 <div style={s.logContent}>
                   <div style={s.logAction}>
                     <strong>{log.admin_name}</strong> — {log.action}
-                    <span style={{ ...s.roleBadge, background: log.role === 'main_admin' ? '#7c3aed' : '#2563eb', fontSize: '0.65rem', marginLeft: '0.4rem' }}>
-                      {log.role === 'main_admin' ? 'Main Admin' : 'Admin'}
+                    <span style={{ ...s.roleBadge, background: log.role === 'main_admin' ? '#7c3aed' : log.role === 'teacher' ? '#D4A843' : '#2563eb', fontSize: '0.65rem', marginLeft: '0.4rem' }}>
+                      {log.role === 'main_admin' ? 'Main Admin' : log.role === 'teacher' ? 'Teacher' : 'Admin'}
                     </span>
                   </div>
                   {log.details && <div style={s.logDetails}>{log.details}</div>}

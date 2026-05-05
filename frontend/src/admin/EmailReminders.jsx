@@ -16,7 +16,9 @@ const EmailReminders = ({ currentAdmin }) => {
     if (canCompose) { fetchAdmins(); fetchSent(); }
   }, []);
 
-  const fetchAdmins = () => api.get('/admin/admins').then(res => setAdmins(res.data.admins.filter(a => a.id !== currentAdmin?.id)));
+  const fetchAdmins = () => api.get('/admin/admins').then(res => {
+    setAdmins(res.data.admins.filter(a => a.id !== currentAdmin?.id));
+  });
   const fetchInbox = () => api.get('/email/inbox').then(res => setInbox(res.data.reminders));
   const fetchSent  = () => api.get('/email/sent').then(res => setSent(res.data.reminders));
 

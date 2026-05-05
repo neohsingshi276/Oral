@@ -139,6 +139,9 @@ const getAllAdmins = async (req, res) => {
 
 // ─── inviteAdmin ──────────────────────────────────────────────────────────────
 const inviteAdmin = async (req, res) => {
+  if (!['main_admin', 'admin'].includes(req.admin.role))
+    return res.status(403).json({ error: 'You do not have permission to invite users' });
+
   const { email, role } = req.body;
   const inviteRole = ['admin', 'teacher'].includes(role) ? role : 'admin';
   if (!email || typeof email !== 'string')
@@ -342,6 +345,9 @@ const changePassword = async (req, res) => {
 
 // ─── resendInvite ─────────────────────────────────────────────────────────────
 const resendInvite = async (req, res) => {
+  if (!['main_admin', 'admin'].includes(req.admin.role))
+    return res.status(403).json({ error: 'You do not have permission to resend invitations' });
+
   try {
     const [invites] = await db.query(
       'SELECT * FROM admin_invitations WHERE id = ? AND used = FALSE AND expires_at > NOW()',
