@@ -65,6 +65,7 @@ const JoinGamePage = () => {
     try {
       // Clear any stale player data from a previous session before joining
       localStorage.removeItem('player');
+      localStorage.removeItem('tutorial_seen');
       const res = await api.post(`/game/join/${session.unique_token}`, { nickname: nickname.trim() });
       localStorage.setItem('player', JSON.stringify(res.data.player));
       navigate(`/game/${session.unique_token}`);

@@ -22,11 +22,19 @@ const allowedOrigins = [
   'http://localhost:5174',
 ].filter(Boolean);
 
+// Support dynamic Vercel preview URLs like:
+//   https://<project>-<hash>-<team>.vercel.app
+const allowedPatterns = [
+  /^https:\/\/[a-z0-9-]+-[a-z0-9]+-[a-z0-9-]+\.vercel\.app$/,
+];
+
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     const normalised = origin.replace(/\/$/, '');
-    if (allowedOrigins.map(o => o.replace(/\/$/, '')).includes(normalised)) {
+    const exactMatch = allowedOrigins.map(o => o.replace(/\/$/, '')).includes(normalised);
+    const patternMatch = allowedPatterns.some(re => re.test(normalised));
+    if (exactMatch || patternMatch) {
       callback(null, true);
     } else {
       console.warn(`CORS blocked origin: ${origin}`);
