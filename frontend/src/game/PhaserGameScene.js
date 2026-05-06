@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { START_POS } from './gameConfig';
+import { CHECKPOINTS } from './gameConfig';
 
 /**
  * PhaserGameScene
@@ -63,38 +65,21 @@ const TILESET_ASSETS = [
   { key: 'Try', file: 'Try.png' },
   { key: 'A', file: 'A.png' },
   { key: 'B', file: 'B.png' },
+  { key: 'Arrows', file: 'Arrows.png' },
 ];
 
 // The order above matches the order of tilesets in map.json — this is critical
 // because addTilesetImage must be called in the same order as the JSON declares them.
 
 // ── Checkpoint definitions ───────────────────────────────────────────────────
-// Positions matched to the actual Checkpoint1/2/3 TILESET GRAPHICS on the
-// checkpointroad layer (verified from map.json tile scan):
-//   Checkpoint1 graphic centre: (3040, 4800) — nearest trigger id=14 (2880,4832)
-//   Checkpoint2 graphic centre: (2808, 2800) — nearest trigger id=10 (2640,2832)
-//   Checkpoint3 graphic centre: (2880,  624) — nearest trigger id=15 (2752, 624)
-// Trigger points snapped to graphic centres so the marker sits on the sign.
-const CHECKPOINT_DEFS = [
-  { id: 1, x: 3040, y: 4800, radius: 80, color: 0x7B2FBE, label: 'Checkpoint 1' },
-  { id: 2, x: 2808, y: 2800, radius: 80, color: 0xCC3380, label: 'Checkpoint 2' },
-  { id: 3, x: 2880, y: 624, radius: 80, color: 0xE85D04, label: 'Checkpoint 3' },
-];
+// The `triggervideocheckpoint` object layer has 6 point objects.
+// We map them to our 3 game checkpoints based on visual position on the map.
+// Obj id=13 (x:3296, y:6880) → bottom of map → CP1 (start area)
+// Obj id=14 (x:2880, y:4832) → middle area → CP2
+// Obj id=15 (x:2752, y:624)  → top of map → CP3
 
-// Player start position — at the START SIGN on the checkpointroad layer.
-// The start sign tiles span x=1072–1680, y=6816–6992 (centre x=1376).
-// Player spawns just ABOVE the sign at y=6784 so they walk DOWN onto it.
-const START_X = 1376;
-const START_Y = 6784;
-const PLAYER_SPEED = 180;
-const PLAYER_UNDER_TREE_ALPHA = 0.6;
-const PLAYER_BODY_WIDTH = 18;
-const PLAYER_BODY_HEIGHT = 24;
-const WATER_TILE_GIDS = [
-  1067, 1387, 1392, 1515, 1516, 2480,
-  10659, 10907, 11227, 11355,
-];
-const WATER_TILE_SET = new Set(WATER_TILE_GIDS);
+// Player start position — near the bottom of the map (near CP1)
+const PLAYER_SPEED = 2;
 
 // Tile layer names from Tiled (the order determines z-order)
 const TILE_LAYER_NAMES = [
@@ -151,7 +136,7 @@ export default class PhaserGameScene extends Phaser.Scene {
     });
 
     // Load tilemap JSON
-    this.load.tilemapTiledJSON('mainmap', '/assets/map.json');
+    this.load.tilemapTiledJSON('mainmap', '/assets/mapnew.json');
 
     // Load all tileset images
     TILESET_ASSETS.forEach(({ key, file }) => {
@@ -166,13 +151,30 @@ export default class PhaserGameScene extends Phaser.Scene {
   }
 
   create() {
+    console.log('🎮 SCENE CREATE RUNNING');
+
+    console.log('Player initial pos:', this.initialPos);
+    this.add.text(100, 100, 'GAME WORKING', {
+      fontSize: '32px',
+      color: '#ffffff'
+    }).setDepth(2000);
+
     // ── Create tilemap ───────────────────────────────────────────────
     const map = this.make.tilemap({ key: 'mainmap' });
+
+    // const startX = this.initialPos?.x || START_POS.x;
+    // const startY = this.initialPos?.y || START_POS.y;
+
+    const startX = START_POS.x;
+    const startY = START_POS.y;
 
     // Add tilesets — order must match the JSON tileset array exactly.
     // The first arg is the tileset name in Tiled, second is the Phaser image key.
     const tilesetNames = map.tilesets.map(ts => ts.name);
     const tilesets = [];
+
+    this.matter.world.engine.positionIterations = 6;
+    this.matter.world.engine.velocityIterations = 4;
 
     // Build a mapping between JSON tileset names (possibly duplicated) and our unique keys
     const usedNames = {};
@@ -193,195 +195,142 @@ export default class PhaserGameScene extends Phaser.Scene {
 
     // ── Create tile layers ───────────────────────────────────────────
     this.tileLayers = [];
-    this.tileLayerMap = {};
     TILE_LAYER_NAMES.forEach(name => {
       const layer = map.createLayer(name, tilesets);
       if (layer) {
+        layer.setDepth(0);
         this.tileLayers.push(layer);
-        this.tileLayerMap[name] = layer;
       }
     });
 
     // ── World bounds ─────────────────────────────────────────────────
     const mapWidthPx = map.widthInPixels;
     const mapHeightPx = map.heightInPixels;
-    this.physics.world.setBounds(0, 0, mapWidthPx, mapHeightPx);
 
-    this.baseLayer = this.tileLayerMap.map || null;
-    this.checkpointRoadLayer = this.tileLayerMap.checkpointroad || null;
-    this.fenceBackLayer = this.tileLayerMap.fenceback || null;
-    this.fenceMidLayer = this.tileLayerMap.fencemid || null;
-    this.layer1CollisionHint = this.tileLayerMap.layer1 || null;
-    this.layer2CollisionHint = this.tileLayerMap.layer2 || null;
-    this.fenceFrontLayer = this.tileLayerMap.fencefrontlayer3 || null;
-    this.smallTreeLayer = this.tileLayerMap.smalltree || null;
-    this.bigTreeLayer = this.tileLayerMap.bigtree || null;
-
-    if (this.baseLayer) {
-      // The sea is painted directly onto the base map layer using a small set
-      // of blue water tile GIDs. Only those tiles should be non-walkable.
-      this.baseLayer.setCollision(WATER_TILE_GIDS);
-    }
+    // NOTE: Sea tile collision (setCollisionByExclusion) has been removed.
+    // It was marking nearly every tile as solid because the WALKABLE_GIDS list
+    // was incomplete, blocking the player at spawn and preventing movement.
+    // World boundary is enforced by setCollideWorldBounds(true) on the player.
 
     // ── Collision bodies from object layers ───────────────────────────
-    // ONE StaticGroup for all collision shapes.  A single physics.add.collider()
-    // call against a group is O(1) setup instead of O(N) individual calls,
-    // which is what caused the black-screen freeze on load.
-    this.collisionGroup = this.physics.add.staticGroup();
+    // Collect all static collision zones in a plain array so we can pass
+    // them to physics.add.collider() individually after creation.
 
-    // ── Collision filter helpers ─────────────────────────────────────────
-    // collisionbelowplayer  = ground-level items (fences, rocks, bushes)
-    // collisionupperplayer  = upper items drawn above the player (trees / roofs)
-    //
-    // Per design:
-    //   • Tree SHADOWS (ellipses in below-layer)  → skip (walk through)
-    //   • Small STONES  (≤32×16 rects in below)   → skip (walk through)
-    //   • Small upper tree helpers                → skip (walk under + fade)
-    //   • Large structures / furniture blockers   → keep (solid)
 
-    const getObjectBounds = (obj) => {
-      if (obj.ellipse || (obj.width > 0 && obj.height > 0 && !obj.polygon)) {
-        return {
-          x0: obj.x,
-          y0: obj.y,
-          x1: obj.x + (obj.width || 0),
-          y1: obj.y + (obj.height || 0),
-        };
-      }
-      if (obj.polygon) {
-        let x0 = Infinity;
-        let y0 = Infinity;
-        let x1 = -Infinity;
-        let y1 = -Infinity;
-        obj.polygon.forEach(p => {
-          x0 = Math.min(x0, obj.x + p.x);
-          y0 = Math.min(y0, obj.y + p.y);
-          x1 = Math.max(x1, obj.x + p.x);
-          y1 = Math.max(y1, obj.y + p.y);
-        });
-        return { x0, y0, x1, y1 };
-      }
-      return null;
-    };
+    const createBody = (obj, isSensor = false, label = 'wall') => {
+      const options = {
+        isStatic: true,
+        isSensor,
+        label,
+      };
 
-    const objectOverlapsLayers = (bounds, layers) =>
-      layers.some(layer => {
-        if (!layer) return false;
-        const sampleXs = [
-          bounds.x0 + 4,
-          (bounds.x0 + bounds.x1) / 2,
-          bounds.x1 - 4,
-        ];
-        const sampleYs = [
-          bounds.y0 + 4,
-          (bounds.y0 + bounds.y1) / 2,
-          bounds.y1 - 4,
-        ];
-        return sampleXs.some(worldX =>
-          sampleYs.some(worldY => {
-            const tile = layer.getTileAtWorldXY(worldX, worldY, true);
-            return !!tile && tile.index !== -1;
-          })
-        );
-      });
+      // ─────────────────────────────
+      // RECTANGLE
+      // ─────────────────────────────
+      if (!obj.polygon && !obj.polyline && !obj.ellipse) {
+        const cx = obj.x + obj.width / 2;
+        const cy = obj.y + obj.height / 2;
 
-    const objectOverlapsProtectedLayers = (bounds) =>
-      objectOverlapsLayers(bounds, [
-        this.fenceBackLayer,
-        this.fenceMidLayer,
-        this.fenceFrontLayer,
-        this.checkpointRoadLayer,
-      ]);
-
-    const shouldSkipBelowObj = (obj) => {
-      // Skip all ellipses (tree shadows / canopy footprints)
-      if (obj.ellipse) return true;
-
-      const bounds = getObjectBounds(obj);
-      if (!bounds) return false;
-
-      const w = bounds.x1 - bounds.x0;
-      const h = bounds.y1 - bounds.y0;
-
-      // Skip tiny flat rects that are small stones / pebbles
-      if (!obj.polygon && w <= 16 && h <= 16) return true;
-
-      const overlapsTree = objectOverlapsLayers(bounds, [this.smallTreeLayer, this.bigTreeLayer]);
-      if (overlapsTree && w <= 64 && h <= 64) return true;
-
-      const overlapsBridgeDecor = objectOverlapsLayers(bounds, [this.layer1CollisionHint, this.layer2CollisionHint]);
-      const isBridgeLikeStrip = (w >= 64 && h <= 32) || (h >= 64 && w <= 32);
-      if (overlapsBridgeDecor && isBridgeLikeStrip && !objectOverlapsProtectedLayers(bounds)) {
-        return true;
-      }
-
-      return false;
-    };
-
-    const objectOverlapsTreeTiles = (bounds) => {
-      return objectOverlapsLayers(bounds, [this.smallTreeLayer, this.bigTreeLayer]);
-    };
-
-    const shouldSkipUpperObj = (obj) => {
-      // Upper-layer ellipses are decorative overlap helpers, not blockers.
-      if (obj.ellipse) return true;
-      if (!obj.polygon) return false;
-
-      const bounds = getObjectBounds(obj);
-      if (!bounds) return false;
-
-      const w = bounds.x1 - bounds.x0;
-      const h = bounds.y1 - bounds.y0;
-
-      // Only skip compact upper collision helpers that truly belong to tree
-      // tiles. Furniture, stalls, fences, fire, and structures stay solid.
-      return w <= 96 && h <= 96 && objectOverlapsTreeTiles(bounds);
-    };
-
-    const buildCollisionLayer = (layerName) => {
-      const objectLayer = map.getObjectLayer(layerName);
-      if (!objectLayer) return;
-
-      const isBelowLayer = layerName === 'collisionbelowplayer';
-      const isUpperLayer = layerName === 'collisionupperplayer';
-
-      // Group objects at the same (x,y) — Tiled splits sloped tiles into
-      // two polygons at the same origin. Merge their bboxes into one body.
-      const byPos = new Map();
-      objectLayer.objects.forEach(obj => {
-        if (isBelowLayer && shouldSkipBelowObj(obj)) return; // skip shadows/stones
-        if (isUpperLayer && shouldSkipUpperObj(obj)) return; // skip tree overlap helpers
-        const key = `${obj.x},${obj.y}`;
-        if (!byPos.has(key)) byPos.set(key, []);
-        byPos.get(key).push(obj);
-      });
-
-      byPos.forEach(objs => {
-        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-        objs.forEach(obj => {
-          const bounds = getObjectBounds(obj);
-          if (bounds) {
-            x0 = Math.min(x0, bounds.x0); y0 = Math.min(y0, bounds.y0);
-            x1 = Math.max(x1, bounds.x1); y1 = Math.max(y1, bounds.y1);
+        const body = this.matter.add.rectangle(
+          cx,
+          cy,
+          obj.width,
+          obj.height,
+          {
+            ...options,
+            angle: Phaser.Math.DegToRad(obj.rotation || 0),
           }
+        );
+
+        body.label = label;
+        return body;
+      }
+
+      // ─────────────────────────────
+      // ELLIPSE
+      // ─────────────────────────────
+      if (obj.ellipse) {
+        const cx = obj.x + obj.width / 2;
+        const cy = obj.y + obj.height / 2;
+
+        const body = this.matter.add.circle(
+          cx,
+          cy,
+          obj.width / 2,
+          options
+        );
+
+        if (obj.width !== obj.height) {
+          this.matter.body.scale(body, 1, obj.height / obj.width);
+        }
+
+        body.label = label;
+        return body;
+      }
+
+      // ─────────────────────────────
+      // POLYGON (closed shape)
+      // ─────────────────────────────
+      if (obj.polygon) {
+        const worldVerts = obj.polygon.map(p => ({
+          x: obj.x + p.x,
+          y: obj.y + p.y
+        }));
+
+        const center = Phaser.Physics.Matter.Matter.Vertices.centre(worldVerts);
+
+        const localVerts = worldVerts.map(v => ({
+          x: v.x - center.x,
+          y: v.y - center.y
+        }));
+
+        const body = this.matter.add.fromVertices(
+          center.x,
+          center.y,
+          localVerts,
+          options,
+          true
+        );
+
+        body.label = label;
+        return body;
+      }
+
+      // ─────────────────────────────
+      // 🔥 POLYLINE (edge-based collision)
+      // ─────────────────────────────
+      if (obj.polyline) {
+        const thickness = 6; // 👈 adjust collision thickness
+
+        obj.polyline.forEach((p, i) => {
+          if (i === obj.polyline.length - 1) return;
+
+          const p1 = obj.polyline[i];
+          const p2 = obj.polyline[i + 1];
+
+          const x1 = obj.x + p1.x;
+          const y1 = obj.y + p1.y;
+          const x2 = obj.x + p2.x;
+          const y2 = obj.y + p2.y;
+
+          const length = Phaser.Math.Distance.Between(x1, y1, x2, y2);
+          const angle = Phaser.Math.Angle.Between(x1, y1, x2, y2);
+
+          this.matter.add.rectangle(
+            (x1 + x2) / 2,
+            (y1 + y2) / 2,
+            length,
+            thickness,
+            {
+              ...options,
+              angle,
+            }
+          );
         });
 
-        const w = x1 - x0;
-        const h = y1 - y0;
-        if (w > 0 && h > 0) {
-          const zone = this.add.zone(x0 + w / 2, y0 + h / 2, w, h);
-          this.collisionGroup.add(zone, true);
-        }
-      });
+        return null; // polyline creates multiple bodies
+      }
     };
-
-    buildCollisionLayer('collisionbelowplayer');
-    buildCollisionLayer('collisionupperplayer');
-    this.collisionGroup.refresh();
-
-    // ── Player sprite ────────────────────────────────────────────────
-    const startX = this.initialPos?.x || START_X;
-    const startY = this.initialPos?.y || START_Y;
 
     // Create the player with arcade physics, using a simple graphic character
     this.playerGraphic = this.add.container(startX, startY);
@@ -415,33 +364,76 @@ export default class PhaserGameScene extends Phaser.Scene {
     nameBg.setOrigin(0.5, 1);
 
     this.playerGraphic.add([nameBg, nameText, body, head, eyeL, eyeR, this.legL, this.legR]);
-    this.playerGraphic.setDepth(100);
+    this.playerGraphic.setDepth(1000);
 
     // Physics body for player (invisible rectangle — avoids null-texture bug
     // where physics.add.sprite(x, y, null) places the body at (0,0) instead
     // of the requested position and breaks movement registration).
-    this.playerBody = this.physics.add.image(startX, startY, '__DEFAULT');
-    this.playerBody.setVisible(false);
-    // Use a near full-body hitbox so props feel solid and the player cannot
-    // squeeze through narrow gaps or drift onto sea edges.
-    this.playerBody.setDisplaySize(PLAYER_BODY_WIDTH, PLAYER_BODY_HEIGHT);
-    this.playerBody.body.setSize(PLAYER_BODY_WIDTH, PLAYER_BODY_HEIGHT);
-    this.playerBody.body.setOffset(0, 0);
-    this.playerBody.setCollideWorldBounds(true);
-    this.playerBody.setPosition(startX, startY);
+    this.playerBody = this.matter.add.rectangle(startX, startY + 22, 16, 10, {
+      friction: 0,
+      frictionAir: 0.2,
+      inertia: Infinity,
+      label: 'player'
+    });
 
-    // ONE collider call covers every shape in the group — O(1) not O(N).
-    this.physics.add.collider(this.playerBody, this.collisionGroup);
-    if (this.baseLayer) {
-      this.physics.add.collider(this.playerBody, this.baseLayer);
-    }
+    this.matter.world.on('collisionstart', (event) => {
+      event.pairs.forEach(pair => {
+        const { bodyA, bodyB } = pair;
 
-    // Sea collision now comes from the base map layer, while furniture and
-    // structure collision still comes from the explicit object layers above.
+        const isTree =
+          (bodyA.label === 'player' && bodyB.label === 'tree') ||
+          (bodyB.label === 'player' && bodyA.label === 'tree');
+
+        if (isTree) {
+          const treeBody = bodyA.label === 'tree' ? bodyA : bodyB;
+          this.treeCollisions.add(treeBody.id);
+        }
+      });
+
+      this.updatePlayerOpacity();
+    });
+
+    this.matter.world.on('collisionend', (event) => {
+      event.pairs.forEach(pair => {
+        const { bodyA, bodyB } = pair;
+
+        const isTree =
+          (bodyA.label === 'player' && bodyB.label === 'tree') ||
+          (bodyB.label === 'player' && bodyA.label === 'tree');
+
+        if (isTree) {
+          const treeBody = bodyA.label === 'tree' ? bodyA : bodyB;
+          this.treeCollisions.delete(treeBody.id);
+        }
+      });
+
+      this.updatePlayerOpacity();
+    });
+
+    const addLayerBodies = (layerName, isSensor = false, label = 'wall') => {
+      const layer = map.getObjectLayer(layerName);
+      if (!layer) return;
+
+      layer.objects.forEach(obj => {
+        createBody(obj, isSensor, label);
+      });
+    };
+
+    // Solid collisions
+    addLayerBodies('collisionbelowplayer', false, 'wall');
+    addLayerBodies('collisionupperplayer', true, 'tree');
+
+    // Collide player with collision objects (trees, fences, etc.)
+    // Add colliders for all static collision zones
+
+    // NOTE: We intentionally do NOT add a collider against the base tile layer.
+    // The setCollisionByExclusion approach marks almost every tile as solid,
+    // which blocks the player at the spawn position and prevents walking.
+    // Collision is already handled by the explicit object layers above.
 
     // ── Checkpoint markers ───────────────────────────────────────────
     this.checkpointGraphics = [];
-    CHECKPOINT_DEFS.forEach(cp => {
+    CHECKPOINTS.forEach(cp => {
       const container = this.add.container(cp.x, cp.y);
       container.setDepth(90);
 
@@ -503,8 +495,9 @@ export default class PhaserGameScene extends Phaser.Scene {
 
     // ── Camera ───────────────────────────────────────────────────────
     this.cameras.main.setBounds(0, 0, mapWidthPx, mapHeightPx);
-    this.cameras.main.startFollow(this.playerBody, true, 0.12, 0.12);
-    this.cameras.main.setZoom(2);
+    this.cameras.main.startFollow(this.playerGraphic);
+    this.cameras.main.centerOn(startX, startY);
+    this.cameras.main.setZoom(3);
 
     // ── Input ────────────────────────────────────────────────────────
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -518,190 +511,192 @@ export default class PhaserGameScene extends Phaser.Scene {
 
     // ── State ────────────────────────────────────────────────────────
     this.nearCheckpointId = null;
+    this.treeCollisions = new Set();
     this.walkFrame = 0;
     this.isPaused = false;
-    this.lastWalkablePosition = { x: startX, y: startY };
 
     // Store map reference for position saving
     this.mapWidthPx = mapWidthPx;
     this.mapHeightPx = mapHeightPx;
   }
 
-  update(_time, _delta) {
-    if (this.isPaused) {
-      this.playerBody.setVelocity(0, 0);
-      return;
-    }
+  update() {
+    try {
+      if (this.isPaused) return;
+      if (!this.playerBody) return;
 
-    // ── Movement ─────────────────────────────────────────────────────
-    let vx = 0;
-    let vy = 0;
+      const pos = this.playerBody.position;
 
-    if (this.cursors.left.isDown || this.wasd.a.isDown) vx = -PLAYER_SPEED;
-    if (this.cursors.right.isDown || this.wasd.d.isDown) vx = PLAYER_SPEED;
-    if (this.cursors.up.isDown || this.wasd.w.isDown) vy = -PLAYER_SPEED;
-    if (this.cursors.down.isDown || this.wasd.s.isDown) vy = PLAYER_SPEED;
+      if (!pos || !Number.isFinite(pos.x) || !Number.isFinite(pos.y)) {
+        console.error("🚨 Player position is invalid:", pos);
 
-    // Normalize diagonal
-    if (vx !== 0 && vy !== 0) {
-      vx *= 0.707;
-      vy *= 0.707;
-    }
+        this.matter.body.setPosition(this.playerBody, {
+          x: 3296,
+          y: 5000
+        });
 
-    this.playerBody.setVelocity(vx, vy);
+        return;
+      }
 
-    // Sync the visible graphic to the physics body
-    this.playerGraphic.setPosition(this.playerBody.x, this.playerBody.y);
-    if (this.isPlayerTouchingWater()) {
-      this.playerBody.setVelocity(0, 0);
-      this.playerBody.setPosition(this.lastWalkablePosition.x, this.lastWalkablePosition.y);
-      this.playerGraphic.setPosition(this.lastWalkablePosition.x, this.lastWalkablePosition.y);
-    } else {
-      this.lastWalkablePosition = {
-        x: this.playerBody.x,
-        y: this.playerBody.y,
-      };
-    }
-    this.updatePlayerVisibilityUnderTrees();
 
-    // Leg animation
-    const isMoving = vx !== 0 || vy !== 0;
-    if (isMoving) {
-      this.walkFrame += 0.15;
-      const legOffset = Math.sin(this.walkFrame) * 3;
-      this.legL.y = 19 + legOffset;
-      this.legR.y = 19 - legOffset;
-    } else {
-      this.legL.y = 19;
-      this.legR.y = 19;
-    }
+      // ── INPUT ──
+      let vx = 0;
+      let vy = 0;
+      this.playerGraphic.setDepth(this.playerBody.position.y);
 
-    // ── Checkpoint proximity ─────────────────────────────────────────
-    const progress = this.getProgress();
-    const completedCPs = progress.filter(p => p.completed).map(p => p.checkpoint_number);
+      if (this.cursors && this.wasd) {
+        if (this.cursors.left.isDown || this.wasd.a.isDown) vx = -PLAYER_SPEED;
+        if (this.cursors.right.isDown || this.wasd.d.isDown) vx = PLAYER_SPEED;
+        if (this.cursors.up.isDown || this.wasd.w.isDown) vy = -PLAYER_SPEED;
+        if (this.cursors.down.isDown || this.wasd.s.isDown) vy = PLAYER_SPEED;
+      }
 
-    let near = null;
-    CHECKPOINT_DEFS.forEach(cp => {
-      const dist = Phaser.Math.Distance.Between(
-        this.playerBody.x, this.playerBody.y, cp.x, cp.y
+      if (vx !== 0 && vy !== 0) {
+        vx *= 0.707;
+        vy *= 0.707;
+      }
+
+      const SPEED = 2.5;
+      this.matter.body.setVelocity(this.playerBody, {
+        x: vx * SPEED,
+        y: vy * SPEED
+      });
+      this.playerGraphic.setPosition(
+        this.playerBody.position.x,
+        this.playerBody.position.y - 22
       );
-      if (dist < cp.radius + 20) near = cp.id;
-    });
 
-    // Update checkpoint visuals
-    this.checkpointGraphics.forEach(({ cpDef, glow, circle, idText, hintText, lockText }) => {
-      const isCompleted = completedCPs.includes(cpDef.id);
-      const isUnlocked = this.getIsCheckpointUnlocked(cpDef.id);
-      const isNear = near === cpDef.id;
+      // ── ANIMATION ──
+      const isMoving = vx !== 0 || vy !== 0;
 
-      // Update circle color
-      if (isCompleted) {
-        circle.setFillStyle(0x16a34a);
-        idText.setText('✓');
-      } else if (isUnlocked) {
-        circle.setFillStyle(cpDef.color);
-        idText.setText(String(cpDef.id));
+      if (isMoving) {
+        this.walkFrame += 0.15;
+        const legOffset = Math.sin(this.walkFrame) * 3;
+        this.legL.y = 19 + legOffset;
+        this.legR.y = 19 - legOffset;
       } else {
-        circle.setFillStyle(0x94a3b8);
-        idText.setText(String(cpDef.id));
+        this.legL.y = 19;
+        this.legR.y = 19;
       }
 
-      // Glow
-      glow.setVisible(isNear && isUnlocked && !isCompleted);
+      // ── SAFE PROGRESS ──
+      const progressRaw = this.getProgress?.();
+      const progress = Array.isArray(progressRaw) ? progressRaw : [];
 
-      // Hint
-      hintText.setVisible(isNear && isUnlocked && !isCompleted);
+      const completedCPs = progress
+        .filter(p => p && p.completed)
+        .map(p => p.checkpoint_number);
 
-      // Lock
-      lockText.setVisible(!isUnlocked && !isCompleted);
-    });
+      let near = null;
 
-    if (near !== this.nearCheckpointId) {
-      this.nearCheckpointId = near;
-      this.onNearCheckpoint(near);
-    }
+      CHECKPOINTS.forEach(cp => {
+        const dist = Phaser.Math.Distance.Between(
+          this.playerBody.position.x,
+          this.playerBody.position.y,
+          cp.x,
+          cp.y
+        );
 
-    // ── Press E to enter checkpoint ──────────────────────────────────
-    if (Phaser.Input.Keyboard.JustDown(this.keyE) && near) {
-      const isUnlocked = this.getIsCheckpointUnlocked(near);
-      const isCompleted = completedCPs.includes(near);
-      if (isUnlocked && !isCompleted) {
-        this.onCheckpointReached(near);
+        if (dist < cp.radius + 20) near = cp.id;
+      });
+
+      this.checkpointGraphics.forEach(({ cpDef, glow, circle, idText, hintText, lockText }) => {
+        const isCompleted = completedCPs.includes(cpDef.id);
+        const isUnlocked = this.getIsCheckpointUnlocked
+          ? this.getIsCheckpointUnlocked(cpDef.id)
+          : true;
+        const isNear = near === cpDef.id;
+
+        if (isCompleted) {
+          circle.setFillStyle(0x16a34a);
+          idText.setText('✓');
+        } else if (isUnlocked) {
+          circle.setFillStyle(cpDef.color);
+          idText.setText(String(cpDef.id));
+        } else {
+          circle.setFillStyle(0x94a3b8);
+          idText.setText(String(cpDef.id));
+        }
+
+        glow.setVisible(isNear && isUnlocked && !isCompleted);
+        hintText.setVisible(isNear && isUnlocked && !isCompleted);
+        lockText.setVisible(!isUnlocked && !isCompleted);
+      });
+
+      if (near !== this.nearCheckpointId) {
+        this.nearCheckpointId = near;
+        this.onNearCheckpoint(near);
       }
+
+      if (Phaser.Input.Keyboard.JustDown(this.keyE) && near) {
+        const isUnlocked = this.getIsCheckpointUnlocked
+          ? this.getIsCheckpointUnlocked(near)
+          : true;
+
+        const isCompleted = completedCPs.includes(near);
+
+        if (isUnlocked && !isCompleted) {
+          this.onCheckpointReached(near);
+        }
+      }
+
+      const x = Phaser.Math.Clamp(this.playerBody.position.x, 0, this.mapWidthPx);
+      const y = Phaser.Math.Clamp(this.playerBody.position.y, 0, this.mapHeightPx);
+
+      if (x !== this.playerBody.position.x || y !== this.playerBody.position.y) {
+        this.matter.body.setPosition(this.playerBody, { x, y });
+      }
+
+      if (this.playerBody?.position) {
+        const { x, y } = this.playerBody.position;
+
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+          console.error("🚨 BAD POSITION:", x, y);
+        }
+      }
+
+    } catch (err) {
+      console.error("🚨 UPDATE CRASH:", err);
     }
   }
 
-  updatePlayerVisibilityUnderTrees() {
-    if (!this.smallTreeLayer && !this.bigTreeLayer) {
-      this.playerGraphic.setAlpha(1);
-      return;
-    }
+  // ─────────────────────────────────────────────
+  // SAFE METHODS (keep inside class)
+  // ─────────────────────────────────────────────
 
-    const x = this.playerBody?.x || START_X;
-    const probeYs = [
-      (this.playerBody?.y || START_Y) - 26,
-      (this.playerBody?.y || START_Y) - 12,
-      this.playerBody?.y || START_Y,
-    ];
-
-    const isTreeTileAt = (layer, worldX, worldY) => {
-      if (!layer) return false;
-      const tile = layer.getTileAtWorldXY(worldX, worldY, true);
-      return !!tile && tile.index !== -1;
-    };
-
-    const underTree = probeYs.some(worldY =>
-      isTreeTileAt(this.smallTreeLayer, x, worldY) ||
-      isTreeTileAt(this.bigTreeLayer, x, worldY)
-    );
-
-    this.playerGraphic.setAlpha(underTree ? PLAYER_UNDER_TREE_ALPHA : 1);
-  }
-
-  isPlayerTouchingWater() {
-    if (!this.baseLayer || !this.playerBody) return false;
-
-    const halfW = PLAYER_BODY_WIDTH / 2;
-    const halfH = PLAYER_BODY_HEIGHT / 2;
-    const samplePoints = [
-      [this.playerBody.x, this.playerBody.y],
-      [this.playerBody.x - halfW + 2, this.playerBody.y - halfH + 2],
-      [this.playerBody.x + halfW - 2, this.playerBody.y - halfH + 2],
-      [this.playerBody.x - halfW + 2, this.playerBody.y + halfH - 2],
-      [this.playerBody.x + halfW - 2, this.playerBody.y + halfH - 2],
-    ];
-
-    return samplePoints.some(([worldX, worldY]) => {
-      const tile = this.baseLayer.getTileAtWorldXY(worldX, worldY, true);
-      return !!tile && WATER_TILE_SET.has(tile.index);
-    });
-  }
-
-  // Called from React when a modal opens
   pauseGame() {
     this.isPaused = true;
   }
 
-  // Called from React when a modal closes
   resumeGame() {
     this.isPaused = false;
   }
 
-  // Get current player position for saving
+  updatePlayerOpacity() {
+    const count = this.treeCollisions.size;
+
+    const alpha = Phaser.Math.Clamp(1 - count * 0.60, 0.60, 1);
+
+    this.tweens.add({
+      targets: this.playerGraphic,
+      alpha: alpha,
+      duration: 120,
+      ease: 'Power2'
+    });
+  }
+
+
   getPlayerPosition() {
     return {
-      x: this.playerBody?.x || START_X,
-      y: this.playerBody?.y || START_Y,
+      x: this.playerBody?.position?.x || START_POS.x,
+      y: this.playerBody?.position?.y || START_POS.y,
     };
   }
 
-  // Set player position (e.g., loaded from server)
   setPlayerPosition(x, y) {
     if (this.playerBody) {
-      this.playerBody.setPosition(x, y);
+      this.matter.body.setPosition(this.playerBody, { x, y });
       this.playerGraphic.setPosition(x, y);
     }
   }
 }
-
-export { CHECKPOINT_DEFS, START_X, START_Y };
