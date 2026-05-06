@@ -159,65 +159,19 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
     };
   }, []);
 
-
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {/* Loading overlay — shown until Phaser fires onLoadComplete */}
-      {!ready && (
-        <div style={{
-          position: 'absolute', inset: 0,
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-          background: '#1a1a2e',
-          borderRadius: '12px',
-          border: '3px solid #1e3a5f',
-          zIndex: 10,
-          gap: 16,
-          minHeight: 300,
-        }}>
-          {/* Tooth emoji spinner */}
-          <div style={{ fontSize: 48, animation: 'spin 1.2s linear infinite' }}>🦷</div>
-          <div style={{ color: '#FFD700', fontWeight: 'bold', fontSize: 18 }}>
-            Loading Dental Quest…
-          </div>
-          {/* Progress bar */}
-          <div style={{
-            width: 220, height: 10,
-            background: '#0f1a2e',
-            borderRadius: 5,
-            overflow: 'hidden',
-            border: '1px solid #2563eb',
-          }}>
-            <div style={{
-              height: '100%',
-              width: `${loadPct}%`,
-              background: 'linear-gradient(90deg, #2563eb, #7B2FBE)',
-              borderRadius: 5,
-              transition: 'width 0.2s ease',
-            }} />
-          </div>
-          <div style={{ color: '#94a3b8', fontSize: 13 }}>{loadPct}%</div>
-          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-        </div>
-      )}
-
-      {/* Phaser canvas container */}
-      <div
-        ref={containerRef}
-        style={{
-          width: '100%',
-          height: '100%',
-          lineHeight: 0,
-          borderRadius: '8px',
-          overflow: 'hidden',
-          border: ready ? '2px solid #1e3a5f' : '2px solid transparent',
-          opacity: ready ? 1 : 0,
-          transition: 'opacity 0.4s ease',
-        }}
-      />
-    </div>
+    <div
+      ref={containerRef}
+      style={{
+        width: '100%',
+        lineHeight: 0,
+        borderRadius: '12px',
+        overflow: 'hidden',
+        border: '3px solid #1e3a5f',
+        margin: '0 auto',
+      }}
+    />
   );
-
 };
 
 
