@@ -111,7 +111,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
           backgroundColor: '#1a1a2e',
           physics: {
             default: 'matter',
-            matter: { gravity: { y: 0 }, debug: true },
+            matter: { gravity: { y: 0 }, debug: false },
           },
           // Don't put the scene in the config array — start it manually below
           // so we can pass sceneData into init(data) before create() runs.
