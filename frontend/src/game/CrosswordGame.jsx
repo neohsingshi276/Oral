@@ -7,7 +7,7 @@ const MAX_HINTS = 3;
 
 const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   const [words, setWords] = useState([]);
-  const [gridSize, setGridSize] = useState(10);
+  const [gridSize, setGridSize] = useState(12);
   const [grid, setGrid] = useState([]);
   const [userGrid, setUserGrid] = useState([]);
   const [selectedCell, setSelectedCell] = useState(null);
@@ -43,7 +43,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     api.get(endpoint)
       .then(res => {
         const w = res.data.words;
-        const gs = res.data.gridSize || 10;
+        const gs = res.data.gridSize || 12;
         const cfg = res.data.settings || {};
         setWords(w);
         setGridSize(gs);
@@ -349,8 +349,8 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     return idx >= 0 ? idx + 1 : null;
   };
 
-  const cellSize = gridSize > 15 ? 40 : gridSize > 12 ? 46 : 56;
-  const fontSize = gridSize > 15 ? '0.9rem' : gridSize > 12 ? '1.05rem' : '1.25rem';
+  const cellSize = gridSize > 18 ? 44 : gridSize > 14 ? 52 : 62;
+  const fontSize = gridSize > 18 ? '0.95rem' : gridSize > 14 ? '1.1rem' : '1.3rem';
   const minCorrect = settings.minimum_correct || DEFAULT_MIN_CORRECT;
   const passed = minCorrect > 0 ? completed.length >= minCorrect : true;
   const pct = words.length > 0 ? Math.round((completed.length / words.length) * 100) : 0;

@@ -326,7 +326,10 @@ function generateCrosswordLayout(wordsData) {
     maxCol = Math.max(maxCol, endCol);
   }
 
-  return { words: placedWords, gridSize: Math.max(maxRow, maxCol) + 1 };
+  // Cap grid at 12 minimum — enough for up to 12 words while keeping cells large on screen.
+  // If words genuinely need more space (e.g. very long words), allow it to grow beyond 12.
+  const rawSize = Math.max(maxRow, maxCol) + 1;
+  return { words: placedWords, gridSize: Math.max(12, rawSize) };
 }
 
 // ─── getCrossword ─────────────────────────────────────────────────────────────
