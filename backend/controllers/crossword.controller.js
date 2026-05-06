@@ -27,7 +27,7 @@ function generateCrosswordLayout(wordsData) {
     const cells = [];
     for (let i = 0; i < p.word.length; i++) {
       cells.push({
-        r: p.direction === 'down' ? p.start_row + i : p.start_row,
+        r: p.direction === 'down'   ? p.start_row + i : p.start_row,
         c: p.direction === 'across' ? p.start_col + i : p.start_col,
       });
     }
@@ -64,7 +64,7 @@ function generateCrosswordLayout(wordsData) {
     const myCells = [];
     for (let i = 0; i < len; i++) {
       myCells.push({
-        r: direction === 'down' ? row + i : row,
+        r: direction === 'down'   ? row + i : row,
         c: direction === 'across' ? col + i : col,
         letter: word[i],
       });
@@ -79,7 +79,7 @@ function generateCrosswordLayout(wordsData) {
     //    Build a quick lookup of occupied cells for this check.
     for (const p of placedWords) {
       for (let i = 0; i < p.word.length; i++) {
-        const pr = p.direction === 'down' ? p.start_row + i : p.start_row;
+        const pr = p.direction === 'down'   ? p.start_row + i : p.start_row;
         const pc = p.direction === 'across' ? p.start_col + i : p.start_col;
         const pl = p.word[i];
         // Find if my word touches this cell.
@@ -96,14 +96,14 @@ function generateCrosswordLayout(wordsData) {
     // 4. The cell immediately BEFORE the start and AFTER the end of the new
     //    word (in its own direction) must be empty — otherwise two same-direction
     //    words would appear to merge.
-    const beforeR = direction === 'down' ? row - 1 : row;
+    const beforeR = direction === 'down'   ? row - 1 : row;
     const beforeC = direction === 'across' ? col - 1 : col;
-    const afterR = direction === 'down' ? row + len : row;
-    const afterC = direction === 'across' ? col + len : col;
+    const afterR  = direction === 'down'   ? row + len : row;
+    const afterC  = direction === 'across' ? col + len : col;
 
     for (const p of placedWords) {
       for (let i = 0; i < p.word.length; i++) {
-        const pr = p.direction === 'down' ? p.start_row + i : p.start_row;
+        const pr = p.direction === 'down'   ? p.start_row + i : p.start_row;
         const pc = p.direction === 'across' ? p.start_col + i : p.start_col;
         if ((pr === beforeR && pc === beforeC) || (pr === afterR && pc === afterC)) {
           return false; // merging risk
@@ -127,7 +127,7 @@ function generateCrosswordLayout(wordsData) {
     for (const mc of myCells) {
       for (const p of placedWords) {
         for (let i = 0; i < p.word.length; i++) {
-          const pr = p.direction === 'down' ? p.start_row + i : p.start_row;
+          const pr = p.direction === 'down'   ? p.start_row + i : p.start_row;
           const pc = p.direction === 'across' ? p.start_col + i : p.start_col;
           if (pr === mc.r && pc === mc.c) {
             intersectionSet.add(`${mc.r},${mc.c}`);
@@ -140,7 +140,7 @@ function generateCrosswordLayout(wordsData) {
     const occupiedSet = new Set();
     for (const p of placedWords) {
       for (let i = 0; i < p.word.length; i++) {
-        const pr = p.direction === 'down' ? p.start_row + i : p.start_row;
+        const pr = p.direction === 'down'   ? p.start_row + i : p.start_row;
         const pc = p.direction === 'across' ? p.start_col + i : p.start_col;
         occupiedSet.add(`${pr},${pc}`);
       }
@@ -173,16 +173,16 @@ function generateCrosswordLayout(wordsData) {
       let sumR = 0, sumC = 0, totalCells = 0;
       for (const p of placedWords) {
         for (let i = 0; i < p.word.length; i++) {
-          sumR += p.direction === 'down' ? p.start_row + i : p.start_row;
+          sumR += p.direction === 'down'   ? p.start_row + i : p.start_row;
           sumC += p.direction === 'across' ? p.start_col + i : p.start_col;
           totalCells++;
         }
       }
       const centR = sumR / totalCells;
       const centC = sumC / totalCells;
-      const midR = direction === 'down' ? row + word.length / 2 : row;
-      const midC = direction === 'across' ? col + word.length / 2 : col;
-      const dist = Math.abs(midR - centR) + Math.abs(midC - centC);
+      const midR  = direction === 'down'   ? row + word.length / 2 : row;
+      const midC  = direction === 'across' ? col + word.length / 2 : col;
+      const dist  = Math.abs(midR - centR) + Math.abs(midC - centC);
       score -= dist; // closer = higher score
     }
 
@@ -195,7 +195,7 @@ function generateCrosswordLayout(wordsData) {
     const item = sorted[i];
     const word = item.word.toUpperCase().trim();
     const clue = item.clue;
-    const id = item.id;
+    const id   = item.id;
 
     if (i === 0) {
       // Place the longest word horizontally near the centre of our virtual grid.
@@ -232,11 +232,11 @@ function generateCrosswordLayout(wordsData) {
             // (used as placement quality score).
             let intersections = 0;
             for (let k = 0; k < word.length; k++) {
-              const tr = newDir === 'down' ? newRow + k : newRow;
+              const tr = newDir === 'down'   ? newRow + k : newRow;
               const tc = newDir === 'across' ? newCol + k : newCol;
               for (const p2 of placedWords) {
                 for (let m = 0; m < p2.word.length; m++) {
-                  const pr2 = p2.direction === 'down' ? p2.start_row + m : p2.start_row;
+                  const pr2 = p2.direction === 'down'   ? p2.start_row + m : p2.start_row;
                   const pc2 = p2.direction === 'across' ? p2.start_col + m : p2.start_col;
                   if (tr === pr2 && tc === pc2) intersections++;
                 }
@@ -250,44 +250,59 @@ function generateCrosswordLayout(wordsData) {
     }
 
     if (candidates.length > 0) {
-      // Pick the highest-scoring valid placement.
       candidates.sort((a, b) => b.sc - a.sc);
       const best = candidates[0];
       placedWords.push({ id, word, clue, direction: best.newDir, start_row: best.newRow, start_col: best.newCol });
     } else {
-      // No valid intersecting placement found — place as an isolated word.
-      // Find a row/col that is far enough from ALL existing content (≥ 2 cells gap).
-      let placed = false;
-      for (let gap = 3; gap <= 6 && !placed; gap++) {
-        // Try below all existing content first, then above, then to the right.
-        let maxR = OFFSET, maxC = OFFSET;
-        for (const p of placedWords) {
-          const endR = p.start_row + (p.direction === 'down' ? p.word.length : 1);
-          const endC = p.start_col + (p.direction === 'across' ? p.word.length : 1);
-          maxR = Math.max(maxR, endR);
-          maxC = Math.max(maxC, endC);
-        }
-        const tryRow = maxR + gap;
-        const tryCol = OFFSET;
-        if (canPlace(word, tryRow, tryCol, 'across')) {
-          placedWords.push({ id, word, clue, direction: 'across', start_row: tryRow, start_col: tryCol });
-          placed = true;
-        }
-        if (!placed) {
-          // Try to the right of everything
-          if (canPlace(word, OFFSET, maxC + gap, 'down')) {
-            placedWords.push({ id, word, clue, direction: 'down', start_row: OFFSET, start_col: maxC + gap });
-            placed = true;
-          }
+      // No intersecting placement — tuck word just outside the cluster bounding
+      // box with a 2-cell gap, choosing the position closest to the centroid so
+      // it stays visually near the main puzzle rather than floating far away.
+      let minR = Infinity, minC = Infinity, maxR = -Infinity, maxC = -Infinity;
+      let sumR = 0, sumC = 0, totalCells = 0;
+      for (const p of placedWords) {
+        for (let k = 0; k < p.word.length; k++) {
+          const pr = p.direction === 'down'   ? p.start_row + k : p.start_row;
+          const pc = p.direction === 'across' ? p.start_col + k : p.start_col;
+          minR = Math.min(minR, pr); maxR = Math.max(maxR, pr);
+          minC = Math.min(minC, pc); maxC = Math.max(maxC, pc);
+          sumR += pr; sumC += pc; totalCells++;
         }
       }
-      if (!placed) {
-        // Absolute last resort — force placement far away
-        let maxR = OFFSET;
-        for (const p of placedWords) {
-          maxR = Math.max(maxR, p.start_row + (p.direction === 'down' ? p.word.length : 1));
+      const centR = sumR / totalCells;
+      const centC = sumC / totalCells;
+      const GAP = 2;
+      const fallbackCandidates = [];
+
+      const tryFallback = (r, c, dir) => {
+        if (r < 0 || c < 0) return;
+        if (canPlace(word, r, c, dir)) {
+          const midR = dir === 'down'   ? r + word.length / 2 : r;
+          const midC = dir === 'across' ? c + word.length / 2 : c;
+          fallbackCandidates.push({ r, c, dir, dist: Math.abs(midR - centR) + Math.abs(midC - centC) });
         }
-        placedWords.push({ id, word, clue, direction: 'across', start_row: maxR + 4, start_col: OFFSET });
+      };
+
+      // Scan all four edges of the bounding box
+      for (let c = minC - 1; c <= maxC + 1; c++) {
+        tryFallback(maxR + GAP + 1, c, 'across');
+        tryFallback(minR - GAP - 1, c, 'across');
+        tryFallback(maxR + GAP + 1, c, 'down');
+        tryFallback(minR - GAP - word.length, c, 'down');
+      }
+      for (let r = minR - 1; r <= maxR + 1; r++) {
+        tryFallback(r, maxC + GAP + 1, 'across');
+        tryFallback(r, minC - GAP - word.length, 'across');
+        tryFallback(r, maxC + GAP + 1, 'down');
+        tryFallback(r, minC - GAP - 1, 'down');
+      }
+
+      if (fallbackCandidates.length > 0) {
+        fallbackCandidates.sort((a, b) => a.dist - b.dist);
+        const best = fallbackCandidates[0];
+        placedWords.push({ id, word, clue, direction: best.dir, start_row: best.r, start_col: best.c });
+      } else {
+        // Absolute last resort
+        placedWords.push({ id, word, clue, direction: 'across', start_row: maxR + GAP + 1, start_col: minC });
       }
     }
   }
@@ -365,10 +380,10 @@ const submitScore = async (req, res) => {
   if (!player_id || !session_id)
     return res.status(400).json({ error: 'player_id and session_id required' });
 
-  const safeWordsCorrect = Math.max(0, parseInt(words_correct, 10) || 0);
-  const safeTotalWords = Math.max(0, parseInt(total_words, 10) || 0);
+  const safeWordsCorrect  = Math.max(0, parseInt(words_correct,  10) || 0);
+  const safeTotalWords    = Math.max(0, parseInt(total_words,    10) || 0);
   const safeTimeRemaining = Math.max(0, parseInt(time_remaining, 10) || 0);
-  const safeTimeTaken = Math.max(0, parseInt(time_taken, 10) || 0);
+  const safeTimeTaken     = Math.max(0, parseInt(time_taken,     10) || 0);
 
   try {
     const [playerRows] = await db.query(
