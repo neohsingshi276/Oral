@@ -97,6 +97,7 @@ const GamePage = () => {
   const [allDone, setAllDone] = useState(false);
   const [quizKey, setQuizKey] = useState(0);
   const [showTutorial, setShowTutorial] = useState(() => !localStorage.getItem('tutorial_seen'));
+  const [tutorialPage, setTutorialPage] = useState(0); // 0=movement, 1=checkpoints, 2=cp details
   const [showConfetti, setShowConfetti] = useState(false);
   const [crosswordKey, setCrosswordKey] = useState(0);
 
@@ -187,9 +188,10 @@ const GamePage = () => {
   };
 
   const handleQuizRetry = () => {
+    // Force student to re-watch the video before retrying the activity
     api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }).catch(console.error);
     setQuizKey(prev => prev + 1);
-    setCpStep('activity');
+    setCpStep('video');
   };
 
   const handleCloseCPModal = () => {
@@ -295,44 +297,162 @@ const GamePage = () => {
         <GameCanvas player={player} progress={progress} onCheckpointReached={handleCheckpointReached} paused={isWorldPaused} />
       </div>
 
-      {/* Tutorial Overlay */}
-      {showTutorial && (
-        <div style={s.overlay}>
-          <div style={{ ...s.doneCard, maxWidth: '500px' }}>
-            <div style={{ fontSize: '4rem', marginBottom: '0.5rem' }}>🗺️</div>
-            <h2 style={{ ...s.doneTitle, fontSize: '1.5rem' }}>Selamat Datang ke Dental Quest!</h2>
-            <div style={{ textAlign: 'left', margin: '1.5rem 0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#eff6ff', padding: '1rem', borderRadius: '12px' }}>
-                <span style={{ fontSize: '2rem' }}>🕹️</span>
+      {/* Tutorial Overlay — 3-page walkthrough */}
+      {showTutorial && (() => {
+        // tut must be defined first — const is not hoisted
+        const tut = {
+          row: (bg) => ({ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', background: bg, padding: '0.85rem', borderRadius: '10px' }),
+          icon: { fontSize: '1.6rem', flexShrink: 0, marginTop: '2px' },
+          cpBadge: { color: '#fff', fontWeight: '800', fontSize: '0.75rem', padding: '0.3rem 0.6rem', borderRadius: '8px', flexShrink: 0, marginTop: '2px', letterSpacing: '0.03em' },
+          title: { color: '#1e3a5f', display: 'block', marginBottom: '0.2rem', fontSize: '0.92rem' },
+          desc: { margin: 0, color: '#475569', fontSize: '0.83rem', lineHeight: 1.5 },
+          kbd: { background: '#1e293b', color: '#FFD700', border: '1px solid #334155', borderRadius: '4px', padding: '1px 5px', fontSize: '0.78rem', fontFamily: 'monospace', margin: '0 1px' },
+          nav: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem' },
+          dots: { display: 'flex', gap: '6px' },
+          dot: { width: '8px', height: '8px', borderRadius: '50%' },
+        };
+
+        const pages = [
+          // Page 0 — Movement controls
+          <div key="p0" style={{ ...s.doneCard, maxWidth: '520px', padding: '2rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '3.5rem' }}>🗺️</div>
+              <h2 style={{ ...s.doneTitle, fontSize: '1.4rem', margin: '0.5rem 0 0.25rem' }}>Selamat Datang ke Dental Quest!</h2>
+              <p style={{ color: '#64748b', fontSize: '0.88rem', margin: 0 }}>Baca arahan sebelum bermain • 1 / 3</p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', margin: '1.25rem 0' }}>
+              <div style={tut.row('#eff6ff')}>
+                <span style={tut.icon}>🕹️</span>
                 <div>
-                  <strong style={{ color: '#1e3a5f' }}>Gerakkan watak anda</strong>
-                  <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.9rem' }}>Guna <strong>W A S D</strong> atau <strong>Anak Panah</strong></p>
+                  <strong style={tut.title}>Gerakkan Watak</strong>
+                  <p style={tut.desc}>Tekan <kbd style={tut.kbd}>W</kbd><kbd style={tut.kbd}>A</kbd><kbd style={tut.kbd}>S</kbd><kbd style={tut.kbd}>D</kbd> atau kekunci <kbd style={tut.kbd}>↑</kbd><kbd style={tut.kbd}>↓</kbd><kbd style={tut.kbd}>←</kbd><kbd style={tut.kbd}>→</kbd> untuk bergerak</p>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f0fdf4', padding: '1rem', borderRadius: '12px' }}>
-                <span style={{ fontSize: '2rem' }}>🎯</span>
+              <div style={tut.row('#f0fdf4')}>
+                <span style={tut.icon}>🎯</span>
                 <div>
-                  <strong style={{ color: '#1e3a5f' }}>Masuk pusat pemeriksaan</strong>
-                  <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.9rem' }}>Pergi ke bulatan bercahaya dan tekan <strong>E</strong></p>
+                  <strong style={tut.title}>Masuk Pusat Pemeriksaan</strong>
+                  <p style={tut.desc}>Jalan ke bulatan bercahaya, kemudian tekan <kbd style={tut.kbd}>E</kbd> untuk masuk</p>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#fff7ed', padding: '1rem', borderRadius: '12px' }}>
-                <span style={{ fontSize: '2rem' }}>📋</span>
+              <div style={tut.row('#fff7ed')}>
+                <span style={tut.icon}>💬</span>
                 <div>
-                  <strong style={{ color: '#1e3a5f' }}>Lengkapkan semua 3 pusat</strong>
-                  <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.9rem' }}>Tonton video, buat aktiviti, kemudian teruskan!</p>
+                  <strong style={tut.title}>Butang Sembang</strong>
+                  <p style={tut.desc}>Gunakan butang 💬 di sudut bawah kanan untuk bertanya kepada guru anda</p>
+                </div>
+              </div>
+              <div style={tut.row('#fdf4ff')}>
+                <span style={tut.icon}>💾</span>
+                <div>
+                  <strong style={tut.title}>Kemajuan Disimpan Automatik</strong>
+                  <p style={tut.desc}>Jika halaman tertutup secara tidak sengaja, kemajuan anda selamat — sertai semula sahaja!</p>
                 </div>
               </div>
             </div>
-            <button
-              style={{ ...s.continueBtn, background: '#2563eb' }}
-              onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}
-            >
-              Mula!
-            </button>
+            <div style={tut.nav}>
+              <div style={tut.dots}>{[0, 1, 2].map(i => <div key={i} style={{ ...tut.dot, background: i === 0 ? '#2563eb' : '#cbd5e1' }} />)}</div>
+              <button style={{ ...s.continueBtn, width: 'auto', padding: '0.7rem 2rem' }} onClick={() => setTutorialPage(1)}>Seterusnya →</button>
+            </div>
+          </div>,
+
+          // Page 1 — Checkpoints overview
+          <div key="p1" style={{ ...s.doneCard, maxWidth: '520px', padding: '2rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '3.5rem' }}>🏁</div>
+              <h2 style={{ ...s.doneTitle, fontSize: '1.4rem', margin: '0.5rem 0 0.25rem' }}>3 Pusat Pemeriksaan</h2>
+              <p style={{ color: '#64748b', fontSize: '0.88rem', margin: 0 }}>Mesti selesai mengikut urutan • 2 / 3</p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', margin: '1.25rem 0' }}>
+              <div style={tut.row('#eff6ff')}>
+                <span style={tut.icon}>🎬</span>
+                <div>
+                  <strong style={tut.title}>Langkah 1 — Tonton Video</strong>
+                  <p style={tut.desc}>Setiap pusat mempunyai video pendidikan. <strong>Anda mesti menonton video penuh</strong> sebelum aktiviti dibuka.</p>
+                </div>
+              </div>
+              <div style={tut.row('#f0fdf4')}>
+                <span style={tut.icon}>🎮</span>
+                <div>
+                  <strong style={tut.title}>Langkah 2 — Buat Aktiviti</strong>
+                  <p style={tut.desc}>Selepas video, selesaikan aktiviti untuk melengkapkan pusat tersebut.</p>
+                </div>
+              </div>
+              <div style={tut.row('#fff7ed')}>
+                <span style={tut.icon}>⚠️</span>
+                <div>
+                  <strong style={tut.title}>Jika Tidak Lulus</strong>
+                  <p style={tut.desc}><strong>Anda perlu tonton semula video</strong> sebelum cuba aktiviti sekali lagi. Beri perhatian semasa menonton!</p>
+                </div>
+              </div>
+              <div style={tut.row('#fdf4ff')}>
+                <span style={tut.icon}>🏆</span>
+                <div>
+                  <strong style={tut.title}>Papan Markah</strong>
+                  <p style={tut.desc}>Markah anda akan dipaparkan dalam papan markah selepas setiap aktiviti. Cuba capai tempat pertama!</p>
+                </div>
+              </div>
+            </div>
+            <div style={tut.nav}>
+              <div style={tut.dots}>{[0, 1, 2].map(i => <div key={i} style={{ ...tut.dot, background: i === 1 ? '#2563eb' : '#cbd5e1' }} />)}</div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button style={{ ...s.continueBtn, width: 'auto', padding: '0.7rem 1.5rem', background: '#64748b' }} onClick={() => setTutorialPage(0)}>← Balik</button>
+                <button style={{ ...s.continueBtn, width: 'auto', padding: '0.7rem 2rem' }} onClick={() => setTutorialPage(2)}>Seterusnya →</button>
+              </div>
+            </div>
+          </div>,
+
+          // Page 2 — CP details
+          <div key="p2" style={{ ...s.doneCard, maxWidth: '540px', padding: '2rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '3.5rem' }}>🦷</div>
+              <h2 style={{ ...s.doneTitle, fontSize: '1.4rem', margin: '0.5rem 0 0.25rem' }}>Apa Ada di Setiap Pusat?</h2>
+              <p style={{ color: '#64748b', fontSize: '0.88rem', margin: 0 }}>Senarai aktiviti • 3 / 3</p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', margin: '1.25rem 0' }}>
+              <div style={tut.row('#ede9fe')}>
+                <div style={{ ...tut.cpBadge, background: '#7B2FBE' }}>CP1</div>
+                <div>
+                  <strong style={tut.title}>Pusat 1 — Kuiz ❓</strong>
+                  <p style={tut.desc}>Jawab soalan kuiz pelbagai pilihan tentang kesihatan pergigian. Jawab dengan tepat dan pantas untuk markah tinggi!</p>
+                </div>
+              </div>
+              <div style={tut.row('#fce7f3')}>
+                <div style={{ ...tut.cpBadge, background: '#CC3380' }}>CP2</div>
+                <div>
+                  <strong style={tut.title}>Pusat 2 — Teka Silang Kata 🧩</strong>
+                  <p style={tut.desc}>Lengkapkan teka silang kata pergigian menggunakan petunjuk yang diberikan. Guna butang 💡 jika perlukan bantuan!</p>
+                </div>
+              </div>
+              <div style={tut.row('#fff7ed')}>
+                <div style={{ ...tut.cpBadge, background: '#E85D04' }}>CP3</div>
+                <div>
+                  <strong style={tut.title}>Pusat 3 — Permainan Makanan 🍎</strong>
+                  <p style={tut.desc}>Pilih makanan yang baik dan buruk untuk kesihatan gigi. Kumpul markah tertinggi!</p>
+                </div>
+              </div>
+            </div>
+            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '1.25rem', fontSize: '0.83rem', color: '#15803d' }}>
+              🏆 <strong>Papan markah</strong> akan dipaparkan selepas setiap aktiviti — lihat kedudukan anda berbanding rakan-rakan!
+            </div>
+            <div style={tut.nav}>
+              <div style={tut.dots}>{[0, 1, 2].map(i => <div key={i} style={{ ...tut.dot, background: i === 2 ? '#2563eb' : '#cbd5e1' }} />)}</div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button style={{ ...s.continueBtn, width: 'auto', padding: '0.7rem 1.5rem', background: '#64748b' }} onClick={() => setTutorialPage(1)}>← Balik</button>
+                <button style={{ ...s.continueBtn, width: 'auto', padding: '0.7rem 2rem', background: '#16a34a' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}>
+                  🚀 Mula Bermain!
+                </button>
+              </div>
+            </div>
+          </div>,
+        ];
+
+        return (
+          <div style={s.overlay}>
+            {pages[tutorialPage]}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* All Done — Congratulations screen */}
       {allDone && (
@@ -420,8 +540,10 @@ const GamePage = () => {
                 key={crosswordKey}
                 onComplete={handleActivityDone}
                 onRetry={() => {
+                  // Force student to re-watch the video before retrying crossword
                   api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }).catch(console.error);
                   setCrosswordKey(prev => prev + 1);
+                  setCpStep('video');
                 }}
                 playerId={player.id}
                 sessionId={player.session_id}
