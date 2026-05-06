@@ -27,11 +27,14 @@ const createPlayerChatToken = (player) =>
   );
 
 // ─── joinGame ─────────────────────────────────────────────────────────────────
-// FIX: Added duplicate-nickname check so the same nickname cannot join twice
-// in the same session — prevents polluted analytics and leaderboards.
+// If the player sends their existing player_id (stored in localStorage) AND it
+// matches the session + nickname, we resume their progress instead of creating
+// a new record. Otherwise we always create a fresh player — duplicate nicknames
+// in the same session are intentionally allowed so teachers can distinguish
+// students by seating/context rather than being forced to use unique names.
 const joinGame = async (req, res) => {
   const { token } = req.params;
-  const { nickname } = req.body;
+  const { nickname, resume_player_id } = req.body;
 
   if (!nickname || typeof nickname !== 'string')
     return res.status(400).json({ error: 'Nickname required' });
@@ -40,7 +43,6 @@ const joinGame = async (req, res) => {
   if (cleanNick.length < 1)
     return res.status(400).json({ error: 'Nickname cannot be empty' });
 
-  // Extra guard: reject clearly invalid token formats before hitting DB
   if (!token || typeof token !== 'string' || token.length !== 4 || !/^\d{4}$/.test(token))
     return res.status(400).json({ error: 'Invalid session code' });
 
@@ -54,14 +56,29 @@ const joinGame = async (req, res) => {
 
     const session = sessions[0];
 
-    // FIX: Prevent duplicate nicknames in the same session
-    const [existing] = await db.query(
-      'SELECT id FROM players WHERE session_id = ? AND nickname = ?',
-      [session.id, cleanNick]
-    );
-    if (existing.length > 0)
-      return res.status(409).json({ error: 'This nickname is already taken. Please choose a different one.' });
+    // ── Resume path: only if the client provides their own player ID ──────────
+    const resumeId = safeId(resume_player_id);
+    if (resumeId) {
+      const [resumeRows] = await db.query(
+        'SELECT * FROM players WHERE id = ? AND session_id = ?',
+        [resumeId, session.id]
+      );
+      if (resumeRows.length > 0) {
+        const p = {
+          id: resumeRows[0].id,
+          nickname: resumeRows[0].nickname,
+          session_id: resumeRows[0].session_id,
+          session_name: session.session_name,
+        };
+        return res.status(200).json({
+          message: 'Resumed successfully',
+          player: { ...p, chat_token: createPlayerChatToken(p) },
+        });
+      }
+      // resume_player_id didn't match — fall through and create a new player
+    }
 
+    // ── New player path ───────────────────────────────────────────────────────
     const [result] = await db.query(
       'INSERT INTO players (session_id, nickname) VALUES (?, ?)',
       [session.id, cleanNick]
@@ -89,10 +106,7 @@ const joinGame = async (req, res) => {
 
     res.status(201).json({
       message: 'Joined successfully',
-      player: {
-        ...player,
-        chat_token: createPlayerChatToken(player),
-      }
+      player: { ...player, chat_token: createPlayerChatToken(player) },
     });
   } catch (err) {
     console.error('Join game error:', err.message);
@@ -212,24 +226,8 @@ const getCheckpointVideos = async (req, res) => {
   }
 };
 
-// ─── checkPlayerExists ────────────────────────────────────────────────────────
-// Lightweight endpoint for the game client to poll and detect if the player
-// has been deleted by an admin while the game is still running.
-const checkPlayerExists = async (req, res) => {
-  const player_id = safeId(req.params.player_id);
-  if (!player_id) return res.status(400).json({ exists: false });
-
-  try {
-    const [rows] = await db.query('SELECT id FROM players WHERE id = ?', [player_id]);
-    res.json({ exists: rows.length > 0 });
-  } catch (err) {
-    res.status(500).json({ exists: false });
-  }
-};
-
 module.exports = {
   joinGame, savePosition, getPosition,
   recordAttempt, completeCheckpoint,
-  getProgress, getCheckpointVideos,
-  checkPlayerExists
+  getProgress, getCheckpointVideos
 };

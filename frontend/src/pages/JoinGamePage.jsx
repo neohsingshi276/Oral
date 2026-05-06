@@ -63,10 +63,23 @@ const JoinGamePage = () => {
     setLoading(true);
     setError('');
     try {
-      // Clear any stale player data from a previous session before joining
+      // Check if this browser already has a player for this session — if so,
+      // pass their ID so the backend can resume their progress. We do NOT clear
+      // localStorage yet; the backend decides whether to resume or create fresh.
+      let resumePlayerId = null;
+      try {
+        const saved = JSON.parse(localStorage.getItem('player'));
+        if (saved?.session_id === session.id) {
+          resumePlayerId = saved.id;
+        }
+      } catch { /* ignore malformed localStorage */ }
+
       localStorage.removeItem('player');
       localStorage.removeItem('tutorial_seen');
-      const res = await api.post(`/game/join/${session.unique_token}`, { nickname: nickname.trim() });
+      const res = await api.post(`/game/join/${session.unique_token}`, {
+        nickname: nickname.trim(),
+        resume_player_id: resumePlayerId,
+      });
       localStorage.setItem('player', JSON.stringify(res.data.player));
       navigate(`/game/${session.unique_token}`);
     } catch (err) {
