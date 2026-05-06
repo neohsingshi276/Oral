@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import PhaserGameScene from './PhaserGameScene';
 import api from '../services/api';
 import { START_POS } from './gameConfig';
@@ -11,6 +11,10 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
   const sceneRef = useRef(null);
   const lastSave = useRef(Date.now());
   const hasBooted = useRef(false);
+
+  // Loading state
+  const [ready, setReady] = useState(false);
+  const [loadPct, setLoadPct] = useState(0);
 
   // Keep latest progress in a ref so the scene can read it every frame
   // without needing Phaser to restart when React re-renders.
@@ -95,8 +99,8 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
           playerNickname: player.nickname,
           initialPos,                       // ← player spawns here, not (0,0)
           onNearCheckpoint: () => { },
-          onLoadProgress: () => { },
-          onLoadComplete: () => { },
+          onLoadProgress: (pct) => setLoadPct(Math.round(pct * 100)),
+          onLoadComplete: () => setReady(true),
         };
 
         const game = new Phaser.Game({
@@ -160,19 +164,58 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        width: '100%',
-        lineHeight: 0,
-        borderRadius: '12px',
-        overflow: 'hidden',
-        border: '3px solid #1e3a5f',
-        margin: '0 auto',
-      }}
-    />
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* Loading overlay — shown until Phaser fires onLoadComplete */}
+      {!ready && (
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          background: '#1a1a2e',
+          borderRadius: '12px',
+          border: '3px solid #1e3a5f',
+          zIndex: 10,
+          gap: 16,
+          minHeight: 300,
+        }}>
+          {/* Tooth emoji spinner */}
+          <div style={{ fontSize: 48, animation: 'spin 1.2s linear infinite' }}>🦷</div>
+          <div style={{ color: '#FFD700', fontWeight: 'bold', fontSize: 18 }}>
+            Loading Dental Quest…
+          </div>
+          {/* Progress bar */}
+          <div style={{
+            width: 220, height: 10,
+            background: '#0f1a2e',
+            borderRadius: 5,
+            overflow: 'hidden',
+            border: '1px solid #2563eb',
+          }}>
+            <div style={{
+              height: '100%',
+              width: `${loadPct}%`,
+              background: 'linear-gradient(90deg, #2563eb, #7B2FBE)',
+              borderRadius: 5,
+              transition: 'width 0.2s ease',
+            }} />
+          </div>
+          <div style={{ color: '#94a3b8', fontSize: 13 }}>{loadPct}%</div>
+          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+      <div
+        ref={containerRef}
+        style={{
+          width: '100%',
+          lineHeight: 0,
+          borderRadius: '12px',
+          overflow: 'hidden',
+          border: '3px solid #1e3a5f',
+          margin: '0 auto',
+        }}
+      />
+    </div>
   );
 };
-
 
 export default GameCanvas;

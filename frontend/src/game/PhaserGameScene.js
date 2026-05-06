@@ -132,7 +132,8 @@ export default class PhaserGameScene extends Phaser.Scene {
       this.onLoadProgress(value);
     });
     this.load.on('complete', () => {
-      this.onLoadComplete();
+      // We defer this.onLoadComplete() until the end of create()
+      // to keep the loading screen up while the tilemap is parsed and built.
     });
 
     // Load tilemap JSON
@@ -518,6 +519,9 @@ export default class PhaserGameScene extends Phaser.Scene {
     // Store map reference for position saving
     this.mapWidthPx = mapWidthPx;
     this.mapHeightPx = mapHeightPx;
+
+    // Signal that loading and map generation is complete
+    this.onLoadComplete();
   }
 
   update() {
@@ -531,8 +535,8 @@ export default class PhaserGameScene extends Phaser.Scene {
         console.error("🚨 Player position is invalid:", pos);
 
         this.matter.body.setPosition(this.playerBody, {
-          x: 3296,
-          y: 5000
+          x: START_POS.x,
+          y: START_POS.y
         });
 
         return;
