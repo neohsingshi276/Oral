@@ -136,7 +136,7 @@ export default class PhaserGameScene extends Phaser.Scene {
     });
 
     // Load tilemap JSON
-    this.load.tilemapTiledJSON('mainmap', '/assets/mapnew.json');
+    this.load.tilemapTiledJSON('mainmap', '/assets/map.json');
 
     // Load all tileset images
     TILESET_ASSETS.forEach(({ key, file }) => {
