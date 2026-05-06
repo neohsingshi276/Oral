@@ -1,102 +1,306 @@
 const db = require('../db');
 
 // ============================================
-// AUTO-LAYOUT GENERATOR
+// AUTO-LAYOUT GENERATOR (v2)
 // ============================================
+// Key rules:
+//   1. Words that SHARE a letter may occupy the same or adjacent cells only at
+//      the exact intersection point — everywhere else they must be separated.
+//   2. Words that do NOT share any letter must have at least 2 cells of empty
+//      space between them (no touching sides or corners).
+//   3. An ACROSS word may not immediately precede/follow another ACROSS word on
+//      the same row (they would visually merge into one long word).
+//   4. A DOWN word may not immediately precede/follow another DOWN word in the
+//      same column.
+//   5. Fallback (unconnected) words are spaced far apart from all existing content.
 function generateCrosswordLayout(wordsData) {
+  // Working in a large virtual grid; normalise to 0-based at the end.
+  const OFFSET = 50; // start coordinates so we have room to go negative during placement
+
   const placedWords = [];
   const sorted = [...wordsData].sort((a, b) => b.word.length - a.word.length);
 
-  function checkCollision(word, row, col, direction) {
-    for (let i = 0; i < word.length; i++) {
-      const char = word[i];
-      const r = row + (direction === 'down' ? i : 0);
-      const c = col + (direction === 'across' ? i : 0);
-      if (r < 0 || c < 0) return false;
-      for (const p of placedWords) {
-        if (p.direction === 'down') {
-          if (p.start_col === c && p.start_row <= r && r < p.start_row + p.word.length) {
-            if (p.word[r - p.start_row] !== char) return false;
-          }
+  // --- helpers ---------------------------------------------------------------
+
+  // Returns every (row, col) occupied by a placed word.
+  function cellsOf(p) {
+    const cells = [];
+    for (let i = 0; i < p.word.length; i++) {
+      cells.push({
+        r: p.direction === 'down' ? p.start_row + i : p.start_row,
+        c: p.direction === 'across' ? p.start_col + i : p.start_col,
+      });
+    }
+    return cells;
+  }
+
+  // Build a map from "r,c" → the placed word index that owns that cell.
+  // A cell can be shared only when two words intersect on the same letter.
+  function buildOccupied() {
+    const map = {}; // "r,c" -> { letter, wordIdx, isIntersection? }
+    placedWords.forEach((p, idx) => {
+      cellsOf(p).forEach(({ r, c }) => {
+        const key = `${r},${c}`;
+        if (map[key]) {
+          map[key].shared = true; // marks a valid intersection
         } else {
-          if (p.start_row === r && p.start_col <= c && c < p.start_col + p.word.length) {
-            if (p.word[c - p.start_col] !== char) return false;
+          map[key] = { letter: p.word[/* will be set below */0], wordIdx: idx, shared: false };
+        }
+      });
+    });
+    return map;
+  }
+
+  // Check whether placing `word` at (row, col, direction) is valid.
+  // Returns false if:
+  //   - any cell is out of virtual bounds
+  //   - a cell is occupied by a different letter (letter conflict)
+  //   - a cell that should be empty borders another word's cell (spacing violation)
+  //   - the word would extend past / touch the tip of a same-direction word
+  function canPlace(word, row, col, direction) {
+    const len = word.length;
+
+    // 1. Build set of cells this candidate word needs.
+    const myCells = [];
+    for (let i = 0; i < len; i++) {
+      myCells.push({
+        r: direction === 'down' ? row + i : row,
+        c: direction === 'across' ? col + i : col,
+        letter: word[i],
+      });
+    }
+
+    // 2. Reject negative coords (they'll normalise away but collisions checked below may not).
+    for (const { r, c } of myCells) {
+      if (r < 0 || c < 0) return false;
+    }
+
+    // 3. For each candidate cell, check letter compatibility with existing grid.
+    //    Build a quick lookup of occupied cells for this check.
+    for (const p of placedWords) {
+      for (let i = 0; i < p.word.length; i++) {
+        const pr = p.direction === 'down' ? p.start_row + i : p.start_row;
+        const pc = p.direction === 'across' ? p.start_col + i : p.start_col;
+        const pl = p.word[i];
+        // Find if my word touches this cell.
+        const hit = myCells.find(mc => mc.r === pr && mc.c === pc);
+        if (hit) {
+          // A shared cell: letters must match.
+          if (hit.letter !== pl) return false;
+          // And the two words must be perpendicular (no two same-direction words can overlap).
+          if (p.direction === direction) return false;
+        }
+      }
+    }
+
+    // 4. The cell immediately BEFORE the start and AFTER the end of the new
+    //    word (in its own direction) must be empty — otherwise two same-direction
+    //    words would appear to merge.
+    const beforeR = direction === 'down' ? row - 1 : row;
+    const beforeC = direction === 'across' ? col - 1 : col;
+    const afterR = direction === 'down' ? row + len : row;
+    const afterC = direction === 'across' ? col + len : col;
+
+    for (const p of placedWords) {
+      for (let i = 0; i < p.word.length; i++) {
+        const pr = p.direction === 'down' ? p.start_row + i : p.start_row;
+        const pc = p.direction === 'across' ? p.start_col + i : p.start_col;
+        if ((pr === beforeR && pc === beforeC) || (pr === afterR && pc === afterC)) {
+          return false; // merging risk
+        }
+      }
+    }
+
+    // 5. Spacing rule: for every cell of the new word that does NOT intersect an
+    //    existing word's cell, none of its perpendicular neighbours (the sides of
+    //    the word) may be occupied — this prevents words running parallel with
+    //    only one empty cell between them (which looks merged).
+    //
+    //    Perpendicular neighbours for ACROSS word at (r, c): (r-1, c) and (r+1, c)
+    //    Perpendicular neighbours for DOWN   word at (r, c): (r, c-1) and (r, c+1)
+    //
+    //    We only apply this to NON-intersection cells (intersection cells are
+    //    allowed to touch the crossing word by definition).
+
+    // Build quick set of intersection cells (cells that are shared with existing grid).
+    const intersectionSet = new Set();
+    for (const mc of myCells) {
+      for (const p of placedWords) {
+        for (let i = 0; i < p.word.length; i++) {
+          const pr = p.direction === 'down' ? p.start_row + i : p.start_row;
+          const pc = p.direction === 'across' ? p.start_col + i : p.start_col;
+          if (pr === mc.r && pc === mc.c) {
+            intersectionSet.add(`${mc.r},${mc.c}`);
           }
         }
       }
     }
+
+    // Build occupied set for quick lookup.
+    const occupiedSet = new Set();
+    for (const p of placedWords) {
+      for (let i = 0; i < p.word.length; i++) {
+        const pr = p.direction === 'down' ? p.start_row + i : p.start_row;
+        const pc = p.direction === 'across' ? p.start_col + i : p.start_col;
+        occupiedSet.add(`${pr},${pc}`);
+      }
+    }
+
+    for (const mc of myCells) {
+      if (intersectionSet.has(`${mc.r},${mc.c}`)) continue; // intersection cell — skip spacing check
+
+      // Perpendicular neighbour cells
+      const neighbours = direction === 'across'
+        ? [{ r: mc.r - 1, c: mc.c }, { r: mc.r + 1, c: mc.c }]
+        : [{ r: mc.r, c: mc.c - 1 }, { r: mc.r, c: mc.c + 1 }];
+
+      for (const nb of neighbours) {
+        if (occupiedSet.has(`${nb.r},${nb.c}`)) return false; // parallel neighbour occupied → too close
+      }
+    }
+
     return true;
   }
 
-  // FIX: Track the next safe fallback row so floated words never stack on
-  // each other when many words fail to intersect.
-  let nextFallbackRow = 10;
+  // Score a placement: prefer positions that create more intersections (connected
+  // to more existing words) and are closer to the existing cluster's centroid.
+  function scorePlacement(word, row, col, direction, intersectionCount) {
+    // More intersections = better (compact grid).
+    let score = intersectionCount * 100;
+
+    // Prefer placements near the centroid of already-placed words.
+    if (placedWords.length > 0) {
+      let sumR = 0, sumC = 0, totalCells = 0;
+      for (const p of placedWords) {
+        for (let i = 0; i < p.word.length; i++) {
+          sumR += p.direction === 'down' ? p.start_row + i : p.start_row;
+          sumC += p.direction === 'across' ? p.start_col + i : p.start_col;
+          totalCells++;
+        }
+      }
+      const centR = sumR / totalCells;
+      const centC = sumC / totalCells;
+      const midR = direction === 'down' ? row + word.length / 2 : row;
+      const midC = direction === 'across' ? col + word.length / 2 : col;
+      const dist = Math.abs(midR - centR) + Math.abs(midC - centC);
+      score -= dist; // closer = higher score
+    }
+
+    return score;
+  }
+
+  // ---------------------------------------------------------------------------
 
   for (let i = 0; i < sorted.length; i++) {
     const item = sorted[i];
     const word = item.word.toUpperCase().trim();
     const clue = item.clue;
-    const id   = item.id;
+    const id = item.id;
 
     if (i === 0) {
-      placedWords.push({ id, word, clue, direction: 'across', start_row: 10, start_col: 10 });
+      // Place the longest word horizontally near the centre of our virtual grid.
+      placedWords.push({ id, word, clue, direction: 'across', start_row: OFFSET, start_col: OFFSET });
       continue;
     }
 
-    let foundFit = false;
+    // Collect all valid candidate placements by trying to intersect with every
+    // letter of every already-placed word.
+    const candidates = [];
+
     for (const placed of placedWords) {
-      if (foundFit) break;
       for (let pIdx = 0; pIdx < placed.word.length; pIdx++) {
-        if (foundFit) break;
         for (let wIdx = 0; wIdx < word.length; wIdx++) {
-          if (placed.word[pIdx] === word[wIdx]) {
-            const newDir = placed.direction === 'across' ? 'down' : 'across';
+          if (placed.word[pIdx] !== word[wIdx]) continue;
 
-            // FIX: Correct intersection math for all direction combinations.
-            // When placing a 'down' word crossing an 'across' placed word:
-            //   - The crossing cell is at placed.start_col + pIdx (col of the shared letter)
-            //   - The new word starts wIdx rows above that row
-            // When placing an 'across' word crossing a 'down' placed word:
-            //   - The crossing cell is at placed.start_row + pIdx (row of the shared letter)
-            //   - The new word starts wIdx cols to the left of that col
-            let newRow, newCol;
-            if (newDir === 'down') {
-              // new word is DOWN, placed word is ACROSS
-              newRow = placed.start_row - wIdx;
-              newCol = placed.start_col + pIdx;
-            } else {
-              // new word is ACROSS, placed word is DOWN
-              newRow = placed.start_row + pIdx;
-              newCol = placed.start_col - wIdx;
-            }
+          const newDir = placed.direction === 'across' ? 'down' : 'across';
+          let newRow, newCol;
 
-            if (checkCollision(word, newRow, newCol, newDir)) {
-              placedWords.push({ id, word, clue, direction: newDir, start_row: newRow, start_col: newCol });
-              foundFit = true;
-              break;
+          if (newDir === 'down') {
+            // new word DOWN, placed word ACROSS
+            // Intersection cell row = placed.start_row, col = placed.start_col + pIdx
+            // new word's wIdx-th letter is at that cell ⟹ start_row = placed.start_row - wIdx
+            newRow = placed.start_row - wIdx;
+            newCol = placed.start_col + pIdx;
+          } else {
+            // new word ACROSS, placed word DOWN
+            newRow = placed.start_row + pIdx;
+            newCol = placed.start_col - wIdx;
+          }
+
+          if (canPlace(word, newRow, newCol, newDir)) {
+            // Count how many cells of this placement intersect existing words
+            // (used as placement quality score).
+            let intersections = 0;
+            for (let k = 0; k < word.length; k++) {
+              const tr = newDir === 'down' ? newRow + k : newRow;
+              const tc = newDir === 'across' ? newCol + k : newCol;
+              for (const p2 of placedWords) {
+                for (let m = 0; m < p2.word.length; m++) {
+                  const pr2 = p2.direction === 'down' ? p2.start_row + m : p2.start_row;
+                  const pc2 = p2.direction === 'across' ? p2.start_col + m : p2.start_col;
+                  if (tr === pr2 && tc === pc2) intersections++;
+                }
+              }
             }
+            const sc = scorePlacement(word, newRow, newCol, newDir, intersections);
+            candidates.push({ newRow, newCol, newDir, sc });
           }
         }
       }
     }
 
-    if (!foundFit) {
-      // FIX: Each fallback word gets its own row (3 rows apart) so they
-      // never overlap each other in the rendered grid.
-      placedWords.push({ id, word, clue, direction: 'across', start_row: nextFallbackRow, start_col: 20 });
-      nextFallbackRow += 3;
+    if (candidates.length > 0) {
+      // Pick the highest-scoring valid placement.
+      candidates.sort((a, b) => b.sc - a.sc);
+      const best = candidates[0];
+      placedWords.push({ id, word, clue, direction: best.newDir, start_row: best.newRow, start_col: best.newCol });
+    } else {
+      // No valid intersecting placement found — place as an isolated word.
+      // Find a row/col that is far enough from ALL existing content (≥ 2 cells gap).
+      let placed = false;
+      for (let gap = 3; gap <= 6 && !placed; gap++) {
+        // Try below all existing content first, then above, then to the right.
+        let maxR = OFFSET, maxC = OFFSET;
+        for (const p of placedWords) {
+          const endR = p.start_row + (p.direction === 'down' ? p.word.length : 1);
+          const endC = p.start_col + (p.direction === 'across' ? p.word.length : 1);
+          maxR = Math.max(maxR, endR);
+          maxC = Math.max(maxC, endC);
+        }
+        const tryRow = maxR + gap;
+        const tryCol = OFFSET;
+        if (canPlace(word, tryRow, tryCol, 'across')) {
+          placedWords.push({ id, word, clue, direction: 'across', start_row: tryRow, start_col: tryCol });
+          placed = true;
+        }
+        if (!placed) {
+          // Try to the right of everything
+          if (canPlace(word, OFFSET, maxC + gap, 'down')) {
+            placedWords.push({ id, word, clue, direction: 'down', start_row: OFFSET, start_col: maxC + gap });
+            placed = true;
+          }
+        }
+      }
+      if (!placed) {
+        // Absolute last resort — force placement far away
+        let maxR = OFFSET;
+        for (const p of placedWords) {
+          maxR = Math.max(maxR, p.start_row + (p.direction === 'down' ? p.word.length : 1));
+        }
+        placedWords.push({ id, word, clue, direction: 'across', start_row: maxR + 4, start_col: OFFSET });
+      }
     }
   }
 
-  // Normalize positions
+  // Normalize: shift everything so minimum row and col are both 1 (leave a 1-cell border).
   let minRow = Infinity, minCol = Infinity;
   for (const w of placedWords) {
     minRow = Math.min(minRow, w.start_row);
     minCol = Math.min(minCol, w.start_col);
   }
   for (const w of placedWords) {
-    w.start_row -= minRow;
-    w.start_col -= minCol;
+    w.start_row -= (minRow - 1);
+    w.start_col -= (minCol - 1);
   }
 
   let maxRow = 0, maxCol = 0;
@@ -107,7 +311,7 @@ function generateCrosswordLayout(wordsData) {
     maxCol = Math.max(maxCol, endCol);
   }
 
-  return { words: placedWords, gridSize: Math.max(maxRow, maxCol) };
+  return { words: placedWords, gridSize: Math.max(maxRow, maxCol) + 1 };
 }
 
 // ─── getCrossword ─────────────────────────────────────────────────────────────
@@ -161,10 +365,10 @@ const submitScore = async (req, res) => {
   if (!player_id || !session_id)
     return res.status(400).json({ error: 'player_id and session_id required' });
 
-  const safeWordsCorrect  = Math.max(0, parseInt(words_correct,  10) || 0);
-  const safeTotalWords    = Math.max(0, parseInt(total_words,    10) || 0);
+  const safeWordsCorrect = Math.max(0, parseInt(words_correct, 10) || 0);
+  const safeTotalWords = Math.max(0, parseInt(total_words, 10) || 0);
   const safeTimeRemaining = Math.max(0, parseInt(time_remaining, 10) || 0);
-  const safeTimeTaken     = Math.max(0, parseInt(time_taken,     10) || 0);
+  const safeTimeTaken = Math.max(0, parseInt(time_taken, 10) || 0);
 
   try {
     const [playerRows] = await db.query(
