@@ -123,13 +123,13 @@ const updateSession = async (req, res) => {
     const [rows] = await db.query('SELECT admin_id FROM game_sessions WHERE id = ?', [sessionId]);
     if (rows.length === 0)
       return res.status(404).json({ error: 'Session not found' });
-    if (req.admin.role !== 'main_admin' && rows[0].admin_id !== req.admin.id)
+    if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin' && rows[0].admin_id !== req.admin.id)
       return res.status(403).json({ error: 'You can only edit your own sessions' });
 
     // Only main_admin can activate/deactivate session codes
     if (is_active !== undefined) {
-      if (req.admin.role !== 'main_admin')
-        return res.status(403).json({ error: 'Only the Main Admin can activate or deactivate session codes' });
+      if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin')
+        return res.status(403).json({ error: 'Only Admins can activate or deactivate session codes' });
       await db.query('UPDATE game_sessions SET is_active = ? WHERE id = ?', [!!is_active, sessionId]);
     }
 
@@ -193,7 +193,7 @@ const deleteSession = async (req, res) => {
     if (rows.length === 0)
       return res.status(404).json({ error: 'Session not found' });
 
-    if (req.admin.role !== 'main_admin' && rows[0].admin_id !== req.admin.id)
+    if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin' && rows[0].admin_id !== req.admin.id)
       return res.status(403).json({ error: 'You can only delete your own sessions' });
 
     await db.query('DELETE FROM game_sessions WHERE id = ?', [req.params.id]);

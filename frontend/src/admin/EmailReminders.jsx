@@ -86,7 +86,8 @@ const EmailReminders = ({ currentAdmin }) => {
           <form onSubmit={handleSend}>
             <div style={s.field}>
               <label style={s.label}>Hantar Kepada</label>
-              <select style={s.input} value={form.to_admin_id} onChange={e => setForm({ ...form, to_admin_id: e.target.value })}>
+              <select style={s.input} value={form.to_admin_id} onChange={e => setForm({ ...form, to_admin_id: e.target.value })} required>
+                <option value="" disabled>Sila Pilih Penerima</option>
                 {isMainAdmin && <option value="all">📢 Semua Staf</option>}
                 {admins.map(a => <option key={a.id} value={a.id}>{a.name} ({a.role === 'main_admin' ? '⭐ Pentadbir Utama' : a.role === 'teacher' ? '👩‍🏫 Guru' : '👨‍💼 Pentadbir'}) — {a.email}</option>)}
                 {currentAdmin?.role !== 'teacher' && <option value="custom">Alamat E-mel Lain</option>}

@@ -334,7 +334,7 @@ const ManageSessions = () => {
               </div>
               <div style={s.sessionActions}>
                 <button style={s.btnEdit} onClick={() => handleEdit(session)}>✏️ Ubahsuai Tetapan</button>
-                {admin?.role === 'main_admin' && (
+                {(admin?.role === 'main_admin' || admin?.role === 'admin') && (
                   <button style={session.is_active ? s.btnDeactivate : s.btnActivate} onClick={() => handleToggle(session.id, session.is_active)}>
                     {session.is_active ? 'Matikan' : 'Aktifkan'}
                   </button>
