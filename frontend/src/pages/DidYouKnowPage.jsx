@@ -67,7 +67,7 @@ const DidYouKnowPage = () => {
       <Navbar />
       <div style={styles.loadingWrap}>
         <div style={styles.loadingSpinner}></div>
-        <p style={styles.loadingText}>Memuatkan fakta menarik... 💡</p>
+        <p style={styles.loadingText}>{t('did.loading') || 'Memuatkan fakta menarik...'} 💡</p>
         <style>{`
           @keyframes spin { to { transform: rotate(360deg); } }
           @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
@@ -135,20 +135,23 @@ const DidYouKnowPage = () => {
 
       {/* Stats Banner */}
       <div style={styles.statsBanner}>
-        {[
-          { icon: '🦷', value: '32', label: 'Gigi Dewasa' },
-          { icon: '🦠', value: '700+', label: 'Jenis Bakteria' },
-          { icon: '💧', value: '1 Liter', label: 'Air Liur Sehari' },
-          { icon: '⏱️', value: '2 Min', label: 'Masa Memberus' },
-          { icon: '📅', value: '2x', label: 'Memberus Sehari' },
-          { icon: '🏥', value: '6 Bln', label: 'Lawatan Doktor Gigi' },
-        ].map((s, i) => (
-          <div key={i} className="stat-card" style={{ ...styles.statCard, animationDelay: `${i * 0.1}s` }}>
-            <div style={styles.statIcon}>{s.icon}</div>
-            <div style={styles.statValue}>{s.value}</div>
-            <div style={styles.statLabel}>{s.label}</div>
-          </div>
-        ))}
+        {(() => {
+          const labels = t('did.stats');
+          return [
+            { icon: '🦷', value: '32', label: labels[0] },
+            { icon: '🦠', value: '700+', label: labels[1] },
+            { icon: '💧', value: '1 Liter', label: labels[2] },
+            { icon: '⏱️', value: '2 Min', label: labels[3] },
+            { icon: '📅', value: '2x', label: labels[4] },
+            { icon: '🏥', value: '6 Bln', label: labels[5] },
+          ].map((s, i) => (
+            <div key={i} className="stat-card" style={{ ...styles.statCard, animationDelay: `${i * 0.1}s` }}>
+              <div style={styles.statIcon}>{s.icon}</div>
+              <div style={styles.statValue}>{s.value}</div>
+              <div style={styles.statLabel}>{s.label}</div>
+            </div>
+          ));
+        })()}
       </div>
 
       {/* Search */}
@@ -158,7 +161,7 @@ const DidYouKnowPage = () => {
           <input
             className="search-input"
             style={styles.searchInput}
-            placeholder="Cari fakta..."
+            placeholder={t('did.searchPlaceholder') || 'Cari fakta...'}
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -167,11 +170,13 @@ const DidYouKnowPage = () => {
           )}
         </div>
         <p style={styles.searchHint}>
-          {search ? `Dijumpai ${filtered.length} fakta` : `${facts.length} fakta menakjubkan untuk diterokai!`}
+          {search
+            ? `${t('did.found') || 'Dijumpai'} ${filtered.length} ${t('did.factsLabel') || 'fakta'}`
+            : `${facts.length} ${t('did.amazingFacts') || 'fakta menakjubkan untuk diterokai!'}`}
         </p>
       </div>
 
-      <p style={styles.flipHint}>👆 Ketik mana-mana kad untuk terbalik dan baca fakta penuh!</p>
+      <p style={styles.flipHint}>👆 {t('did.flipHint') || 'Ketik mana-mana kad untuk terbalik dan baca fakta penuh!'}</p>
 
       {/* Facts Grid */}
       <div style={styles.grid}>
@@ -212,18 +217,18 @@ const DidYouKnowPage = () => {
                     <div style={{ ...styles.cardBadge, background: color.accent }}>💡 {t('did.badge')}</div>
                     <h3 style={{ ...styles.cardTitle, color: color.accent }} data-no-translate="true">{fact.title}</h3>
                     <div style={styles.cardFlipHint}>
-                      <span>Ketik untuk baca lagi</span>
+                      <span>{t('did.readMore')}</span>
                       <span style={{ marginLeft: '4px' }}>→</span>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div style={styles.cardBackFace}>
-                  <div style={{ ...styles.cardBadgeBack, background: color.accent }}>💡 Fakta!</div>
+                  <div style={{ ...styles.cardBadgeBack, background: color.accent }}>💡 {t('did.factBadge')}</div>
                   <h3 style={{ ...styles.cardTitleBack, color: color.accent }} data-no-translate="true">{fact.title}</h3>
                   <p style={styles.cardContent} data-no-translate="true">{fact.content}</p>
                   {fact.author && <p style={styles.cardAuthor} data-no-translate="true">— {fact.author}</p>}
-                  <div style={styles.cardFlipHint}>↩ Ketik untuk terbalik semula</div>
+                  <div style={styles.cardFlipHint}>↩ {t('did.flipBack')}</div>
                 </div>
               )}
             </div>
@@ -233,21 +238,21 @@ const DidYouKnowPage = () => {
         {filtered.length === 0 && (
           <div style={styles.empty}>
             <div style={{ fontSize: '5rem', marginBottom: '1rem', animation: 'bounce 1s infinite' }}>🔍</div>
-            <p style={{ color: '#64748b', fontSize: '1.2rem', fontWeight: '600' }}>Tiada fakta dijumpai!</p>
-            <p style={{ color: '#94a3b8' }}>Cuba istilah carian yang berbeza</p>
+            <p style={{ color: '#64748b', fontSize: '1.2rem', fontWeight: '600' }}>{t('did.emptyTitle')}</p>
+            <p style={{ color: '#94a3b8' }}>{t('did.emptyText')}</p>
           </div>
         )}
       </div>
 
       {/* Photo Banner */}
       <div style={styles.photoBanner}>
-        <h2 style={styles.bannerTitle}>Kekalkan Senyuman Anda Bersinar! 🌺</h2>
+        <h2 style={styles.bannerTitle}>{t('did.bannerTitle')} 🌺</h2>
         <div style={styles.photoGrid}>
           {[
-            { src: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&q=80', label: 'Lawati Doktor Gigi' },
-            { src: 'https://images.unsplash.com/photo-1571772996211-2f02c9727629?w=400&q=80', label: 'Memberus Setiap Hari' },
-            { src: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&q=80', label: 'Tabiat Sihat' },
-            { src: 'https://images.unsplash.com/photo-1588776814546-daab30f310ce?w=400&q=80', label: 'Senyuman Cerah' },
+            { src: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&q=80', label: t('did.photos')[0] },
+            { src: 'https://images.unsplash.com/photo-1571772996211-2f02c9727629?w=400&q=80', label: t('did.photos')[1] },
+            { src: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&q=80', label: t('did.photos')[2] },
+            { src: 'https://images.unsplash.com/photo-1588776814546-daab30f310ce?w=400&q=80', label: t('did.photos')[3] },
           ].map((item, i) => (
             <div key={i} style={styles.photoCard}>
               <img
@@ -266,9 +271,9 @@ const DidYouKnowPage = () => {
 
       {/* CTA */}
       <div style={styles.cta}>
-        <h2 style={styles.ctaTitle}>Mahu Belajar Lebih Lanjut? 📚</h2>
-        <p style={styles.ctaText}>Pergi ke Modul Pembelajaran kami untuk video dan petua!</p>
-        <a href="/learning" style={styles.ctaBtn}>Pergi ke Modul Pembelajaran →</a>
+        <h2 style={styles.ctaTitle}>{t('did.ctaTitle')} 📚</h2>
+        <p style={styles.ctaText}>{t('did.ctaText')}</p>
+        <a href="/learning" style={styles.ctaBtn}>{t('did.ctaButton')} →</a>
       </div>
     </div>
   );
