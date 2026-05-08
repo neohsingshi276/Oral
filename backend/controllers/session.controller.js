@@ -22,8 +22,12 @@ const safeInt = (val, fallback, min = 0, max = 9999) => {
 // queries that fetch all settings at once, then merge them in JS.
 const getSessions = async (req, res) => {
   try {
+    const isTeacher = req.admin.role === 'teacher';
     const [sessions] = await db.query(
-      'SELECT s.*, a.name as admin_name FROM game_sessions s JOIN admins a ON s.admin_id = a.id ORDER BY s.created_at DESC'
+      isTeacher
+        ? 'SELECT s.*, a.name as admin_name, a.school as teacher_school FROM game_sessions s JOIN admins a ON s.admin_id = a.id WHERE s.admin_id = ? ORDER BY s.created_at DESC'
+        : 'SELECT s.*, a.name as admin_name, a.school as teacher_school FROM game_sessions s JOIN admins a ON s.admin_id = a.id ORDER BY s.created_at DESC',
+      isTeacher ? [req.admin.id] : []
     );
 
     if (sessions.length === 0) return res.json({ sessions: [] });
@@ -63,9 +67,10 @@ const createSession = async (req, res) => {
 
   try {
     const unique_token = await generateCode();
+    const session_month = req.body.session_month ? safeInt(req.body.session_month, null, 1, 12) : null;
     const [result] = await db.query(
-      'INSERT INTO game_sessions (admin_id, session_name, unique_token) VALUES (?, ?, ?)',
-      [req.admin.id, session_name.trim(), unique_token]
+      'INSERT INTO game_sessions (admin_id, session_name, session_month, unique_token) VALUES (?, ?, ?, ?)',
+      [req.admin.id, session_name.trim(), session_month, unique_token]
     );
     const sessionId = result.insertId;
 
@@ -139,6 +144,11 @@ const updateSession = async (req, res) => {
       if (session_name.trim().length > 80)
         return res.status(400).json({ error: 'Session name too long (max 80 characters)' });
       await db.query('UPDATE game_sessions SET session_name = ? WHERE id = ?', [session_name.trim(), sessionId]);
+    }
+
+    if (req.body.session_month !== undefined) {
+      const monthVal = req.body.session_month ? safeInt(req.body.session_month, null, 1, 12) : null;
+      await db.query('UPDATE game_sessions SET session_month = ? WHERE id = ?', [monthVal, sessionId]);
     }
 
     if (quiz_settings) {

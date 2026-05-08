@@ -6,6 +6,7 @@ const ManageAdmins = ({ currentAdmin }) => {
   const [pendingInvites, setPendingInvites] = useState([]);
   const [email, setEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('admin');
+  const [inviteSchool, setInviteSchool] = useState('');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,10 +21,11 @@ const ManageAdmins = ({ currentAdmin }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await api.post('/admin/invite', { email, role: inviteRole });
+      const res = await api.post('/admin/invite', { email, role: inviteRole, school: inviteRole === 'teacher' ? inviteSchool : undefined });
       setMsg('✅ ' + res.data.message);
       setEmail('');
       setInviteRole('admin');
+      setInviteSchool('');
       fetchAdmins();
     } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal menghantar jemputan')); }
     finally { setLoading(false); setTimeout(() => setMsg(''), 4000); }
@@ -81,6 +83,12 @@ const ManageAdmins = ({ currentAdmin }) => {
               <option value="teacher">Guru</option>
             </select>
           </div>
+          {inviteRole === 'teacher' && (
+            <div style={{ minWidth: '180px' }}>
+              <label style={s.label}>Sekolah</label>
+              <input style={s.input} value={inviteSchool} onChange={e => setInviteSchool(e.target.value)} placeholder="Nama Sekolah" maxLength={255} />
+            </div>
+          )}
           <button style={s.btnPrimary} onClick={handleInvite} disabled={loading}>
             {loading ? 'Menghantar...' : '📧 Hantar Jemputan'}
           </button>
@@ -128,6 +136,7 @@ const ManageAdmins = ({ currentAdmin }) => {
                 </div>
                 <div style={s.adminEmail}>{admin.email}</div>
                 <div style={s.adminDate}>Sertai {new Date(admin.created_at).toLocaleDateString()}</div>
+                {admin.school && <div style={{ color: '#16a34a', fontSize: '0.78rem', fontWeight: '600' }}>🏫 {admin.school}</div>}
               </div>
               {/* Role change dropdown — only main_admin can see, and only for non-main_admin users */}
               {currentAdmin?.role === 'main_admin' && admin.id !== currentAdmin?.id && admin.role !== 'main_admin' && (

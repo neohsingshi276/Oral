@@ -3,6 +3,8 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
+const MONTH_NAMES = ['','Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+
 const ManageSessions = () => {
   const { admin } = useAuth();
   const { t } = useLanguage();
@@ -15,9 +17,12 @@ const ManageSessions = () => {
   // Edit mode tracking
   const [editId, setEditId] = useState(null);
   const [step, setStep] = useState(1);
+  const [expandedSession, setExpandedSession] = useState(null);
+  const [sessionPlayers, setSessionPlayers] = useState([]);
 
   const defaultForm = {
     session_name: '',
+    session_month: '',
     q_mode: 'random', q_timer: 15, q_order: 'shuffle', q_count: 10, q_min: 0, q_selected: [],
     cw_mode: 'random', cw_count: 8, cw_selected: [], cw_min: 0,
     cp3_timer: 60, cp3_min: 0
@@ -53,6 +58,7 @@ const ManageSessions = () => {
 
     setForm({
       session_name: session.session_name || '',
+      session_month: session.session_month || '',
       q_mode: qSel.length > 0 ? 'manual' : 'random',
       q_timer: qs.timer_seconds || 15,
       q_order: qs.question_order || 'shuffle',
@@ -91,6 +97,7 @@ const ManageSessions = () => {
     try {
       const payload = {
         session_name: form.session_name,
+        session_month: form.session_month || null,
         quiz_settings: {
           timer_seconds: form.q_timer,
           question_order: form.q_order,
@@ -210,6 +217,15 @@ const ManageSessions = () => {
                 <label style={s.label}>{t('admin.sessionName')}</label>
                 <input style={s.input} value={form.session_name} onChange={e => setForm({ ...form, session_name: e.target.value })} required placeholder="e.g. Class 5A — March 2026" maxLength={80} />
               </div>
+              <div style={s.field}>
+                <label style={s.label}>📅 Bulan Sesi</label>
+                <select style={s.input} value={form.session_month} onChange={e => setForm({ ...form, session_month: e.target.value ? parseInt(e.target.value) : '' })}>
+                  <option value="">— Pilih Bulan (Pilihan) —</option>
+                  {MONTH_NAMES.slice(1).map((m, i) => (
+                    <option key={i + 1} value={i + 1}>{m}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
 
@@ -322,11 +338,84 @@ const ManageSessions = () => {
       {/* ─── ACTIVE SESSIONS LIST ─── */}
       <div style={s.card}>
         <h2 style={s.cardTitle}>🎮 {t('admin.activeSessions')} ({sessions.length})</h2>
+
+        {/* Teacher view: grouped by month */}
+        {admin?.role === 'teacher' && admin?.school && (
+          <div style={s.schoolHeader}>
+            <span style={s.schoolIcon}>🏫</span>
+            <span style={s.schoolName}>{admin.school}</span>
+          </div>
+        )}
+
         <div style={s.sessionList}>
-          {sessions.map(session => (
-            <div key={session.id} style={s.sessionCard}>
+          {(admin?.role === 'teacher' ? groupByMonth(sessions) : sessions).map((item, gi) => {
+            // Teacher grouped view
+            if (admin?.role === 'teacher' && item.month !== undefined) {
+              return (
+                <div key={gi} style={s.monthGroup}>
+                  <div style={s.monthHeader}>
+                    <span style={s.monthIcon}>📅</span>
+                    <span style={s.monthName}>{item.monthName}</span>
+                    <span style={s.monthCount}>{item.sessions.length} sesi</span>
+                  </div>
+                  {item.sessions.map(session => (
+                    <div key={session.id} style={s.sessionCard}>
+                      <div style={s.sessionTop}>
+                        <div><h3 style={s.sessionName}>{session.session_name}</h3></div>
+                        <span style={session.is_active ? s.badgeActive : s.badgeInactive}>{session.is_active ? `🟢 ${t('admin.active')}` : `🔴 ${t('admin.inactive')}`}</span>
+                      </div>
+                      <div style={s.codeWrap}>
+                        <p style={s.codeLabel}>{t('admin.studentGameCode')}</p>
+                        <div style={s.codeBox}>{session.unique_token.split('').map((digit, i) => (<div key={i} style={s.codeDigit}>{digit}</div>))}</div>
+                        <button style={copied === session.unique_token ? s.btnCopied : s.btnCopy} onClick={() => copyCode(session.unique_token)}>{copied === session.unique_token ? `✅ ${t('admin.copied')}` : `📋 ${t('admin.copyCode')}`}</button>
+                      </div>
+                      <div style={s.sessionActions}>
+                        <button style={s.btnEdit} onClick={() => handleEdit(session)}>✏️ {t('admin.editSettings')}</button>
+                        <button style={s.btnView} onClick={() => {
+                          if (expandedSession === session.id) { setExpandedSession(null); setSessionPlayers([]); }
+                          else {
+                            setExpandedSession(session.id);
+                            api.get(`/admin/players?session_id=${session.id}`).then(res => setSessionPlayers(res.data.players)).catch(() => setSessionPlayers([]));
+                          }
+                        }}>👥 {expandedSession === session.id ? 'Tutup Pemain' : 'Lihat Pemain'}</button>
+                        <button style={s.btnDelete} onClick={() => handleDelete(session.id)}>🗑️ {t('admin.delete')}</button>
+                      </div>
+                      {expandedSession === session.id && (
+                        <div style={s.playerList}>
+                          <h4 style={{ margin: '0 0 0.5rem', color: '#1e3a5f', fontSize: '0.9rem' }}>👥 Pemain dalam sesi ini ({sessionPlayers.length})</h4>
+                          {sessionPlayers.length === 0 ? <p style={s.muted}>Tiada pemain lagi</p> : (
+                            <div style={s.playerGrid}>
+                              {sessionPlayers.map(p => (
+                                <div key={p.id} style={s.playerCard}>
+                                  <div style={s.playerAvatar}>{p.nickname?.[0]?.toUpperCase()}</div>
+                                  <div>
+                                    <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>{p.nickname}</div>
+                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                      CP1: {p.cp1_completed ? '✅' : '❌'} · CP2: {p.cp2_completed ? '✅' : '❌'} · CP3: {p.cp3_completed ? '✅' : '❌'}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            }
+
+            // Admin/main_admin normal view
+            const session = item;
+            return (
+              <div key={session.id} style={s.sessionCard}>
               <div style={s.sessionTop}>
-                <div><h3 style={s.sessionName}>{session.session_name}</h3></div>
+                <div>
+                  <h3 style={s.sessionName}>{session.session_name}</h3>
+                  {session.session_month && <span style={s.monthBadge}>📅 {MONTH_NAMES[session.session_month]}</span>}
+                  {session.teacher_school && <span style={s.schoolBadge}>🏫 {session.teacher_school}</span>}
+                </div>
                 <span style={session.is_active ? s.badgeActive : s.badgeInactive}>{session.is_active ? `🟢 ${t('admin.active')}` : `🔴 ${t('admin.inactive')}`}</span>
               </div>
               <div style={s.codeWrap}>
@@ -344,7 +433,8 @@ const ManageSessions = () => {
                 <button style={s.btnDelete} onClick={() => handleDelete(session.id)}>🗑️ {t('admin.delete')}</button>
               </div>
             </div>
-          ))}
+            );
+          })}
           {sessions.length === 0 && <p style={s.muted}>{t('admin.noSessionsYet')}</p>}
         </div>
       </div>
@@ -397,7 +487,33 @@ const s = {
   btnActivate: { background: '#f0fdf4', color: '#16a34a', border: 'none', borderRadius: '6px', padding: '0.4rem 0.9rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.82rem' },
   btnDeactivate: { background: '#fff7ed', color: '#ea580c', border: 'none', borderRadius: '6px', padding: '0.4rem 0.9rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.82rem' },
   btnDelete: { background: '#fff1f2', color: '#e11d48', border: 'none', borderRadius: '6px', padding: '0.4rem 0.9rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.82rem' },
+  btnView: { background: '#eff6ff', color: '#2563eb', border: 'none', borderRadius: '6px', padding: '0.4rem 0.9rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.82rem' },
   muted: { color: '#94a3b8', fontSize: '0.9rem', textAlign: 'center', padding: '2rem' },
+  monthGroup: { marginBottom: '1.5rem' },
+  monthHeader: { display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', background: 'linear-gradient(135deg, #eff6ff, #f0fdf4)', borderRadius: '12px', marginBottom: '0.75rem', border: '1px solid #e2e8f0' },
+  monthIcon: { fontSize: '1.2rem' },
+  monthName: { fontWeight: '700', color: '#1e3a5f', fontSize: '1rem' },
+  monthCount: { color: '#64748b', fontSize: '0.82rem', marginLeft: 'auto' },
+  monthBadge: { background: '#eff6ff', color: '#2563eb', padding: '0.15rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600', marginLeft: '0.5rem' },
+  schoolBadge: { background: '#f0fdf4', color: '#16a34a', padding: '0.15rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600', marginLeft: '0.5rem' },
+  schoolHeader: { display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', background: 'linear-gradient(135deg, #01306B, #1e5aad)', borderRadius: '14px', marginBottom: '1.25rem' },
+  schoolIcon: { fontSize: '1.5rem' },
+  schoolName: { color: '#FFD700', fontWeight: '800', fontSize: '1.15rem' },
+  playerList: { marginTop: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' },
+  playerGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem' },
+  playerCard: { display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', background: '#fff', borderRadius: '8px', border: '1px solid #f1f5f9' },
+  playerAvatar: { width: '28px', height: '28px', borderRadius: '50%', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '0.75rem', flexShrink: 0 },
 };
+
+// Helper: group sessions by month for teacher view
+function groupByMonth(sessions) {
+  const groups = {};
+  sessions.forEach(s => {
+    const m = s.session_month || 0;
+    if (!groups[m]) groups[m] = { month: m, monthName: m ? MONTH_NAMES[m] : 'Tiada Bulan', sessions: [] };
+    groups[m].sessions.push(s);
+  });
+  return Object.values(groups).sort((a, b) => a.month - b.month);
+}
 
 export default ManageSessions;

@@ -2,22 +2,41 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
+const MONTH_NAMES = ['','Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+
 const ManageStudents = () => {
   const { admin } = useAuth();
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [deleting, setDeleting] = useState(null); // id currently being deleted
+  const [deleting, setDeleting] = useState(null);
+
+  // Filter state
+  const [schools, setSchools] = useState([]);
+  const [sessionList, setSessionList] = useState([]);
+  const [filterSchool, setFilterSchool] = useState('');
+  const [filterSession, setFilterSession] = useState('');
+  const [filterMonth, setFilterMonth] = useState('');
 
   const fetchPlayers = () => {
     setLoading(true);
-    api.get('/admin/players')
-      .then(res => setPlayers(res.data.players))
+    const params = new URLSearchParams();
+    if (filterSchool) params.set('school', filterSchool);
+    if (filterSession) params.set('session_id', filterSession);
+    if (filterMonth) params.set('month', filterMonth);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+
+    api.get(`/admin/players${qs}`)
+      .then(res => {
+        setPlayers(res.data.players);
+        if (res.data.schools) setSchools(res.data.schools);
+        if (res.data.sessions) setSessionList(res.data.sessions);
+      })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchPlayers(); }, []);
+  useEffect(() => { fetchPlayers(); }, [filterSchool, filterSession, filterMonth]);
 
   const handleDelete = async (player) => {
     if (!window.confirm(
@@ -41,10 +60,52 @@ const ManageStudents = () => {
   );
 
   const isMainAdmin = admin?.role === 'main_admin';
+  const isAdmin = admin?.role === 'admin';
   const canDelete = ['main_admin', 'admin', 'teacher'].includes(admin?.role);
+  const showSchoolFilter = isMainAdmin || isAdmin;
+
+  const clearFilters = () => {
+    setFilterSchool('');
+    setFilterSession('');
+    setFilterMonth('');
+  };
+
+  const hasActiveFilters = filterSchool || filterSession || filterMonth;
 
   return (
     <div>
+      {/* Filter Bar */}
+      <div style={s.filterBar}>
+        <span style={s.filterLabel}>🔍 Tapis:</span>
+
+        {showSchoolFilter && (
+          <select style={s.filterSelect} value={filterSchool} onChange={e => setFilterSchool(e.target.value)}>
+            <option value="">Semua Sekolah</option>
+            {schools.map(sch => (
+              <option key={sch} value={sch}>{sch}</option>
+            ))}
+          </select>
+        )}
+
+        <select style={s.filterSelect} value={filterSession} onChange={e => setFilterSession(e.target.value)}>
+          <option value="">Semua Sesi</option>
+          {sessionList.map(sess => (
+            <option key={sess.id} value={String(sess.id)}>{sess.session_name}</option>
+          ))}
+        </select>
+
+        <select style={s.filterSelect} value={filterMonth} onChange={e => setFilterMonth(e.target.value)}>
+          <option value="">Semua Bulan</option>
+          {MONTH_NAMES.slice(1).map((m, i) => (
+            <option key={i + 1} value={String(i + 1)}>{m}</option>
+          ))}
+        </select>
+
+        {hasActiveFilters && (
+          <button style={s.clearBtn} onClick={clearFilters}>✕ Kosongkan</button>
+        )}
+      </div>
+
       <div style={s.card}>
         <div style={s.topRow}>
           <h2 style={s.cardTitle}>👥 Semua Pemain ({players.length})</h2>
@@ -70,6 +131,7 @@ const ManageStudents = () => {
               <thead>
                 <tr style={s.thead}>
                   <th style={s.th}>Nama Samaran</th>
+                  {showSchoolFilter && <th style={s.th}>Sekolah</th>}
                   <th style={s.th}>Sesi</th>
                   <th style={s.th}>CP1 Kuiz</th>
                   <th style={s.th}>CP2 Teka Silang Kata</th>
@@ -87,6 +149,11 @@ const ManageStudents = () => {
                         <strong data-no-translate="true">{p.nickname}</strong>
                       </div>
                     </td>
+                    {showSchoolFilter && (
+                      <td style={s.td}>
+                        <span style={s.schoolBadge} data-no-translate="true">{p.teacher_school || '—'}</span>
+                      </td>
+                    )}
                     <td style={s.td}>
                       <span style={s.sessionBadge} data-no-translate="true">{p.session_name || '—'}</span>
                     </td>
@@ -141,7 +208,7 @@ const ManageStudents = () => {
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={canDelete ? 7 : 6} style={{ ...s.td, textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
+                    <td colSpan={canDelete ? (showSchoolFilter ? 9 : 8) : (showSchoolFilter ? 8 : 7)} style={{ ...s.td, textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
                       Tiada Pemain Ditemui
                     </td>
                   </tr>
@@ -156,6 +223,10 @@ const ManageStudents = () => {
 };
 
 const s = {
+  filterBar: { display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem', background: '#fff', borderRadius: '12px', padding: '0.85rem 1.25rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', flexWrap: 'wrap' },
+  filterLabel: { fontSize: '0.88rem', fontWeight: '600', color: '#475569', whiteSpace: 'nowrap' },
+  filterSelect: { minWidth: '160px', padding: '0.5rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem', color: '#1e293b', background: '#f8fafc', cursor: 'pointer', outline: 'none' },
+  clearBtn: { background: '#fff1f2', color: '#e11d48', border: 'none', borderRadius: '8px', padding: '0.4rem 0.85rem', fontWeight: '600', fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap' },
   card: { background: '#fff', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
   topRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' },
   cardTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#1e3a5f', margin: 0 },
@@ -169,6 +240,7 @@ const s = {
   trEven: { background: '#fafafa' },
   playerAvatar: { width: '30px', height: '30px', borderRadius: '50%', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '0.85rem', flexShrink: 0 },
   sessionBadge: { background: '#eff6ff', color: '#2563eb', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600' },
+  schoolBadge: { background: '#f0fdf4', color: '#16a34a', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600' },
   badgeGreen: { background: '#f0fdf4', color: '#16a34a', padding: '0.2rem 0.55rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', whiteSpace: 'nowrap' },
   badgeGray: { background: '#f1f5f9', color: '#94a3b8', padding: '0.2rem 0.55rem', borderRadius: '6px', fontSize: '0.8rem' },
   dateText: { color: '#64748b', fontSize: '0.82rem' },

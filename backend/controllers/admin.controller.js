@@ -9,8 +9,11 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // ─── getPlayers ───────────────────────────────────────────────────────────────
 const getPlayers = async (req, res) => {
   try {
-    const [rows] = await db.query(`
-      SELECT p.*, s.session_name,
+    const { school, session_id, month } = req.query;
+    const isTeacher = req.admin.role === 'teacher';
+
+    let query = `
+      SELECT p.*, s.session_name, s.session_month, a.school as teacher_school,
         MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
         MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
         MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
@@ -19,11 +22,29 @@ const getPlayers = async (req, res) => {
         MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts
       FROM players p
       JOIN game_sessions s ON p.session_id = s.id
+      JOIN admins a ON s.admin_id = a.id
       LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
-      GROUP BY p.id ORDER BY p.joined_at DESC
-    `);
-    res.json({ players: rows });
+    `;
+    const conditions = [];
+    const params = [];
+    if (isTeacher) { conditions.push('s.admin_id = ?'); params.push(req.admin.id); }
+    if (school)     { conditions.push('a.school = ?');    params.push(school); }
+    if (session_id) { conditions.push('s.id = ?');        params.push(parseInt(session_id)); }
+    if (month)      { conditions.push('MONTH(p.joined_at) = ?'); params.push(parseInt(month)); }
+    if (conditions.length > 0) query += ' WHERE ' + conditions.join(' AND ');
+    query += ' GROUP BY p.id ORDER BY p.joined_at DESC';
+
+    const [rows] = await db.query(query, params);
+    const [schools] = await db.query("SELECT DISTINCT school FROM admins WHERE school IS NOT NULL AND school != '' ORDER BY school");
+    const [sessions] = await db.query(
+      isTeacher
+        ? 'SELECT id, session_name FROM game_sessions WHERE admin_id = ? ORDER BY session_name'
+        : 'SELECT id, session_name FROM game_sessions ORDER BY session_name',
+      isTeacher ? [req.admin.id] : []
+    );
+    res.json({ players: rows, schools: schools.map(s => s.school), sessions });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -90,14 +111,18 @@ const downloadCSV = async (req, res) => {
 // ─── getAnalytics ─────────────────────────────────────────────────────────────
 const getAnalytics = async (req, res) => {
   try {
-    const [[{ total_players }]] = await db.query('SELECT COUNT(*) as total_players  FROM players');
-    const [[{ total_sessions }]] = await db.query('SELECT COUNT(*) as total_sessions FROM game_sessions');
-    const [[{ cp1_completed }]] = await db.query('SELECT COUNT(*) as cp1_completed  FROM checkpoint_attempts WHERE checkpoint_number=1 AND completed=1');
-    const [[{ cp2_completed }]] = await db.query('SELECT COUNT(*) as cp2_completed  FROM checkpoint_attempts WHERE checkpoint_number=2 AND completed=1');
-    const [[{ cp3_completed }]] = await db.query('SELECT COUNT(*) as cp3_completed  FROM checkpoint_attempts WHERE checkpoint_number=3 AND completed=1');
+    const isTeacher = req.admin.role === 'teacher';
+    const tF = isTeacher ? ' AND s.admin_id = ?' : '';
+    const tP = isTeacher ? [req.admin.id] : [];
+
+    const [[{ total_players }]] = await db.query(`SELECT COUNT(DISTINCT p.id) as total_players FROM players p JOIN game_sessions s ON p.session_id = s.id WHERE 1=1${tF}`, tP);
+    const [[{ total_sessions }]] = await db.query(`SELECT COUNT(*) as total_sessions FROM game_sessions s WHERE 1=1${tF}`, tP);
+    const [[{ cp1_completed }]] = await db.query(`SELECT COUNT(*) as cp1_completed FROM checkpoint_attempts ca JOIN players p ON ca.player_id = p.id JOIN game_sessions s ON p.session_id = s.id WHERE ca.checkpoint_number=1 AND ca.completed=1${tF}`, tP);
+    const [[{ cp2_completed }]] = await db.query(`SELECT COUNT(*) as cp2_completed FROM checkpoint_attempts ca JOIN players p ON ca.player_id = p.id JOIN game_sessions s ON p.session_id = s.id WHERE ca.checkpoint_number=2 AND ca.completed=1${tF}`, tP);
+    const [[{ cp3_completed }]] = await db.query(`SELECT COUNT(*) as cp3_completed FROM checkpoint_attempts ca JOIN players p ON ca.player_id = p.id JOIN game_sessions s ON p.session_id = s.id WHERE ca.checkpoint_number=3 AND ca.completed=1${tF}`, tP);
 
     const [players] = await db.query(`
-      SELECT p.*, s.session_name,
+      SELECT p.*, s.session_name, s.session_month, a.school as teacher_school, a.name as teacher_name,
         MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
         MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
         MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
@@ -110,14 +135,18 @@ const getAnalytics = async (req, res) => {
         MAX(cp3s.score)          as cp3_score
       FROM players p
       JOIN game_sessions s ON p.session_id = s.id
+      JOIN admins a ON s.admin_id = a.id
       LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
       LEFT JOIN quiz_scores qs          ON qs.player_id = p.id
       LEFT JOIN cp3_scores cp3s         ON cp3s.player_id = p.id
+      ${isTeacher ? 'WHERE s.admin_id = ?' : ''}
       GROUP BY p.id ORDER BY p.joined_at DESC
-    `);
+    `, tP);
 
-    res.json({ total_players, total_sessions, cp1_completed, cp2_completed, cp3_completed, players });
+    const [schools] = await db.query("SELECT DISTINCT school FROM admins WHERE school IS NOT NULL AND school != '' ORDER BY school");
+    res.json({ total_players, total_sessions, cp1_completed, cp2_completed, cp3_completed, players, schools: schools.map(s => s.school) });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -142,8 +171,9 @@ const inviteAdmin = async (req, res) => {
   if (!['main_admin', 'admin'].includes(req.admin.role))
     return res.status(403).json({ error: 'You do not have permission to invite users' });
 
-  const { email, role } = req.body;
+  const { email, role, school } = req.body;
   const inviteRole = ['admin', 'teacher'].includes(role) ? role : 'admin';
+  const inviteSchool = (inviteRole === 'teacher' && school && typeof school === 'string') ? school.trim() : null;
   if (!email || typeof email !== 'string')
     return res.status(400).json({ error: 'Email required' });
   if (email.length > 120)
@@ -166,8 +196,8 @@ const inviteAdmin = async (req, res) => {
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     await db.query(
-      'INSERT INTO admin_invitations (email, token, role, expires_at) VALUES (?, ?, ?, ?)',
-      [email, token, inviteRole, expiresAt]
+      'INSERT INTO admin_invitations (email, token, role, school, expires_at) VALUES (?, ?, ?, ?, ?)',
+      [email, token, inviteRole, inviteSchool, expiresAt]
     );
 
     const inviteBaseUrl = process.env.ADMIN_URL || process.env.CLIENT_URL;
@@ -219,10 +249,11 @@ const completeRegistration = async (req, res) => {
       return res.status(400).json({ error: 'This email is already registered' });
 
     const inviteRole = invites[0].role || decoded.role || 'admin';
+    const inviteSchool = invites[0].school || null;
     const password_hash = await bcrypt.hash(password, 10);
     await db.query(
-      'INSERT INTO admins (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-      [name.trim(), email, password_hash, inviteRole]
+      'INSERT INTO admins (name, email, password_hash, role, school) VALUES (?, ?, ?, ?, ?)',
+      [name.trim(), email, password_hash, inviteRole, inviteSchool]
     );
     await db.query('UPDATE admin_invitations SET used = TRUE WHERE token = ?', [token]);
 
@@ -463,8 +494,68 @@ const updateAdminRole = async (req, res) => {
   }
 };
 
+// ─── getComparisonData ────────────────────────────────────────────────────────
+const getComparisonData = async (req, res) => {
+  const { session_a, session_b } = req.query;
+  if (!session_a || !session_b) return res.status(400).json({ error: 'Two session IDs required' });
+  try {
+    const isTeacher = req.admin.role === 'teacher';
+    const ownerCheck = isTeacher ? ' AND s.admin_id = ?' : '';
+    const ownerParams = isTeacher ? [req.admin.id] : [];
+
+    const fetchSession = async (sessionId) => {
+      const [info] = await db.query(
+        `SELECT s.id, s.session_name, s.session_month, a.school, a.name as teacher_name
+         FROM game_sessions s JOIN admins a ON s.admin_id = a.id WHERE s.id = ?${ownerCheck}`,
+        [sessionId, ...ownerParams]
+      );
+      if (info.length === 0) return null;
+      const [players] = await db.query(`
+        SELECT p.id, p.nickname, p.joined_at,
+          MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
+          MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
+          MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
+          MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts  END) as cp2_attempts,
+          MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.completed END) as cp3_completed,
+          MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts,
+          MAX(qs.score) as quiz_score, MAX(qs.correct_answers) as quiz_correct,
+          MAX(qs.total_questions) as quiz_total, MAX(cp3s.score) as cp3_score
+        FROM players p
+        LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
+        LEFT JOIN quiz_scores qs ON qs.player_id = p.id
+        LEFT JOIN cp3_scores cp3s ON cp3s.player_id = p.id
+        WHERE p.session_id = ?
+        GROUP BY p.id ORDER BY p.nickname
+      `, [sessionId]);
+      const total = players.length;
+      const cp1Done = players.filter(p => p.cp1_completed).length;
+      const cp2Done = players.filter(p => p.cp2_completed).length;
+      const cp3Done = players.filter(p => p.cp3_completed).length;
+      return {
+        ...info[0], players,
+        stats: {
+          total,
+          cp1_completed: cp1Done, cp1_rate: total ? Math.round((cp1Done / total) * 100) : 0,
+          cp2_completed: cp2Done, cp2_rate: total ? Math.round((cp2Done / total) * 100) : 0,
+          cp3_completed: cp3Done, cp3_rate: total ? Math.round((cp3Done / total) * 100) : 0,
+          avg_quiz: total ? Math.round(players.reduce((s, p) => s + (p.quiz_correct || 0), 0) / total * 10) / 10 : 0,
+          avg_cp3: total ? Math.round(players.reduce((s, p) => s + (p.cp3_score || 0), 0) / total) : 0,
+        }
+      };
+    };
+
+    const [a, b] = await Promise.all([fetchSession(session_a), fetchSession(session_b)]);
+    if (!a) return res.status(404).json({ error: 'Session A not found or access denied' });
+    if (!b) return res.status(404).json({ error: 'Session B not found or access denied' });
+    res.json({ session_a: a, session_b: b });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 module.exports = {
-  getPlayers, downloadCSV, getAnalytics,
+  getPlayers, downloadCSV, getAnalytics, getComparisonData,
   getAllAdmins, inviteAdmin, resendInvite, cancelInvite,
   completeRegistration, verifyInviteToken,
   deleteAdmin, deletePlayer, updateProfile, changePassword,
