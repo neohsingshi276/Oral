@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,18 +7,17 @@ const ManageStudents = () => {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ school: '', session_id: '', month: '' });
   const [deleting, setDeleting] = useState(null); // id currently being deleted
 
-  const fetchPlayers = useCallback(() => {
+  const fetchPlayers = () => {
     setLoading(true);
-    api.get('/admin/players', { params: filters })
+    api.get('/admin/players')
       .then(res => setPlayers(res.data.players))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
-  }, [filters]);
+  };
 
-  useEffect(() => { fetchPlayers(); }, [fetchPlayers]);
+  useEffect(() => { fetchPlayers(); }, []);
 
   const handleDelete = async (player) => {
     if (!window.confirm(
@@ -38,19 +37,11 @@ const ManageStudents = () => {
 
   const filtered = players.filter(p =>
     p.nickname?.toLowerCase().includes(search.toLowerCase()) ||
-    p.session_name?.toLowerCase().includes(search.toLowerCase()) ||
-    p.school?.toLowerCase().includes(search.toLowerCase()) ||
-    p.admin_name?.toLowerCase().includes(search.toLowerCase())
+    p.session_name?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const isMainAdmin = admin?.role === 'main_admin';
   const canDelete = ['main_admin', 'admin', 'teacher'].includes(admin?.role);
-  const schools = [...new Set(players.map(p => p.school).filter(Boolean))].sort();
-  const sessions = [...new Map(players.map(p => [p.session_id, { id: p.session_id, name: p.session_name }])).values()].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-  const months = [
-    ['1', 'Januari'], ['2', 'Februari'], ['3', 'Mac'], ['4', 'April'],
-    ['5', 'Mei'], ['6', 'Jun'], ['7', 'Julai'], ['8', 'Ogos'],
-    ['9', 'September'], ['10', 'Oktober'], ['11', 'November'], ['12', 'Disember']
-  ];
 
   return (
     <div>
@@ -71,34 +62,6 @@ const ManageStudents = () => {
           </div>
         )}
 
-        <div style={s.filterBar}>
-          <select
-            style={s.filterSelect}
-            value={admin?.role === 'teacher' ? (admin?.school || '') : filters.school}
-            disabled={admin?.role === 'teacher'}
-            onChange={e => setFilters(prev => ({ ...prev, school: e.target.value }))}
-          >
-            <option value="">{admin?.role === 'teacher' ? (admin?.school || 'Sekolah Guru') : 'Semua Sekolah'}</option>
-            {schools.map(school => <option key={school} value={school}>{school}</option>)}
-          </select>
-          <select
-            style={s.filterSelect}
-            value={filters.session_id}
-            onChange={e => setFilters(prev => ({ ...prev, session_id: e.target.value }))}
-          >
-            <option value="">Semua Sesi</option>
-            {sessions.map(session => <option key={session.id} value={session.id}>{session.name}</option>)}
-          </select>
-          <select
-            style={s.filterSelect}
-            value={filters.month}
-            onChange={e => setFilters(prev => ({ ...prev, month: e.target.value }))}
-          >
-            <option value="">Semua Bulan</option>
-            {months.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-          </select>
-        </div>
-
         {loading ? (
           <p style={s.muted}>Memuatkan data pemain…</p>
         ) : (
@@ -107,8 +70,6 @@ const ManageStudents = () => {
               <thead>
                 <tr style={s.thead}>
                   <th style={s.th}>Nama Samaran</th>
-                  <th style={s.th}>Sekolah</th>
-                  <th style={s.th}>Guru</th>
                   <th style={s.th}>Sesi</th>
                   <th style={s.th}>CP1 Kuiz</th>
                   <th style={s.th}>CP2 Teka Silang Kata</th>
@@ -126,8 +87,6 @@ const ManageStudents = () => {
                         <strong data-no-translate="true">{p.nickname}</strong>
                       </div>
                     </td>
-                    <td style={s.td}>{p.school || '—'}</td>
-                    <td style={s.td}>{p.admin_name || '—'}</td>
                     <td style={s.td}>
                       <span style={s.sessionBadge} data-no-translate="true">{p.session_name || '—'}</span>
                     </td>
@@ -182,7 +141,7 @@ const ManageStudents = () => {
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={canDelete ? 9 : 8} style={{ ...s.td, textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
+                    <td colSpan={canDelete ? 7 : 6} style={{ ...s.td, textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
                       Tiada Pemain Ditemui
                     </td>
                   </tr>
@@ -202,8 +161,6 @@ const s = {
   cardTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#1e3a5f', margin: 0 },
   search: { padding: '0.5rem 1rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.9rem', outline: 'none', width: '240px' },
   hint: { background: '#fef9ee', border: '1px solid #fde68a', borderRadius: '8px', padding: '0.6rem 1rem', fontSize: '0.82rem', color: '#92400e', marginBottom: '1rem' },
-  filterBar: { display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' },
-  filterSelect: { minWidth: '170px', padding: '0.55rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#f8fafc', color: '#1e293b', fontSize: '0.88rem' },
   tableWrap: { overflowX: 'auto' },
   table: { width: '100%', borderCollapse: 'collapse', minWidth: '600px' },
   thead: { background: '#f8fafc' },

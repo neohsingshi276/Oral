@@ -6,71 +6,24 @@ const { sendInviteEmail, sendReminderEmail } = require('../services/email.servic
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const buildRoleScopedFilters = (req, allowed = {}) => {
-  const where = [];
-  const params = [];
-
-  if (req.admin.role === 'teacher') {
-    where.push('s.admin_id = ?');
-    params.push(req.admin.id);
-  } else {
-    if (allowed.school && req.query.school) {
-      where.push('a.school = ?');
-      params.push(req.query.school);
-    }
-    if (allowed.teacher_id && req.query.teacher_id) {
-      where.push('a.id = ?');
-      params.push(req.query.teacher_id);
-    }
-  }
-
-  if (allowed.session_id && req.query.session_id) {
-    where.push('s.id = ?');
-    params.push(req.query.session_id);
-  }
-  if (allowed.month && req.query.month) {
-    where.push('(s.session_month = ? OR (s.session_month IS NULL AND MONTH(p.joined_at) = ?))');
-    params.push(req.query.month, req.query.month);
-  }
-
-  return {
-    clause: where.length ? `WHERE ${where.join(' AND ')}` : '',
-    params
-  };
-};
-
-const playerSelect = `
-  SELECT p.*, s.session_name, s.session_month, a.name as admin_name, a.school,
-    MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
-    MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
-    MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
-    MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts  END) as cp2_attempts,
-    MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.completed END) as cp3_completed,
-    MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts,
-    MAX(qs.score)            as quiz_score,
-    MAX(qs.correct_answers)  as quiz_correct,
-    MAX(qs.total_questions)  as quiz_total,
-    MAX(cp3s.score)          as cp3_score
-  FROM players p
-  JOIN game_sessions s ON p.session_id = s.id
-  JOIN admins a ON s.admin_id = a.id
-  LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
-  LEFT JOIN quiz_scores qs          ON qs.player_id = p.id
-  LEFT JOIN cp3_scores cp3s         ON cp3s.player_id = p.id
-`;
-
 // ─── getPlayers ───────────────────────────────────────────────────────────────
 const getPlayers = async (req, res) => {
   try {
-    const filters = buildRoleScopedFilters(req, { school: true, teacher_id: true, session_id: true, month: true });
     const [rows] = await db.query(`
-      ${playerSelect}
-      ${filters.clause}
+      SELECT p.*, s.session_name,
+        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
+        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
+        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
+        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts  END) as cp2_attempts,
+        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.completed END) as cp3_completed,
+        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts
+      FROM players p
+      JOIN game_sessions s ON p.session_id = s.id
+      LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
       GROUP BY p.id ORDER BY p.joined_at DESC
-    `, filters.params);
+    `);
     res.json({ players: rows });
   } catch (err) {
-    console.error('Get players error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -78,15 +31,27 @@ const getPlayers = async (req, res) => {
 // ─── downloadCSV ──────────────────────────────────────────────────────────────
 const downloadCSV = async (req, res) => {
   try {
-    const filters = buildRoleScopedFilters(req, { school: true, teacher_id: true, session_id: true, month: true });
     const [rows] = await db.query(`
-      ${playerSelect}
-      ${filters.clause}
+      SELECT p.nickname, s.session_name, p.joined_at,
+        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
+        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
+        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
+        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts  END) as cp2_attempts,
+        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.completed END) as cp3_completed,
+        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts,
+        MAX(qs.score)            as quiz_score,
+        MAX(qs.correct_answers)  as quiz_correct,
+        MAX(cp3.score)           as cp3_score
+      FROM players p
+      JOIN game_sessions s ON p.session_id = s.id
+      LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
+      LEFT JOIN quiz_scores qs          ON qs.player_id = p.id
+      LEFT JOIN cp3_scores cp3          ON cp3.player_id = p.id
       GROUP BY p.id ORDER BY s.session_name, p.nickname
-    `, filters.params);
+    `);
 
     const headers = [
-      'Nickname', 'School', 'Teacher', 'Session', 'Joined At',
+      'Nickname', 'Session', 'Joined At',
       'CP1 Completed', 'CP1 Attempts',
       'CP2 Completed', 'CP2 Attempts',
       'CP3 Completed', 'CP3 Attempts',
@@ -104,7 +69,7 @@ const downloadCSV = async (req, res) => {
     const csvRows = [headers.map(csvEscape).join(',')];
     rows.forEach(r => {
       csvRows.push([
-        r.nickname, r.school || '', r.admin_name || '', r.session_name,
+        r.nickname, r.session_name,
         new Date(r.joined_at).toLocaleDateString(),
         r.cp1_completed ? 'Yes' : 'No', r.cp1_attempts || 0,
         r.cp2_completed ? 'Yes' : 'No', r.cp2_attempts || 0,
@@ -125,80 +90,34 @@ const downloadCSV = async (req, res) => {
 // ─── getAnalytics ─────────────────────────────────────────────────────────────
 const getAnalytics = async (req, res) => {
   try {
-    const filters = buildRoleScopedFilters(req, { school: true, teacher_id: true, session_id: true, month: true });
-    const [players] = await db.query(`
-      ${playerSelect}
-      ${filters.clause}
-      GROUP BY p.id ORDER BY p.joined_at DESC
-    `, filters.params);
+    const [[{ total_players }]] = await db.query('SELECT COUNT(*) as total_players  FROM players');
+    const [[{ total_sessions }]] = await db.query('SELECT COUNT(*) as total_sessions FROM game_sessions');
+    const [[{ cp1_completed }]] = await db.query('SELECT COUNT(*) as cp1_completed  FROM checkpoint_attempts WHERE checkpoint_number=1 AND completed=1');
+    const [[{ cp2_completed }]] = await db.query('SELECT COUNT(*) as cp2_completed  FROM checkpoint_attempts WHERE checkpoint_number=2 AND completed=1');
+    const [[{ cp3_completed }]] = await db.query('SELECT COUNT(*) as cp3_completed  FROM checkpoint_attempts WHERE checkpoint_number=3 AND completed=1');
 
-    const sessionIds = [...new Set(players.map(p => p.session_id))];
-    const total_players = players.length;
-    const total_sessions = sessionIds.length;
-    const cp1_completed = players.filter(p => p.cp1_completed).length;
-    const cp2_completed = players.filter(p => p.cp2_completed).length;
-    const cp3_completed = players.filter(p => p.cp3_completed).length;
+    const [players] = await db.query(`
+      SELECT p.*, s.session_name,
+        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
+        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
+        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
+        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts  END) as cp2_attempts,
+        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.completed END) as cp3_completed,
+        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts,
+        MAX(qs.score)            as quiz_score,
+        MAX(qs.correct_answers)  as quiz_correct,
+        MAX(qs.total_questions)  as quiz_total,
+        MAX(cp3s.score)          as cp3_score
+      FROM players p
+      JOIN game_sessions s ON p.session_id = s.id
+      LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
+      LEFT JOIN quiz_scores qs          ON qs.player_id = p.id
+      LEFT JOIN cp3_scores cp3s         ON cp3s.player_id = p.id
+      GROUP BY p.id ORDER BY p.joined_at DESC
+    `);
 
     res.json({ total_players, total_sessions, cp1_completed, cp2_completed, cp3_completed, players });
   } catch (err) {
-    console.error('Analytics error:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-};
-
-const getSessionComparison = async (req, res) => {
-  const { session_a, session_b } = req.query;
-  if (!session_a || !session_b)
-    return res.status(400).json({ error: 'session_a and session_b are required' });
-
-  try {
-    const [sessions] = await db.query(
-      `SELECT s.id, s.session_name, s.session_month, s.created_at, a.name as admin_name, a.school, s.admin_id
-       FROM game_sessions s
-       JOIN admins a ON s.admin_id = a.id
-       WHERE s.id IN (?, ?)`,
-      [session_a, session_b]
-    );
-
-    if (sessions.length !== 2)
-      return res.status(404).json({ error: 'One or both sessions were not found' });
-    if (req.admin.role === 'teacher' && sessions.some(s => s.admin_id !== req.admin.id))
-      return res.status(403).json({ error: 'Teachers can only compare their own sessions' });
-
-    const [players] = await db.query(`
-      ${playerSelect}
-      WHERE s.id IN (?, ?)
-      GROUP BY p.id ORDER BY p.joined_at DESC
-    `, [session_a, session_b]);
-
-    const summarize = (session) => {
-      const group = players.filter(p => p.session_id === session.id);
-      const total = group.length;
-      const rate = count => total ? Math.round((count / total) * 100) : 0;
-      const cp1 = group.filter(p => p.cp1_completed).length;
-      const cp2 = group.filter(p => p.cp2_completed).length;
-      const cp3 = group.filter(p => p.cp3_completed).length;
-      return {
-        session: {
-          ...session,
-          month: session.session_month || new Date(session.created_at).getMonth() + 1
-        },
-        players: group,
-        summary: {
-          players: total,
-          cp1_completed: cp1,
-          cp2_completed: cp2,
-          cp3_completed: cp3,
-          cp1_rate: rate(cp1),
-          cp2_rate: rate(cp2),
-          cp3_rate: rate(cp3)
-        }
-      };
-    };
-
-    res.json({ comparison: sessions.map(summarize) });
-  } catch (err) {
-    console.error('Compare sessions error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -207,7 +126,7 @@ const getSessionComparison = async (req, res) => {
 const getAllAdmins = async (req, res) => {
   try {
     const [rows] = await db.query(
-      'SELECT id, name, email, role, school, created_at FROM admins ORDER BY role DESC, created_at ASC'
+      'SELECT id, name, email, role, created_at FROM admins ORDER BY role DESC, created_at ASC'
     );
     const [invites] = await db.query(
       'SELECT * FROM admin_invitations WHERE used = FALSE AND expires_at > NOW() ORDER BY created_at DESC'
@@ -223,19 +142,14 @@ const inviteAdmin = async (req, res) => {
   if (!['main_admin', 'admin'].includes(req.admin.role))
     return res.status(403).json({ error: 'You do not have permission to invite users' });
 
-  const { email, role, school } = req.body;
+  const { email, role } = req.body;
   const inviteRole = ['admin', 'teacher'].includes(role) ? role : 'admin';
-  const cleanSchool = typeof school === 'string' ? school.trim() : '';
   if (!email || typeof email !== 'string')
     return res.status(400).json({ error: 'Email required' });
   if (email.length > 120)
     return res.status(400).json({ error: 'Email too long (max 120 characters)' });
   if (!emailRegex.test(email))
     return res.status(400).json({ error: 'Invalid email format. Must include @ and valid domain' });
-  if (inviteRole === 'teacher' && !cleanSchool)
-    return res.status(400).json({ error: 'School is required when inviting a teacher' });
-  if (cleanSchool.length > 255)
-    return res.status(400).json({ error: 'School name too long (max 255 characters)' });
 
   try {
     const [existing] = await db.query('SELECT id FROM admins WHERE email = ?', [email]);
@@ -248,12 +162,12 @@ const inviteAdmin = async (req, res) => {
     if (existingInvite.length > 0)
       return res.status(400).json({ error: 'An invitation has already been sent to this email' });
 
-    const token = jwt.sign({ email, type: 'admin_invite', role: inviteRole, school: cleanSchool || null }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ email, type: 'admin_invite', role: inviteRole }, process.env.JWT_SECRET, { expiresIn: '7d' });
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     await db.query(
-      'INSERT INTO admin_invitations (email, token, role, school, expires_at) VALUES (?, ?, ?, ?, ?)',
-      [email, token, inviteRole, cleanSchool || null, expiresAt]
+      'INSERT INTO admin_invitations (email, token, role, expires_at) VALUES (?, ?, ?, ?)',
+      [email, token, inviteRole, expiresAt]
     );
 
     const inviteBaseUrl = process.env.ADMIN_URL || process.env.CLIENT_URL;
@@ -305,11 +219,10 @@ const completeRegistration = async (req, res) => {
       return res.status(400).json({ error: 'This email is already registered' });
 
     const inviteRole = invites[0].role || decoded.role || 'admin';
-    const inviteSchool = invites[0].school || decoded.school || null;
     const password_hash = await bcrypt.hash(password, 10);
     await db.query(
-      'INSERT INTO admins (name, email, password_hash, role, school) VALUES (?, ?, ?, ?, ?)',
-      [name.trim(), email, password_hash, inviteRole, inviteSchool]
+      'INSERT INTO admins (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
+      [name.trim(), email, password_hash, inviteRole]
     );
     await db.query('UPDATE admin_invitations SET used = TRUE WHERE token = ?', [token]);
 
@@ -338,7 +251,7 @@ const verifyInviteToken = async (req, res) => {
     if (invites.length === 0)
       return res.status(400).json({ error: 'Invitation expired or already used' });
 
-    res.json({ email: invites[0].email, role: invites[0].role || decoded.role || 'admin', school: invites[0].school || decoded.school || null, valid: true });
+    res.json({ email: invites[0].email, role: invites[0].role || decoded.role || 'admin', valid: true });
   } catch (err) {
     res.status(400).json({ error: 'Invalid or expired invitation link' });
   }
@@ -446,7 +359,7 @@ const resendInvite = async (req, res) => {
     const invite = invites[0];
     const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const inviteRole = invite.role || 'admin';
-    const token = jwt.sign({ email: invite.email, type: 'admin_invite', role: inviteRole, school: invite.school || null }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ email: invite.email, type: 'admin_invite', role: inviteRole }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
     await db.query(
       'UPDATE admin_invitations SET token = ?, expires_at = ? WHERE id = ?',
@@ -503,17 +416,9 @@ const deletePlayer = async (req, res) => {
     return res.status(400).json({ error: 'Invalid player ID' });
 
   try {
-    const [rows] = await db.query(
-      `SELECT p.nickname, p.session_id, s.admin_id
-       FROM players p
-       JOIN game_sessions s ON p.session_id = s.id
-       WHERE p.id = ?`,
-      [targetId]
-    );
+    const [rows] = await db.query('SELECT nickname, session_id FROM players WHERE id = ?', [targetId]);
     if (rows.length === 0)
       return res.status(404).json({ error: 'Player not found' });
-    if (req.admin.role === 'teacher' && rows[0].admin_id !== req.admin.id)
-      return res.status(403).json({ error: 'Teachers can only delete players from their own sessions' });
 
     await db.query('DELETE FROM players WHERE id = ?', [targetId]);
     await logActivity(req.admin.id, 'Deleted player', `Deleted player: ${rows[0].nickname} (id ${targetId})`);
@@ -559,7 +464,7 @@ const updateAdminRole = async (req, res) => {
 };
 
 module.exports = {
-  getPlayers, downloadCSV, getAnalytics, getSessionComparison,
+  getPlayers, downloadCSV, getAnalytics,
   getAllAdmins, inviteAdmin, resendInvite, cancelInvite,
   completeRegistration, verifyInviteToken,
   deleteAdmin, deletePlayer, updateProfile, changePassword,

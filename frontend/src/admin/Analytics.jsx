@@ -35,10 +35,6 @@ const Analytics = () => {
   const [loading, setLoading]             = useState(true);
   const [activeTab, setActiveTab]         = useState('overview');
   const [selectedSession, setSelectedSession] = useState('all');
-  const [selectedSchool, setSelectedSchool] = useState('all');
-  const [compareA, setCompareA] = useState('');
-  const [compareB, setCompareB] = useState('');
-  const [comparison, setComparison] = useState(null);
   const [finalLeaderboard, setFinalLeaderboard] = useState([]);
   const [lbLoading, setLbLoading]         = useState(false);
 
@@ -58,16 +54,6 @@ const Analytics = () => {
         .finally(() => setLbLoading(false));
     }
   }, [activeTab, selectedSession]);
-
-  useEffect(() => {
-    if (!compareA || !compareB || compareA === compareB) {
-      setComparison(null);
-      return;
-    }
-    api.get('/admin/compare-sessions', { params: { session_a: compareA, session_b: compareB } })
-      .then(res => setComparison(res.data.comparison || null))
-      .catch(() => setComparison(null));
-  }, [compareA, compareB]);
 
   const downloadCSV = async () => {
     try {
@@ -93,23 +79,18 @@ const Analytics = () => {
 
   if (loading) return <div style={{ color: '#94a3b8', padding: '2rem', textAlign: 'center' }}>Memuatkan analitik... 📊</div>;
 
-  const schools = [...new Set((data?.players || []).map(p => p.school).filter(Boolean))].sort();
-  const schoolPlayers = selectedSchool === 'all'
-    ? (data?.players || [])
-    : (data?.players || []).filter(p => p.school === selectedSchool);
-
   const sessions = [...new Map(
-    schoolPlayers.map(p => [p.session_id, { id: p.session_id, name: p.session_name, school: p.school, teacher: p.admin_name }])
+    (data?.players || []).map(p => [p.session_id, { id: p.session_id, name: p.session_name }])
   ).values()].sort((a, b) => a.name.localeCompare(b.name));
 
   const filteredPlayers = selectedSession === 'all'
-    ? schoolPlayers
-    : schoolPlayers.filter(p => String(p.session_id) === selectedSession);
+    ? (data?.players || [])
+    : (data?.players || []).filter(p => String(p.session_id) === selectedSession);
 
   let markedPlayers;
   if (selectedSession === 'all') {
     const bySession = {};
-    schoolPlayers.forEach(p => {
+    (data?.players || []).forEach(p => {
       if (!bySession[p.session_id]) bySession[p.session_id] = [];
       bySession[p.session_id].push(p);
     });
@@ -183,7 +164,6 @@ const Analytics = () => {
     { key: 'completion',  label: '📈 Penyelesaian' },
     { key: 'attempts',    label: '🔁 Percubaan' },
     { key: 'sessions',    label: '🔀 Sesi' },
-    { key: 'compare',     label: 'Bandingkan' },
     { key: 'timeline',    label: '📅 Garis Masa' },
     { key: 'leaderboard', label: '🏆 Papan Pendahulu' },
   ];
@@ -199,15 +179,6 @@ const Analytics = () => {
     <div>
       {/* Penapis Sesi */}
       <div style={s.filterBar}>
-        <span style={s.filterLabel}>Sekolah:</span>
-        <select
-          style={s.filterSelect}
-          value={selectedSchool}
-          onChange={e => { setSelectedSchool(e.target.value); setSelectedSession('all'); }}
-        >
-          <option value="all">Semua Sekolah</option>
-          {schools.map(school => <option key={school} value={school}>{school}</option>)}
-        </select>
         <span style={s.filterLabel}>📌 Tapis mengikut Sesi:</span>
         <select
           style={s.filterSelect}
@@ -429,49 +400,6 @@ const Analytics = () => {
         </div>
       )}
 
-      {activeTab === 'compare' && (
-        <div style={s.card}>
-          <h3 style={s.cardTitle}>Bandingkan Dua Sesi</h3>
-          <div style={s.compareControls}>
-            <select style={s.filterSelect} value={compareA} onChange={e => setCompareA(e.target.value)}>
-              <option value="">Pilih sesi pertama</option>
-              {sessions.map(sess => <option key={sess.id} value={sess.id}>{sess.name} {sess.school ? `- ${sess.school}` : ''}</option>)}
-            </select>
-            <select style={s.filterSelect} value={compareB} onChange={e => setCompareB(e.target.value)}>
-              <option value="">Pilih sesi kedua</option>
-              {sessions.map(sess => <option key={sess.id} value={sess.id}>{sess.name} {sess.school ? `- ${sess.school}` : ''}</option>)}
-            </select>
-          </div>
-          {!comparison ? <p style={s.muted}>Pilih dua sesi berbeza untuk melihat perbandingan.</p> : (
-            <div style={s.grid2}>
-              {comparison.map(item => {
-                const chartData = [
-                  { name: 'CP1', rate: item.summary.cp1_rate },
-                  { name: 'CP2', rate: item.summary.cp2_rate },
-                  { name: 'CP3', rate: item.summary.cp3_rate },
-                ];
-                return (
-                  <div key={item.session.id} style={s.compareCard}>
-                    <h4 style={s.compareTitle}>{item.session.session_name}</h4>
-                    <div style={s.compareMeta}>{item.session.school || 'Tiada sekolah'} · {item.session.admin_name}</div>
-                    <div style={s.compareStat}>{item.summary.players} pemain</div>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                        <XAxis dataKey="name" />
-                        <YAxis domain={[0, 100]} />
-                        <Tooltip formatter={(val) => [`${val}%`, 'Kadar selesai']} />
-                        <Bar dataKey="rate" fill="#2563eb" radius={[6, 6, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Garis Masa */}
       {activeTab === 'timeline' && (
         <div style={s.card}>
@@ -646,11 +574,6 @@ const s = {
   markBar: { height: '6px', background: '#f1f5f9', borderRadius: '3px', overflow: 'hidden', margin: '0 auto', width: '80%' },
   markBarFill: { height: '100%', borderRadius: '3px', transition: 'width 0.5s ease' },
   completionCards: { display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' },
-  compareControls: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem', marginBottom: '1.25rem' },
-  compareCard: { border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem', background: '#fafafa' },
-  compareTitle: { margin: '0 0 0.25rem', color: '#1e3a5f', fontSize: '1rem' },
-  compareMeta: { color: '#64748b', fontSize: '0.82rem', marginBottom: '0.75rem' },
-  compareStat: { color: '#2563eb', fontSize: '1.3rem', fontWeight: '800', marginBottom: '0.75rem' },
   cpCard: { display: 'flex', alignItems: 'center', gap: '1rem' },
   cpName: { width: '130px', fontSize: '0.85rem', fontWeight: '600', color: '#475569', flexShrink: 0 },
   cpBar: { flex: 1, height: '12px', background: '#f1f5f9', borderRadius: '6px', overflow: 'hidden' },
