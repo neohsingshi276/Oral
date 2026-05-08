@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import LanguageToggle from '../components/LanguageToggle';
 
 const NotFoundPage = () => {
+  const { t } = useLanguage();
   return (
     <div style={s.page}>
-      <LanguageToggle style={s.langToggle} />
+      <LanguageToggle style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 2 }} />
       <style>{`
         @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
@@ -20,24 +22,24 @@ const NotFoundPage = () => {
         </div>
 
         <h1 style={s.code}>404</h1>
-        <h2 style={s.title}>Alamak! Halaman Tidak Dijumpai</h2>
+        <h2 style={s.title}>{t('notFound.title')}</h2>
         <p style={s.text}>
-          Halaman ini seolah-olah telah tercabut seperti gigi susu! 🪥
+          {t('notFound.textOne')} 🪥
           <br />
-          Jom kembali ke landasan yang betul.
+          {t('notFound.textTwo')}
         </p>
 
         <div style={s.funFact}>
-          <span style={{ fontWeight: '700', color: '#D4A843' }}>💡 Tahukah Anda?</span>
+          <span style={{ fontWeight: '700', color: '#D4A843' }}>💡 {t('notFound.didYouKnow')}</span>
           <br />
-          Manusia hanya mendapat dua set gigi dalam seumur hidup — gigi susu dan gigi kekal. Jaga gigi anda!
+          {t('notFound.fact')}
         </div>
 
         <Link to="/" className="home-btn" style={s.btn}>
-          🏠 Kembali ke Utama
+          🏠 {t('notFound.home')}
         </Link>
         <Link to="/learning" style={s.secondaryBtn}>
-          📚 Pergi ke Pembelajaran
+          📚 {t('notFound.learning')}
         </Link>
       </div>
     </div>

@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
 import LanguageToggle from '../components/LanguageToggle';
+import { useLanguage } from '../context/LanguageContext';
 
 const JoinGamePage = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [code, setCode] = useState(['', '', '', '']);
   const [nickname, setNickname] = useState('');
@@ -21,7 +23,7 @@ const JoinGamePage = () => {
           setSession(res.data.session);
           setStep('nickname');
         })
-        .catch(() => setError('Kod tidak sah! Sila cuba lagi.'));
+        .catch(() => setError(t('join.invalidCode')));
     }
   }, [urlCode]);
 
@@ -44,7 +46,7 @@ const JoinGamePage = () => {
   const handleCodeSubmit = async (e) => {
     e.preventDefault();
     const fullCode = code.join('');
-    if (fullCode.length !== 4) return setError('Sila masukkan kod 4 digit penuh!');
+    if (fullCode.length !== 4) return setError(t('join.fullCode'));
     setLoading(true);
     setError('');
     try {
@@ -52,7 +54,7 @@ const JoinGamePage = () => {
       setSession(res.data.session);
       setStep('nickname');
     } catch (err) {
-      setError(err.response?.data?.error || 'Kod tidak sah! Sila cuba lagi.');
+      setError(err.response?.data?.error || t('join.invalidCode'));
     } finally {
       setLoading(false);
     }
@@ -60,7 +62,7 @@ const JoinGamePage = () => {
 
   const handleNicknameSubmit = async (e) => {
     e.preventDefault();
-    if (!nickname.trim()) return setError('Sila masukkan nama samaran!');
+    if (!nickname.trim()) return setError(t('join.nicknameRequired'));
     setLoading(true);
     setError('');
     try {
@@ -84,7 +86,7 @@ const JoinGamePage = () => {
       localStorage.setItem('player', JSON.stringify(res.data.player));
       navigate(`/game/${session.unique_token}`);
     } catch (err) {
-      setError(err.response?.data?.error || 'Gagal menyertai. Sila cuba lagi!');
+      setError(err.response?.data?.error || t('join.joinFailed'));
     } finally {
       setLoading(false);
     }
@@ -122,7 +124,7 @@ const JoinGamePage = () => {
           </div>
         </div>
         <h1 style={s.title}>Dental Quest!</h1>
-        <p style={s.tagline}>Pengembaraan pergigian anda menanti</p>
+        <p style={s.tagline}>{t('join.tagline')}</p>
 
         {error && <div style={s.error}><span>⚠️</span> {error}</div>}
 
@@ -131,9 +133,9 @@ const JoinGamePage = () => {
           <>
             <div style={s.stepBadge}>
               <span style={s.stepNum}>1</span>
-              <span>Masukkan Kod Permainan</span>
+              <span>{t('join.stepCode')}</span>
             </div>
-            <p style={s.subtitle}>Masukkan kod 4 digit daripada guru anda</p>
+            <p style={s.subtitle}>{t('join.codeSubtitle')}</p>
             <form onSubmit={handleCodeSubmit}>
               <div style={s.codeRow}>
                 {code.map((digit, idx) => (
@@ -153,12 +155,12 @@ const JoinGamePage = () => {
                 ))}
               </div>
               <button className="join-btn" style={s.btn} type="submit" disabled={loading || code.join('').length !== 4}>
-                {loading ? '🔍 Memeriksa...' : '🔍 Semak Kod'}
+                {loading ? `🔍 ${t('join.checking')}` : `🔍 ${t('join.checkCode')}`}
               </button>
             </form>
             <div style={s.tips}>
               <div style={s.tipIcon}>💡</div>
-              <p style={s.tipText}>Minta kod permainan 4 digit daripada guru anda untuk menyertai!</p>
+              <p style={s.tipText}>{t('join.codeTip')}</p>
             </div>
           </>
         )}
@@ -168,19 +170,19 @@ const JoinGamePage = () => {
           <>
             <div style={s.sessionFound}>
               <div style={s.sessionFoundIcon}>✅</div>
-              <p style={s.sessionFoundText}>Berjaya: <strong>{session.session_name}</strong></p>
+              <p style={s.sessionFoundText}>{t('join.success')} <strong>{session.session_name}</strong></p>
             </div>
 
             <div style={s.stepBadge}>
               <span style={s.stepNum}>2</span>
-              <span>Pilih Nama Samaran</span>
+              <span>{t('join.stepNickname')}</span>
             </div>
-            <p style={s.subtitle}>Masukkan nama samaran anda untuk mula!</p>
+            <p style={s.subtitle}>{t('join.nicknameSubtitle')}</p>
             <form onSubmit={handleNicknameSubmit}>
               <input
                 style={s.input}
                 type="text"
-                placeholder="cth. PemberusHebat 🦷"
+                placeholder={`${t('join.nicknamePlaceholder')} 🦷`}
                 value={nickname}
                 onChange={e => setNickname(e.target.value)}
                 maxLength={20}
@@ -193,18 +195,18 @@ const JoinGamePage = () => {
                 <span style={s.charText}>{nickname.length}/20</span>
               </div>
               <button className="join-btn" style={s.btn} type="submit" disabled={loading}>
-                {loading ? '🚀 Menyertai...' : '🚀 Mula Pengembaraan!'}
+                {loading ? `🚀 ${t('join.joining')}` : `🚀 ${t('join.startAdventure')}`}
               </button>
               <button style={s.backBtn} type="button" onClick={() => { setStep('code'); setError(''); }}>
-                ← Tukar Kod
+                ← {t('join.changeCode')}
               </button>
             </form>
             <div style={s.tips}>
-              <p style={s.tipTitle}>🎮 Cara bermain:</p>
-              <p style={s.tipText}>Gunakan <strong>W A S D</strong> atau <strong>Anak Panah</strong> untuk bergerak</p>
-              <p style={s.tipText}>Jalan ke setiap pusat pemeriksaan dan tekan <strong>E</strong> untuk masuk!</p>
+              <p style={s.tipTitle}>🎮 {t('join.howToPlay')}</p>
+              <p style={s.tipText}>{t('join.movementTip')}</p>
+              <p style={s.tipText}>{t('join.checkpointTip')}</p>
               <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#FEF9EE', borderRadius: '10px', border: '1px solid rgba(212,168,67,0.3)' }}>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#B45309', fontWeight: '600' }}>🔄 Tertutup secara tidak sengaja? Jangan risau — kemajuan anda disimpan secara automatik!</p>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#B45309', fontWeight: '600' }}>🔄 {t('join.resumeTip')}</p>
               </div>
             </div>
           </>

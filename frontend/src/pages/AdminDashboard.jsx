@@ -15,28 +15,30 @@ import ProfileSettings from '../admin/ProfileSettings';
 import EmailReminders from '../admin/EmailReminders';
 import ActivityLog from '../admin/ActivityLog';
 import LanguageToggle from '../components/LanguageToggle';
+import { useLanguage } from '../context/LanguageContext';
 
 const AdminDashboard = () => {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [active, setActive] = useState('overview');
   const [showProfile, setShowProfile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const ALL_MENU = [
-    { key: 'overview', icon: '📊', label: 'Gambaran Keseluruhan', roles: ['main_admin', 'admin', 'teacher'] },
-    { key: 'sessions', icon: '🎮', label: 'Sesi Permainan', roles: ['main_admin', 'admin', 'teacher'] },
-    { key: 'students', icon: '👥', label: 'Pemain', roles: ['main_admin', 'admin', 'teacher'] },
-    { key: 'chat', icon: '💬', label: 'Sembang Pemain', roles: ['main_admin', 'admin', 'teacher'] },
-    { key: 'staffchat', icon: '🏢', label: 'Sembang Staf', roles: ['main_admin', 'admin', 'teacher'] },
-    { key: 'videos', icon: '📹', label: 'Video Pembelajaran', roles: ['main_admin', 'admin'] },
-    { key: 'facts', icon: '💡', label: 'Tahukah Anda?', roles: ['main_admin', 'admin'] },
-    { key: 'quiz', icon: '❓', label: 'Soalan Kuiz', roles: ['main_admin', 'admin'] },
-    { key: 'crossword', icon: '🧩', label: 'Teka Silang Kata', roles: ['main_admin', 'admin'] },
-    { key: 'analytics', icon: '📈', label: 'Analitik', roles: ['main_admin', 'admin', 'teacher'] },
-    { key: 'admins', icon: '👨‍💼', label: 'Urus Pentadbir', roles: ['main_admin', 'admin'] },
-    { key: 'email', icon: '✉️', label: admin?.role === 'main_admin' ? 'E-mel Peringatan' : 'Peti Masuk', roles: ['main_admin', 'admin', 'teacher'] },
-    { key: 'activity', icon: '📋', label: 'Log Aktiviti', roles: ['main_admin'] },
+    { key: 'overview', icon: '📊', label: t('admin.overview'), roles: ['main_admin', 'admin', 'teacher'] },
+    { key: 'sessions', icon: '🎮', label: t('admin.sessions'), roles: ['main_admin', 'admin', 'teacher'] },
+    { key: 'students', icon: '👥', label: t('admin.players'), roles: ['main_admin', 'admin', 'teacher'] },
+    { key: 'chat', icon: '💬', label: t('admin.playerChat'), roles: ['main_admin', 'admin', 'teacher'] },
+    { key: 'staffchat', icon: '🏢', label: t('admin.staffChat'), roles: ['main_admin', 'admin', 'teacher'] },
+    { key: 'videos', icon: '📹', label: t('admin.videos'), roles: ['main_admin', 'admin'] },
+    { key: 'facts', icon: '💡', label: t('admin.facts'), roles: ['main_admin', 'admin'] },
+    { key: 'quiz', icon: '❓', label: t('admin.quiz'), roles: ['main_admin', 'admin'] },
+    { key: 'crossword', icon: '🧩', label: t('admin.crossword'), roles: ['main_admin', 'admin'] },
+    { key: 'analytics', icon: '📈', label: t('admin.analytics'), roles: ['main_admin', 'admin', 'teacher'] },
+    { key: 'admins', icon: '👨‍💼', label: t('admin.admins'), roles: ['main_admin', 'admin'] },
+    { key: 'email', icon: '✉️', label: admin?.role === 'main_admin' ? t('admin.email') : t('admin.inbox'), roles: ['main_admin', 'admin', 'teacher'] },
+    { key: 'activity', icon: '📋', label: t('admin.activity'), roles: ['main_admin'] },
   ];
 
   const MENU = ALL_MENU.filter(item => item.roles.includes(admin?.role || 'admin'));
@@ -70,9 +72,9 @@ const AdminDashboard = () => {
 
   const getRoleLabel = (role) => {
     switch (role) {
-      case 'main_admin': return '⭐ Pentadbir Utama';
-      case 'teacher': return '👩‍🏫 Guru';
-      default: return 'Pentadbir';
+      case 'main_admin': return `⭐ ${t('admin.mainAdmin') || 'Pentadbir Utama'}`;
+      case 'teacher': return `👩‍🏫 ${t('admin.teacher') || 'Guru'}`;
+      default: return t('admin.adminRole') || 'Pentadbir';
     }
   };
 
@@ -139,7 +141,7 @@ const AdminDashboard = () => {
             </button>
           ))}
         </nav>
-        <button style={styles.logoutBtn} onClick={handleLogout}>🚪 Log Keluar</button>
+        <button style={styles.logoutBtn} onClick={handleLogout}>🚪 {t('admin.logout')}</button>
       </div>
 
       <div style={styles.main}>
@@ -155,10 +157,10 @@ const AdminDashboard = () => {
             {MENU.find(m => m.key === active)?.icon} {MENU.find(m => m.key === active)?.label}
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span className="admin-welcome-text" style={styles.welcomeText}>Selamat datang, {admin?.name}! 👋</span>
+            <span className="admin-welcome-text" style={styles.welcomeText}>{t('admin.welcome')}, {admin?.name}! 👋</span>
             <LanguageToggle compact />
             <button style={styles.profileBtn} onClick={() => setShowProfile(true)}>
-              👤 Profil
+              👤 {t('admin.profile')}
             </button>
           </div>
         </div>
@@ -170,19 +172,20 @@ const AdminDashboard = () => {
 };
 
 const Overview = ({ admin, setActive, menu }) => {
+  const { t } = useLanguage();
   const allCards = [
-    { icon: '🎮', label: 'Sesi Permainan', desc: 'Cipta dan urus sesi permainan', key: 'sessions', color: '#eff6ff', accent: '#01306B' },
-    { icon: '👥', label: 'Pemain', desc: 'Lihat semua pemain dan kemajuan', key: 'students', color: '#f0fdf4', accent: '#16a34a' },
-    { icon: '📹', label: 'Video Pembelajaran', desc: 'Tambah dan edit video pembelajaran', key: 'videos', color: '#fdf4ff', accent: '#9333ea' },
-    { icon: '💡', label: 'Tahukah Anda?', desc: 'Urus fakta pergigian', key: 'facts', color: '#fff7ed', accent: '#ea580c' },
-    { icon: '📈', label: 'Analitik', desc: 'Lihat markah dan muat turun laporan', key: 'analytics', color: '#f0fdfa', accent: '#0d9488' },
-    { icon: '❓', label: 'Soalan Kuiz', desc: 'Urus soalan kuiz', key: 'quiz', color: '#FEF9EE', accent: '#D4A843' },
-    { icon: '🧩', label: 'Teka Silang Kata', desc: 'Urus perkataan teka silang kata', key: 'crossword', color: '#f5f3ff', accent: '#7c3aed' },
-    { icon: '💬', label: 'Sembang Pemain', desc: 'Balas mesej pelajar', key: 'chat', color: '#f0f9ff', accent: '#0284c7' },
-    { icon: '🏢', label: 'Sembang Staf', desc: 'Berbual dengan pentadbir lain', key: 'staffchat', color: '#FFF7ED', accent: '#B45309' },
-    { icon: '👨‍💼', label: 'Urus Pentadbir', desc: 'Urus akaun pentadbir dan guru', key: 'admins', color: '#f5f3ff', accent: '#6d28d9' },
-    { icon: '✉️', label: 'Peti Masuk', desc: 'Lihat mesej e-mel', key: 'email', color: '#FEF2F2', accent: '#CC0000' },
-    { icon: '📋', label: 'Log Aktiviti', desc: 'Lihat log aktiviti sistem', key: 'activity', color: '#f0f9ff', accent: '#0369a1' },
+    { icon: '🎮', label: t('admin.sessions'), desc: t('admin.overviewDescSessions') || 'Cipta dan urus sesi permainan', key: 'sessions', color: '#eff6ff', accent: '#01306B' },
+    { icon: '👥', label: t('admin.players'), desc: t('admin.overviewDescPlayers') || 'Lihat semua pemain dan kemajuan', key: 'students', color: '#f0fdf4', accent: '#16a34a' },
+    { icon: '📹', label: t('admin.videos'), desc: t('admin.overviewDescVideos') || 'Tambah dan edit video pembelajaran', key: 'videos', color: '#fdf4ff', accent: '#9333ea' },
+    { icon: '💡', label: t('admin.facts'), desc: t('admin.overviewDescFacts') || 'Urus fakta pergigian', key: 'facts', color: '#fff7ed', accent: '#ea580c' },
+    { icon: '📈', label: t('admin.analytics'), desc: t('admin.overviewDescAnalytics') || 'Lihat markah dan muat turun laporan', key: 'analytics', color: '#f0fdfa', accent: '#0d9488' },
+    { icon: '❓', label: t('admin.quiz'), desc: t('admin.overviewDescQuiz') || 'Urus soalan kuiz', key: 'quiz', color: '#FEF9EE', accent: '#D4A843' },
+    { icon: '🧩', label: t('admin.crossword'), desc: t('admin.overviewDescCrossword') || 'Urus perkataan teka silang kata', key: 'crossword', color: '#f5f3ff', accent: '#7c3aed' },
+    { icon: '💬', label: t('admin.playerChat'), desc: t('admin.overviewDescChat') || 'Balas mesej pelajar', key: 'chat', color: '#f0f9ff', accent: '#0284c7' },
+    { icon: '🏢', label: t('admin.staffChat'), desc: t('admin.overviewDescStaffChat') || 'Berbual dengan pentadbir lain', key: 'staffchat', color: '#FFF7ED', accent: '#B45309' },
+    { icon: '👨‍💼', label: t('admin.admins'), desc: t('admin.overviewDescAdmins') || 'Urus akaun pentadbir dan guru', key: 'admins', color: '#f5f3ff', accent: '#6d28d9' },
+    { icon: '✉️', label: t('admin.inbox'), desc: t('admin.overviewDescEmail') || 'Lihat mesej e-mel', key: 'email', color: '#FEF2F2', accent: '#CC0000' },
+    { icon: '📋', label: t('admin.activity'), desc: t('admin.overviewDescActivity') || 'Lihat log aktiviti sistem', key: 'activity', color: '#f0f9ff', accent: '#0369a1' },
   ];
 
   // Filter cards to only show items the user has access to
@@ -194,13 +197,13 @@ const Overview = ({ admin, setActive, menu }) => {
       <div style={styles.welcomeCard}>
         <div style={styles.welcomeCardInner}>
           <div>
-            <h2 style={styles.welcomeTitle}>Selamat sejahtera, {admin?.name}! 🌺</h2>
+            <h2 style={styles.welcomeTitle}>{t('admin.welcome')}, {admin?.name}! 🌺</h2>
             <p style={styles.welcomeSubtitle}>
               {admin?.role === 'main_admin'
-                ? '⭐ Anda telah log masuk sebagai Pentadbir Utama — akses penuh diaktifkan.'
+                ? `⭐ ${t('admin.welcomeMain') || 'Anda telah log masuk sebagai Pentadbir Utama — akses penuh diaktifkan.'}`
                 : admin?.role === 'teacher'
-                  ? '👩‍🏫 Anda telah log masuk sebagai Guru — urus sembang dan lihat analitik.'
-                  : 'Urus program kesihatan pergigian anda dari sini.'}
+                  ? `👩‍🏫 ${t('admin.welcomeTeacher') || 'Anda telah log masuk sebagai Guru — urus sembang dan lihat analitik.'}`
+                  : t('admin.welcomeAdmin') || 'Urus program kesihatan pergigian anda dari sini.'}
             </p>
           </div>
           <div style={styles.welcomeEmoji}>🦷</div>
@@ -214,7 +217,7 @@ const Overview = ({ admin, setActive, menu }) => {
             </div>
             <h3 style={{ ...styles.overviewLabel, color: card.accent }}>{card.label}</h3>
             <p style={styles.overviewDesc}>{card.desc}</p>
-            <div style={{ ...styles.overviewGo, color: card.accent }}>Pergi →</div>
+            <div style={{ ...styles.overviewGo, color: card.accent }}>{t('admin.go')} →</div>
           </div>
         ))}
       </div>

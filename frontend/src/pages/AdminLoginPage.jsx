@@ -3,10 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import LanguageToggle from '../components/LanguageToggle';
+import { useLanguage } from '../context/LanguageContext';
 
 const AdminLoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -27,7 +29,7 @@ const AdminLoginPage = () => {
       login(res.data.token, res.data.admin);
       navigate('/admin/dashboard');
     } catch (err) {
-      setError(err.response?.data?.error || 'Log masuk gagal');
+      setError(err.response?.data?.error || t('admin.loginFailed') || 'Log masuk gagal');
     } finally {
       setLoading(false);
     }
@@ -64,13 +66,13 @@ const AdminLoginPage = () => {
         <div style={s.logoSection}>
           <div style={s.logoIcon}>🦷</div>
           <h1 style={s.title}>DentalQuest</h1>
-          <p style={s.subtitle}>Portal Pentadbir & Guru</p>
+          <p style={s.subtitle}>{t('admin.portalTitle') || 'Portal Pentadbir & Guru'}</p>
         </div>
 
         {/* Divider */}
         <div style={s.divider}>
           <div style={s.dividerLine}></div>
-          <span style={s.dividerText}>Log masuk untuk meneruskan</span>
+          <span style={s.dividerText}>{t('admin.loginContinue') || 'Log masuk untuk meneruskan'}</span>
           <div style={s.dividerLine}></div>
         </div>
 
@@ -85,7 +87,7 @@ const AdminLoginPage = () => {
           <div style={s.field}>
             <label style={s.label}>
               <span style={s.labelIcon}>📧</span>
-              Alamat E-mel
+              {t('admin.emailLabel') || 'Alamat E-mel'}
             </label>
             <input
               className="login-input"
@@ -103,7 +105,7 @@ const AdminLoginPage = () => {
           <div style={s.field}>
             <label style={s.label}>
               <span style={s.labelIcon}>🔒</span>
-              Kata Laluan
+              {t('admin.passwordLabel') || 'Kata Laluan'}
             </label>
             <div style={s.passwordWrap}>
               <input
@@ -131,16 +133,16 @@ const AdminLoginPage = () => {
             {loading ? (
               <span style={s.loadingWrap}>
                 <span style={s.loadingDot}></span>
-                Sedang log masuk...
+                {t('admin.loggingIn') || 'Sedang log masuk...'}
               </span>
             ) : (
-              '🚀 Log Masuk'
+              `🚀 ${t('admin.loginBtn') || 'Log Masuk'}`
             )}
           </button>
 
           <div style={s.footer}>
             <Link to="/admin/forgot-password" className="forgot-link" style={s.forgotLink}>
-              Lupa Kata Laluan?
+              {t('admin.forgotPassword') || 'Lupa Kata Laluan?'}
             </Link>
           </div>
         </form>
@@ -148,7 +150,7 @@ const AdminLoginPage = () => {
         {/* Bottom decoration */}
         <div style={s.bottomDeco}>
           <span>🌺</span>
-          <span style={s.bottomText}>Platform Pendidikan Kesihatan Pergigian</span>
+          <span style={s.bottomText}>{t('admin.platformTitle') || 'Platform Pendidikan Kesihatan Pergigian'}</span>
           <span>🌺</span>
         </div>
       </div>

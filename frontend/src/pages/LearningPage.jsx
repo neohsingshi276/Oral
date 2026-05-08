@@ -35,7 +35,7 @@ const LearningPage = () => {
   };
 
   if (loading) return (
-    <div style={styles.page}><Navbar /><div style={styles.loading}>{t('learning.loading')} ??</div></div>
+    <div style={styles.page}><Navbar /><div style={styles.loading}>{t('learning.loading')} 🦷</div></div>
   );
 
   return (
@@ -45,8 +45,8 @@ const LearningPage = () => {
       {/* Hero Banner */}
       <div style={styles.hero}>
         <div style={styles.heroLeft}>
-          <div style={styles.heroBadge}>?? {t('learning.heroBadge')}</div>
-          <h1 style={styles.heroTitle}>{t('learning.heroTitleTop')}<br />{t('learning.heroTitleBottom')} ??</h1>
+          <div style={styles.heroBadge}>📚 {t('learning.heroBadge')}</div>
+          <h1 style={styles.heroTitle}>{t('learning.heroTitleTop')}<br />{t('learning.heroTitleBottom')} 🦷</h1>
           <p style={styles.heroText}>{t('learning.heroText')}</p>
         </div>
         <div style={styles.heroEmojis}>
@@ -58,24 +58,24 @@ const LearningPage = () => {
       {/* What is Oral Health */}
       <section style={styles.section}>
         <div style={styles.sectionInner}>
-          <h2 style={styles.sectionTitle}>?? {t('learning.oralTitle')}</h2>
-          <p style={styles.sectionText}>{t('learning.oralOne')} ??</p>
-          <p style={styles.sectionText}>{t('learning.oralTwo')} ??</p>
+          <h2 style={styles.sectionTitle}>🌟 {t('learning.oralTitle')}</h2>
+          <p style={styles.sectionText}>{t('learning.oralOne')} 😊</p>
+          <p style={styles.sectionText}>{t('learning.oralTwo')} 🎉</p>
         </div>
       </section>
 
       {/* Fun Fact Cards */}
       <section style={{ ...styles.section, background: '#FEF9EE' }}>
         <div style={styles.sectionInner}>
-          <h2 style={styles.sectionTitle}>? {t('learning.factsTitle')}</h2>
+          <h2 style={styles.sectionTitle}>⚡ {t('learning.factsTitle')}</h2>
           <div style={styles.factGrid}>
             {[
-              { icon: '??', ...t('learning.facts')[0] },
-              { icon: '??', ...t('learning.facts')[1] },
-              { icon: '??', ...t('learning.facts')[2] },
-              { icon: '??', ...t('learning.facts')[3] },
-              { icon: '??', ...t('learning.facts')[4] },
-              { icon: '?????', ...t('learning.facts')[5] },
+              { icon: '🦠', ...t('learning.facts')[0] },
+              { icon: '🍬', ...t('learning.facts')[1] },
+              { icon: '🪥', ...t('learning.facts')[2] },
+              { icon: '💧', ...t('learning.facts')[3] },
+              { icon: '🧵', ...t('learning.facts')[4] },
+              { icon: '👨‍⚕️', ...t('learning.facts')[5] },
             ].map((fact, i) => (
               <div key={i} style={{ ...styles.factCard, background: ['#fff7ed', '#f0fdf4', '#eff6ff', '#fdf4ff', '#fff1f2', '#f0fdfa'][i] }}>
                 <div style={styles.factIcon}>{fact.icon}</div>
@@ -90,14 +90,14 @@ const LearningPage = () => {
       {/* How to Brush Steps */}
       <section style={styles.section}>
         <div style={styles.sectionInner}>
-          <h2 style={styles.sectionTitle}>?? {t('learning.brushTitle')}</h2>
+          <h2 style={styles.sectionTitle}>🪥 {t('learning.brushTitle')}</h2>
           <div style={styles.stepsRow}>
             {[
-              { step: '1', icon: '??', ...t('learning.steps')[0] },
-              { step: '2', icon: '??', ...t('learning.steps')[1] },
-              { step: '3', icon: '??', ...t('learning.steps')[2] },
-              { step: '4', icon: '??', ...t('learning.steps')[3] },
-              { step: '5', icon: '??', ...t('learning.steps')[4] },
+              { step: '1', icon: '🪥', ...t('learning.steps')[0] },
+              { step: '2', icon: '⏱️', ...t('learning.steps')[1] },
+              { step: '3', icon: '🔄', ...t('learning.steps')[2] },
+              { step: '4', icon: '👅', ...t('learning.steps')[3] },
+              { step: '5', icon: '💦', ...t('learning.steps')[4] },
             ].map((s, i) => (
               <div key={i} style={styles.stepCard}>
                 <div style={styles.stepNumber}>{s.step}</div>
@@ -113,18 +113,18 @@ const LearningPage = () => {
       {/* Foods Section */}
       <section style={{ ...styles.section, background: '#f0fdf4' }}>
         <div style={styles.sectionInner}>
-          <h2 style={styles.sectionTitle}>?? {t('learning.foodTitle')}</h2>
+          <h2 style={styles.sectionTitle}>🍎 {t('learning.foodTitle')}</h2>
           <div style={styles.foodGrid}>
             <div style={styles.foodCard}>
-              <h3 style={styles.foodGoodTitle}>? {t('learning.goodFoodTitle')}</h3>
+              <h3 style={styles.foodGoodTitle}>✅ {t('learning.goodFoodTitle')}</h3>
               {t('learning.goodFoods').map((f, i) => (
-                <div key={i} style={styles.foodItem}>{['??', '??', '??', '??', '??'][i]} {f}</div>
+                <div key={i} style={styles.foodItem}>{['🥛', '🍎', '💧', '🥦', '🥜'][i]} {f}</div>
               ))}
             </div>
             <div style={{ ...styles.foodCard, background: '#fff1f2' }}>
-              <h3 style={styles.foodBadTitle}>? {t('learning.badFoodTitle')}</h3>
+              <h3 style={styles.foodBadTitle}>❌ {t('learning.badFoodTitle')}</h3>
               {t('learning.badFoods').map((f, i) => (
-                <div key={i} style={styles.foodItemBad}>{['??', '??', '??', '??', '??'][i]} {f}</div>
+                <div key={i} style={styles.foodItemBad}>{['🍬', '🥤', '🍟', '🧃', '🍦'][i]} {f}</div>
               ))}
             </div>
           </div>
@@ -134,7 +134,7 @@ const LearningPage = () => {
       {/* Videos Section */}
       <section style={{ ...styles.section, background: '#eff6ff' }}>
         <div style={styles.sectionInner}>
-          <h2 style={styles.sectionTitle}>?? {t('learning.videosTitle')}</h2>
+          <h2 style={styles.sectionTitle}>🎬 {t('learning.videosTitle')}</h2>
           <p style={{ textAlign: 'center', color: '#475569', marginBottom: '2rem' }}>{t('learning.videosText')}</p>
 
           {/* Selected Video Player */}
@@ -184,7 +184,7 @@ const LearningPage = () => {
 
       {/* Footer CTA */}
       <section style={styles.cta}>
-        <h2 style={styles.ctaTitle}>{t('learning.ctaTitle')} ??</h2>
+        <h2 style={styles.ctaTitle}>{t('learning.ctaTitle')} 🎮</h2>
         <p style={styles.ctaText}>{t('learning.ctaText')}</p>
       </section>
     </div>
