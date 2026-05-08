@@ -164,8 +164,8 @@ const ManageFacts = () => {
                 />
               )}
               <div style={s.factContent}>
-                <h4 style={s.factTitle}>{fact.title}</h4>
-                <p style={s.factText}>{fact.content?.slice(0, 100)}...</p>
+                <h4 style={s.factTitle} data-no-translate="true">{fact.title}</h4>
+                <p style={s.factText} data-no-translate="true">{fact.content?.slice(0, 100)}...</p>
                 {!fact.image_url && <span style={s.noImgBadge}>Tiada imej</span>}
               </div>
               <div style={s.factActions}>

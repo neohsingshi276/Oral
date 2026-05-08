@@ -152,8 +152,8 @@ const LearningPage = () => {
                 allowFullScreen
               />
               <div style={styles.playerInfo}>
-                <h3 style={styles.playerTitle}>{selected.title}</h3>
-                <p style={styles.playerDesc}>{selected.description}</p>
+                <h3 style={styles.playerTitle} data-no-translate="true">{selected.title}</h3>
+                <p style={styles.playerDesc} data-no-translate="true">{selected.description}</p>
               </div>
             </div>
           )}
@@ -177,8 +177,8 @@ const LearningPage = () => {
                 </div>
                 <div style={styles.videoMeta}>
                   <span style={styles.videoNum}>Video {index + 1}</span>
-                  <p style={styles.videoCardTitle}>{video.title}</p>
-                  <p style={styles.videoCardDesc}>{video.description?.slice(0, 70)}...</p>
+                  <p style={styles.videoCardTitle} data-no-translate="true">{video.title}</p>
+                  <p style={styles.videoCardDesc} data-no-translate="true">{video.description?.slice(0, 70)}...</p>
                 </div>
               </div>
             ))}

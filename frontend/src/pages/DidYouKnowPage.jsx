@@ -208,7 +208,7 @@ const DidYouKnowPage = () => {
                   </div>
                   <div style={styles.cardBody}>
                     <div style={{ ...styles.cardBadge, background: color.accent }}>💡 Tahukah Anda?</div>
-                    <h3 style={{ ...styles.cardTitle, color: color.accent }}>{fact.title}</h3>
+                    <h3 style={{ ...styles.cardTitle, color: color.accent }} data-no-translate="true">{fact.title}</h3>
                     <div style={styles.cardFlipHint}>
                       <span>Ketik untuk baca lagi</span>
                       <span style={{ marginLeft: '4px' }}>→</span>
@@ -218,9 +218,9 @@ const DidYouKnowPage = () => {
               ) : (
                 <div style={styles.cardBackFace}>
                   <div style={{ ...styles.cardBadgeBack, background: color.accent }}>💡 Fakta!</div>
-                  <h3 style={{ ...styles.cardTitleBack, color: color.accent }}>{fact.title}</h3>
-                  <p style={styles.cardContent}>{fact.content}</p>
-                  {fact.author && <p style={styles.cardAuthor}>— {fact.author}</p>}
+                  <h3 style={{ ...styles.cardTitleBack, color: color.accent }} data-no-translate="true">{fact.title}</h3>
+                  <p style={styles.cardContent} data-no-translate="true">{fact.content}</p>
+                  {fact.author && <p style={styles.cardAuthor} data-no-translate="true">— {fact.author}</p>}
                   <div style={styles.cardFlipHint}>↩ Ketik untuk terbalik semula</div>
                 </div>
               )}

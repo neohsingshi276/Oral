@@ -23,26 +23,35 @@ const translateText = (text, language) => {
 const translateDomText = (root, language) => {
   if (!root || typeof document === 'undefined') return;
   const replacements = language === 'bi' ? exactTextTranslations : reverseExactTextTranslations;
-  const entries = Object.entries(replacements).sort((a, b) => b[0].length - a[0].length);
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+
+  const translateFullLabel = (value) => {
+    const trimmed = value.trim();
+    if (!trimmed) return value;
+    if (replacements[trimmed]) return value.replace(trimmed, replacements[trimmed]);
+
+    const match = trimmed.match(/^([^A-Za-zÀ-ž0-9]*)(.*?)(\s*\(\d+\))?$/);
+    if (!match) return value;
+
+    const [, prefix = '', core = '', suffix = ''] = match;
+    const translatedCore = replacements[core.trim()];
+    if (!translatedCore) return value;
+    return value.replace(trimmed, `${prefix}${translatedCore}${suffix}`);
+  };
 
   let node = walker.nextNode();
   while (node) {
     const raw = node.nodeValue;
-    const trimmed = raw.trim();
-    if (trimmed && replacements[trimmed]) {
-      node.nodeValue = raw.replace(trimmed, replacements[trimmed]);
-    } else if (trimmed) {
-      let nextValue = raw;
-      entries.forEach(([from, to]) => {
-        if (from && nextValue.includes(from)) nextValue = nextValue.split(from).join(to);
-      });
+    const parent = node.parentElement;
+    if (!parent?.closest('[data-no-translate="true"]')) {
+      const nextValue = translateFullLabel(raw);
       if (nextValue !== raw) node.nodeValue = nextValue;
     }
     node = walker.nextNode();
   }
 
   root.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
+    if (el.closest('[data-no-translate="true"]')) return;
     const translated = replacements[el.placeholder];
     if (translated) el.placeholder = translated;
   });

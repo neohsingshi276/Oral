@@ -247,11 +247,11 @@ const ManageQuiz = () => {
                         <span style={s.qTypeBadge}>{typeInfo?.label}</span>
                       </div>
                       {q.image_url && <img src={q.image_url} alt="" style={s.qImg} />}
-                      <p style={s.qText}>{q.question}</p>
+                      <p style={s.qText} data-no-translate="true">{q.question}</p>
                       {q.question_type !== 'match' && (
                         <div style={s.qOpts}>
                           {opts.map((opt, idx) => (
-                            <span key={idx} style={{ ...s.qOpt, ...(ca.includes(idx) ? s.qOptCorrect : {}) }}>
+                            <span key={idx} style={{ ...s.qOpt, ...(ca.includes(idx) ? s.qOptCorrect : {}) }} data-no-translate="true">
                               {String.fromCharCode(65 + idx)}: {opt}
                               {ca.includes(idx) && ' ✓'}
                             </span>
@@ -261,7 +261,7 @@ const ManageQuiz = () => {
                       {q.question_type === 'match' && (
                         <div style={s.qOpts}>
                           {opts.map((pair, idx) => (
-                            <span key={idx} style={s.qOptCorrect}>{pair.left || pair} ↔ {pair.right || pair}</span>
+                            <span key={idx} style={s.qOptCorrect} data-no-translate="true">{pair.left || pair} ↔ {pair.right || pair}</span>
                           ))}
                         </div>
                       )}

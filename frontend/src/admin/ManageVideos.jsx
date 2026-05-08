@@ -89,8 +89,8 @@ const ManageVideos = () => {
               {videos.map((v, i) => (
                 <tr key={v.id} style={i % 2 === 0 ? s.trEven : {}}>
                   <td style={s.td}>{v.order_num}</td>
-                  <td style={s.td}><strong>{v.title}</strong></td>
-                  <td style={s.td}>{v.description?.slice(0, 60)}...</td>
+                  <td style={s.td} data-no-translate="true"><strong>{v.title}</strong></td>
+                  <td style={s.td} data-no-translate="true">{v.description?.slice(0, 60)}...</td>
                   <td style={s.td}>
                     <button style={s.btnEdit} onClick={() => handleEdit(v)}>✏️ Ubahsuai</button>
                     <button style={s.btnDelete} onClick={() => handleDelete(v.id)}>🗑️ Padam</button>

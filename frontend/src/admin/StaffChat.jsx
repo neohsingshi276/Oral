@@ -146,7 +146,7 @@ const StaffChat = () => {
                   </span>
                 </div>
                 {c.lastMessage && (
-                  <div style={s.contactLast}>
+                  <div style={s.contactLast} data-no-translate="true">
                     {c.lastMessage.length > 34 ? c.lastMessage.slice(0, 34) + '…' : c.lastMessage}
                   </div>
                 )}
@@ -217,7 +217,7 @@ const StaffChat = () => {
                       <span style={{ ...s.bubbleSender, color: isMine ? 'rgba(255,255,255,0.65)' : '#94a3b8' }}>
                         {isMine ? 'Anda' : m.sender_name}
                       </span>
-                      <p style={{ ...s.bubbleText, color: isMine ? '#fff' : '#1e293b' }}>{m.message}</p>
+                      <p style={{ ...s.bubbleText, color: isMine ? '#fff' : '#1e293b' }} data-no-translate="true">{m.message}</p>
                       <span style={{ ...s.bubbleTime, color: isMine ? 'rgba(255,255,255,0.55)' : '#94a3b8' }}>
                         {new Date(m.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         {m.is_read && isMine && <span style={{ marginLeft: '0.3rem' }}>✓✓</span>}

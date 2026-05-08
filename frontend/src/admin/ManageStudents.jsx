@@ -84,11 +84,11 @@ const ManageStudents = () => {
                     <td style={s.td}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <div style={s.playerAvatar}>{p.nickname?.[0]?.toUpperCase()}</div>
-                        <strong>{p.nickname}</strong>
+                        <strong data-no-translate="true">{p.nickname}</strong>
                       </div>
                     </td>
                     <td style={s.td}>
-                      <span style={s.sessionBadge}>{p.session_name || '—'}</span>
+                      <span style={s.sessionBadge} data-no-translate="true">{p.session_name || '—'}</span>
                     </td>
                     <td style={s.td}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>

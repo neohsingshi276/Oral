@@ -130,8 +130,8 @@ const ManageCrossword = () => {
             {words.map((w, i) => (
               <tr key={w.id} style={i % 2 === 0 ? s.trEven : {}}>
                 <td style={s.td}><div style={{ ...s.wordDot, background: COLORS[i % COLORS.length] }}>{i + 1}</div></td>
-                <td style={s.td}><strong style={{ color: COLORS[i % COLORS.length], letterSpacing: '0.05em' }}>{w.word}</strong></td>
-                <td style={s.td}>{w.clue}</td>
+                <td style={s.td} data-no-translate="true"><strong style={{ color: COLORS[i % COLORS.length], letterSpacing: '0.05em' }}>{w.word}</strong></td>
+                <td style={s.td} data-no-translate="true">{w.clue}</td>
                 <td style={s.td}><span style={s.letterBadge}>{w.word.length}</span></td>
                 <td style={s.td}>
                   <button style={s.btnEdit} onClick={() => handleEdit(w)}>✏️</button>

@@ -156,7 +156,7 @@ const AdminChat = () => {
               <div style={s.avatar}>{p.nickname?.[0]?.toUpperCase()}</div>
               <div style={s.contactInfo}>
                 <div style={s.contactName}>{p.nickname}</div>
-                <div style={s.contactLast}>
+                <div style={s.contactLast} data-no-translate="true">
                   {p.lastMessage
                     ? (p.lastMessage.length > 34 ? p.lastMessage.slice(0, 34) + '…' : p.lastMessage)
                     : 'Belum ada mesej'}
@@ -212,7 +212,7 @@ const AdminChat = () => {
                       <span style={{ ...s.bubbleSender, color: isAdmin ? 'rgba(255,255,255,0.65)' : '#94a3b8' }}>
                         {isAdmin ? '👤 Anda (Pentadbir)' : `🎮 ${selected.nickname}`}
                       </span>
-                      <p style={{ ...s.bubbleText, color: isAdmin ? '#fff' : '#1e293b' }}>{m.message}</p>
+                      <p style={{ ...s.bubbleText, color: isAdmin ? '#fff' : '#1e293b' }} data-no-translate="true">{m.message}</p>
                       <span style={{ ...s.bubbleTime, color: isAdmin ? 'rgba(255,255,255,0.55)' : '#94a3b8' }}>
                         {new Date(m.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
