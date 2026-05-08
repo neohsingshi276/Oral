@@ -307,3 +307,8 @@ ALTER TABLE crossword_data MODIFY COLUMN start_col INT DEFAULT 0;
 ALTER TABLE admins MODIFY COLUMN role ENUM('admin', 'main_admin', 'teacher') DEFAULT 'admin';
 ALTER TABLE admin_invitations ADD COLUMN role ENUM('admin', 'teacher') DEFAULT 'admin' AFTER token;
 ALTER TABLE otp_tokens MODIFY COLUMN otp VARCHAR(255) NOT NULL;
+
+-- Migration: Add school column to admins (for grouping teachers/admins by school)
+ALTER TABLE admins ADD COLUMN school VARCHAR(255) NULL AFTER role;
+ALTER TABLE admin_invitations ADD COLUMN school VARCHAR(255) NULL AFTER role;
+ALTER TABLE game_sessions ADD COLUMN session_month TINYINT NULL AFTER session_name;

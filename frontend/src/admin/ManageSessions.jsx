@@ -3,6 +3,11 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
+const MONTHS = [
+  'Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun',
+  'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'
+];
+
 const ManageSessions = () => {
   const { admin } = useAuth();
   const { t } = useLanguage();
@@ -11,6 +16,8 @@ const ManageSessions = () => {
   const [words, setWords] = useState([]);
   const [msg, setMsg] = useState('');
   const [copied, setCopied] = useState('');
+  const [teacherHierarchy, setTeacherHierarchy] = useState([]);
+  const [expandedSession, setExpandedSession] = useState(null);
 
   // Edit mode tracking
   const [editId, setEditId] = useState(null);
@@ -18,6 +25,7 @@ const ManageSessions = () => {
 
   const defaultForm = {
     session_name: '',
+    session_month: new Date().getMonth() + 1,
     q_mode: 'random', q_timer: 15, q_order: 'shuffle', q_count: 10, q_min: 0, q_selected: [],
     cw_mode: 'random', cw_count: 8, cw_selected: [], cw_min: 0,
     cp3_timer: 60, cp3_min: 0
@@ -26,10 +34,11 @@ const ManageSessions = () => {
   const [form, setForm] = useState(defaultForm);
 
   const fetchSessions = () => api.get('/sessions').then(res => setSessions(res.data.sessions));
+  const fetchTeacherSessions = () => api.get('/sessions/teacher-sessions').then(res => setTeacherHierarchy(res.data.hierarchy || []));
   const fetchQuestions = () => api.get('/quiz/admin/questions').then(res => setQuestions(res.data.questions));
   const fetchWords = () => api.get('/crossword/admin').then(res => setWords(res.data.words));
 
-  useEffect(() => { fetchSessions(); fetchQuestions(); fetchWords(); }, []);
+  useEffect(() => { fetchSessions(); fetchTeacherSessions(); fetchQuestions(); fetchWords(); }, []);
 
   // LOAD EXISTING SETTINGS INTO THE WIZARD
   const handleEdit = (session) => {
@@ -39,7 +48,7 @@ const ManageSessions = () => {
     const parseArr = (val) => {
       if (!val) return [];
       if (typeof val === 'string') {
-        try { return JSON.parse(val); } catch (e) { return []; }
+        try { return JSON.parse(val); } catch { return []; }
       }
       return val;
     };
@@ -53,6 +62,7 @@ const ManageSessions = () => {
 
     setForm({
       session_name: session.session_name || '',
+      session_month: session.session_month || session.month || new Date(session.created_at).getMonth() + 1,
       q_mode: qSel.length > 0 ? 'manual' : 'random',
       q_timer: qs.timer_seconds || 15,
       q_order: qs.question_order || 'shuffle',
@@ -91,6 +101,7 @@ const ManageSessions = () => {
     try {
       const payload = {
         session_name: form.session_name,
+        session_month: form.session_month,
         quiz_settings: {
           timer_seconds: form.q_timer,
           question_order: form.q_order,
@@ -118,12 +129,13 @@ const ManageSessions = () => {
       setStep(1);
       setEditId(null);
       fetchSessions();
+      fetchTeacherSessions();
     } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Failed')); }
     setTimeout(() => setMsg(''), 4000);
   };
 
   const handleToggle = async (id, is_active) => { await api.put(`/sessions/${id}`, { is_active: !is_active }); fetchSessions(); };
-  const handleDelete = async (id) => { if (!confirm('Delete this session?')) return; await api.delete(`/sessions/${id}`); fetchSessions(); };
+  const handleDelete = async (id) => { if (!confirm('Delete this session?')) return; await api.delete(`/sessions/${id}`); fetchSessions(); fetchTeacherSessions(); };
   const copyCode = (code) => { navigator.clipboard.writeText(code); setCopied(code); setTimeout(() => setCopied(''), 2000); };
 
   const toggleQ = (id) => {
@@ -209,6 +221,12 @@ const ManageSessions = () => {
               <div style={s.field}>
                 <label style={s.label}>{t('admin.sessionName')}</label>
                 <input style={s.input} value={form.session_name} onChange={e => setForm({ ...form, session_name: e.target.value })} required placeholder="e.g. Class 5A — March 2026" maxLength={80} />
+              </div>
+              <div style={s.field}>
+                <label style={s.label}>Bulan Sesi</label>
+                <select style={s.input} value={form.session_month} onChange={e => setForm({ ...form, session_month: Number(e.target.value) })}>
+                  {MONTHS.map((month, i) => <option key={month} value={i + 1}>{month}</option>)}
+                </select>
               </div>
             </div>
           )}
@@ -321,12 +339,64 @@ const ManageSessions = () => {
 
       {/* ─── ACTIVE SESSIONS LIST ─── */}
       <div style={s.card}>
+        <h2 style={s.cardTitle}>Paparan Sesi Guru</h2>
+        {teacherHierarchy.length === 0 ? <p style={s.muted}>{t('admin.noSessionsYet')}</p> : (
+          <div style={s.hierarchyList}>
+            {teacherHierarchy.map(school => (
+              <div key={school.school} style={s.schoolBlock}>
+                <div style={s.schoolTitle}>{school.school}</div>
+                {school.teachers.map(teacher => (
+                  <div key={teacher.teacher_id} style={s.teacherBlock}>
+                    <div style={s.teacherName}>{teacher.teacher_name}</div>
+                    <div style={s.monthGrid}>
+                      {teacher.months.map(monthGroup => (
+                        <div key={`${teacher.teacher_id}-${monthGroup.month}`} style={s.monthBlock}>
+                          <div style={s.monthTitle}>{MONTHS[monthGroup.month - 1]} Session</div>
+                          {monthGroup.sessions.map(session => (
+                            <div key={session.id} style={s.compactSession}>
+                              <button type="button" style={s.monthSessionBtn} onClick={() => setExpandedSession(expandedSession === session.id ? null : session.id)}>
+                                {session.session_name}
+                              </button>
+                              <div style={s.compactCode}>
+                                <span>Kod Permainan</span>
+                                <strong>{session.unique_token}</strong>
+                                <button type="button" style={s.smallCopy} onClick={() => copyCode(session.unique_token)}>
+                                  {copied === session.unique_token ? 'Disalin' : 'Salin'}
+                                </button>
+                              </div>
+                              {expandedSession === session.id && (
+                                <div style={s.studentList}>
+                                  {session.players.length === 0 ? <div style={s.emptyMini}>Tiada pemain lagi</div> : session.players.map(player => (
+                                    <div key={player.id} style={s.studentRow}>
+                                      <strong>{player.nickname}</strong>
+                                      <span>{[player.cp1_completed, player.cp2_completed, player.cp3_completed].filter(Boolean).length}/3 CP</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={s.card}>
         <h2 style={s.cardTitle}>🎮 {t('admin.activeSessions')} ({sessions.length})</h2>
         <div style={s.sessionList}>
           {sessions.map(session => (
             <div key={session.id} style={s.sessionCard}>
               <div style={s.sessionTop}>
-                <div><h3 style={s.sessionName}>{session.session_name}</h3></div>
+                <div>
+                  <h3 style={s.sessionName}>{session.session_name}</h3>
+                  <div style={s.sessionMonth}>{MONTHS[(session.session_month || session.month || new Date(session.created_at).getMonth() + 1) - 1]} Session</div>
+                </div>
                 <span style={session.is_active ? s.badgeActive : s.badgeInactive}>{session.is_active ? `🟢 ${t('admin.active')}` : `🔴 ${t('admin.inactive')}`}</span>
               </div>
               <div style={s.codeWrap}>
@@ -381,9 +451,25 @@ const s = {
   success: { background: '#f0fdf4', color: '#16a34a', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' },
   error: { background: '#fff1f2', color: '#e11d48', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' },
   sessionList: { display: 'flex', flexDirection: 'column', gap: '1rem' },
+  hierarchyList: { display: 'flex', flexDirection: 'column', gap: '1rem' },
+  schoolBlock: { border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem', background: '#f8fafc' },
+  schoolTitle: { fontWeight: '800', color: '#01306B', marginBottom: '0.75rem', fontSize: '1rem' },
+  teacherBlock: { background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.9rem', marginTop: '0.75rem' },
+  teacherName: { fontWeight: '700', color: '#1e3a5f', marginBottom: '0.75rem' },
+  monthGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' },
+  monthBlock: { border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.75rem', background: '#fafafa' },
+  monthTitle: { fontSize: '0.85rem', fontWeight: '800', color: '#475569', marginBottom: '0.5rem' },
+  compactSession: { background: '#fff', border: '1px solid #f1f5f9', borderRadius: '8px', padding: '0.6rem', marginTop: '0.5rem' },
+  monthSessionBtn: { width: '100%', background: '#eff6ff', color: '#2563eb', border: 'none', borderRadius: '7px', padding: '0.45rem 0.6rem', fontWeight: '700', cursor: 'pointer', textAlign: 'left' },
+  compactCode: { display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem', fontSize: '0.78rem', color: '#64748b' },
+  smallCopy: { background: '#f0fdf4', color: '#16a34a', border: 'none', borderRadius: '6px', padding: '0.25rem 0.5rem', fontWeight: '700', cursor: 'pointer', fontSize: '0.72rem' },
+  studentList: { marginTop: '0.6rem', borderTop: '1px solid #f1f5f9', paddingTop: '0.5rem' },
+  studentRow: { display: 'flex', justifyContent: 'space-between', gap: '0.5rem', padding: '0.35rem 0', fontSize: '0.82rem', color: '#334155' },
+  emptyMini: { color: '#94a3b8', fontSize: '0.8rem', padding: '0.35rem 0' },
   sessionCard: { border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.25rem' },
   sessionTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', gap: '1rem' },
   sessionName: { fontSize: '1rem', fontWeight: '700', color: '#1e3a5f', margin: '0 0 0.25rem' },
+  sessionMonth: { color: '#64748b', fontSize: '0.78rem', fontWeight: '700' },
   badgeActive: { background: '#f0fdf4', color: '#16a34a', padding: '0.3rem 0.75rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600' },
   badgeInactive: { background: '#fff1f2', color: '#e11d48', padding: '0.3rem 0.75rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600' },
   codeWrap: { background: '#f8fafc', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' },

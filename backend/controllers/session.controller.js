@@ -1,6 +1,5 @@
 const db = require('../db');
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 const generateCode = async () => {
   let code, exists;
   do {
@@ -17,44 +16,66 @@ const safeInt = (val, fallback, min = 0, max = 9999) => {
   return Math.min(max, Math.max(min, n));
 };
 
-// ─── getSessions ──────────────────────────────────────────────────────────────
-// FIX: Replace N+1 queries (3 extra DB calls per session) with 3 bulk
-// queries that fetch all settings at once, then merge them in JS.
+const normalizeMonth = (val) => {
+  const n = parseInt(val, 10);
+  return Number.isInteger(n) && n >= 1 && n <= 12 ? n : null;
+};
+
+const canAccessSession = (admin, session) => {
+  if (['main_admin', 'admin'].includes(admin.role)) return true;
+  return session.admin_id === admin.id;
+};
+
+const enrichSessionsWithSettings = async (sessions) => {
+  if (sessions.length === 0) return sessions;
+
+  const sessionIds = sessions.map(s => s.id);
+  const placeholders = sessionIds.map(() => '?').join(',');
+
+  const [qRows] = await db.query(`SELECT * FROM quiz_settings WHERE session_id IN (${placeholders})`, sessionIds);
+  const [cRows] = await db.query(`SELECT * FROM crossword_settings WHERE session_id IN (${placeholders})`, sessionIds);
+  const [cp3Rows] = await db.query(`SELECT * FROM cp3_settings WHERE session_id IN (${placeholders})`, sessionIds);
+
+  const quizMap = Object.fromEntries(qRows.map(r => [r.session_id, r]));
+  const crosswordMap = Object.fromEntries(cRows.map(r => [r.session_id, r]));
+  const cp3Map = Object.fromEntries(cp3Rows.map(r => [r.session_id, r]));
+
+  return sessions.map(s => ({
+    ...s,
+    month: s.session_month || new Date(s.created_at).getMonth() + 1,
+    quiz_settings: quizMap[s.id] || {},
+    crossword_settings: crosswordMap[s.id] || {},
+    cp3_settings: cp3Map[s.id] || {}
+  }));
+};
+
 const getSessions = async (req, res) => {
   try {
-    const [sessions] = await db.query(
-      'SELECT s.*, a.name as admin_name FROM game_sessions s JOIN admins a ON s.admin_id = a.id ORDER BY s.created_at DESC'
-    );
-
-    if (sessions.length === 0) return res.json({ sessions: [] });
-
-    // Bulk-fetch all settings for the returned sessions in 3 queries total
-    const sessionIds = sessions.map(s => s.id);
-    const placeholders = sessionIds.map(() => '?').join(',');
-
-    const [qRows]   = await db.query(`SELECT * FROM quiz_settings      WHERE session_id IN (${placeholders})`, sessionIds);
-    const [cRows]   = await db.query(`SELECT * FROM crossword_settings  WHERE session_id IN (${placeholders})`, sessionIds);
-    const [cp3Rows] = await db.query(`SELECT * FROM cp3_settings        WHERE session_id IN (${placeholders})`, sessionIds);
-
-    const quizMap      = Object.fromEntries(qRows.map(r   => [r.session_id, r]));
-    const crosswordMap = Object.fromEntries(cRows.map(r   => [r.session_id, r]));
-    const cp3Map       = Object.fromEntries(cp3Rows.map(r => [r.session_id, r]));
-
-    for (const s of sessions) {
-      s.quiz_settings      = quizMap[s.id]      || {};
-      s.crossword_settings = crosswordMap[s.id] || {};
-      s.cp3_settings       = cp3Map[s.id]       || {};
+    const params = [];
+    let where = '';
+    if (req.admin.role === 'teacher') {
+      where = 'WHERE s.admin_id = ?';
+      params.push(req.admin.id);
     }
 
-    res.json({ sessions });
+    const [sessions] = await db.query(
+      `SELECT s.*, a.name as admin_name, a.school
+       FROM game_sessions s
+       JOIN admins a ON s.admin_id = a.id
+       ${where}
+       ORDER BY s.created_at DESC`,
+      params
+    );
+
+    res.json({ sessions: await enrichSessionsWithSettings(sessions) });
   } catch (err) {
+    console.error('Get sessions error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
 
-// ─── createSession ────────────────────────────────────────────────────────────
 const createSession = async (req, res) => {
-  const { session_name, quiz_settings, crossword_settings, cp3_settings } = req.body;
+  const { session_name, session_month, quiz_settings, crossword_settings, cp3_settings } = req.body;
 
   if (!session_name || typeof session_name !== 'string' || session_name.trim().length === 0)
     return res.status(400).json({ error: 'Session name required' });
@@ -63,9 +84,10 @@ const createSession = async (req, res) => {
 
   try {
     const unique_token = await generateCode();
+    const month = normalizeMonth(session_month) || new Date().getMonth() + 1;
     const [result] = await db.query(
-      'INSERT INTO game_sessions (admin_id, session_name, unique_token) VALUES (?, ?, ?)',
-      [req.admin.id, session_name.trim(), unique_token]
+      'INSERT INTO game_sessions (admin_id, session_name, session_month, unique_token) VALUES (?, ?, ?, ?)',
+      [req.admin.id, session_name.trim(), month, unique_token]
     );
     const sessionId = result.insertId;
 
@@ -108,27 +130,24 @@ const createSession = async (req, res) => {
 
     res.status(201).json({ message: 'Session created!', sessionId, unique_token });
   } catch (err) {
-    console.error(err);
+    console.error('Create session error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
 
-// ─── updateSession ────────────────────────────────────────────────────────────
 const updateSession = async (req, res) => {
-  const { is_active, session_name, quiz_settings, crossword_settings, cp3_settings } = req.body;
+  const { is_active, session_name, session_month, quiz_settings, crossword_settings, cp3_settings } = req.body;
   const sessionId = req.params.id;
 
   try {
-    // FIX: Verify ownership before allowing updates — same rule as deleteSession
     const [rows] = await db.query('SELECT admin_id FROM game_sessions WHERE id = ?', [sessionId]);
     if (rows.length === 0)
       return res.status(404).json({ error: 'Session not found' });
-    if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin' && rows[0].admin_id !== req.admin.id)
+    if (!canAccessSession(req.admin, rows[0]))
       return res.status(403).json({ error: 'You can only edit your own sessions' });
 
-    // Only main_admin can activate/deactivate session codes
     if (is_active !== undefined) {
-      if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin')
+      if (!['main_admin', 'admin'].includes(req.admin.role))
         return res.status(403).json({ error: 'Only Admins can activate or deactivate session codes' });
       await db.query('UPDATE game_sessions SET is_active = ? WHERE id = ?', [!!is_active, sessionId]);
     }
@@ -139,6 +158,12 @@ const updateSession = async (req, res) => {
       if (session_name.trim().length > 80)
         return res.status(400).json({ error: 'Session name too long (max 80 characters)' });
       await db.query('UPDATE game_sessions SET session_name = ? WHERE id = ?', [session_name.trim(), sessionId]);
+    }
+
+    if (session_month !== undefined) {
+      const month = normalizeMonth(session_month);
+      if (!month) return res.status(400).json({ error: 'Session month must be between 1 and 12' });
+      await db.query('UPDATE game_sessions SET session_month = ? WHERE id = ?', [month, sessionId]);
     }
 
     if (quiz_settings) {
@@ -180,30 +205,28 @@ const updateSession = async (req, res) => {
 
     res.json({ message: 'Session updated' });
   } catch (err) {
-    console.error(err);
+    console.error('Update session error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
 
-// ─── deleteSession ────────────────────────────────────────────────────────────
-// FIX: Added ownership check — only the session creator or main_admin can delete.
 const deleteSession = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT admin_id FROM game_sessions WHERE id = ?', [req.params.id]);
     if (rows.length === 0)
       return res.status(404).json({ error: 'Session not found' });
 
-    if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin' && rows[0].admin_id !== req.admin.id)
+    if (!canAccessSession(req.admin, rows[0]))
       return res.status(403).json({ error: 'You can only delete your own sessions' });
 
     await db.query('DELETE FROM game_sessions WHERE id = ?', [req.params.id]);
     res.json({ message: 'Session deleted' });
   } catch (err) {
+    console.error('Delete session error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
 
-// ─── validateSession ──────────────────────────────────────────────────────────
 const validateSession = async (req, res) => {
   const { token } = req.params;
   if (!token || !/^\d{4}$/.test(token))
@@ -219,8 +242,82 @@ const validateSession = async (req, res) => {
 
     res.json({ session: rows[0] });
   } catch (err) {
+    console.error('Validate session error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
 
-module.exports = { getSessions, createSession, updateSession, deleteSession, validateSession };
+const getTeacherSessions = async (req, res) => {
+  try {
+    const params = [];
+    let where = '';
+    if (req.admin.role === 'teacher') {
+      where = 'WHERE s.admin_id = ?';
+      params.push(req.admin.id);
+    }
+
+    const [sessions] = await db.query(
+      `SELECT s.id, s.session_name, s.session_month, s.unique_token, s.is_active, s.created_at,
+              a.id as teacher_id, a.name as teacher_name, a.school
+       FROM game_sessions s
+       JOIN admins a ON s.admin_id = a.id
+       ${where}
+       ORDER BY COALESCE(a.school, ''), a.name, COALESCE(s.session_month, MONTH(s.created_at)), s.created_at DESC`,
+      params
+    );
+
+    if (sessions.length === 0) return res.json({ sessions: [], hierarchy: [] });
+
+    const sessionIds = sessions.map(s => s.id);
+    const placeholders = sessionIds.map(() => '?').join(',');
+    const [players] = await db.query(
+      `SELECT p.id, p.nickname, p.joined_at, p.session_id,
+              MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
+              MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
+              MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.completed END) as cp3_completed
+       FROM players p
+       LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
+       WHERE p.session_id IN (${placeholders})
+       GROUP BY p.id
+       ORDER BY p.joined_at DESC`,
+      sessionIds
+    );
+
+    const playersBySession = players.reduce((acc, player) => {
+      acc[player.session_id] = acc[player.session_id] || [];
+      acc[player.session_id].push(player);
+      return acc;
+    }, {});
+
+    const enriched = sessions.map(session => ({
+      ...session,
+      month: session.session_month || new Date(session.created_at).getMonth() + 1,
+      players: playersBySession[session.id] || []
+    }));
+
+    const schoolMap = new Map();
+    enriched.forEach(session => {
+      const schoolName = session.school || 'No school assigned';
+      if (!schoolMap.has(schoolName)) schoolMap.set(schoolName, { school: schoolName, teachers: [] });
+      const school = schoolMap.get(schoolName);
+      let teacher = school.teachers.find(t => t.teacher_id === session.teacher_id);
+      if (!teacher) {
+        teacher = { teacher_id: session.teacher_id, teacher_name: session.teacher_name, months: [] };
+        school.teachers.push(teacher);
+      }
+      let monthGroup = teacher.months.find(m => m.month === session.month);
+      if (!monthGroup) {
+        monthGroup = { month: session.month, sessions: [] };
+        teacher.months.push(monthGroup);
+      }
+      monthGroup.sessions.push(session);
+    });
+
+    res.json({ sessions: enriched, hierarchy: Array.from(schoolMap.values()) });
+  } catch (err) {
+    console.error('Teacher sessions error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+module.exports = { getSessions, createSession, updateSession, deleteSession, validateSession, getTeacherSessions };

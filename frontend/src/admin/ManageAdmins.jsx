@@ -6,6 +6,7 @@ const ManageAdmins = ({ currentAdmin }) => {
   const [pendingInvites, setPendingInvites] = useState([]);
   const [email, setEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('admin');
+  const [school, setSchool] = useState('');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,10 +21,11 @@ const ManageAdmins = ({ currentAdmin }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await api.post('/admin/invite', { email, role: inviteRole });
+      const res = await api.post('/admin/invite', { email, role: inviteRole, school });
       setMsg('✅ ' + res.data.message);
       setEmail('');
       setInviteRole('admin');
+      setSchool('');
       fetchAdmins();
     } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal menghantar jemputan')); }
     finally { setLoading(false); setTimeout(() => setMsg(''), 4000); }
@@ -81,6 +83,12 @@ const ManageAdmins = ({ currentAdmin }) => {
               <option value="teacher">Guru</option>
             </select>
           </div>
+          {inviteRole === 'teacher' && (
+            <div style={{ minWidth: '180px', flex: 1 }}>
+              <label style={s.label}>Sekolah Guru</label>
+              <input style={s.input} value={school} onChange={e => setSchool(e.target.value)} placeholder="SJKC 1" maxLength={255} required />
+            </div>
+          )}
           <button style={s.btnPrimary} onClick={handleInvite} disabled={loading}>
             {loading ? 'Menghantar...' : '📧 Hantar Jemputan'}
           </button>
@@ -97,6 +105,7 @@ const ManageAdmins = ({ currentAdmin }) => {
                 <div style={s.inviteInfo}>
                   <div style={s.inviteEmail}>{invite.email}</div>
                   <div style={s.inviteMeta}>
+                    {invite.role === 'teacher' ? `Guru${invite.school ? ` - ${invite.school}` : ''}` : 'Pentadbir'} ·
                     Dihantar {new Date(invite.created_at).toLocaleDateString()} ·
                     Tamat tempoh {new Date(invite.expires_at).toLocaleDateString()}
                   </div>
@@ -127,6 +136,7 @@ const ManageAdmins = ({ currentAdmin }) => {
                   </span>
                 </div>
                 <div style={s.adminEmail}>{admin.email}</div>
+                {admin.school && <div style={s.adminSchool}>{admin.school}</div>}
                 <div style={s.adminDate}>Sertai {new Date(admin.created_at).toLocaleDateString()}</div>
               </div>
               {/* Role change dropdown — only main_admin can see, and only for non-main_admin users */}
@@ -179,6 +189,7 @@ const s = {
   youBadge: { background: '#2563eb', color: '#fff', fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '6px', fontWeight: '700' },
   roleBadge: { color: '#fff', fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '6px', fontWeight: '700' },
   adminEmail: { color: '#64748b', fontSize: '0.85rem', margin: '0.15rem 0' },
+  adminSchool: { color: '#1e3a5f', fontSize: '0.8rem', fontWeight: '700', marginBottom: '0.1rem' },
   adminDate: { color: '#94a3b8', fontSize: '0.78rem' },
   btnDelete: { background: '#fff1f2', color: '#e11d48', border: 'none', borderRadius: '8px', padding: '0.5rem 0.9rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.82rem', flexShrink: 0 },
   roleChangeWrap: { flexShrink: 0 },
