@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
+import LanguageToggle from '../components/LanguageToggle';
 
 const NotFoundPage = () => {
   return (
     <div style={s.page}>
+      <LanguageToggle style={s.langToggle} />
       <style>{`
         @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
@@ -50,7 +52,9 @@ const s = {
     justifyContent: 'center',
     background: 'linear-gradient(135deg, #FFF9F0 0%, #FEF9EE 50%, #FEF3C7 100%)',
     padding: '1rem',
+    position: 'relative',
   },
+  langToggle: { position: 'absolute', top: '1rem', right: '1rem', zIndex: 2 },
   card: {
     background: 'white',
     borderRadius: '28px',

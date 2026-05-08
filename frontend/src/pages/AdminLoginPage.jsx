@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import LanguageToggle from '../components/LanguageToggle';
 
 const AdminLoginPage = () => {
   const { login } = useAuth();
@@ -34,6 +35,7 @@ const AdminLoginPage = () => {
 
   return (
     <div style={s.page}>
+      <LanguageToggle style={s.langToggle} />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
         @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-12px); } }
@@ -167,6 +169,7 @@ const s = {
     fontFamily: '"Outfit", sans-serif',
   },
   bgElements: { position: 'absolute', inset: 0, pointerEvents: 'none' },
+  langToggle: { position: 'absolute', top: '1rem', right: '1rem', zIndex: 2 },
   bgDot: { position: 'absolute', animation: 'float 4s ease-in-out infinite', opacity: 0.3 },
   card: {
     background: 'rgba(255, 255, 255, 0.97)',

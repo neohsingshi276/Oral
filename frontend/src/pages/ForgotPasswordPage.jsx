@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
+import LanguageToggle from '../components/LanguageToggle';
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
@@ -59,6 +60,7 @@ const ForgotPasswordPage = () => {
 
   return (
     <div style={s.page}>
+      <LanguageToggle style={s.langToggle} />
       <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`}</style>
       <div style={s.card}>
         <div style={s.logo}>🦷 DentalQuest</div>
@@ -164,6 +166,7 @@ const ForgotPasswordPage = () => {
 
 const s = {
   page: { minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'linear-gradient(135deg, #01306B 0%, #1e5aad 100%)', fontFamily:'"Outfit", sans-serif', padding:'1rem' },
+  langToggle: { position:'absolute', top:'1rem', right:'1rem', zIndex:2 },
   card: { background:'#fff', borderRadius:'24px', padding:'2.5rem', width:'100%', maxWidth:'420px', boxShadow:'0 20px 60px rgba(0,0,0,0.3)', animation:'fadeIn 0.5s ease' },
   logo: { fontSize:'1.5rem', fontWeight:'800', color:'#01306B', textAlign:'center', marginBottom:'1.5rem' },
   title: { fontSize:'1.5rem', fontWeight:'800', color:'#01306B', margin:'0 0 0.5rem', textAlign:'center' },

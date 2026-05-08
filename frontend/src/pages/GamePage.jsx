@@ -7,6 +7,7 @@ import api from '../services/api';
 import QuizGame from '../game/QuizGame';
 import CrosswordGame from '../game/CrosswordGame';
 import CP3Game from '../game/Trolley';
+import LanguageToggle from '../components/LanguageToggle';
 
 // ─── Web Audio chime — no audio files needed ──────────────────────────────────
 // Plays a cheerful rising 3-note fanfare using the browser's AudioContext.
@@ -275,6 +276,7 @@ const GamePage = () => {
           <span style={s.playerBadge}>👤 {player.nickname}</span>
         </div>
         <div style={s.headerRight}>
+          <LanguageToggle compact style={{ background: 'rgba(255,255,255,0.1)', color: '#FFD700' }} />
           {[1, 2, 3].map(cp => {
             const done = progress.find(p => p.checkpoint_number === cp)?.completed;
             return (

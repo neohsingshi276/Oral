@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import HomePage from './pages/HomePage';
@@ -19,6 +20,7 @@ const MODE = import.meta.env.VITE_APP_MODE || 'student';
 
 function App() {
   return (
+    <LanguageProvider mode={MODE === 'admin' ? 'admin' : 'student'}>
     <BrowserRouter>
       <AuthProvider>
         <Routes>
@@ -49,6 +51,7 @@ function App() {
         </Routes>
       </AuthProvider>
     </BrowserRouter>
+    </LanguageProvider>
   );
 }
 

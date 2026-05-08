@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../services/api';
+import LanguageToggle from '../components/LanguageToggle';
 
 const JoinGamePage = () => {
   const navigate = useNavigate();
@@ -91,6 +92,7 @@ const JoinGamePage = () => {
 
   return (
     <div style={s.page}>
+      <LanguageToggle style={s.langToggle} />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
         @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
@@ -214,6 +216,7 @@ const JoinGamePage = () => {
 
 const s = {
   page: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #01306B 0%, #012550 50%, #1e5aad 100%)', padding: '1rem', position: 'relative', overflow: 'hidden', fontFamily: '"Outfit", sans-serif' },
+  langToggle: { position: 'absolute', top: '1rem', right: '1rem', zIndex: 2 },
   bg: { position: 'absolute', inset: 0, pointerEvents: 'none' },
   bgShape: { position: 'absolute', borderRadius: '50%' },
   bubble1: { position: 'absolute', top: '10%', left: '8%', fontSize: '3rem', animation: 'float 3s ease-in-out infinite', opacity: 0.3 },
