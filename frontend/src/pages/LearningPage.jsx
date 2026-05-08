@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 const LearningPage = () => {
+  const { t } = useLanguage();
   const [videos, setVideos] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +35,7 @@ const LearningPage = () => {
   };
 
   if (loading) return (
-    <div style={styles.page}><Navbar /><div style={styles.loading}>Memuatkan... 🦷</div></div>
+    <div style={styles.page}><Navbar /><div style={styles.loading}>{t('learning.loading')} ??</div></div>
   );
 
   return (
@@ -43,9 +45,9 @@ const LearningPage = () => {
       {/* Hero Banner */}
       <div style={styles.hero}>
         <div style={styles.heroLeft}>
-          <div style={styles.heroBadge}>📚 Modul Pembelajaran</div>
-          <h1 style={styles.heroTitle}>Jom Belajar Tentang<br />Gigi Kita! 🦷</h1>
-          <p style={styles.heroText}>Tahukah anda gigi anda sangat penting? Gigi membantu anda makan, bercakap, dan tersenyum! Jom belajar cara menjaga gigi kita.</p>
+          <div style={styles.heroBadge}>?? {t('learning.heroBadge')}</div>
+          <h1 style={styles.heroTitle}>{t('learning.heroTitleTop')}<br />{t('learning.heroTitleBottom')} ??</h1>
+          <p style={styles.heroText}>{t('learning.heroText')}</p>
         </div>
         <div style={styles.heroEmojis}>
           <span style={{ fontSize: '5rem' }}>🦷</span>
@@ -56,30 +58,24 @@ const LearningPage = () => {
       {/* What is Oral Health */}
       <section style={styles.section}>
         <div style={styles.sectionInner}>
-          <h2 style={styles.sectionTitle}>🌟 Apakah Kesihatan Mulut?</h2>
-          <p style={styles.sectionText}>
-            <strong>Kesihatan mulut</strong> bermakna menjaga <strong>mulut, gigi, dan gusi</strong> anda supaya sihat dan bersih!
-            Mulut anda adalah pintu kepada badan anda — apabila mulut anda sihat, seluruh badan anda juga berasa lebih baik! 😊
-          </p>
-          <p style={styles.sectionText}>
-            Gigi reput (juga dipanggil <strong>karies</strong>) dan penyakit gusi adalah masalah yang sangat biasa — tetapi berita baiknya ialah,
-            ia hampir selalu boleh <strong>dicegah</strong> hanya dengan memberus gigi, menggunakan benang gigi, dan makan makanan yang betul! 🎉
-          </p>
+          <h2 style={styles.sectionTitle}>?? {t('learning.oralTitle')}</h2>
+          <p style={styles.sectionText}>{t('learning.oralOne')} ??</p>
+          <p style={styles.sectionText}>{t('learning.oralTwo')} ??</p>
         </div>
       </section>
 
       {/* Fun Fact Cards */}
       <section style={{ ...styles.section, background: '#FEF9EE' }}>
         <div style={styles.sectionInner}>
-          <h2 style={styles.sectionTitle}>⚡ Tahukah Anda?</h2>
+          <h2 style={styles.sectionTitle}>? {t('learning.factsTitle')}</h2>
           <div style={styles.factGrid}>
             {[
-              { icon: '🦠', title: 'Bakteria Kecil!', text: 'Mulut anda mempunyai lebih 700 jenis bakteria! Kebanyakannya tidak berbahaya tetapi ada yang boleh menyebabkan gigi berlubang jika anda tidak memberus.' },
-              { icon: '🍬', title: 'Gula Itu Licik!', text: 'Apabila anda makan gula, bakteria dalam mulut anda menukarkannya menjadi asid. Asid itu perlahan-lahan merosakkan gigi anda — aduh!' },
-              { icon: '🪥', title: 'Memberus 2x Sehari!', text: 'Memberus gigi pada waktu pagi dan sebelum tidur membuang bakteria dan makanan yang melekat pada gigi anda.' },
-              { icon: '💧', title: 'Minum Air!', text: 'Air membasuh makanan dan bakteria. Fluorida dalam air paip juga menjadikan gigi anda lebih kuat!' },
-              { icon: '🧵', title: 'Jangan Lupa Benang Gigi!', text: 'Berus gigi anda tidak boleh mencapai celah gigi! Benang gigi membuang makanan dan bakteria yang tersembunyi setiap hari.' },
-              { icon: '👨‍⚕️', title: 'Lawati Doktor Gigi!', text: 'Jumpa doktor gigi setiap 6 bulan untuk pemeriksaan — walaupun tiada apa-apa yang sakit! Pencegahan lebih baik daripada rawatan.' },
+              { icon: '??', ...t('learning.facts')[0] },
+              { icon: '??', ...t('learning.facts')[1] },
+              { icon: '??', ...t('learning.facts')[2] },
+              { icon: '??', ...t('learning.facts')[3] },
+              { icon: '??', ...t('learning.facts')[4] },
+              { icon: '?????', ...t('learning.facts')[5] },
             ].map((fact, i) => (
               <div key={i} style={{ ...styles.factCard, background: ['#fff7ed', '#f0fdf4', '#eff6ff', '#fdf4ff', '#fff1f2', '#f0fdfa'][i] }}>
                 <div style={styles.factIcon}>{fact.icon}</div>
@@ -94,14 +90,14 @@ const LearningPage = () => {
       {/* How to Brush Steps */}
       <section style={styles.section}>
         <div style={styles.sectionInner}>
-          <h2 style={styles.sectionTitle}>🪥 Cara Memberus Gigi Yang Betul!</h2>
+          <h2 style={styles.sectionTitle}>?? {t('learning.brushTitle')}</h2>
           <div style={styles.stepsRow}>
             {[
-              { step: '1', icon: '🪥', title: 'Guna berus lembut', text: 'Gunakan berus gigi berbulu lembut dan ubat gigi berfluorida sebesar kacang.' },
-              { step: '2', icon: '⏱️', title: 'Memberus 2 minit', text: 'Tetapkan pemasa! Memberus semua permukaan — depan, belakang, dan permukaan kunyah setiap gigi.' },
-              { step: '3', icon: '🔄', title: 'Bulatan kecil', text: 'Gunakan gerakan bulatan kecil yang lembut. Jangan terlalu kuat — anda boleh mencederakan gusi!' },
-              { step: '4', icon: '👅', title: 'Memberus lidah', text: 'Bakteria juga suka bersembunyi di lidah anda! Berikan berusan lembut untuk nafas segar.' },
-              { step: '5', icon: '💦', title: 'Kumur dengan baik', text: 'Ludahkan ubat gigi dan kumur mulut anda dengan air. Semuanya bersih!' },
+              { step: '1', icon: '??', ...t('learning.steps')[0] },
+              { step: '2', icon: '??', ...t('learning.steps')[1] },
+              { step: '3', icon: '??', ...t('learning.steps')[2] },
+              { step: '4', icon: '??', ...t('learning.steps')[3] },
+              { step: '5', icon: '??', ...t('learning.steps')[4] },
             ].map((s, i) => (
               <div key={i} style={styles.stepCard}>
                 <div style={styles.stepNumber}>{s.step}</div>
@@ -117,18 +113,18 @@ const LearningPage = () => {
       {/* Foods Section */}
       <section style={{ ...styles.section, background: '#f0fdf4' }}>
         <div style={styles.sectionInner}>
-          <h2 style={styles.sectionTitle}>🍎 Makanan Baik vs Makanan Buruk Untuk Gigi</h2>
+          <h2 style={styles.sectionTitle}>?? {t('learning.foodTitle')}</h2>
           <div style={styles.foodGrid}>
             <div style={styles.foodCard}>
-              <h3 style={styles.foodGoodTitle}>✅ Baik Untuk Gigi</h3>
-              {['🥛 Susu & Keju — kalsium untuk gigi kuat', '🍎 Epal & Lobak Merah — membersihkan gigi secara semula jadi', '💧 Air — membasuh bakteria', '🥦 Sayur-sayuran — vitamin untuk gusi sihat', '🥜 Kacang — mineral yang baik untuk gigi kuat'].map((f, i) => (
-                <div key={i} style={styles.foodItem}>{f}</div>
+              <h3 style={styles.foodGoodTitle}>? {t('learning.goodFoodTitle')}</h3>
+              {t('learning.goodFoods').map((f, i) => (
+                <div key={i} style={styles.foodItem}>{['??', '??', '??', '??', '??'][i]} {f}</div>
               ))}
             </div>
             <div style={{ ...styles.foodCard, background: '#fff1f2' }}>
-              <h3 style={styles.foodBadTitle}>❌ Buruk Untuk Gigi</h3>
-              {['🍬 Gula-gula & Manisan — memberi makan bakteria', '🥤 Minuman bergula — asid menyerang gigi', '🍟 Kerepek & Biskut — melekat pada gigi', '🧃 Jus buah — tinggi gula', '🍦 Aiskrim — gula + sejuk = kerosakan'].map((f, i) => (
-                <div key={i} style={styles.foodItemBad}>{f}</div>
+              <h3 style={styles.foodBadTitle}>? {t('learning.badFoodTitle')}</h3>
+              {t('learning.badFoods').map((f, i) => (
+                <div key={i} style={styles.foodItemBad}>{['??', '??', '??', '??', '??'][i]} {f}</div>
               ))}
             </div>
           </div>
@@ -138,8 +134,8 @@ const LearningPage = () => {
       {/* Videos Section */}
       <section style={{ ...styles.section, background: '#eff6ff' }}>
         <div style={styles.sectionInner}>
-          <h2 style={styles.sectionTitle}>🎬 Tonton & Belajar!</h2>
-          <p style={{ textAlign: 'center', color: '#475569', marginBottom: '2rem' }}>Tonton video yang menyeronokkan ini untuk belajar lebih lanjut tentang menjaga kesihatan gigi!</p>
+          <h2 style={styles.sectionTitle}>?? {t('learning.videosTitle')}</h2>
+          <p style={{ textAlign: 'center', color: '#475569', marginBottom: '2rem' }}>{t('learning.videosText')}</p>
 
           {/* Selected Video Player */}
           {selected && (
@@ -176,7 +172,7 @@ const LearningPage = () => {
                   <div style={styles.playBtn}>▶</div>
                 </div>
                 <div style={styles.videoMeta}>
-                  <span style={styles.videoNum}>Video {index + 1}</span>
+                  <span style={styles.videoNum}>{t('learning.videoLabel')} {index + 1}</span>
                   <p style={styles.videoCardTitle} data-no-translate="true">{video.title}</p>
                   <p style={styles.videoCardDesc} data-no-translate="true">{video.description?.slice(0, 70)}...</p>
                 </div>
@@ -188,8 +184,8 @@ const LearningPage = () => {
 
       {/* Footer CTA */}
       <section style={styles.cta}>
-        <h2 style={styles.ctaTitle}>Bersedia Untuk Menguji Apa Yang Anda Pelajari? 🎮</h2>
-        <p style={styles.ctaText}>Minta pautan permainan daripada guru anda dan mulakan pengembaraan pergigian!</p>
+        <h2 style={styles.ctaTitle}>{t('learning.ctaTitle')} ??</h2>
+        <p style={styles.ctaText}>{t('learning.ctaText')}</p>
       </section>
     </div>
   );

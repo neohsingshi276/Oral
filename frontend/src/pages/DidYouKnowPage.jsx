@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 
 const CARD_COLORS = [
@@ -24,6 +25,7 @@ const FACT_IMAGES = [
 ];
 
 const DidYouKnowPage = () => {
+  const { t } = useLanguage();
   const [facts, setFacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -108,15 +110,15 @@ const DidYouKnowPage = () => {
       {/* Hero */}
       <div style={styles.hero}>
         <div style={styles.heroLeft}>
-          <div style={styles.heroBadge}>💡 Tahukah Anda?</div>
-          <h1 style={styles.heroTitle}>Fakta Gigi Menarik<br />Yang Anda Tidak Tahu! 🦷</h1>
+          <div style={styles.heroBadge}>💡 {t('did.heroBadge')}</div>
+          <h1 style={styles.heroTitle}>{t('did.heroTitleTop')}<br />{t('did.heroTitleBottom')} 🦷</h1>
           <p style={styles.heroText}>
-            Bersedialah untuk terkejut! Temui fakta yang sangat menyeronokkan dan mengejutkan tentang gigi, mulut, dan kesihatan mulut. Klik mana-mana kad untuk mendedahkan fakta penuh!
+            {t('did.heroText')}
           </p>
           <div style={styles.heroStats}>
-            <div style={styles.heroStat}><strong style={{ color: '#FFD700' }}>{facts.length}</strong> fakta menarik</div>
+            <div style={styles.heroStat}><strong style={{ color: '#FFD700' }}>{facts.length}</strong> {t('did.factsCount')}</div>
             <div style={styles.heroDot}></div>
-            <div style={styles.heroStat}>Klik kad untuk <strong style={{ color: '#FFD700' }}>terbalik!</strong></div>
+            <div style={styles.heroStat}>{t('did.flipStat')}</div>
           </div>
         </div>
         <div style={styles.heroImgWrap}>
@@ -207,7 +209,7 @@ const DidYouKnowPage = () => {
                     <div style={{ ...styles.cardImgOverlay, background: `${color.accent}22` }}></div>
                   </div>
                   <div style={styles.cardBody}>
-                    <div style={{ ...styles.cardBadge, background: color.accent }}>💡 Tahukah Anda?</div>
+                    <div style={{ ...styles.cardBadge, background: color.accent }}>💡 {t('did.badge')}</div>
                     <h3 style={{ ...styles.cardTitle, color: color.accent }} data-no-translate="true">{fact.title}</h3>
                     <div style={styles.cardFlipHint}>
                       <span>Ketik untuk baca lagi</span>

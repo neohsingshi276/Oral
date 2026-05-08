@@ -5,8 +5,13 @@
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import heroImage from '../assets/child.png';
+import { useLanguage } from '../context/LanguageContext';
 
 const HomePage = () => {
+  const { t } = useLanguage();
+  const featureCards = t('home.cards');
+  const details = t('home.details');
+
   return (
     <>
       <style>{`
@@ -452,7 +457,7 @@ const HomePage = () => {
             <div className="hero-content">
               <div className="hero-badge">
                 <span className="badge-icon">🌺</span>
-                <span className="badge-text">Platform Pendidikan Pergigian Kanak-kanak</span>
+                <span className="badge-text">{t('home.badge')}</span>
               </div>
 
               <h1 className="hero-title">
@@ -461,18 +466,18 @@ const HomePage = () => {
               </h1>
 
               <p className="hero-subtitle">
-                Kami menyediakan pendidikan pergigian yang menyeronokkan dan interaktif dengan teknologi moden. Kami percaya pada kekuatan senyuman anda! 😁
+                {t('home.subtitle')} 😁
               </p>
 
               <div className="hero-actions">
                 <Link to="/learning" className="btn btn-primary">
-                  <span>Mula Belajar</span>
+                <span>{t('home.primaryButton')}</span>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </Link>
                 <Link to="/join" className="btn btn-secondary">
-                  Sertai Permainan
+                  {t('home.secondaryButton')}
                 </Link>
               </div>
             </div>
@@ -481,21 +486,21 @@ const HomePage = () => {
               <div className="glass-panel main-glass">
                 <img
                   src={heroImage}
-                  alt="Klinik Pergigian Moden"
+                  alt={t('home.heroAlt')}
                   className="hero-image"
                 />
                 <div className="floating-card stat-card card-1">
                   <span className="emoji">🦷</span>
                   <div className="stat-info">
                     <span className="stat-value">100%</span>
-                    <span className="stat-label">Belajar Sambil Bermain</span>
+                    <span className="stat-label">{t('home.statOneLabel')}</span>
                   </div>
                 </div>
                 <div className="floating-card stat-card card-2">
                   <span className="emoji">⭐</span>
                   <div className="stat-info">
-                    <span className="stat-value">Terbaik</span>
-                    <span className="stat-label">Permainan Mini</span>
+                    <span className="stat-value">{t('home.statTwoValue')}</span>
+                    <span className="stat-label">{t('home.statTwoLabel')}</span>
                   </div>
                 </div>
               </div>
@@ -505,18 +510,18 @@ const HomePage = () => {
           <section className="features-nav">
             <div className="feature-nav-card">
               <div className="nav-card-icon bg-blue">📘</div>
-              <h3>Modul Pembelajaran Interaktif</h3>
-              <p>Selami pelajaran animasi terperinci tentang kesihatan gigi.</p>
+              <h3>{featureCards[0].title}</h3>
+              <p>{featureCards[0].text}</p>
             </div>
             <div className="feature-nav-card">
               <div className="nav-card-icon bg-gold">🎮</div>
-              <h3>Permainan Mini Pergigian</h3>
-              <p>Main kuiz, teka silang kata, dan banyak lagi!</p>
+              <h3>{featureCards[1].title}</h3>
+              <p>{featureCards[1].text}</p>
             </div>
             <div className="feature-nav-card">
               <div className="nav-card-icon bg-red">🌱</div>
-              <h3>Bina Tabiat Sihat</h3>
-              <p>Jejaki kemajuan memberus gigi harian anda.</p>
+              <h3>{featureCards[2].title}</h3>
+              <p>{featureCards[2].text}</p>
             </div>
           </section>
 
@@ -526,8 +531,8 @@ const HomePage = () => {
                 <span className="feature-icon">📚</span>
               </div>
               <div className="feature-text">
-                <h3 className="feature-title">Pelajaran Video</h3>
-                <p className="feature-desc">Tonton video animasi berkualiti tinggi tentang cara memberus gigi, menggunakan benang gigi, dan sains gigi berlubang.</p>
+                <h3 className="feature-title">{details[0].title}</h3>
+                <p className="feature-desc">{details[0].text}</p>
               </div>
             </div>
             <div className="feature-box">
@@ -535,8 +540,8 @@ const HomePage = () => {
                 <span className="feature-icon">🕹️</span>
               </div>
               <div className="feature-text">
-                <h3 className="feature-title">Permainan Mini Quest</h3>
-                <p className="feature-desc">Sertai permainan makanan, berlumba melawan masa dalam kuiz interaktif, dan takluki teka silang kata pergigian.</p>
+                <h3 className="feature-title">{details[1].title}</h3>
+                <p className="feature-desc">{details[1].text}</p>
               </div>
             </div>
             <div className="feature-box">
@@ -544,8 +549,8 @@ const HomePage = () => {
                 <span className="feature-icon">💡</span>
               </div>
               <div className="feature-text">
-                <h3 className="feature-title">Tahukah Anda?</h3>
-                <p className="feature-desc">Teroka fakta menakjubkan tentang gigi anda yang akan mengagumkan anda dan memastikan senyuman anda kekal cerah.</p>
+                <h3 className="feature-title">{details[2].title}</h3>
+                <p className="feature-desc">{details[2].text}</p>
               </div>
             </div>
           </section>

@@ -8,6 +8,7 @@ import QuizGame from '../game/QuizGame';
 import CrosswordGame from '../game/CrosswordGame';
 import CP3Game from '../game/Trolley';
 import LanguageToggle from '../components/LanguageToggle';
+import { useLanguage } from '../context/LanguageContext';
 
 // ─── Web Audio chime — no audio files needed ──────────────────────────────────
 // Plays a cheerful rising 3-note fanfare using the browser's AudioContext.
@@ -86,6 +87,7 @@ const ConfettiBlast = ({ onDone }) => {
 };
 
 const GamePage = () => {
+  const { t } = useLanguage();
   const { token } = useParams();
   const navigate = useNavigate();
   const [player, setPlayer] = useState(null);
@@ -319,42 +321,42 @@ const GamePage = () => {
           <div key="p0" style={{ ...s.doneCard, maxWidth: '520px', padding: '2rem' }}>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
               <div style={{ fontSize: '3.5rem' }}>🗺️</div>
-              <h2 style={{ ...s.doneTitle, fontSize: '1.4rem', margin: '0.5rem 0 0.25rem' }}>Selamat Datang ke Dental Quest!</h2>
-              <p style={{ color: '#64748b', fontSize: '0.88rem', margin: 0 }}>Baca arahan sebelum bermain • 1 / 3</p>
+              <h2 style={{ ...s.doneTitle, fontSize: '1.4rem', margin: '0.5rem 0 0.25rem' }}>{t('game.tutorialWelcome')}</h2>
+              <p style={{ color: '#64748b', fontSize: '0.88rem', margin: 0 }}>{t('game.tutorialRead')} • 1 / 3</p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', margin: '1.25rem 0' }}>
               <div style={tut.row('#eff6ff')}>
                 <span style={tut.icon}>🕹️</span>
                 <div>
-                  <strong style={tut.title}>Gerakkan Watak</strong>
-                  <p style={tut.desc}>Tekan <kbd style={tut.kbd}>W</kbd><kbd style={tut.kbd}>A</kbd><kbd style={tut.kbd}>S</kbd><kbd style={tut.kbd}>D</kbd> atau kekunci <kbd style={tut.kbd}>↑</kbd><kbd style={tut.kbd}>↓</kbd><kbd style={tut.kbd}>←</kbd><kbd style={tut.kbd}>→</kbd> untuk bergerak</p>
+                  <strong style={tut.title}>{t('game.moveCharacter')}</strong>
+                  <p style={tut.desc}>{t('game.moveDesc')} <kbd style={tut.kbd}>W</kbd><kbd style={tut.kbd}>A</kbd><kbd style={tut.kbd}>S</kbd><kbd style={tut.kbd}>D</kbd> {t('game.controlsOr')} <kbd style={tut.kbd}>↑</kbd><kbd style={tut.kbd}>↓</kbd><kbd style={tut.kbd}>←</kbd><kbd style={tut.kbd}>→</kbd> {t('game.moveDescEnd')}</p>
                 </div>
               </div>
               <div style={tut.row('#f0fdf4')}>
                 <span style={tut.icon}>🎯</span>
                 <div>
-                  <strong style={tut.title}>Masuk Pusat Pemeriksaan</strong>
-                  <p style={tut.desc}>Jalan ke bulatan bercahaya, kemudian tekan <kbd style={tut.kbd}>E</kbd> untuk masuk</p>
+                  <strong style={tut.title}>{t('game.enterCheckpoint')}</strong>
+                  <p style={tut.desc}>{t('game.enterCheckpointDesc')} <kbd style={tut.kbd}>E</kbd> {t('game.enterCheckpointEnd')}</p>
                 </div>
               </div>
               <div style={tut.row('#fff7ed')}>
                 <span style={tut.icon}>💬</span>
                 <div>
-                  <strong style={tut.title}>Butang Sembang</strong>
-                  <p style={tut.desc}>Gunakan butang 💬 di sudut bawah kanan untuk bertanya kepada guru anda</p>
+                  <strong style={tut.title}>{t('game.chatButton')}</strong>
+                  <p style={tut.desc}>{t('game.chatButtonDesc')}</p>
                 </div>
               </div>
               <div style={tut.row('#fdf4ff')}>
                 <span style={tut.icon}>💾</span>
                 <div>
-                  <strong style={tut.title}>Kemajuan Disimpan Automatik</strong>
-                  <p style={tut.desc}>Jika halaman tertutup secara tidak sengaja, kemajuan anda selamat — sertai semula sahaja!</p>
+                  <strong style={tut.title}>{t('game.autosave')}</strong>
+                  <p style={tut.desc}>{t('game.autosaveDesc')}</p>
                 </div>
               </div>
             </div>
             <div style={tut.nav}>
               <div style={tut.dots}>{[0, 1, 2].map(i => <div key={i} style={{ ...tut.dot, background: i === 0 ? '#2563eb' : '#cbd5e1' }} />)}</div>
-              <button style={{ ...s.continueBtn, width: 'auto', padding: '0.7rem 2rem' }} onClick={() => setTutorialPage(1)}>Seterusnya →</button>
+              <button style={{ ...s.continueBtn, width: 'auto', padding: '0.7rem 2rem' }} onClick={() => setTutorialPage(1)}>{t('game.next')} →</button>
             </div>
           </div>,
 
@@ -362,44 +364,44 @@ const GamePage = () => {
           <div key="p1" style={{ ...s.doneCard, maxWidth: '520px', padding: '2rem' }}>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
               <div style={{ fontSize: '3.5rem' }}>🏁</div>
-              <h2 style={{ ...s.doneTitle, fontSize: '1.4rem', margin: '0.5rem 0 0.25rem' }}>3 Pusat Pemeriksaan</h2>
-              <p style={{ color: '#64748b', fontSize: '0.88rem', margin: 0 }}>Mesti selesai mengikut urutan • 2 / 3</p>
+              <h2 style={{ ...s.doneTitle, fontSize: '1.4rem', margin: '0.5rem 0 0.25rem' }}>{t('game.checkpointsTitle')}</h2>
+              <p style={{ color: '#64748b', fontSize: '0.88rem', margin: 0 }}>{t('game.checkpointsSub')} • 2 / 3</p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', margin: '1.25rem 0' }}>
               <div style={tut.row('#eff6ff')}>
                 <span style={tut.icon}>🎬</span>
                 <div>
-                  <strong style={tut.title}>Langkah 1 — Tonton Video</strong>
-                  <p style={tut.desc}>Setiap pusat mempunyai video pendidikan. <strong>Anda mesti menonton video penuh</strong> sebelum aktiviti dibuka.</p>
+                  <strong style={tut.title}>{t('game.stepWatchTitle')}</strong>
+                  <p style={tut.desc}>{t('game.stepWatchDesc')}</p>
                 </div>
               </div>
               <div style={tut.row('#f0fdf4')}>
                 <span style={tut.icon}>🎮</span>
                 <div>
-                  <strong style={tut.title}>Langkah 2 — Buat Aktiviti</strong>
-                  <p style={tut.desc}>Selepas video, selesaikan aktiviti untuk melengkapkan pusat tersebut.</p>
+                  <strong style={tut.title}>{t('game.stepActivityTitle')}</strong>
+                  <p style={tut.desc}>{t('game.stepActivityDesc')}</p>
                 </div>
               </div>
               <div style={tut.row('#fff7ed')}>
                 <span style={tut.icon}>⚠️</span>
                 <div>
-                  <strong style={tut.title}>Jika Tidak Lulus</strong>
-                  <p style={tut.desc}><strong>Anda perlu tonton semula video</strong> sebelum cuba aktiviti sekali lagi. Beri perhatian semasa menonton!</p>
+                  <strong style={tut.title}>{t('game.retryTitle')}</strong>
+                  <p style={tut.desc}>{t('game.retryDesc')}</p>
                 </div>
               </div>
               <div style={tut.row('#fdf4ff')}>
                 <span style={tut.icon}>🏆</span>
                 <div>
-                  <strong style={tut.title}>Papan Markah</strong>
-                  <p style={tut.desc}>Markah anda akan dipaparkan dalam papan markah selepas setiap aktiviti. Cuba capai tempat pertama!</p>
+                  <strong style={tut.title}>{t('game.scoreboardTitle')}</strong>
+                  <p style={tut.desc}>{t('game.scoreboardDesc')}</p>
                 </div>
               </div>
             </div>
             <div style={tut.nav}>
               <div style={tut.dots}>{[0, 1, 2].map(i => <div key={i} style={{ ...tut.dot, background: i === 1 ? '#2563eb' : '#cbd5e1' }} />)}</div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button style={{ ...s.continueBtn, width: 'auto', padding: '0.7rem 1.5rem', background: '#64748b' }} onClick={() => setTutorialPage(0)}>← Balik</button>
-                <button style={{ ...s.continueBtn, width: 'auto', padding: '0.7rem 2rem' }} onClick={() => setTutorialPage(2)}>Seterusnya →</button>
+                <button style={{ ...s.continueBtn, width: 'auto', padding: '0.7rem 1.5rem', background: '#64748b' }} onClick={() => setTutorialPage(0)}>← {t('game.back')}</button>
+                <button style={{ ...s.continueBtn, width: 'auto', padding: '0.7rem 2rem' }} onClick={() => setTutorialPage(2)}>{t('game.next')} →</button>
               </div>
             </div>
           </div>,
@@ -408,41 +410,41 @@ const GamePage = () => {
           <div key="p2" style={{ ...s.doneCard, maxWidth: '540px', padding: '2rem' }}>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
               <div style={{ fontSize: '3.5rem' }}>🦷</div>
-              <h2 style={{ ...s.doneTitle, fontSize: '1.4rem', margin: '0.5rem 0 0.25rem' }}>Apa Ada di Setiap Pusat?</h2>
-              <p style={{ color: '#64748b', fontSize: '0.88rem', margin: 0 }}>Senarai aktiviti • 3 / 3</p>
+              <h2 style={{ ...s.doneTitle, fontSize: '1.4rem', margin: '0.5rem 0 0.25rem' }}>{t('game.checkpointDetailsTitle')}</h2>
+              <p style={{ color: '#64748b', fontSize: '0.88rem', margin: 0 }}>{t('game.activityList')} • 3 / 3</p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', margin: '1.25rem 0' }}>
               <div style={tut.row('#ede9fe')}>
                 <div style={{ ...tut.cpBadge, background: '#7B2FBE' }}>CP1</div>
                 <div>
-                  <strong style={tut.title}>Pusat 1 — Kuiz ❓</strong>
-                  <p style={tut.desc}>Jawab soalan kuiz pelbagai pilihan tentang kesihatan pergigian. Jawab dengan tepat dan pantas untuk markah tinggi!</p>
+                  <strong style={tut.title}>{t('game.cp1Title')} ❓</strong>
+                  <p style={tut.desc}>{t('game.cp1Desc')}</p>
                 </div>
               </div>
               <div style={tut.row('#fce7f3')}>
                 <div style={{ ...tut.cpBadge, background: '#CC3380' }}>CP2</div>
                 <div>
-                  <strong style={tut.title}>Pusat 2 — Teka Silang Kata 🧩</strong>
-                  <p style={tut.desc}>Lengkapkan teka silang kata pergigian menggunakan petunjuk yang diberikan. Guna butang 💡 jika perlukan bantuan!</p>
+                  <strong style={tut.title}>{t('game.cp2Title')} 🧩</strong>
+                  <p style={tut.desc}>{t('game.cp2Desc')}</p>
                 </div>
               </div>
               <div style={tut.row('#fff7ed')}>
                 <div style={{ ...tut.cpBadge, background: '#E85D04' }}>CP3</div>
                 <div>
-                  <strong style={tut.title}>Pusat 3 — Permainan Makanan 🍎</strong>
-                  <p style={tut.desc}>Pilih makanan yang baik dan buruk untuk kesihatan gigi. Kumpul markah tertinggi!</p>
+                  <strong style={tut.title}>{t('game.cp3Title')} 🍎</strong>
+                  <p style={tut.desc}>{t('game.cp3Desc')}</p>
                 </div>
               </div>
             </div>
             <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '1.25rem', fontSize: '0.83rem', color: '#15803d' }}>
-              🏆 <strong>Papan markah</strong> akan dipaparkan selepas setiap aktiviti — lihat kedudukan anda berbanding rakan-rakan!
+              🏆 {t('game.scoreboardNote')}
             </div>
             <div style={tut.nav}>
               <div style={tut.dots}>{[0, 1, 2].map(i => <div key={i} style={{ ...tut.dot, background: i === 2 ? '#2563eb' : '#cbd5e1' }} />)}</div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button style={{ ...s.continueBtn, width: 'auto', padding: '0.7rem 1.5rem', background: '#64748b' }} onClick={() => setTutorialPage(1)}>← Balik</button>
+                <button style={{ ...s.continueBtn, width: 'auto', padding: '0.7rem 1.5rem', background: '#64748b' }} onClick={() => setTutorialPage(1)}>← {t('game.back')}</button>
                 <button style={{ ...s.continueBtn, width: 'auto', padding: '0.7rem 2rem', background: '#16a34a' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}>
-                  🚀 Mula Bermain!
+                  🚀 {t('game.startPlaying')}
                 </button>
               </div>
             </div>
@@ -465,7 +467,7 @@ const GamePage = () => {
             <p style={s.doneText}>Anda telah lengkapkan semua 3 pusat pemeriksaan!</p>
             <p style={s.doneText}>Anda ialah Juara Dental Quest!</p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', margin: '1.5rem 0', background: '#f8fafc', borderRadius: '16px', padding: '1.25rem' }}>
-              {[{ label: 'Kuiz', cp: 1 }, { label: 'Teka Silang Kata', cp: 2 }, { label: 'Permainan Makanan', cp: 3 }].map(({ label, cp }) => {
+              {[{ label: t('game.quiz'), cp: 1 }, { label: t('game.crossword'), cp: 2 }, { label: t('game.foodGame'), cp: 3 }].map(({ label, cp }) => {
                 const done = progress.find(p => p.checkpoint_number === cp)?.completed;
                 return (
                   <div key={cp} style={{ textAlign: 'center' }}>
@@ -489,7 +491,7 @@ const GamePage = () => {
       {showFullQuiz && (
         <div style={s.fullQuiz}>
           <div style={s.fullQuizHeader}>
-            <span style={s.fullQuizTitle}>Pusat Pemeriksaan 1 - Kuiz</span>
+            <span style={s.fullQuizTitle}>{t('game.checkpoint')} 1 - {t('game.quiz')}</span>
             <span style={s.fullQuizPlayer}>👤 {player.nickname}</span>
           </div>
           <div style={s.fullQuizBody}>
@@ -514,7 +516,7 @@ const GamePage = () => {
           <div style={s.modal}>
             <div style={s.modalHeader}>
               <h2 style={s.modalTitle}>
-                {activeCP === 1 ? '🟣' : activeCP === 2 ? '🟤' : '🟠'} Pusat Pemeriksaan {activeCP}
+                {activeCP === 1 ? '🟣' : activeCP === 2 ? '🟤' : '🟠'} {t('game.checkpoint')} {activeCP}
               </h2>
               {cpStep === 'video' && (
                 <button style={s.closeBtn} onClick={handleCloseCPModal}>✕</button>
@@ -522,7 +524,7 @@ const GamePage = () => {
             </div>
 
             <div style={s.steps}>
-              {['Tonton Video', 'Aktiviti', 'Selesai!'].map((label, i) => (
+              {t('game.steps').map((label, i) => (
                 <div key={i} style={{ ...s.step, ...((['video', 'activity', 'done'][i] === cpStep) ? s.stepActive : {}) }}>
                   <div style={s.stepDot}>{i + 1}</div>
                   <span>{label}</span>
@@ -532,7 +534,7 @@ const GamePage = () => {
 
             {cpStep === 'video' && (
               <div style={s.modalBody}>
-                <p style={s.modalHint}>Tonton video penuh untuk membuka aktiviti seterusnya!</p>
+                <p style={s.modalHint}>{t('game.modalHint')}</p>
                 <YouTubePlayer videoId={CHECKPOINT_VIDEO_IDS[activeCP]} onVideoEnd={handleVideoWatched} />
               </div>
             )}
@@ -556,10 +558,10 @@ const GamePage = () => {
               <div style={{ ...s.modalBody, textAlign: 'center' }}>
                 <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎉</div>
                 <h3 style={{ color: '#16a34a', fontSize: '1.4rem', fontWeight: '800' }}>
-                  Pusat Pemeriksaan {activeCP} Selesai!
+                  {t('game.checkpoint')} {activeCP} {t('game.checkpointDone')}
                 </h3>
                 <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
-                  Bagus! Jalan ke pusat pemeriksaan seterusnya!
+                  {t('game.nextCheckpoint')}
                 </p>
                 <button style={{ ...s.continueBtn, background: '#16a34a' }} onClick={handleCloseCPModal}>
                   Teruskan Pengembaraan!
@@ -574,7 +576,7 @@ const GamePage = () => {
       {showChat && (
         <div style={s.chatBox}>
           <div style={s.chatHeader}>
-            <span>Sembang dengan Guru</span>
+            <span>{t('game.chatTitle')}</span>
             <button style={s.chatClose} onClick={() => setShowChat(false)}>✕</button>
           </div>
           <div style={s.chatMessages}>
@@ -602,7 +604,7 @@ const GamePage = () => {
           </div>
           {!player?.chat_token && (
             <div style={{ padding: '0 0.75rem 0.75rem', color: '#e11d48', fontSize: '0.78rem' }}>
-              Sembang perlukan token baharu. Sertai semula sesi untuk guna sembang dengan selamat.
+                  {t('game.chatToken')}
             </div>
           )}
         </div>

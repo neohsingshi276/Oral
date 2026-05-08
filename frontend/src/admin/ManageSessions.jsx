@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const ManageSessions = () => {
   const { admin } = useAuth();
+  const { t } = useLanguage();
   const [sessions, setSessions] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [words, setWords] = useState([]);
@@ -106,10 +108,10 @@ const ManageSessions = () => {
 
       if (editId) {
         await api.put(`/sessions/${editId}`, payload);
-        setMsg('✅ Sesi Dikemaskini Berjaya!');
+        setMsg(`✅ ${t('admin.sessionSaved')}`);
       } else {
         await api.post('/sessions', payload);
-        setMsg('✅ Sesi Dicipta Berjaya!');
+        setMsg(`✅ ${t('admin.sessionCreated')}`);
       }
 
       setForm(defaultForm);
@@ -160,7 +162,7 @@ const ManageSessions = () => {
             }}
           >
             {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            <option value="custom">✍️ Tambah Sendiri</option>
+            <option value="custom">✍️ {t('admin.custom')}</option>
           </select>
           {isCustom && (
             <input
@@ -186,10 +188,10 @@ const ManageSessions = () => {
       {/* ─── WIZARD FORM ─── */}
       <div style={s.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-          <h2 style={s.cardTitle}>{editId ? '✏️ Ubahsuai tetapan sesi permainan' : '➕ Cipta Sesi Permainan'}</h2>
-          {editId && <button type="button" onClick={handleCancelEdit} style={{ background: 'none', border: 'none', color: '#e11d48', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem' }}>❌ Cancel Edit</button>}
+          <h2 style={s.cardTitle}>{editId ? `✏️ ${t('admin.editSessionSettings')}` : `➕ ${t('admin.createGameSession')}`}</h2>
+          {editId && <button type="button" onClick={handleCancelEdit} style={{ background: 'none', border: 'none', color: '#e11d48', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem' }}>❌ {t('admin.cancelEdit')}</button>}
         </div>
-        <p style={s.hint}>{editId ? 'Ubahsuai sesi permainan yang sedia ada.' : 'Kongurasi Peraturan langkah demi Langkah.Langakah 1 daripada 4'}. Step {step} of 4</p>
+        <p style={s.hint}>{editId ? t('admin.editSessionHint') : t('admin.createSessionHint')} {t('admin.stepOf')} {step} {t('admin.of')} 4</p>
 
         {/* Progress Bar */}
         <div style={s.progressBar}>
@@ -203,9 +205,9 @@ const ManageSessions = () => {
           {/* STEP 1: GENERAL */}
           {step === 1 && (
             <div style={s.stepContent}>
-              <h3 style={s.secTitle}>Langkah 1: Info Sesi</h3>
+              <h3 style={s.secTitle}>{t('admin.step1Info')}</h3>
               <div style={s.field}>
-                <label style={s.label}>Nama Sesi</label>
+                <label style={s.label}>{t('admin.sessionName')}</label>
                 <input style={s.input} value={form.session_name} onChange={e => setForm({ ...form, session_name: e.target.value })} required placeholder="e.g. Class 5A — March 2026" maxLength={80} />
               </div>
             </div>
@@ -214,37 +216,37 @@ const ManageSessions = () => {
           {/* STEP 2: QUIZ */}
           {step === 2 && (
             <div style={s.stepContent}>
-              <h3 style={s.secTitle}>Langkah 2: Titik Semak 1 (Kuiz)</h3>
+              <h3 style={s.secTitle}>{t('admin.step2Quiz')}</h3>
 
               <div style={s.field}>
-                <label style={s.label}>Bagaimanakah Anda Mahu Memilih Soalan?</label>
+                <label style={s.label}>{t('admin.chooseQuestions')}</label>
                 <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem', marginBottom: '1.5rem' }}>
                   <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '500' }}>
-                    <input type="radio" value="random" checked={form.q_mode === 'random'} onChange={e => setForm({ ...form, q_mode: e.target.value })} /> 🎲 Randomly by System
+                    <input type="radio" value="random" checked={form.q_mode === 'random'} onChange={e => setForm({ ...form, q_mode: e.target.value })} /> 🎲 {t('admin.randomBySystem')}
                   </label>
                   <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '500' }}>
-                    <input type="radio" value="manual" checked={form.q_mode === 'manual'} onChange={e => setForm({ ...form, q_mode: e.target.value })} /> ✍️ I want to pick manually
+                    <input type="radio" value="manual" checked={form.q_mode === 'manual'} onChange={e => setForm({ ...form, q_mode: e.target.value })} /> ✍️ {t('admin.pickManually')}
                   </label>
                 </div>
               </div>
 
               <div style={s.gridRow}>
-                <SelectOrCustom label="Masa Untuk Setiap Soalan" value={form.q_timer} onChange={v => setForm({ ...form, q_timer: v })} min={5} max={120}
+                <SelectOrCustom label={t('admin.timePerQuestion')} value={form.q_timer} onChange={v => setForm({ ...form, q_timer: v })} min={5} max={120}
                   options={[{ value: 10, label: '10 Saat' }, { value: 15, label: '15 Saat' }, { value: 30, label: '30 Saat' }]} />
 
                 {form.q_mode === 'random' && (
-                  <SelectOrCustom label="Jumlah soalan yang perlu dipilih" value={form.q_count} onChange={v => setForm({ ...form, q_count: v })} min={1} max={questions.length}
-                    options={getDynamicOptions([{ value: 5, label: '5 Soalan' }, { value: 10, label: '10 Soalan' }, { value: 15, label: '15 Soalan' }], questions.length)} />
+                  <SelectOrCustom label={t('admin.questionsToPick')} value={form.q_count} onChange={v => setForm({ ...form, q_count: v })} min={1} max={questions.length}
+                    options={getDynamicOptions([5, 10, 15].map(value => ({ value, label: `${value} ${t('admin.questions')}` })), questions.length)} />
                 )}
 
-                <SelectOrCustom label="Markah Minimum Untuk Lulus" value={form.q_min} onChange={v => setForm({ ...form, q_min: v })} min={0} max={form.q_mode === 'random' ? form.q_count : form.q_selected.length || questions.length}
-                  options={[{ value: 0, label: '0 (Tiada minimum)' }, { value: 5, label: '5 Betul' }, { value: 8, label: '8 Betul' }]} />
+                <SelectOrCustom label={t('admin.minimumToPass')} value={form.q_min} onChange={v => setForm({ ...form, q_min: v })} min={0} max={form.q_mode === 'random' ? form.q_count : form.q_selected.length || questions.length}
+                  options={[{ value: 0, label: `0 (${t('admin.noMinimum')})` }, { value: 5, label: `5 ${t('admin.correct')}` }, { value: 8, label: `8 ${t('admin.correct')}` }]} />
               </div>
 
               {form.q_mode === 'manual' && (
                 <div style={s.largeSelectionBox}>
-                  <h4 style={s.largeBoxTitle}>Pilih Soalan Tertentu</h4>
-                  <p style={s.largeBoxSubtitle}>Anda telah memilih sendiri <strong>{form.q_selected.length}</strong> questions.</p>
+                  <h4 style={s.largeBoxTitle}>{t('admin.pickSpecificQuestions')}</h4>
+                  <p style={s.largeBoxSubtitle}>{t('admin.selectedQuestions')} <strong>{form.q_selected.length}</strong> {t('admin.questions')}.</p>
                   <div style={s.tallScrollBox}>
                     {questions.map(q => (
                       <label key={q.id} style={s.checkRowWide}><input type="checkbox" checked={form.q_selected.includes(q.id)} onChange={() => toggleQ(q.id)} /> <span style={{ fontWeight: '500' }}>[{q.question_type}]</span> {q.question}</label>
@@ -258,36 +260,36 @@ const ManageSessions = () => {
           {/* STEP 3: CROSSWORD */}
           {step === 3 && (
             <div style={s.stepContent}>
-              <h3 style={s.secTitle}>Langkah 3: Titik Semak 2 (Teka Silang Kata)</h3>
+              <h3 style={s.secTitle}>{t('admin.step3Crossword')}</h3>
 
               <div style={s.field}>
-                <label style={s.label}>Bagaimanakah Anda Mahu Memilih Kata?</label>
+                <label style={s.label}>{t('admin.chooseWords')}</label>
                 <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem', marginBottom: '1.5rem' }}>
                   <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '500' }}>
-                    <input type="radio" value="random" checked={form.cw_mode === 'random'} onChange={e => setForm({ ...form, cw_mode: e.target.value })} /> 🎲 System akan Memilih secara Rawak
+                    <input type="radio" value="random" checked={form.cw_mode === 'random'} onChange={e => setForm({ ...form, cw_mode: e.target.value })} /> 🎲 {t('admin.randomBySystem')}
                   </label>
                   <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '500' }}>
-                    <input type="radio" value="manual" checked={form.cw_mode === 'manual'} onChange={e => setForm({ ...form, cw_mode: e.target.value })} /> ✍️ Saya Mahu Memilih Sendiri
+                    <input type="radio" value="manual" checked={form.cw_mode === 'manual'} onChange={e => setForm({ ...form, cw_mode: e.target.value })} /> ✍️ {t('admin.pickManually')}
                   </label>
                 </div>
               </div>
 
               {form.cw_mode === 'random' && (
                 <div style={{ maxWidth: '600px' }}>
-                  <SelectOrCustom label="Bilangan Kata Dalam Teka Silang Kata" value={form.cw_count} onChange={v => setForm({ ...form, cw_count: v })} min={3} max={words.length}
-                    options={getDynamicOptions([{ value: 5, label: '5 Kata' }, { value: 8, label: '8 Kata' }, { value: 10, label: '10 Kata' }], words.length)} />
+                  <SelectOrCustom label={t('admin.wordsToPick')} value={form.cw_count} onChange={v => setForm({ ...form, cw_count: v })} min={3} max={words.length}
+                    options={getDynamicOptions([5, 8, 10].map(value => ({ value, label: `${value} ${t('admin.words')}` })), words.length)} />
                 </div>
               )}
 
               <div style={{ maxWidth: '600px' }}>
-                <SelectOrCustom label="Markah Minimum Untuk Lulus" value={form.cw_min} onChange={v => setForm({ ...form, cw_min: v })} min={0} max={form.cw_mode === 'random' ? form.cw_count : form.cw_selected.length || words.length}
-                  options={[{ value: 0, label: '0 (Tiada minimum)' }, { value: 3, label: '3 Kata' }, { value: 5, label: '5 Kata' }]} />
+                <SelectOrCustom label={t('admin.minimumToPass')} value={form.cw_min} onChange={v => setForm({ ...form, cw_min: v })} min={0} max={form.cw_mode === 'random' ? form.cw_count : form.cw_selected.length || words.length}
+                  options={[{ value: 0, label: `0 (${t('admin.noMinimum')})` }, { value: 3, label: `3 ${t('admin.words')}` }, { value: 5, label: `5 ${t('admin.words')}` }]} />
               </div>
 
               {form.cw_mode === 'manual' && (
                 <div style={s.largeSelectionBox}>
-                  <h4 style={s.largeBoxTitle}>Pilih Kata Sendiri</h4>
-                  <p style={s.largeBoxSubtitle}>Anda telah Memilih Sendiri <strong>{form.cw_selected.length}</strong> Kata. Minimum 3 diperlukan.</p>
+                  <h4 style={s.largeBoxTitle}>{t('admin.pickSpecificWords')}</h4>
+                  <p style={s.largeBoxSubtitle}>{t('admin.selectedWords')} <strong>{form.cw_selected.length}</strong> {t('admin.words')}. {t('admin.minimumRequired')}</p>
                   <div style={s.tallScrollBox}>
                     {words.map(w => (
                       <label key={w.id} style={s.checkRowWide}><input type="checkbox" checked={form.cw_selected.includes(w.id)} onChange={() => toggleW(w.id)} /> <strong>{w.word}</strong> — {w.clue}</label>
@@ -301,49 +303,49 @@ const ManageSessions = () => {
           {/* STEP 4: CP3 */}
           {step === 4 && (
             <div style={s.stepContent}>
-              <h3 style={s.secTitle}>Langkan 4: Titik Semak 3 (Permainan Makanan)</h3>
+              <h3 style={s.secTitle}>{t('admin.step4Food')}</h3>
               <div style={s.gridRow}>
-                <SelectOrCustom label="Jumlah Masa Untuk Permainan" value={form.cp3_timer} onChange={v => setForm({ ...form, cp3_timer: v })} options={[{ value: 45, label: '45 Seconds' }, { value: 60, label: '60 Seconds' }, { value: 90, label: '90 Seconds' }]} min={10} max={600} />
-                <SelectOrCustom label="Skor Sasaran Minimum/Had Lulus" value={form.cp3_min} onChange={v => setForm({ ...form, cp3_min: v })} options={[{ value: 0, label: '0 (No minimum)' }, { value: 500, label: '500 Points' }, { value: 1000, label: '1000 Points' }]} min={0} max={5000} />
+                <SelectOrCustom label={t('admin.gameTime')} value={form.cp3_timer} onChange={v => setForm({ ...form, cp3_timer: v })} options={[45, 60, 90].map(value => ({ value, label: `${value} ${t('admin.seconds')}` }))} min={10} max={600} />
+                <SelectOrCustom label={t('admin.targetScore')} value={form.cp3_min} onChange={v => setForm({ ...form, cp3_min: v })} options={[{ value: 0, label: `0 (${t('admin.noMinimum')})` }, { value: 500, label: `500 ${t('admin.points')}` }, { value: 1000, label: `1000 ${t('admin.points')}` }]} min={0} max={5000} />
               </div>
             </div>
           )}
 
           <div style={s.wizardFooter}>
-            {step > 1 && <button type="button" style={s.btnSecondary} onClick={() => setStep(step - 1)}>⬅️ Back</button>}
+            {step > 1 && <button type="button" style={s.btnSecondary} onClick={() => setStep(step - 1)}>⬅️ {t('admin.back')}</button>}
             <div style={{ flex: 1 }}></div>
-            <button style={s.btnPrimary} type="submit">{step === 4 ? (editId ? '💾 Simpan Perubahan' : '🚀 Cipta Sesi Terakhir') : 'Langkah Seterusnya ➡️'}</button>
+            <button style={s.btnPrimary} type="submit">{step === 4 ? (editId ? `💾 ${t('admin.saveChanges')}` : `🚀 ${t('admin.createFinalSession')}`) : `${t('admin.nextStep')} ➡️`}</button>
           </div>
         </form>
       </div>
 
       {/* ─── ACTIVE SESSIONS LIST ─── */}
       <div style={s.card}>
-        <h2 style={s.cardTitle}>🎮 Sesi Aktif ({sessions.length})</h2>
+        <h2 style={s.cardTitle}>🎮 {t('admin.activeSessions')} ({sessions.length})</h2>
         <div style={s.sessionList}>
           {sessions.map(session => (
             <div key={session.id} style={s.sessionCard}>
               <div style={s.sessionTop}>
                 <div><h3 style={s.sessionName}>{session.session_name}</h3></div>
-                <span style={session.is_active ? s.badgeActive : s.badgeInactive}>{session.is_active ? '🟢 Aktif' : '🔴 Tidak Aktif'}</span>
+                <span style={session.is_active ? s.badgeActive : s.badgeInactive}>{session.is_active ? `🟢 ${t('admin.active')}` : `🔴 ${t('admin.inactive')}`}</span>
               </div>
               <div style={s.codeWrap}>
-                <p style={s.codeLabel}>Kod Permainan Pelajar:</p>
+                <p style={s.codeLabel}>{t('admin.studentGameCode')}</p>
                 <div style={s.codeBox}>{session.unique_token.split('').map((digit, i) => (<div key={i} style={s.codeDigit}>{digit}</div>))}</div>
-                <button style={copied === session.unique_token ? s.btnCopied : s.btnCopy} onClick={() => copyCode(session.unique_token)}>{copied === session.unique_token ? '✅ Copied!' : '📋 Copy Code'}</button>
+                <button style={copied === session.unique_token ? s.btnCopied : s.btnCopy} onClick={() => copyCode(session.unique_token)}>{copied === session.unique_token ? `✅ ${t('admin.copied')}` : `📋 ${t('admin.copyCode')}`}</button>
               </div>
               <div style={s.sessionActions}>
-                <button style={s.btnEdit} onClick={() => handleEdit(session)}>✏️ Ubahsuai Tetapan</button>
+                <button style={s.btnEdit} onClick={() => handleEdit(session)}>✏️ {t('admin.editSettings')}</button>
                 {(admin?.role === 'main_admin' || admin?.role === 'admin') && (
                   <button style={session.is_active ? s.btnDeactivate : s.btnActivate} onClick={() => handleToggle(session.id, session.is_active)}>
-                    {session.is_active ? 'Matikan' : 'Aktifkan'}
+                    {session.is_active ? t('admin.deactivate') : t('admin.activate')}
                   </button>
                 )}
-                <button style={s.btnDelete} onClick={() => handleDelete(session.id)}>🗑️ Padam</button>
+                <button style={s.btnDelete} onClick={() => handleDelete(session.id)}>🗑️ {t('admin.delete')}</button>
               </div>
             </div>
           ))}
-          {sessions.length === 0 && <p style={s.muted}>Tiada Sesi Lagi</p>}
+          {sessions.length === 0 && <p style={s.muted}>{t('admin.noSessionsYet')}</p>}
         </div>
       </div>
     </div>
