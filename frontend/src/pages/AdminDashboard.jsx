@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ManageVideos from '../admin/ManageVideos';
@@ -29,7 +29,7 @@ const AdminDashboard = () => {
   const ALL_MENU = [
     { key: 'overview', icon: '📊', label: t('admin.overview'), roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'sessions', icon: '🎮', label: t('admin.sessions'), roles: ['main_admin', 'admin', 'teacher'] },
-    { key: 'students', icon: '👥', label: t('admin.players'), roles: ['main_admin', 'admin', 'teacher'] },
+    { key: 'students', icon: '👥', label: t('admin.players'), roles: ['main_admin', 'admin'] },
     { key: 'chat', icon: '💬', label: t('admin.playerChat'), roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'staffchat', icon: '🏢', label: t('admin.staffChat'), roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'videos', icon: '📹', label: t('admin.videos'), roles: ['main_admin', 'admin'] },

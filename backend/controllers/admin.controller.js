@@ -273,6 +273,7 @@ const getTeacherSessions = async (req, res) => {
     // Step 2: fetch player counts per session
     const sessionIds = sessions.map(s => s.id);
     const playerCountMap = {};
+    const playerMonthCountMap = {};
     const usageBySession = {};
 
     if (sessionIds.length > 0) {
@@ -287,7 +288,7 @@ const getTeacherSessions = async (req, res) => {
 
       // Find which YYYY-MM each session was used (only group by session_id + ym — both in SELECT)
       const [usageRows] = await db.query(
-        `SELECT session_id, DATE_FORMAT(joined_at, '%Y-%m') as ym
+        `SELECT session_id, DATE_FORMAT(joined_at, '%Y-%m') as ym, COUNT(*) as cnt
          FROM players
          WHERE session_id IN (${ph})
          GROUP BY session_id, ym
@@ -297,6 +298,7 @@ const getTeacherSessions = async (req, res) => {
       usageRows.forEach(r => {
         if (!usageBySession[r.session_id]) usageBySession[r.session_id] = [];
         usageBySession[r.session_id].push(r.ym);
+        playerMonthCountMap[`${r.session_id}-${r.ym}`] = Number(r.cnt);
       });
     }
 
@@ -317,7 +319,11 @@ const getTeacherSessions = async (req, res) => {
         } else {
           s.usage_months.forEach(({ ym, label }) => {
             if (!byMonth[label]) byMonth[label] = [];
-            byMonth[label].push({ ...s, _ym: ym });
+            byMonth[label].push({
+              ...s,
+              _ym: ym,
+              player_count: playerMonthCountMap[`${s.id}-${ym}`] || 0
+            });
           });
         }
       });
@@ -342,7 +348,10 @@ const getTeacherSessions = async (req, res) => {
       if (!bySchool[school][teacher]) bySchool[school][teacher] = { admin_id: s.admin_id, months: {} };
       months.forEach(month => {
         if (!bySchool[school][teacher].months[month]) bySchool[school][teacher].months[month] = [];
-        bySchool[school][teacher].months[month].push(s);
+        const usage = s.usage_months.find(u => u.label === month);
+        bySchool[school][teacher].months[month].push(usage
+          ? { ...s, _ym: usage.ym, player_count: playerMonthCountMap[`${s.id}-${usage.ym}`] || 0 }
+          : s);
       });
     });
     res.json({ by_school: bySchool, sessions });
@@ -356,6 +365,9 @@ const getTeacherSessions = async (req, res) => {
 const getSessionPlayers = async (req, res) => {
   const sessionId = parseInt(req.params.sessionId, 10);
   if (!sessionId) return res.status(400).json({ error: 'Invalid session ID' });
+  const { month } = req.query;
+  if (month && !/^\d{4}-\d{2}$/.test(month))
+    return res.status(400).json({ error: 'Invalid month format' });
   try {
     const isTeacher = req.admin.role === 'teacher';
     if (isTeacher) {
@@ -363,6 +375,8 @@ const getSessionPlayers = async (req, res) => {
       if (!rows.length || rows[0].admin_id !== req.admin.id)
         return res.status(403).json({ error: 'Access denied' });
     }
+    const monthClause = month ? "AND DATE_FORMAT(p.joined_at, '%Y-%m') = ?" : '';
+    const queryParams = month ? [sessionId, month] : [sessionId];
     const [players] = await db.query(`
       SELECT p.*,
         MAX(CASE WHEN ca.checkpoint_number=1 THEN ca.completed END) as cp1_completed,
@@ -377,8 +391,8 @@ const getSessionPlayers = async (req, res) => {
       LEFT JOIN checkpoint_attempts ca ON ca.player_id=p.id
       LEFT JOIN quiz_scores qs ON qs.player_id=p.id
       LEFT JOIN cp3_scores cp3s ON cp3s.player_id=p.id
-      WHERE p.session_id=? GROUP BY p.id ORDER BY p.nickname
-    `, [sessionId]);
+      WHERE p.session_id=? ${monthClause} GROUP BY p.id ORDER BY p.nickname
+    `, queryParams);
     res.json({ players });
   } catch (err) {
     console.error('getSessionPlayers error:', err);
