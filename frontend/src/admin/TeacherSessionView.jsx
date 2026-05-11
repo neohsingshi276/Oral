@@ -108,7 +108,7 @@ const SessionComparison = ({ sessions }) => {
 
   // Chart datasets
   const completionData = result ? [
-    { name: 'CP1 Kuiz', A: result.session_a.stats.cp1_rate, B: result.session_b.stats.cp2_rate },
+    { name: 'CP1 Kuiz', A: result.session_a.stats.cp1_rate, B: result.session_b.stats.cp1_rate },
     { name: 'CP2 Kata Silang', A: result.session_a.stats.cp2_rate, B: result.session_b.stats.cp2_rate },
     { name: 'CP3 Makanan', A: result.session_a.stats.cp3_rate, B: result.session_b.stats.cp3_rate },
   ] : [];
@@ -123,8 +123,8 @@ const SessionComparison = ({ sessions }) => {
     { metric: 'CP1 %', A: result.session_a.stats.cp1_rate, B: result.session_b.stats.cp1_rate },
     { metric: 'CP2 %', A: result.session_a.stats.cp2_rate, B: result.session_b.stats.cp2_rate },
     { metric: 'CP3 %', A: result.session_a.stats.cp3_rate, B: result.session_b.stats.cp3_rate },
-    { metric: 'Avg Kuiz', A: Math.min(result.session_a.stats.avg_quiz, 100), B: Math.min(result.session_b.stats.avg_quiz, 100) },
-    { metric: 'Avg CP3 Skor', A: Math.min(result.session_a.stats.avg_cp3 || 0, 100), B: Math.min(result.session_b.stats.avg_cp3 || 0, 100) },
+    { metric: 'Avg Kuiz %', A: result.session_a.stats.avg_quiz_pct, B: result.session_b.stats.avg_quiz_pct },
+    { metric: 'CP3 Skor %', A: result.session_a.stats.avg_cp3_pct, B: result.session_b.stats.avg_cp3_pct },
   ] : [];
 
   const nameA = result?.session_a.session.session_name || 'Sesi A';

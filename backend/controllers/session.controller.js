@@ -181,8 +181,10 @@ const updateSession = async (req, res) => {
       return res.status(403).json({ error: 'You can only edit your own sessions' });
 
     if (is_active !== undefined) {
-      if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin')
-        return res.status(403).json({ error: 'Only Admins can activate or deactivate session codes' });
+      const isOwner = rows[0].admin_id === req.admin.id;
+      const isAdminOrAbove = req.admin.role === 'main_admin' || req.admin.role === 'admin';
+      if (!isAdminOrAbove && !isOwner)
+        return res.status(403).json({ error: 'Only Admins or the session owner can activate or deactivate session codes' });
       await db.query('UPDATE game_sessions SET is_active = ? WHERE id = ?', [!!is_active, sessionId]);
     }
 

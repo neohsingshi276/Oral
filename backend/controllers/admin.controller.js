@@ -190,8 +190,11 @@ const compareSessions = async (req, res) => {
       const [players] = await db.query(`
         SELECT p.*,
           MAX(CASE WHEN ca.checkpoint_number=1 THEN ca.completed END) as cp1_completed,
+          MAX(CASE WHEN ca.checkpoint_number=1 THEN ca.attempts  END) as cp1_attempts,
           MAX(CASE WHEN ca.checkpoint_number=2 THEN ca.completed END) as cp2_completed,
+          MAX(CASE WHEN ca.checkpoint_number=2 THEN ca.attempts  END) as cp2_attempts,
           MAX(CASE WHEN ca.checkpoint_number=3 THEN ca.completed END) as cp3_completed,
+          MAX(CASE WHEN ca.checkpoint_number=3 THEN ca.attempts  END) as cp3_attempts,
           MAX(qs.score) as quiz_score, MAX(qs.correct_answers) as quiz_correct,
           MAX(qs.total_questions) as quiz_total, MAX(cp3s.score) as cp3_score
         FROM players p
@@ -202,6 +205,17 @@ const compareSessions = async (req, res) => {
       `, [sid]);
       const total = players.length;
       const pct = (n) => total ? Math.round(n/total*100) : 0;
+      const avg = (arr) => arr.length ? Math.round(arr.reduce((s,v)=>s+v,0)/arr.length) : 0;
+      // avg_quiz is a raw score (e.g. 7 correct out of 10).
+      // Normalise to 0-100 using quiz_total so the radar chart stays on a % scale.
+      const avgQuizRaw = total ? Math.round(players.reduce((s,p)=>s+(p.quiz_score||0),0)/total) : 0;
+      const avgQuizTotal = total ? Math.round(players.reduce((s,p)=>s+(p.quiz_total||0),0)/total) : 0;
+      const avgQuizPct = avgQuizTotal > 0 ? Math.round(avgQuizRaw / avgQuizTotal * 100) : 0;
+      // avg_cp3 is a raw game score (can be > 100). Use cp3_settings.target_score as ceiling if available,
+      // otherwise cap to 5000 for the radar chart normalisation.
+      const avgCp3Raw = avg(players.filter(p=>p.cp3_score!=null).map(p=>p.cp3_score));
+      const cp3Ceiling = 5000;
+      const avgCp3Pct = Math.min(Math.round(avgCp3Raw / cp3Ceiling * 100), 100);
       return {
         session, players,
         stats: {
@@ -209,7 +223,13 @@ const compareSessions = async (req, res) => {
           cp1_rate: pct(players.filter(p=>p.cp1_completed).length),
           cp2_rate: pct(players.filter(p=>p.cp2_completed).length),
           cp3_rate: pct(players.filter(p=>p.cp3_completed).length),
-          avg_quiz: total ? Math.round(players.reduce((s,p)=>s+(p.quiz_score||0),0)/total) : 0,
+          avg_quiz:     avgQuizRaw,
+          avg_quiz_pct: avgQuizPct,
+          avg_cp3:      avgCp3Raw,
+          avg_cp3_pct:  avgCp3Pct,
+          avg_cp1_att:  avg(players.filter(p=>p.cp1_attempts>0).map(p=>p.cp1_attempts||0)),
+          avg_cp2_att:  avg(players.filter(p=>p.cp2_attempts>0).map(p=>p.cp2_attempts||0)),
+          avg_cp3_att:  avg(players.filter(p=>p.cp3_attempts>0).map(p=>p.cp3_attempts||0)),
         }
       };
     };
