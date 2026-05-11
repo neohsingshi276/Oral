@@ -22,12 +22,8 @@ const safeInt = (val, fallback, min = 0, max = 9999) => {
 // queries that fetch all settings at once, then merge them in JS.
 const getSessions = async (req, res) => {
   try {
-    const isTeacher = req.admin.role === 'teacher';
     const [sessions] = await db.query(
-      isTeacher
-        ? 'SELECT s.*, a.name as admin_name, a.school as teacher_school FROM game_sessions s JOIN admins a ON s.admin_id = a.id WHERE s.admin_id = ? ORDER BY s.created_at DESC'
-        : 'SELECT s.*, a.name as admin_name, a.school as teacher_school FROM game_sessions s JOIN admins a ON s.admin_id = a.id ORDER BY s.created_at DESC',
-      isTeacher ? [req.admin.id] : []
+      'SELECT s.*, a.name as admin_name, a.school FROM game_sessions s JOIN admins a ON s.admin_id = a.id ORDER BY s.created_at DESC'
     );
 
     if (sessions.length === 0) return res.json({ sessions: [] });
@@ -58,19 +54,21 @@ const getSessions = async (req, res) => {
 
 // ─── createSession ────────────────────────────────────────────────────────────
 const createSession = async (req, res) => {
-  const { session_name, quiz_settings, crossword_settings, cp3_settings } = req.body;
+  const { session_name, session_month, quiz_settings, crossword_settings, cp3_settings } = req.body;
 
   if (!session_name || typeof session_name !== 'string' || session_name.trim().length === 0)
     return res.status(400).json({ error: 'Session name required' });
   if (session_name.trim().length > 80)
     return res.status(400).json({ error: 'Session name too long (max 80 characters)' });
 
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const cleanMonth = (session_month && MONTHS.includes(session_month)) ? session_month : null;
+
   try {
     const unique_token = await generateCode();
-    const session_month = req.body.session_month ? safeInt(req.body.session_month, null, 1, 12) : null;
     const [result] = await db.query(
       'INSERT INTO game_sessions (admin_id, session_name, session_month, unique_token) VALUES (?, ?, ?, ?)',
-      [req.admin.id, session_name.trim(), session_month, unique_token]
+      [req.admin.id, session_name.trim(), cleanMonth, unique_token]
     );
     const sessionId = result.insertId;
 
@@ -120,7 +118,7 @@ const createSession = async (req, res) => {
 
 // ─── updateSession ────────────────────────────────────────────────────────────
 const updateSession = async (req, res) => {
-  const { is_active, session_name, quiz_settings, crossword_settings, cp3_settings } = req.body;
+  const { is_active, session_name, session_month, quiz_settings, crossword_settings, cp3_settings } = req.body;
   const sessionId = req.params.id;
 
   try {
@@ -146,9 +144,10 @@ const updateSession = async (req, res) => {
       await db.query('UPDATE game_sessions SET session_name = ? WHERE id = ?', [session_name.trim(), sessionId]);
     }
 
-    if (req.body.session_month !== undefined) {
-      const monthVal = req.body.session_month ? safeInt(req.body.session_month, null, 1, 12) : null;
-      await db.query('UPDATE game_sessions SET session_month = ? WHERE id = ?', [monthVal, sessionId]);
+    if (session_month !== undefined) {
+      const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const cleanMonth = (session_month && MONTHS.includes(session_month)) ? session_month : null;
+      await db.query('UPDATE game_sessions SET session_month = ? WHERE id = ?', [cleanMonth, sessionId]);
     }
 
     if (quiz_settings) {

@@ -6,6 +6,7 @@ import ManageFacts from '../admin/ManageFacts';
 import ManageStudents from '../admin/ManageStudents';
 import Analytics from '../admin/Analytics';
 import ManageSessions from '../admin/ManageSessions';
+import TeacherSessionView from '../admin/TeacherSessionView';
 import ManageQuiz from '../admin/ManageQuiz';
 import ManageCrossword from '../admin/ManageCrossword';
 import AdminChat from '../admin/AdminChat';
@@ -54,7 +55,7 @@ const AdminDashboard = () => {
   const renderContent = () => {
     switch (active) {
       case 'overview': return <Overview admin={admin} setActive={setActive} menu={MENU} />;
-      case 'sessions': return <ManageSessions />;
+      case 'sessions': return admin?.role === 'teacher' ? <TeacherSessionView /> : <ManageSessions />;
       case 'students': return <ManageStudents />;
       case 'chat': return <AdminChat />;
       case 'staffchat': return <StaffChat />;

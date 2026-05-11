@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+  PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
 
 const COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#e11d48', '#9333ea', '#0d9488'];
@@ -35,21 +35,27 @@ const Analytics = () => {
   const [loading, setLoading]             = useState(true);
   const [activeTab, setActiveTab]         = useState('overview');
   const [selectedSession, setSelectedSession] = useState('all');
+  const [selectedSchool, setSelectedSchool]   = useState('');
   const [finalLeaderboard, setFinalLeaderboard] = useState([]);
   const [lbLoading, setLbLoading]         = useState(false);
 
-  // Comparison state
-  const [compareA, setCompareA] = useState('');
-  const [compareB, setCompareB] = useState('');
-  const [compareData, setCompareData] = useState(null);
-  const [compareLoading, setCompareLoading] = useState(false);
+  // Compare sessions state
+  const [cmpA, setCmpA]     = useState('');
+  const [cmpB, setCmpB]     = useState('');
+  const [cmpResult, setCmpResult] = useState(null);
+  const [cmpLoading, setCmpLoading] = useState(false);
+  const [cmpError, setCmpError]    = useState('');
 
-  useEffect(() => {
-    api.get('/admin/analytics')
+  const fetchAnalytics = (school = selectedSchool) => {
+    setLoading(true);
+    const params = school ? { school } : {};
+    api.get('/admin/analytics', { params })
       .then(res => setData(res.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { fetchAnalytics(); }, []);
 
   useEffect(() => {
     if (activeTab === 'leaderboard' && selectedSession !== 'all') {
@@ -60,6 +66,17 @@ const Analytics = () => {
         .finally(() => setLbLoading(false));
     }
   }, [activeTab, selectedSession]);
+
+  const handleCompare = async () => {
+    if (!cmpA || !cmpB) return setCmpError('Sila pilih 2 sesi yang berbeza.');
+    if (cmpA === cmpB)  return setCmpError('Pilih dua sesi yang berbeza.');
+    setCmpError(''); setCmpLoading(true);
+    try {
+      const res = await api.get('/admin/compare-sessions', { params: { session_a: cmpA, session_b: cmpB } });
+      setCmpResult(res.data);
+    } catch (e) { setCmpError(e.response?.data?.error || 'Gagal memuatkan perbandingan.'); }
+    finally { setCmpLoading(false); }
+  };
 
   const downloadCSV = async () => {
     try {
@@ -172,7 +189,7 @@ const Analytics = () => {
     { key: 'sessions',    label: '🔀 Sesi' },
     { key: 'timeline',    label: '📅 Garis Masa' },
     { key: 'leaderboard', label: '🏆 Papan Pendahulu' },
-    { key: 'comparison',  label: '🔍 Perbandingan' },
+    { key: 'compare',     label: '⚖️ Bandingkan Sesi' },
   ];
 
   const markColor = (mark, max = 100) => {
@@ -186,7 +203,25 @@ const Analytics = () => {
     <div>
       {/* Penapis Sesi */}
       <div style={s.filterBar}>
-        <span style={s.filterLabel}>📌 Tapis mengikut Sesi:</span>
+        {/* School filter — only for admin/main_admin */}
+        {(data?.schools || []).length > 0 && (
+          <>
+            <span style={s.filterLabel}>🏫 Sekolah:</span>
+            <select
+              style={s.filterSelect}
+              value={selectedSchool}
+              onChange={e => { setSelectedSchool(e.target.value); fetchAnalytics(e.target.value); setSelectedSession('all'); }}
+            >
+              <option value="">Semua Sekolah</option>
+              {(data?.schools || []).map(sc => <option key={sc} value={sc}>{sc}</option>)}
+            </select>
+            {selectedSchool && (
+              <button style={s.clearBtn} onClick={() => { setSelectedSchool(''); fetchAnalytics(''); setSelectedSession('all'); }}>✕</button>
+            )}
+            <span style={{ color: '#e2e8f0' }}>|</span>
+          </>
+        )}
+        <span style={s.filterLabel}>📌 Sesi:</span>
         <select
           style={s.filterSelect}
           value={selectedSession}
@@ -548,116 +583,91 @@ const Analytics = () => {
         </div>
       )}
 
-      {/* Perbandingan */}
-      {activeTab === 'comparison' && (
-        <div style={s.card}>
-          <h3 style={s.cardTitle}>🔍 Perbandingan Dua Sesi</h3>
-          <p style={s.hint}>Pilih dua sesi untuk membandingkan prestasi pelajar secara berdampingan.</p>
 
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            <div style={{ flex: 1, minWidth: '200px' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#475569', marginBottom: '0.3rem' }}>Sesi A</label>
-              <select style={s.filterSelect} value={compareA} onChange={e => setCompareA(e.target.value)}>
+      {/* ── Compare Sessions Tab ── */}
+      {activeTab === 'compare' && (
+        <div style={{ background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: '1.5rem' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#1e3a5f', marginBottom: '0.5rem' }}>⚖️ Bandingkan 2 Sesi</h3>
+          <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.25rem' }}>Pilih dua sesi untuk melihat perbandingan prestasi pelajar secara sebelah-menyebelah.</p>
+
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '1rem' }}>
+            <div style={{ flex: 1, minWidth: '180px' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '600', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Sesi A</label>
+              <select style={s.filterSelect} value={cmpA} onChange={e => { setCmpA(e.target.value); setCmpResult(null); }}>
                 <option value="">— Pilih Sesi A —</option>
-                {sessions.map(sess => <option key={sess.id} value={String(sess.id)}>{sess.name}</option>)}
+                {sessions.map(sess => <option key={sess.id} value={sess.id}>{sess.name}</option>)}
               </select>
             </div>
-            <div style={{ flex: 1, minWidth: '200px' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#475569', marginBottom: '0.3rem' }}>Sesi B</label>
-              <select style={s.filterSelect} value={compareB} onChange={e => setCompareB(e.target.value)}>
+            <div style={{ flex: 1, minWidth: '180px' }}>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '600', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Sesi B</label>
+              <select style={s.filterSelect} value={cmpB} onChange={e => { setCmpB(e.target.value); setCmpResult(null); }}>
                 <option value="">— Pilih Sesi B —</option>
-                {sessions.map(sess => <option key={sess.id} value={String(sess.id)}>{sess.name}</option>)}
+                {sessions.map(sess => <option key={sess.id} value={sess.id}>{sess.name}</option>)}
               </select>
             </div>
             <button
-              style={{ ...s.downloadBtn, opacity: (!compareA || !compareB || compareA === compareB) ? 0.5 : 1 }}
-              disabled={!compareA || !compareB || compareA === compareB || compareLoading}
-              onClick={async () => {
-                setCompareLoading(true);
-                try {
-                  const res = await api.get(`/admin/compare?session_a=${compareA}&session_b=${compareB}`);
-                  setCompareData(res.data);
-                } catch (err) { alert(err.response?.data?.error || 'Gagal memuatkan perbandingan'); setCompareData(null); }
-                finally { setCompareLoading(false); }
-              }}
-            >{compareLoading ? 'Memuatkan...' : '🔍 Bandingkan'}</button>
+              style={{ padding: '0.5rem 1.4rem', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '0.9rem', whiteSpace: 'nowrap', opacity: cmpLoading ? 0.7 : 1 }}
+              onClick={handleCompare}
+              disabled={cmpLoading}
+            >
+              {cmpLoading ? 'Memuatkan...' : '⚖️ Bandingkan'}
+            </button>
           </div>
 
-          {compareData && (
-            <>
-              {/* Side-by-side Stats */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
-                {[compareData.session_a, compareData.session_b].map((sess, idx) => (
-                  <div key={idx} style={{ ...s.card, margin: 0, border: `2px solid ${idx === 0 ? '#2563eb' : '#16a34a'}` }}>
-                    <h4 style={{ margin: '0 0 0.75rem', color: idx === 0 ? '#2563eb' : '#16a34a', fontSize: '1rem' }}>
-                      {idx === 0 ? 'Sesi A' : 'Sesi B'}: {sess.session_name}
-                    </h4>
-                    {sess.school && <div style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: '0.5rem' }}>🏫 {sess.school}</div>}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-                      <div style={s.compareStatCard}><div style={s.compareStatVal}>{sess.stats.total}</div><div style={s.compareStatLbl}>Pemain</div></div>
-                      <div style={s.compareStatCard}><div style={s.compareStatVal}>{sess.stats.cp1_rate}%</div><div style={s.compareStatLbl}>CP1 Selesai</div></div>
-                      <div style={s.compareStatCard}><div style={s.compareStatVal}>{sess.stats.cp2_rate}%</div><div style={s.compareStatLbl}>CP2 Selesai</div></div>
-                      <div style={s.compareStatCard}><div style={s.compareStatVal}>{sess.stats.cp3_rate}%</div><div style={s.compareStatLbl}>CP3 Selesai</div></div>
-                      <div style={s.compareStatCard}><div style={s.compareStatVal}>{sess.stats.avg_quiz}</div><div style={s.compareStatLbl}>Purata Kuiz Betul</div></div>
-                      <div style={s.compareStatCard}><div style={s.compareStatVal}>{sess.stats.avg_cp3}</div><div style={s.compareStatLbl}>Purata Skor CP3</div></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {cmpError && <div style={{ color: '#e11d48', fontSize: '0.85rem', marginBottom: '1rem' }}>❌ {cmpError}</div>}
 
-              {/* Comparison Chart */}
-              <div style={{ ...s.card, margin: '0 0 1.5rem' }}>
-                <h4 style={{ margin: '0 0 1rem', color: '#1e3a5f', fontSize: '0.95rem' }}>📊 Carta Perbandingan Kadar Penyelesaian</h4>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={[
-                    { name: 'CP1 Kuiz', A: compareData.session_a.stats.cp1_rate, B: compareData.session_b.stats.cp1_rate },
-                    { name: 'CP2 Kata Silang', A: compareData.session_a.stats.cp2_rate, B: compareData.session_b.stats.cp2_rate },
-                    { name: 'CP3 Makanan', A: compareData.session_a.stats.cp3_rate, B: compareData.session_b.stats.cp3_rate },
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="name" fontSize={11} />
-                    <YAxis domain={[0, 100]} fontSize={12} />
-                    <Tooltip formatter={(val) => [`${val}%`]} />
-                    <Legend />
-                    <Bar dataKey="A" name={compareData.session_a.session_name} fill="#2563eb" radius={[6, 6, 0, 0]} />
-                    <Bar dataKey="B" name={compareData.session_b.session_name} fill="#16a34a" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Player lists side by side */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                {[compareData.session_a, compareData.session_b].map((sess, idx) => (
-                  <div key={idx}>
-                    <h4 style={{ margin: '0 0 0.5rem', color: idx === 0 ? '#2563eb' : '#16a34a', fontSize: '0.9rem' }}>
-                      👥 {sess.session_name} ({sess.players.length} pemain)
-                    </h4>
-                    <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-                      <table style={{ ...s.table, fontSize: '0.8rem' }}>
-                        <thead><tr style={s.thead}>
-                          <th style={s.th}>Nama</th>
-                          <th style={s.th}>CP1</th>
-                          <th style={s.th}>CP2</th>
-                          <th style={s.th}>CP3</th>
-                        </tr></thead>
-                        <tbody>
-                          {sess.players.map((p, i) => (
-                            <tr key={p.id} style={i % 2 === 0 ? s.trEven : {}}>
-                              <td style={s.td}><strong>{p.nickname}</strong></td>
-                              <td style={s.td}>{p.cp1_completed ? '✅' : '❌'}</td>
-                              <td style={s.td}>{p.cp2_completed ? '✅' : '❌'}</td>
-                              <td style={s.td}>{p.cp3_completed ? '✅' : '❌'}</td>
-                            </tr>
-                          ))}
-                          {sess.players.length === 0 && <tr><td colSpan={4} style={{ ...s.td, textAlign: 'center', color: '#94a3b8' }}>Tiada pemain</td></tr>}
-                        </tbody>
-                      </table>
+          {cmpResult && (() => {
+            const { session_a: sa, session_b: sb } = cmpResult;
+            const chartData = [
+              { name: 'CP1 Kuiz',        A: sa.stats.cp1_rate, B: sb.stats.cp1_rate },
+              { name: 'CP2 Kata Silang',  A: sa.stats.cp2_rate, B: sb.stats.cp2_rate },
+              { name: 'CP3 Makanan',      A: sa.stats.cp3_rate, B: sb.stats.cp3_rate },
+            ];
+            return (
+              <>
+                {/* Side-by-side stats */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                  {[sa, sb].map((d, idx) => (
+                    <div key={idx} style={{ background: idx === 0 ? '#eff6ff' : '#fdf4ff', borderRadius: '14px', padding: '1.1rem' }}>
+                      <div style={{ fontWeight: '700', color: idx === 0 ? '#2563eb' : '#9333ea', fontSize: '0.95rem', marginBottom: '0.75rem' }}>
+                        {idx === 0 ? '🔵' : '🟣'} {d.session.session_name}
+                        {d.session.session_month && <span style={{ fontWeight: '400', fontSize: '0.78rem', marginLeft: '6px', opacity: 0.8 }}>({d.session.session_month})</span>}
+                        {d.session.school && <span style={{ fontWeight: '400', fontSize: '0.78rem', display: 'block', color: '#64748b' }}>🏫 {d.session.school}</span>}
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '0.5rem' }}>
+                        {[
+                          { label: 'Pelajar',  value: d.stats.total,    color: idx === 0 ? '#2563eb' : '#9333ea' },
+                          { label: 'CP1 %',    value: `${d.stats.cp1_rate}%`, color: '#16a34a' },
+                          { label: 'CP2 %',    value: `${d.stats.cp2_rate}%`, color: '#f59e0b' },
+                          { label: 'CP3 %',    value: `${d.stats.cp3_rate}%`, color: '#e11d48' },
+                        ].map(stat => (
+                          <div key={stat.label} style={{ background: '#fff', borderRadius: '10px', padding: '0.65rem', textAlign: 'center' }}>
+                            <div style={{ fontSize: '1.3rem', fontWeight: '800', color: stat.color }}>{stat.value}</div>
+                            <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600' }}>{stat.label}</div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+                  ))}
+                </div>
+
+                {/* Bar chart */}
+                <div style={{ height: 260 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                      <YAxis domain={[0, 100]} tickFormatter={v => `${v}%`} tick={{ fontSize: 12 }} />
+                      <Tooltip formatter={v => `${v}%`} />
+                      <Legend />
+                      <Bar dataKey="A" name={sa.session.session_name} fill="#2563eb" radius={[4,4,0,0]} />
+                      <Bar dataKey="B" name={sb.session.session_name} fill="#9333ea" radius={[4,4,0,0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 
@@ -717,9 +727,6 @@ const s = {
   downloadBar: { display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' },
   downloadBtn: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.65rem 1.5rem', fontWeight: '600', cursor: 'pointer', fontSize: '0.9rem' },
   muted: { color: '#94a3b8', fontSize: '0.9rem', textAlign: 'center', padding: '2rem' },
-  compareStatCard: { background: '#f8fafc', borderRadius: '8px', padding: '0.6rem', textAlign: 'center', border: '1px solid #e2e8f0' },
-  compareStatVal: { fontSize: '1.3rem', fontWeight: '800', color: '#1e3a5f' },
-  compareStatLbl: { fontSize: '0.72rem', color: '#64748b', marginTop: '0.15rem' },
 };
 
 export default Analytics;
