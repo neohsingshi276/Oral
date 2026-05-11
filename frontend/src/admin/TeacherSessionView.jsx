@@ -213,11 +213,18 @@ const TeacherSessionView = () => {
 
   // Sort months in calendar order
   const sortedMonths = Object.keys(by_month || {}).sort((a, b) => {
-    const ia = MONTH_ORDER.indexOf(a), ib = MONTH_ORDER.indexOf(b);
-    if (ia === -1 && ib === -1) return a.localeCompare(b);
-    if (ia === -1) return 1;
-    if (ib === -1) return -1;
-    return ia - ib;
+    // Labels are 'Month YYYY' e.g. 'January 2026', or 'Belum Digunakan'
+    if (a === 'Belum Digunakan') return 1;
+    if (b === 'Belum Digunakan') return -1;
+    // Parse 'Month YYYY' → sortable value
+    const parseLabel = (lbl) => {
+      const parts = lbl.split(' ');
+      const year = parseInt(parts[parts.length - 1], 10) || 0;
+      const monthName = parts.slice(0, parts.length - 1).join(' ');
+      const mi = MONTH_ORDER.indexOf(monthName);
+      return year * 100 + (mi === -1 ? 0 : mi);
+    };
+    return parseLabel(a) - parseLabel(b);
   });
 
   return (

@@ -224,9 +224,15 @@ const compareSessions = async (req, res) => {
 };
 
 // ─── getTeacherSessions ───────────────────────────────────────────────────────
-// Month is derived from players.joined_at — the same session reused in a
-// different month automatically appears under that month. No manual input needed.
+// Month is auto-derived from players.joined_at — no manual input from admin.
+// The same session used in Jan and March shows under both months automatically.
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+const ymToLabel = (ym) => {
+  // ym is 'YYYY-MM' e.g. '2026-01' → 'January 2026'
+  const [year, month] = ym.split('-').map(Number);
+  return (MONTH_NAMES[month - 1] || ym) + ' ' + year;
+};
 
 const getTeacherSessions = async (req, res) => {
   try {
@@ -234,59 +240,60 @@ const getTeacherSessions = async (req, res) => {
     const cond = isTeacher ? 'WHERE s.admin_id = ?' : '';
     const params = isTeacher ? [req.admin.id] : [];
 
-    // Fetch sessions with player count
-    // GROUP BY includes all non-aggregated columns to satisfy MySQL ONLY_FULL_GROUP_BY
+    // Step 1: fetch all sessions (no aggregation — avoid ONLY_FULL_GROUP_BY issues)
     const [sessions] = await db.query(`
       SELECT s.id, s.session_name, s.unique_token, s.is_active, s.created_at,
-        a.id as admin_id, a.name as admin_name, IFNULL(a.school,'') as school,
-        COUNT(p.id) as player_count
+             a.id as admin_id, a.name as admin_name, IFNULL(a.school,'') as school
       FROM game_sessions s
       JOIN admins a ON s.admin_id = a.id
-      LEFT JOIN players p ON p.session_id = s.id
       ${cond}
-      GROUP BY s.id, s.session_name, s.unique_token, s.is_active, s.created_at,
-               a.id, a.name, a.school
       ORDER BY a.school, a.name, s.session_name
     `, params);
 
-    // For each session, find which months it was actually used (by player join dates)
+    // Step 2: fetch player counts per session
     const sessionIds = sessions.map(s => s.id);
-    let usageBySession = {};
+    const playerCountMap = {};
+    const usageBySession = {};
+
     if (sessionIds.length > 0) {
-      const placeholders = sessionIds.map(() => '?').join(',');
+      const ph = sessionIds.map(() => '?').join(',');
+
+      // Count players per session
+      const [countRows] = await db.query(
+        `SELECT session_id, COUNT(*) as cnt FROM players WHERE session_id IN (${ph}) GROUP BY session_id`,
+        sessionIds
+      );
+      countRows.forEach(r => { playerCountMap[r.session_id] = Number(r.cnt); });
+
+      // Find which YYYY-MM each session was used (only group by session_id + ym — both in SELECT)
       const [usageRows] = await db.query(
-        `SELECT session_id,
-           DATE_FORMAT(joined_at, '%Y-%m') as ym,
-           MONTH(joined_at) as month_num,
-           YEAR(joined_at) as year_num
+        `SELECT session_id, DATE_FORMAT(joined_at, '%Y-%m') as ym
          FROM players
-         WHERE session_id IN (${placeholders})
-         GROUP BY session_id, ym`,
+         WHERE session_id IN (${ph})
+         GROUP BY session_id, ym
+         ORDER BY session_id, ym`,
         sessionIds
       );
       usageRows.forEach(r => {
         if (!usageBySession[r.session_id]) usageBySession[r.session_id] = [];
-        usageBySession[r.session_id].push({
-          ym: r.ym,
-          label: MONTH_NAMES[r.month_num - 1] + ' ' + r.year_num
-        });
+        usageBySession[r.session_id].push(r.ym);
       });
     }
 
-    // Attach usage months to each session
+    // Step 3: attach counts + usage months to each session
     sessions.forEach(s => {
-      s.usage_months = usageBySession[s.id] || [];
+      s.player_count = playerCountMap[s.id] || 0;
+      s.usage_months = (usageBySession[s.id] || []).map(ym => ({ ym, label: ymToLabel(ym) }));
     });
 
     if (isTeacher) {
-      // Group by usage month — a session appears once per month it was used.
-      // Sessions with no players yet go under 'Belum Digunakan'.
+      // Group sessions by the month they were actually used.
+      // Sessions with no players yet → 'Belum Digunakan'.
       const byMonth = {};
       sessions.forEach(s => {
         if (s.usage_months.length === 0) {
-          const key = 'Belum Digunakan';
-          if (!byMonth[key]) byMonth[key] = [];
-          if (!byMonth[key].find(x => x.id === s.id)) byMonth[key].push(s);
+          if (!byMonth['Belum Digunakan']) byMonth['Belum Digunakan'] = [];
+          byMonth['Belum Digunakan'].push(s);
         } else {
           s.usage_months.forEach(({ ym, label }) => {
             if (!byMonth[label]) byMonth[label] = [];
@@ -294,7 +301,7 @@ const getTeacherSessions = async (req, res) => {
           });
         }
       });
-      // Sort month keys chronologically
+      // Sort chronologically (YYYY-MM string sort works naturally)
       const sortedByMonth = Object.fromEntries(
         Object.entries(byMonth).sort(([a], [b]) => {
           if (a === 'Belum Digunakan') return 1;
@@ -302,16 +309,15 @@ const getTeacherSessions = async (req, res) => {
           return a.localeCompare(b);
         })
       );
-      return res.json({ school: req.admin.school||'', admin_name: req.admin.name, by_month: sortedByMonth, sessions });
+      return res.json({ school: req.admin.school || '', admin_name: req.admin.name, by_month: sortedByMonth, sessions });
     }
 
+    // Admin view: group by school → teacher → month
     const bySchool = {};
     sessions.forEach(s => {
-      const school = s.school || 'Tiada Sekolah';
-      const teacher = s.admin_name;
-      const months = s.usage_months.length > 0
-        ? s.usage_months.map(u => u.label)
-        : ['Belum Digunakan'];
+      const school   = s.school || 'Tiada Sekolah';
+      const teacher  = s.admin_name;
+      const months   = s.usage_months.length > 0 ? s.usage_months.map(u => u.label) : ['Belum Digunakan'];
       if (!bySchool[school]) bySchool[school] = {};
       if (!bySchool[school][teacher]) bySchool[school][teacher] = { admin_id: s.admin_id, months: {} };
       months.forEach(month => {
@@ -321,8 +327,8 @@ const getTeacherSessions = async (req, res) => {
     });
     res.json({ by_school: bySchool, sessions });
   } catch (err) {
-    console.error('getTeacherSessions error:', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('getTeacherSessions error:', err.message, err.stack);
+    res.status(500).json({ error: err.message || 'Server error' });
   }
 };
 
