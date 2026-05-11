@@ -235,6 +235,7 @@ const getTeacherSessions = async (req, res) => {
     const params = isTeacher ? [req.admin.id] : [];
 
     // Fetch sessions with player count
+    // GROUP BY includes all non-aggregated columns to satisfy MySQL ONLY_FULL_GROUP_BY
     const [sessions] = await db.query(`
       SELECT s.id, s.session_name, s.unique_token, s.is_active, s.created_at,
         a.id as admin_id, a.name as admin_name, IFNULL(a.school,'') as school,
@@ -242,7 +243,9 @@ const getTeacherSessions = async (req, res) => {
       FROM game_sessions s
       JOIN admins a ON s.admin_id = a.id
       LEFT JOIN players p ON p.session_id = s.id
-      ${cond} GROUP BY s.id
+      ${cond}
+      GROUP BY s.id, s.session_name, s.unique_token, s.is_active, s.created_at,
+               a.id, a.name, a.school
       ORDER BY a.school, a.name, s.session_name
     `, params);
 
