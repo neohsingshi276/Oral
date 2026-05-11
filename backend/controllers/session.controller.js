@@ -97,21 +97,20 @@ const createSession = async (req, res) => {
 
   const cleanMonth = (session_month && MONTHS.includes(session_month)) ? session_month : null;
 
-  // Determine owner: admin can assign to a teacher
-  let ownerId = req.admin.id;
-  if (teacher_id && ['admin', 'main_admin'].includes(req.admin.role)) {
-    const tid = parseInt(teacher_id, 10);
-    if (tid && tid > 0) {
-      const [teacherRows] = await db.query(
-        "SELECT id FROM admins WHERE id = ? AND role = 'teacher'", [tid]
-      );
-      if (teacherRows.length === 0)
-        return res.status(400).json({ error: 'Teacher not found' });
-      ownerId = tid;
-    }
-  }
-
   try {
+    // Determine owner: admin can assign to a teacher
+    let ownerId = req.admin.id;
+    if (teacher_id && ['admin', 'main_admin'].includes(req.admin.role)) {
+      const tid = parseInt(teacher_id, 10);
+      if (tid && tid > 0) {
+        const [teacherRows] = await db.query(
+          "SELECT id FROM admins WHERE id = ? AND role = 'teacher'", [tid]
+        );
+        if (teacherRows.length === 0)
+          return res.status(400).json({ error: 'Teacher not found' });
+        ownerId = tid;
+      }
+    }
     const unique_token = await generateCode();
 
     // Try with session_month column; fall back if it doesn't exist yet

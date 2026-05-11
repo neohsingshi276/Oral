@@ -72,13 +72,13 @@ const login = async (req, res) => {
     if (!isMatch) return res.status(401).json({ error: 'Invalid email or password' });
 
     const token = jwt.sign(
-      { id: admin.id, email: admin.email, role: admin.role },
+      { id: admin.id, email: admin.email, role: admin.role, school: admin.school || '' },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
     res.json({
       token,
-      admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role, created_at: admin.created_at }
+      admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role, school: admin.school || '', created_at: admin.created_at }
     });
   } catch (err) {
     console.error(err);
@@ -90,7 +90,7 @@ const login = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     const [rows] = await db.query(
-      'SELECT id, name, email, role, created_at FROM admins WHERE id = ?',
+      "SELECT id, name, email, role, IFNULL(school,'') as school, created_at FROM admins WHERE id = ?",
       [req.admin.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: 'Admin not found' });
