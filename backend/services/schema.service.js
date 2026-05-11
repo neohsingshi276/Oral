@@ -28,7 +28,10 @@ const ensureSchema = async () => {
   await safeAlter("ALTER TABLE admin_invitations ADD COLUMN school VARCHAR(120) DEFAULT NULL AFTER role");
 
   // Add session_month to game_sessions (e.g. 'January', 'April')
+  // Use ADD first (no-op if exists), then MODIFY to fix the type if it was
+  // previously created as TINYINT by an old SQL migration.
   await safeAlter("ALTER TABLE game_sessions ADD COLUMN session_month VARCHAR(20) DEFAULT NULL AFTER session_name");
+  await safeAlter("ALTER TABLE game_sessions MODIFY COLUMN session_month VARCHAR(20) DEFAULT NULL");
 
   console.log('✅ Schema ensured (school + session_month columns added if missing)');
 };
