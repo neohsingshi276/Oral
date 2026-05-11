@@ -19,7 +19,6 @@ const ManageSessions = () => {
 
   const defaultForm = {
     session_name: '',
-    session_month: '',
     teacher_id: '',
     q_mode: 'random', q_timer: 15, q_order: 'shuffle', q_count: 10, q_min: 0, q_selected: [],
     cw_mode: 'random', cw_count: 8, cw_selected: [], cw_min: 0,
@@ -57,7 +56,6 @@ const ManageSessions = () => {
 
     setForm({
       session_name: session.session_name || '',
-      session_month: session.session_month || '',
       q_mode: qSel.length > 0 ? 'manual' : 'random',
       q_timer: qs.timer_seconds || 15,
       q_order: qs.question_order || 'shuffle',
@@ -96,7 +94,6 @@ const ManageSessions = () => {
     try {
       const payload = {
         session_name: form.session_name,
-        session_month: form.session_month || null,
         teacher_id: form.teacher_id || null,
         quiz_settings: {
           timer_seconds: form.q_timer,
@@ -217,16 +214,7 @@ const ManageSessions = () => {
                 <label style={s.label}>{t('admin.sessionName')}</label>
                 <input style={s.input} value={form.session_name} onChange={e => setForm({ ...form, session_name: e.target.value })} required placeholder="e.g. Class 5A — March 2026" maxLength={80} />
               </div>
-              <div style={s.field}>
-                <label style={s.label}>📅 Bulan Sesi <span style={{ color: '#94a3b8', fontWeight: 400 }}>(pilihan)</span></label>
-                <select style={s.input} value={form.session_month} onChange={e => setForm({ ...form, session_month: e.target.value })}>
-                  <option value="">— Pilih Bulan —</option>
-                  {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
-                <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '4px' }}>Pilih bulan untuk mengelompokkan sesi ini dalam paparan guru.</p>
-              </div>
+
 
               {/* Teacher assignment — only visible to admin / main_admin when teachers exist */}
               {!editId && ['admin','main_admin'].includes(admin?.role) && teachers.length > 0 && (
@@ -368,11 +356,6 @@ const ManageSessions = () => {
                 <div>
                   <h3 style={s.sessionName}>{session.session_name}</h3>
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px', alignItems: 'center' }}>
-                    {session.session_month && (
-                      <span style={{ background: '#f0fdf4', color: '#15803d', fontSize: '0.75rem', fontWeight: '600', padding: '2px 8px', borderRadius: '10px' }}>
-                        📅 {session.session_month}
-                      </span>
-                    )}
                     {session.admin_name && ['admin','main_admin'].includes(admin?.role) && (
                       <span style={{ background: '#fdf4ff', color: '#7c3aed', fontSize: '0.75rem', fontWeight: '600', padding: '2px 8px', borderRadius: '10px' }}>
                         👩‍🏫 {session.admin_name}{session.school ? ` · ${session.school}` : ''}

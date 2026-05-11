@@ -88,14 +88,12 @@ const getTeachers = async (req, res) => {
 // Admin/main_admin can optionally pass teacher_id to assign the session to a
 // specific teacher. If omitted, the session belongs to the logged-in user.
 const createSession = async (req, res) => {
-  const { session_name, session_month, teacher_id, quiz_settings, crossword_settings, cp3_settings } = req.body;
+  const { session_name, teacher_id, quiz_settings, crossword_settings, cp3_settings } = req.body;
 
   if (!session_name || typeof session_name !== 'string' || session_name.trim().length === 0)
     return res.status(400).json({ error: 'Session name required' });
   if (session_name.trim().length > 80)
     return res.status(400).json({ error: 'Session name too long (max 80 characters)' });
-
-  const cleanMonth = (session_month && MONTHS.includes(session_month)) ? session_month : null;
 
   try {
     // Determine owner: admin can assign to a teacher
@@ -113,22 +111,10 @@ const createSession = async (req, res) => {
     }
     const unique_token = await generateCode();
 
-    // Try with session_month column; fall back if it doesn't exist yet
-    let result;
-    try {
-      [result] = await db.query(
-        'INSERT INTO game_sessions (admin_id, session_name, session_month, unique_token) VALUES (?, ?, ?, ?)',
-        [ownerId, session_name.trim(), cleanMonth, unique_token]
-      );
-    } catch (colErr) {
-      // session_month column might not exist yet — insert without it
-      if (colErr.code === 'ER_BAD_FIELD_ERROR') {
-        [result] = await db.query(
-          'INSERT INTO game_sessions (admin_id, session_name, unique_token) VALUES (?, ?, ?)',
-          [ownerId, session_name.trim(), unique_token]
-        );
-      } else { throw colErr; }
-    }
+    const [result] = await db.query(
+      'INSERT INTO game_sessions (admin_id, session_name, unique_token) VALUES (?, ?, ?)',
+      [ownerId, session_name.trim(), unique_token]
+    );
 
     const sessionId = result.insertId;
 
@@ -184,7 +170,7 @@ const createSession = async (req, res) => {
 
 // ─── updateSession ────────────────────────────────────────────────────────────
 const updateSession = async (req, res) => {
-  const { is_active, session_name, session_month, quiz_settings, crossword_settings, cp3_settings } = req.body;
+  const { is_active, session_name, quiz_settings, crossword_settings, cp3_settings } = req.body;
   const sessionId = req.params.id;
 
   try {
@@ -206,16 +192,6 @@ const updateSession = async (req, res) => {
       if (session_name.trim().length > 80)
         return res.status(400).json({ error: 'Session name too long (max 80 characters)' });
       await db.query('UPDATE game_sessions SET session_name = ? WHERE id = ?', [session_name.trim(), sessionId]);
-    }
-
-    if (session_month !== undefined) {
-      const cleanMonth = (session_month && MONTHS.includes(session_month)) ? session_month : null;
-      try {
-        await db.query('UPDATE game_sessions SET session_month = ? WHERE id = ?', [cleanMonth, sessionId]);
-      } catch (colErr) {
-        if (colErr.code !== 'ER_BAD_FIELD_ERROR') throw colErr;
-        // Column doesn't exist yet — skip silently (schema.service.js will add it)
-      }
     }
 
     if (quiz_settings) {

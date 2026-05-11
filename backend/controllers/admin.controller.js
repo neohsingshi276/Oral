@@ -224,42 +224,97 @@ const compareSessions = async (req, res) => {
 };
 
 // ─── getTeacherSessions ───────────────────────────────────────────────────────
+// Month is derived from players.joined_at — the same session reused in a
+// different month automatically appears under that month. No manual input needed.
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
 const getTeacherSessions = async (req, res) => {
   try {
     const isTeacher = req.admin.role === 'teacher';
     const cond = isTeacher ? 'WHERE s.admin_id = ?' : '';
     const params = isTeacher ? [req.admin.id] : [];
 
+    // Fetch sessions with player count
     const [sessions] = await db.query(`
-      SELECT s.id,s.session_name,s.session_month,s.unique_token,s.is_active,s.created_at,
-        a.id as admin_id, a.name as admin_name, a.school,
+      SELECT s.id, s.session_name, s.unique_token, s.is_active, s.created_at,
+        a.id as admin_id, a.name as admin_name, IFNULL(a.school,'') as school,
         COUNT(p.id) as player_count
       FROM game_sessions s
-      JOIN admins a ON s.admin_id=a.id
-      LEFT JOIN players p ON p.session_id=s.id
+      JOIN admins a ON s.admin_id = a.id
+      LEFT JOIN players p ON p.session_id = s.id
       ${cond} GROUP BY s.id
-      ORDER BY a.school, a.name, s.session_month, s.session_name
+      ORDER BY a.school, a.name, s.session_name
     `, params);
 
+    // For each session, find which months it was actually used (by player join dates)
+    const sessionIds = sessions.map(s => s.id);
+    let usageBySession = {};
+    if (sessionIds.length > 0) {
+      const placeholders = sessionIds.map(() => '?').join(',');
+      const [usageRows] = await db.query(
+        `SELECT session_id,
+           DATE_FORMAT(joined_at, '%Y-%m') as ym,
+           MONTH(joined_at) as month_num,
+           YEAR(joined_at) as year_num
+         FROM players
+         WHERE session_id IN (${placeholders})
+         GROUP BY session_id, ym`,
+        sessionIds
+      );
+      usageRows.forEach(r => {
+        if (!usageBySession[r.session_id]) usageBySession[r.session_id] = [];
+        usageBySession[r.session_id].push({
+          ym: r.ym,
+          label: MONTH_NAMES[r.month_num - 1] + ' ' + r.year_num
+        });
+      });
+    }
+
+    // Attach usage months to each session
+    sessions.forEach(s => {
+      s.usage_months = usageBySession[s.id] || [];
+    });
+
     if (isTeacher) {
+      // Group by usage month — a session appears once per month it was used.
+      // Sessions with no players yet go under 'Belum Digunakan'.
       const byMonth = {};
       sessions.forEach(s => {
-        const m = s.session_month || 'Tiada Bulan';
-        if (!byMonth[m]) byMonth[m] = [];
-        byMonth[m].push(s);
+        if (s.usage_months.length === 0) {
+          const key = 'Belum Digunakan';
+          if (!byMonth[key]) byMonth[key] = [];
+          if (!byMonth[key].find(x => x.id === s.id)) byMonth[key].push(s);
+        } else {
+          s.usage_months.forEach(({ ym, label }) => {
+            if (!byMonth[label]) byMonth[label] = [];
+            byMonth[label].push({ ...s, _ym: ym });
+          });
+        }
       });
-      return res.json({ school: req.admin.school||'', admin_name: req.admin.name, by_month: byMonth, sessions });
+      // Sort month keys chronologically
+      const sortedByMonth = Object.fromEntries(
+        Object.entries(byMonth).sort(([a], [b]) => {
+          if (a === 'Belum Digunakan') return 1;
+          if (b === 'Belum Digunakan') return -1;
+          return a.localeCompare(b);
+        })
+      );
+      return res.json({ school: req.admin.school||'', admin_name: req.admin.name, by_month: sortedByMonth, sessions });
     }
 
     const bySchool = {};
     sessions.forEach(s => {
-      const school = s.school||'Tiada Sekolah';
+      const school = s.school || 'Tiada Sekolah';
       const teacher = s.admin_name;
-      const month = s.session_month||'Tiada Bulan';
+      const months = s.usage_months.length > 0
+        ? s.usage_months.map(u => u.label)
+        : ['Belum Digunakan'];
       if (!bySchool[school]) bySchool[school] = {};
       if (!bySchool[school][teacher]) bySchool[school][teacher] = { admin_id: s.admin_id, months: {} };
-      if (!bySchool[school][teacher].months[month]) bySchool[school][teacher].months[month] = [];
-      bySchool[school][teacher].months[month].push(s);
+      months.forEach(month => {
+        if (!bySchool[school][teacher].months[month]) bySchool[school][teacher].months[month] = [];
+        bySchool[school][teacher].months[month].push(s);
+      });
     });
     res.json({ by_school: bySchool, sessions });
   } catch (err) {
