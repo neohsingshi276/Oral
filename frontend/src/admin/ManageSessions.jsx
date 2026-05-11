@@ -9,6 +9,7 @@ const ManageSessions = () => {
   const [sessions, setSessions] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [words, setWords] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [msg, setMsg] = useState('');
   const [copied, setCopied] = useState('');
 
@@ -19,6 +20,7 @@ const ManageSessions = () => {
   const defaultForm = {
     session_name: '',
     session_month: '',
+    teacher_id: '',
     q_mode: 'random', q_timer: 15, q_order: 'shuffle', q_count: 10, q_min: 0, q_selected: [],
     cw_mode: 'random', cw_count: 8, cw_selected: [], cw_min: 0,
     cp3_timer: 60, cp3_min: 0
@@ -29,8 +31,9 @@ const ManageSessions = () => {
   const fetchSessions = () => api.get('/sessions').then(res => setSessions(res.data.sessions));
   const fetchQuestions = () => api.get('/quiz/admin/questions').then(res => setQuestions(res.data.questions));
   const fetchWords = () => api.get('/crossword/admin').then(res => setWords(res.data.words));
+  const fetchTeachers = () => api.get('/sessions/teachers').then(res => setTeachers(res.data.teachers || [])).catch(() => {});
 
-  useEffect(() => { fetchSessions(); fetchQuestions(); fetchWords(); }, []);
+  useEffect(() => { fetchSessions(); fetchQuestions(); fetchWords(); fetchTeachers(); }, []);
 
   // LOAD EXISTING SETTINGS INTO THE WIZARD
   const handleEdit = (session) => {
@@ -94,6 +97,7 @@ const ManageSessions = () => {
       const payload = {
         session_name: form.session_name,
         session_month: form.session_month || null,
+        teacher_id: form.teacher_id || null,
         quiz_settings: {
           timer_seconds: form.q_timer,
           question_order: form.q_order,
@@ -223,6 +227,28 @@ const ManageSessions = () => {
                 </select>
                 <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '4px' }}>Pilih bulan untuk mengelompokkan sesi ini dalam paparan guru.</p>
               </div>
+
+              {/* Teacher assignment — only visible to admin / main_admin when teachers exist */}
+              {!editId && ['admin','main_admin'].includes(admin?.role) && teachers.length > 0 && (
+                <div style={s.field}>
+                  <label style={s.label}>👩‍🏫 Tugaskan kepada Guru <span style={{ color: '#94a3b8', fontWeight: 400 }}>(pilihan)</span></label>
+                  <select
+                    style={s.input}
+                    value={form.teacher_id}
+                    onChange={e => setForm({ ...form, teacher_id: e.target.value })}
+                  >
+                    <option value="">— Milik saya (lalai) —</option>
+                    {teachers.map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}{t.school ? ` — ${t.school}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '4px' }}>
+                    Jika dipilih, sesi ini akan muncul dalam papan pemuka guru tersebut.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -341,11 +367,18 @@ const ManageSessions = () => {
               <div style={s.sessionTop}>
                 <div>
                   <h3 style={s.sessionName}>{session.session_name}</h3>
-                  {session.session_month && (
-                    <span style={{ background: '#f0fdf4', color: '#15803d', fontSize: '0.75rem', fontWeight: '600', padding: '2px 8px', borderRadius: '10px', marginTop: '4px', display: 'inline-block' }}>
-                      📅 {session.session_month}
-                    </span>
-                  )}
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px', alignItems: 'center' }}>
+                    {session.session_month && (
+                      <span style={{ background: '#f0fdf4', color: '#15803d', fontSize: '0.75rem', fontWeight: '600', padding: '2px 8px', borderRadius: '10px' }}>
+                        📅 {session.session_month}
+                      </span>
+                    )}
+                    {session.admin_name && ['admin','main_admin'].includes(admin?.role) && (
+                      <span style={{ background: '#fdf4ff', color: '#7c3aed', fontSize: '0.75rem', fontWeight: '600', padding: '2px 8px', borderRadius: '10px' }}>
+                        👩‍🏫 {session.admin_name}{session.school ? ` · ${session.school}` : ''}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <span style={session.is_active ? s.badgeActive : s.badgeInactive}>{session.is_active ? `🟢 ${t('admin.active')}` : `🔴 ${t('admin.inactive')}`}</span>
               </div>
