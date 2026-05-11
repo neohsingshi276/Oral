@@ -133,39 +133,45 @@ const createSession = async (req, res) => {
     const sessionId = result.insertId;
 
     if (quiz_settings) {
+      const qTimer = safeInt(quiz_settings.timer_seconds, 15, 5, 120);
+      const qOrder = ['shuffle', 'sequential'].includes(quiz_settings.question_order) ? quiz_settings.question_order : 'shuffle';
+      const qCount = safeInt(quiz_settings.question_count, 10, 1, 100);
+      const qMin   = safeInt(quiz_settings.minimum_correct, 0, 0, 100);
+      const qSel   = JSON.stringify(quiz_settings.selected_questions || []);
       await db.query(
-        'INSERT INTO quiz_settings (session_id, timer_seconds, question_order, question_count, minimum_correct, selected_questions) VALUES (?,?,?,?,?,?)',
-        [
-          sessionId,
-          safeInt(quiz_settings.timer_seconds, 15, 5, 120),
-          ['shuffle', 'sequential'].includes(quiz_settings.question_order) ? quiz_settings.question_order : 'shuffle',
-          safeInt(quiz_settings.question_count, 10, 1, 100),
-          safeInt(quiz_settings.minimum_correct, 0, 0, 100),
-          JSON.stringify(quiz_settings.selected_questions || [])
-        ]
+        `INSERT INTO quiz_settings (session_id, timer_seconds, question_order, question_count, minimum_correct, selected_questions)
+         VALUES (?,?,?,?,?,?)
+         ON DUPLICATE KEY UPDATE
+           timer_seconds=VALUES(timer_seconds), question_order=VALUES(question_order),
+           question_count=VALUES(question_count), minimum_correct=VALUES(minimum_correct),
+           selected_questions=VALUES(selected_questions)`,
+        [sessionId, qTimer, qOrder, qCount, qMin, qSel]
       );
     }
 
     if (crossword_settings) {
+      const cwCount = safeInt(crossword_settings.word_count, 8, 3, 50);
+      const cwSel   = JSON.stringify(crossword_settings.selected_words || []);
+      const cwMin   = safeInt(crossword_settings.minimum_correct, 0, 0, 50);
       await db.query(
-        'INSERT INTO crossword_settings (session_id, word_count, selected_words, minimum_correct) VALUES (?,?,?,?)',
-        [
-          sessionId,
-          safeInt(crossword_settings.word_count, 8, 3, 50),
-          JSON.stringify(crossword_settings.selected_words || []),
-          safeInt(crossword_settings.minimum_correct, 0, 0, 50)
-        ]
+        `INSERT INTO crossword_settings (session_id, word_count, selected_words, minimum_correct)
+         VALUES (?,?,?,?)
+         ON DUPLICATE KEY UPDATE
+           word_count=VALUES(word_count), selected_words=VALUES(selected_words),
+           minimum_correct=VALUES(minimum_correct)`,
+        [sessionId, cwCount, cwSel, cwMin]
       );
     }
 
     if (cp3_settings) {
+      const cp3Timer = safeInt(cp3_settings.timer_seconds, 60, 10, 600);
+      const cp3Score = safeInt(cp3_settings.target_score, 0, 0, 9999);
       await db.query(
-        'INSERT INTO cp3_settings (session_id, timer_seconds, target_score) VALUES (?,?,?)',
-        [
-          sessionId,
-          safeInt(cp3_settings.timer_seconds, 60, 10, 600),
-          safeInt(cp3_settings.target_score, 0, 0, 9999)
-        ]
+        `INSERT INTO cp3_settings (session_id, timer_seconds, target_score)
+         VALUES (?,?,?)
+         ON DUPLICATE KEY UPDATE
+           timer_seconds=VALUES(timer_seconds), target_score=VALUES(target_score)`,
+        [sessionId, cp3Timer, cp3Score]
       );
     }
 
