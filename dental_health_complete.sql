@@ -240,6 +240,90 @@ CREATE TABLE IF NOT EXISTS otp_tokens (
   FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Here
+CREATE TABLE IF NOT EXISTS faq_questions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  question TEXT NOT NULL,
+  answer TEXT NULL,
+  asked_by_admin_id INT NOT NULL,
+  answered_by_admin_id INT NULL,
+  status ENUM('pending', 'answered') DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  answered_at TIMESTAMP NULL,
+  FOREIGN KEY (asked_by_admin_id) REFERENCES admins(id) ON DELETE CASCADE,
+  FOREIGN KEY (answered_by_admin_id) REFERENCES admins(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS faq_instructions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  display_order INT DEFAULT 1,
+  updated_by_admin_id INT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (updated_by_admin_id) REFERENCES admins(id) ON DELETE SET NULL
+);
+
+INSERT INTO faq_instructions (title, content, display_order)
+VALUES
+('Cara Menggunakan Sistem DentalQuest', '1. Cipta sesi permainan di Sesi Permainan.\n2. Berikan kod 4 digit kepada murid.\n3. Pantau kemajuan murid di bahagian Pemain dan Analitik.\n4. Gunakan Sembang Pemain untuk membantu murid.\n5. Rujuk FAQ Dijawab untuk soalan biasa.', 1);
+-- Here
+
+-- Here
+CREATE TABLE IF NOT EXISTS schools (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  school_name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS classes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  school_id INT NOT NULL,
+  teacher_id INT NOT NULL,
+  class_name VARCHAR(100) NOT NULL,
+  reveal_password_hash VARCHAR(255) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_classes_school
+    FOREIGN KEY (school_id) REFERENCES schools(id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_classes_teacher
+    FOREIGN KEY (teacher_id) REFERENCES admins(id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+ALTER TABLE game_sessions
+ADD COLUMN school_id INT NULL AFTER admin_id,
+ADD COLUMN class_id INT NULL AFTER school_id,
+ADD CONSTRAINT fk_session_school
+  FOREIGN KEY (school_id) REFERENCES schools(id)
+  ON DELETE CASCADE,
+ADD CONSTRAINT fk_session_class
+  FOREIGN KEY (class_id) REFERENCES classes(id)
+  ON DELETE CASCADE;
+
+INSERT INTO schools (school_name)
+VALUES
+('SK Taman Mutiara'),
+('SK Seri Indah');
+
+INSERT INTO classes (school_id, teacher_id, class_name, reveal_password_hash)
+VALUES
+(1, 12, 'Class 5A', NULL),
+(1, 12, 'Class 5B', NULL),
+(2, 12, 'Class 6A', NULL);
+
+ALTER TABLE game_sessions
+ADD COLUMN reveal_password_hash VARCHAR(255) NULL AFTER unique_token;
+
+ALTER TABLE game_sessions
+ADD COLUMN reveal_password_text VARCHAR(100) NULL AFTER reveal_password_hash;
+
+ALTER TABLE game_sessions
+ADD COLUMN reveal_password_plain VARCHAR(255) NULL AFTER reveal_password_hash;
+-- Here
+
 -- ============================================================
 -- SAMPLE DATA
 -- ============================================================

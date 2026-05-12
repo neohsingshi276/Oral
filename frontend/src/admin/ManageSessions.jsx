@@ -11,13 +11,19 @@ const ManageSessions = () => {
   const [words, setWords] = useState([]);
   const [msg, setMsg] = useState('');
   const [copied, setCopied] = useState('');
+  const [revealedCodes, setRevealedCodes] = useState({});
+  const [passwordModal, setPasswordModal] = useState(null);
+  const [revealPassword, setRevealPassword] = useState('');
 
   // Edit mode tracking
   const [editId, setEditId] = useState(null);
   const [step, setStep] = useState(1);
 
   const defaultForm = {
+    school_name: '',
+    class_name: '',
     session_name: '',
+    reveal_password: '',
     q_mode: 'random', q_timer: 15, q_order: 'shuffle', q_count: 10, q_min: 0, q_selected: [],
     cw_mode: 'random', cw_count: 8, cw_selected: [], cw_min: 0,
     cp3_timer: 60, cp3_min: 0
@@ -29,7 +35,11 @@ const ManageSessions = () => {
   const fetchQuestions = () => api.get('/quiz/admin/questions').then(res => setQuestions(res.data.questions));
   const fetchWords = () => api.get('/crossword/admin').then(res => setWords(res.data.words));
 
-  useEffect(() => { fetchSessions(); fetchQuestions(); fetchWords(); }, []);
+  useEffect(() => {
+    fetchSessions();
+    fetchQuestions();
+    fetchWords();
+  }, []);
 
   // LOAD EXISTING SETTINGS INTO THE WIZARD
   const handleEdit = (session) => {
@@ -52,6 +62,8 @@ const ManageSessions = () => {
     const cwSel = parseArr(cs.selected_words);
 
     setForm({
+      school_name: session.school_name || '',
+      class_name: session.class_name || '',
       session_name: session.session_name || '',
       q_mode: qSel.length > 0 ? 'manual' : 'random',
       q_timer: qs.timer_seconds || 15,
@@ -90,7 +102,10 @@ const ManageSessions = () => {
 
     try {
       const payload = {
+        school_name: form.school_name,
+        class_name: form.class_name,
         session_name: form.session_name,
+        reveal_password: form.reveal_password,
         quiz_settings: {
           timer_seconds: form.q_timer,
           question_order: form.q_order,
@@ -183,171 +198,435 @@ const ManageSessions = () => {
     );
   };
 
+  const groupedSessions = sessions.reduce((acc, session) => {
+    const school = session.school_name || 'No School';
+    const className = session.class_name || 'No Class';
+
+    if (!acc[school]) {
+      acc[school] = {};
+    }
+
+    if (!acc[school][className]) {
+      acc[school][className] = [];
+    }
+
+    acc[school][className].push(session);
+
+    return acc;
+  }, {});
+
   return (
     <div>
       {/* ─── WIZARD FORM ─── */}
-      <div style={s.card}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-          <h2 style={s.cardTitle}>{editId ? `✏️ ${t('admin.editSessionSettings')}` : `➕ ${t('admin.createGameSession')}`}</h2>
-          {editId && <button type="button" onClick={handleCancelEdit} style={{ background: 'none', border: 'none', color: '#e11d48', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem' }}>❌ {t('admin.cancelEdit')}</button>}
-        </div>
-        <p style={s.hint}>{editId ? t('admin.editSessionHint') : t('admin.createSessionHint')} {t('admin.stepOf')} {step} {t('admin.of')} 4</p>
+      {admin?.role === 'main_admin' && (
+        <div style={s.card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <h2 style={s.cardTitle}>{editId ? `✏️ ${t('admin.editSessionSettings')}` : `➕ ${t('admin.createGameSession')}`}</h2>
+            {editId && <button type="button" onClick={handleCancelEdit} style={{ background: 'none', border: 'none', color: '#e11d48', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem' }}>❌ {t('admin.cancelEdit')}</button>}
+          </div>
+          <p style={s.hint}>{editId ? t('admin.editSessionHint') : t('admin.createSessionHint')} {t('admin.stepOf')} {step} {t('admin.of')} 4</p>
 
-        {/* Progress Bar */}
-        <div style={s.progressBar}>
-          <div style={{ ...s.progressFill, width: `${(step / 4) * 100}%` }}></div>
-        </div>
+          {/* Progress Bar */}
+          <div style={s.progressBar}>
+            <div style={{ ...s.progressFill, width: `${(step / 4) * 100}%` }}></div>
+          </div>
 
-        {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
+          {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
 
-        <form onSubmit={handleCreate}>
+          <form onSubmit={handleCreate}>
 
-          {/* STEP 1: GENERAL */}
-          {step === 1 && (
-            <div style={s.stepContent}>
-              <h3 style={s.secTitle}>{t('admin.step1Info')}</h3>
-              <div style={s.field}>
-                <label style={s.label}>{t('admin.sessionName')}</label>
-                <input style={s.input} value={form.session_name} onChange={e => setForm({ ...form, session_name: e.target.value })} required placeholder="e.g. Class 5A — March 2026" maxLength={80} />
-              </div>
-            </div>
-          )}
+            {/* STEP 1: GENERAL */}
+            {step === 1 && (
+              <div style={s.stepContent}>
+                <h3 style={s.secTitle}>{t('admin.step1Info')}</h3>
 
-          {/* STEP 2: QUIZ */}
-          {step === 2 && (
-            <div style={s.stepContent}>
-              <h3 style={s.secTitle}>{t('admin.step2Quiz')}</h3>
+                <div style={s.field}>
+                  <label style={s.label}>School</label>
+                  <input
+                    style={s.input}
+                    value={form.school_name || ''}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        school_name: e.target.value
+                      })
+                    }
+                    required
+                    placeholder="e.g. SK Taman Mutiara"
+                  />
+                </div>
 
-              <div style={s.field}>
-                <label style={s.label}>{t('admin.chooseQuestions')}</label>
-                <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem', marginBottom: '1.5rem' }}>
-                  <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '500' }}>
-                    <input type="radio" value="random" checked={form.q_mode === 'random'} onChange={e => setForm({ ...form, q_mode: e.target.value })} /> 🎲 {t('admin.randomBySystem')}
-                  </label>
-                  <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '500' }}>
-                    <input type="radio" value="manual" checked={form.q_mode === 'manual'} onChange={e => setForm({ ...form, q_mode: e.target.value })} /> ✍️ {t('admin.pickManually')}
-                  </label>
+                <div style={s.field}>
+                  <label style={s.label}>Class</label>
+                  <input
+                    style={s.input}
+                    value={form.class_name || ''}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        class_name: e.target.value
+                      })
+                    }
+                    required
+                    placeholder="e.g. Class 5A"
+                  />
+                </div>
+
+                {/* Session Name */}
+                <div style={s.field}>
+                  <label style={s.label}>{t('admin.sessionName')}</label>
+                  <input
+                    style={s.input}
+                    value={form.session_name}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        session_name: e.target.value
+                      })
+                    }
+                    required
+                    placeholder="e.g. January 2026 Session"
+                    maxLength={80}
+                  />
                 </div>
               </div>
+            )}
 
-              <div style={s.gridRow}>
-                <SelectOrCustom label={t('admin.timePerQuestion')} value={form.q_timer} onChange={v => setForm({ ...form, q_timer: v })} min={5} max={120}
-                  options={[{ value: 10, label: '10 Saat' }, { value: 15, label: '15 Saat' }, { value: 30, label: '30 Saat' }]} />
+            {/* STEP 2: QUIZ */}
+            {step === 2 && (
+              <div style={s.stepContent}>
+                <h3 style={s.secTitle}>{t('admin.step2Quiz')}</h3>
 
-                {form.q_mode === 'random' && (
-                  <SelectOrCustom label={t('admin.questionsToPick')} value={form.q_count} onChange={v => setForm({ ...form, q_count: v })} min={1} max={questions.length}
-                    options={getDynamicOptions([5, 10, 15].map(value => ({ value, label: `${value} ${t('admin.questions')}` })), questions.length)} />
+                <div style={s.field}>
+                  <label style={s.label}>{t('admin.chooseQuestions')}</label>
+                  <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem', marginBottom: '1.5rem' }}>
+                    <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '500' }}>
+                      <input type="radio" value="random" checked={form.q_mode === 'random'} onChange={e => setForm({ ...form, q_mode: e.target.value })} /> 🎲 {t('admin.randomBySystem')}
+                    </label>
+                    <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '500' }}>
+                      <input type="radio" value="manual" checked={form.q_mode === 'manual'} onChange={e => setForm({ ...form, q_mode: e.target.value })} /> ✍️ {t('admin.pickManually')}
+                    </label>
+                  </div>
+                </div>
+
+                <div style={s.gridRow}>
+                  <SelectOrCustom label={t('admin.timePerQuestion')} value={form.q_timer} onChange={v => setForm({ ...form, q_timer: v })} min={5} max={120}
+                    options={[{ value: 10, label: '10 Saat' }, { value: 15, label: '15 Saat' }, { value: 30, label: '30 Saat' }]} />
+
+                  {form.q_mode === 'random' && (
+                    <SelectOrCustom label={t('admin.questionsToPick')} value={form.q_count} onChange={v => setForm({ ...form, q_count: v })} min={1} max={questions.length}
+                      options={getDynamicOptions([5, 10, 15].map(value => ({ value, label: `${value} ${t('admin.questions')}` })), questions.length)} />
+                  )}
+
+                  <SelectOrCustom label={t('admin.minimumToPass')} value={form.q_min} onChange={v => setForm({ ...form, q_min: v })} min={0} max={form.q_mode === 'random' ? form.q_count : form.q_selected.length || questions.length}
+                    options={[{ value: 0, label: `0 (${t('admin.noMinimum')})` }, { value: 5, label: `5 ${t('admin.correct')}` }, { value: 8, label: `8 ${t('admin.correct')}` }]} />
+                </div>
+
+                {form.q_mode === 'manual' && (
+                  <div style={s.largeSelectionBox}>
+                    <h4 style={s.largeBoxTitle}>{t('admin.pickSpecificQuestions')}</h4>
+                    <p style={s.largeBoxSubtitle}>{t('admin.selectedQuestions')} <strong>{form.q_selected.length}</strong> {t('admin.questions')}.</p>
+                    <div style={s.tallScrollBox}>
+                      {questions.map(q => (
+                        <label key={q.id} style={s.checkRowWide}><input type="checkbox" checked={form.q_selected.includes(q.id)} onChange={() => toggleQ(q.id)} /> <span style={{ fontWeight: '500' }}>[{q.question_type}]</span> {q.question}</label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP 3: CROSSWORD */}
+            {step === 3 && (
+              <div style={s.stepContent}>
+                <h3 style={s.secTitle}>{t('admin.step3Crossword')}</h3>
+
+                <div style={s.field}>
+                  <label style={s.label}>{t('admin.chooseWords')}</label>
+                  <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem', marginBottom: '1.5rem' }}>
+                    <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '500' }}>
+                      <input type="radio" value="random" checked={form.cw_mode === 'random'} onChange={e => setForm({ ...form, cw_mode: e.target.value })} /> 🎲 {t('admin.randomBySystem')}
+                    </label>
+                    <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '500' }}>
+                      <input type="radio" value="manual" checked={form.cw_mode === 'manual'} onChange={e => setForm({ ...form, cw_mode: e.target.value })} /> ✍️ {t('admin.pickManually')}
+                    </label>
+                  </div>
+                </div>
+
+                {form.cw_mode === 'random' && (
+                  <div style={{ maxWidth: '600px' }}>
+                    <SelectOrCustom label={t('admin.wordsToPick')} value={form.cw_count} onChange={v => setForm({ ...form, cw_count: v })} min={3} max={words.length}
+                      options={getDynamicOptions([5, 8, 10].map(value => ({ value, label: `${value} ${t('admin.words')}` })), words.length)} />
+                  </div>
                 )}
 
-                <SelectOrCustom label={t('admin.minimumToPass')} value={form.q_min} onChange={v => setForm({ ...form, q_min: v })} min={0} max={form.q_mode === 'random' ? form.q_count : form.q_selected.length || questions.length}
-                  options={[{ value: 0, label: `0 (${t('admin.noMinimum')})` }, { value: 5, label: `5 ${t('admin.correct')}` }, { value: 8, label: `8 ${t('admin.correct')}` }]} />
-              </div>
-
-              {form.q_mode === 'manual' && (
-                <div style={s.largeSelectionBox}>
-                  <h4 style={s.largeBoxTitle}>{t('admin.pickSpecificQuestions')}</h4>
-                  <p style={s.largeBoxSubtitle}>{t('admin.selectedQuestions')} <strong>{form.q_selected.length}</strong> {t('admin.questions')}.</p>
-                  <div style={s.tallScrollBox}>
-                    {questions.map(q => (
-                      <label key={q.id} style={s.checkRowWide}><input type="checkbox" checked={form.q_selected.includes(q.id)} onChange={() => toggleQ(q.id)} /> <span style={{ fontWeight: '500' }}>[{q.question_type}]</span> {q.question}</label>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* STEP 3: CROSSWORD */}
-          {step === 3 && (
-            <div style={s.stepContent}>
-              <h3 style={s.secTitle}>{t('admin.step3Crossword')}</h3>
-
-              <div style={s.field}>
-                <label style={s.label}>{t('admin.chooseWords')}</label>
-                <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem', marginBottom: '1.5rem' }}>
-                  <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '500' }}>
-                    <input type="radio" value="random" checked={form.cw_mode === 'random'} onChange={e => setForm({ ...form, cw_mode: e.target.value })} /> 🎲 {t('admin.randomBySystem')}
-                  </label>
-                  <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '500' }}>
-                    <input type="radio" value="manual" checked={form.cw_mode === 'manual'} onChange={e => setForm({ ...form, cw_mode: e.target.value })} /> ✍️ {t('admin.pickManually')}
-                  </label>
-                </div>
-              </div>
-
-              {form.cw_mode === 'random' && (
                 <div style={{ maxWidth: '600px' }}>
-                  <SelectOrCustom label={t('admin.wordsToPick')} value={form.cw_count} onChange={v => setForm({ ...form, cw_count: v })} min={3} max={words.length}
-                    options={getDynamicOptions([5, 8, 10].map(value => ({ value, label: `${value} ${t('admin.words')}` })), words.length)} />
+                  <SelectOrCustom label={t('admin.minimumToPass')} value={form.cw_min} onChange={v => setForm({ ...form, cw_min: v })} min={0} max={form.cw_mode === 'random' ? form.cw_count : form.cw_selected.length || words.length}
+                    options={[{ value: 0, label: `0 (${t('admin.noMinimum')})` }, { value: 3, label: `3 ${t('admin.words')}` }, { value: 5, label: `5 ${t('admin.words')}` }]} />
                 </div>
-              )}
 
-              <div style={{ maxWidth: '600px' }}>
-                <SelectOrCustom label={t('admin.minimumToPass')} value={form.cw_min} onChange={v => setForm({ ...form, cw_min: v })} min={0} max={form.cw_mode === 'random' ? form.cw_count : form.cw_selected.length || words.length}
-                  options={[{ value: 0, label: `0 (${t('admin.noMinimum')})` }, { value: 3, label: `3 ${t('admin.words')}` }, { value: 5, label: `5 ${t('admin.words')}` }]} />
-              </div>
-
-              {form.cw_mode === 'manual' && (
-                <div style={s.largeSelectionBox}>
-                  <h4 style={s.largeBoxTitle}>{t('admin.pickSpecificWords')}</h4>
-                  <p style={s.largeBoxSubtitle}>{t('admin.selectedWords')} <strong>{form.cw_selected.length}</strong> {t('admin.words')}. {t('admin.minimumRequired')}</p>
-                  <div style={s.tallScrollBox}>
-                    {words.map(w => (
-                      <label key={w.id} style={s.checkRowWide}><input type="checkbox" checked={form.cw_selected.includes(w.id)} onChange={() => toggleW(w.id)} /> <strong>{w.word}</strong> — {w.clue}</label>
-                    ))}
+                {form.cw_mode === 'manual' && (
+                  <div style={s.largeSelectionBox}>
+                    <h4 style={s.largeBoxTitle}>{t('admin.pickSpecificWords')}</h4>
+                    <p style={s.largeBoxSubtitle}>{t('admin.selectedWords')} <strong>{form.cw_selected.length}</strong> {t('admin.words')}. {t('admin.minimumRequired')}</p>
+                    <div style={s.tallScrollBox}>
+                      {words.map(w => (
+                        <label key={w.id} style={s.checkRowWide}><input type="checkbox" checked={form.cw_selected.includes(w.id)} onChange={() => toggleW(w.id)} /> <strong>{w.word}</strong> — {w.clue}</label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* STEP 4: CP3 */}
-          {step === 4 && (
-            <div style={s.stepContent}>
-              <h3 style={s.secTitle}>{t('admin.step4Food')}</h3>
-              <div style={s.gridRow}>
-                <SelectOrCustom label={t('admin.gameTime')} value={form.cp3_timer} onChange={v => setForm({ ...form, cp3_timer: v })} options={[45, 60, 90].map(value => ({ value, label: `${value} ${t('admin.seconds')}` }))} min={10} max={600} />
-                <SelectOrCustom label={t('admin.targetScore')} value={form.cp3_min} onChange={v => setForm({ ...form, cp3_min: v })} options={[{ value: 0, label: `0 (${t('admin.noMinimum')})` }, { value: 500, label: `500 ${t('admin.points')}` }, { value: 1000, label: `1000 ${t('admin.points')}` }]} min={0} max={5000} />
+                )}
               </div>
-            </div>
-          )}
+            )}
 
-          <div style={s.wizardFooter}>
-            {step > 1 && <button type="button" style={s.btnSecondary} onClick={() => setStep(step - 1)}>⬅️ {t('admin.back')}</button>}
-            <div style={{ flex: 1 }}></div>
-            <button style={s.btnPrimary} type="submit">{step === 4 ? (editId ? `💾 ${t('admin.saveChanges')}` : `🚀 ${t('admin.createFinalSession')}`) : `${t('admin.nextStep')} ➡️`}</button>
-          </div>
-        </form>
-      </div>
+            {/* STEP 4: CP3 */}
+            {step === 4 && (
+              <div style={s.stepContent}>
+                <h3 style={s.secTitle}>{t('admin.step4Food')}</h3>
+
+                <div style={s.gridRow}>
+                  <SelectOrCustom
+                    label={t('admin.gameTime')}
+                    value={form.cp3_timer}
+                    onChange={v => setForm({ ...form, cp3_timer: v })}
+                    options={[45, 60, 90].map(value => ({ value, label: `${value} ${t('admin.seconds')}` }))}
+                    min={10}
+                    max={600}
+                  />
+
+                  <SelectOrCustom
+                    label={t('admin.targetScore')}
+                    value={form.cp3_min}
+                    onChange={v => setForm({ ...form, cp3_min: v })}
+                    options={[
+                      { value: 0, label: `0 (${t('admin.noMinimum')})` },
+                      { value: 500, label: `500 ${t('admin.points')}` },
+                      { value: 1000, label: `1000 ${t('admin.points')}` }
+                    ]}
+                    min={0}
+                    max={5000}
+                  />
+                </div>
+
+                <div style={s.field}>
+                  <label style={s.label}>Password to Reveal Code</label>
+                  <input
+                    type="password"
+                    style={s.input}
+                    value={form.reveal_password}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        reveal_password: e.target.value
+                      })
+                    }
+                    required={!editId}
+                    placeholder="Set password for this session code"
+                  />
+                </div>
+
+
+              </div>
+            )}
+
+            <div style={s.wizardFooter}>
+              {step > 1 && <button type="button" style={s.btnSecondary} onClick={() => setStep(step - 1)}>⬅️ {t('admin.back')}</button>}
+              <div style={{ flex: 1 }}></div>
+              <button style={s.btnPrimary} type="submit">{step === 4 ? (editId ? `💾 ${t('admin.saveChanges')}` : `🚀 ${t('admin.createFinalSession')}`) : `${t('admin.nextStep')} ➡️`}</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* ─── ACTIVE SESSIONS LIST ─── */}
       <div style={s.card}>
         <h2 style={s.cardTitle}>🎮 {t('admin.activeSessions')} ({sessions.length})</h2>
         <div style={s.sessionList}>
-          {sessions.map(session => (
-            <div key={session.id} style={s.sessionCard}>
-              <div style={s.sessionTop}>
-                <div><h3 style={s.sessionName}>{session.session_name}</h3></div>
-                <span style={session.is_active ? s.badgeActive : s.badgeInactive}>{session.is_active ? `🟢 ${t('admin.active')}` : `🔴 ${t('admin.inactive')}`}</span>
-              </div>
-              <div style={s.codeWrap}>
-                <p style={s.codeLabel}>{t('admin.studentGameCode')}</p>
-                <div style={s.codeBox}>{session.unique_token.split('').map((digit, i) => (<div key={i} style={s.codeDigit}>{digit}</div>))}</div>
-                <button style={copied === session.unique_token ? s.btnCopied : s.btnCopy} onClick={() => copyCode(session.unique_token)}>{copied === session.unique_token ? `✅ ${t('admin.copied')}` : `📋 ${t('admin.copyCode')}`}</button>
-              </div>
-              <div style={s.sessionActions}>
-                <button style={s.btnEdit} onClick={() => handleEdit(session)}>✏️ {t('admin.editSettings')}</button>
-                {(admin?.role === 'main_admin' || admin?.role === 'admin') && (
-                  <button style={session.is_active ? s.btnDeactivate : s.btnActivate} onClick={() => handleToggle(session.id, session.is_active)}>
-                    {session.is_active ? t('admin.deactivate') : t('admin.activate')}
-                  </button>
-                )}
-                <button style={s.btnDelete} onClick={() => handleDelete(session.id)}>🗑️ {t('admin.delete')}</button>
-              </div>
+
+          {Object.entries(groupedSessions).map(([schoolName, classGroups]) => (
+            <div key={schoolName}>
+              <h2 style={s.schoolTitle}>🏫 {schoolName}</h2>
+
+              {Object.entries(classGroups).map(([className, classSessions]) => (
+                <div key={className} style={s.classGroup}>
+                  <h3 style={s.classTitle}>📚 {className}</h3>
+
+                  {classSessions.map(session => (
+                    <div key={session.id} style={s.sessionCard}>
+                      <div style={s.sessionTop}>
+                        <div>
+                          <h3 style={s.sessionName}>
+                            {session.session_name}
+                          </h3>
+                        </div>
+
+                        <span
+                          style={
+                            session.is_active
+                              ? s.badgeActive
+                              : s.badgeInactive
+                          }
+                        >
+                          {session.is_active
+                            ? `🟢 ${t('admin.active')}`
+                            : `🔴 ${t('admin.inactive')}`}
+                        </span>
+                      </div>
+
+                      <div style={s.codeWrap}>
+                        <p style={s.codeLabel}>
+                          {t('admin.studentGameCode')}
+                        </p>
+
+                        {admin?.role === 'main_admin' || admin?.role === 'admin' ? (
+                          <>
+                            <div style={s.codeBox}>
+                              {session.unique_token.split('').map((digit, i) => (
+                                <div key={i} style={s.codeDigit}>{digit}</div>
+                              ))}
+                            </div>
+
+                            <div style={{ fontSize: '0.85rem', color: '#475569' }}>
+                              Password: <strong>{session.reveal_password_plain || '-'}</strong>
+                            </div>
+                          </>
+                        ) : revealedCodes[session.id] ? (
+                          <div style={s.codeBox}>
+                            {revealedCodes[session.id].split('').map((digit, i) => (
+                              <div key={i} style={s.codeDigit}>{digit}</div>
+                            ))}
+                          </div>
+                        ) : (
+                          <button style={s.btnCopy} onClick={() => setPasswordModal(session)}>
+                            🔒 Reveal Code
+                          </button>
+                        )}
+
+                        <div style={s.sessionActions}>
+                          {admin?.role === 'main_admin' && (
+                            <>
+                              <button
+                                style={s.btnEdit}
+                                onClick={() => handleEdit(session)}
+                              >
+                                ✏️ Edit
+                              </button>
+
+                              <button
+                                style={
+                                  session.is_active
+                                    ? s.btnDeactivate
+                                    : s.btnActivate
+                                }
+                                onClick={() =>
+                                  handleToggle(
+                                    session.id,
+                                    session.is_active
+                                  )
+                                }
+                              >
+                                {session.is_active
+                                  ? 'Deactivate'
+                                  : 'Activate'}
+                              </button>
+
+                              <button
+                                style={s.btnDelete}
+                                onClick={() =>
+                                  handleDelete(session.id)
+                                }
+                              >
+                                🗑️ Delete
+                              </button>
+                            </>
+                          )}
+                        </div>
+
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           ))}
+
           {sessions.length === 0 && <p style={s.muted}>{t('admin.noSessionsYet')}</p>}
         </div>
       </div>
+      {passwordModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 999
+        }}>
+          <div style={{
+            background: '#fff',
+            padding: '2rem',
+            borderRadius: '12px',
+            width: '400px'
+          }}>
+            <h3>🔒 Enter Class Password</h3>
+
+            <input
+              type="password"
+              style={s.input}
+              placeholder="Enter password"
+              value={revealPassword}
+              onChange={(e) => setRevealPassword(e.target.value)}
+            />
+
+            <div style={{
+              display: 'flex',
+              gap: '1rem',
+              marginTop: '1rem'
+            }}>
+              <button
+                style={s.btnPrimary}
+                onClick={async () => {
+                  try {
+                    const res = await api.post(
+                      `/sessions/${passwordModal.id}/reveal-code`,
+                      { password: revealPassword }
+                    );
+
+                    setRevealedCodes({
+                      ...revealedCodes,
+                      [passwordModal.id]: res.data.unique_token
+                    });
+
+                    setPasswordModal(null);
+                    setRevealPassword('');
+                  } catch (err) {
+                    setMsg(
+                      err.response?.data?.error ||
+                      'Wrong password'
+                    );
+                  }
+                }}
+              >
+                Reveal
+              </button>
+
+              <button
+                style={s.btnSecondary}
+                onClick={() => {
+                  setPasswordModal(null);
+                  setRevealPassword('');
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -390,6 +669,7 @@ const s = {
   codeLabel: { color: '#475569', fontSize: '0.85rem', fontWeight: '600', margin: 0 },
   codeBox: { display: 'flex', gap: '0.5rem' },
   codeDigit: { width: '44px', height: '52px', background: '#1e3a5f', color: '#FFD700', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', fontWeight: '900' },
+  hiddenCode: { background: '#1e3a5f', color: '#FFD700', borderRadius: '10px', padding: '0.8rem 1.2rem', fontSize: '1.5rem', fontWeight: '900', letterSpacing: '0.4rem' },
   btnCopy: { background: '#eff6ff', color: '#2563eb', border: 'none', borderRadius: '8px', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' },
   btnCopied: { background: '#f0fdf4', color: '#16a34a', border: 'none', borderRadius: '8px', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' },
   sessionActions: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap' },
@@ -397,6 +677,27 @@ const s = {
   btnActivate: { background: '#f0fdf4', color: '#16a34a', border: 'none', borderRadius: '6px', padding: '0.4rem 0.9rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.82rem' },
   btnDeactivate: { background: '#fff7ed', color: '#ea580c', border: 'none', borderRadius: '6px', padding: '0.4rem 0.9rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.82rem' },
   btnDelete: { background: '#fff1f2', color: '#e11d48', border: 'none', borderRadius: '6px', padding: '0.4rem 0.9rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.82rem' },
+  schoolTitle: {
+    fontSize: '1.3rem',
+    fontWeight: '800',
+    color: '#1e3a5f',
+    marginTop: '1.5rem',
+    marginBottom: '1rem',
+    paddingBottom: '0.5rem',
+    borderBottom: '2px solid #e2e8f0'
+  },
+
+  classGroup: {
+    marginLeft: '1rem',
+    marginBottom: '1rem'
+  },
+
+  classTitle: {
+    fontSize: '1rem',
+    fontWeight: '700',
+    color: '#2563eb',
+    marginBottom: '0.75rem'
+  },
   muted: { color: '#94a3b8', fontSize: '0.9rem', textAlign: 'center', padding: '2rem' },
 };
 
