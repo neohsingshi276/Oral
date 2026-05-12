@@ -10,8 +10,6 @@ const AdminRegisterPage = () => {
 
   const [phase, setPhase] = useState('loading'); // loading | form | done | error
   const [email, setEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('');
-  const [inviteSchool, setInviteSchool] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -22,7 +20,7 @@ const AdminRegisterPage = () => {
   useEffect(() => {
     if (!token) { setPhase('error'); return; }
     api.get(`/admin/verify-invite/${token}`)
-      .then(res => { setEmail(res.data.email); setInviteRole(res.data.role || ''); setInviteSchool(res.data.school || ''); setPhase('form'); })
+      .then(res => { setEmail(res.data.email); setPhase('form'); })
       .catch(err => { setError(err.response?.data?.error || 'Pautan jemputan tidak sah atau telah tamat tempoh'); setPhase('error'); });
   }, [token]);
 
@@ -67,18 +65,6 @@ const AdminRegisterPage = () => {
             <h2 style={s.title}>Sediakan Akaun Anda 🎉</h2>
             <p style={s.subtitle}>Anda telah dijemput untuk menyertai DentalQuest. Lengkapkan profil anda di bawah.</p>
             <div style={s.emailBadge}>📧 {email}</div>
-            {inviteRole && (
-              <div style={{ textAlign: 'center', marginBottom: '0.75rem' }}>
-                <span style={{ background: inviteRole === 'teacher' ? '#fef3c7' : '#ede9fe', color: inviteRole === 'teacher' ? '#92400e' : '#6d28d9', padding: '3px 12px', borderRadius: '20px', fontSize: '0.82rem', fontWeight: '600' }}>
-                  {inviteRole === 'teacher' ? '👩‍🏫 Guru' : '🛡️ Pentadbir'}
-                </span>
-              </div>
-            )}
-            {inviteSchool && (
-              <div style={{ background: '#f0fdf4', color: '#166534', padding: '0.4rem 1rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', textAlign: 'center', marginBottom: '1rem' }}>
-                🏫 {inviteSchool}
-              </div>
-            )}
             {error && <div style={s.error}>{error}</div>}
             <form onSubmit={handleSubmit}>
               <div style={s.field}>

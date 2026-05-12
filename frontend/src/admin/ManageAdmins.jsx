@@ -6,7 +6,6 @@ const ManageAdmins = ({ currentAdmin }) => {
   const [pendingInvites, setPendingInvites] = useState([]);
   const [email, setEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('admin');
-  const [inviteSchool, setInviteSchool] = useState('');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -21,11 +20,10 @@ const ManageAdmins = ({ currentAdmin }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await api.post('/admin/invite', { email, role: inviteRole, school: inviteRole === 'teacher' ? inviteSchool : undefined });
+      const res = await api.post('/admin/invite', { email, role: inviteRole });
       setMsg('✅ ' + res.data.message);
       setEmail('');
       setInviteRole('admin');
-      setInviteSchool('');
       fetchAdmins();
     } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal menghantar jemputan')); }
     finally { setLoading(false); setTimeout(() => setMsg(''), 4000); }
@@ -78,17 +76,11 @@ const ManageAdmins = ({ currentAdmin }) => {
           </div>
           <div style={{ minWidth: '140px' }}>
             <label style={s.label}>Peranan</label>
-            <select style={s.input} value={inviteRole} onChange={e => { setInviteRole(e.target.value); setInviteSchool(''); }}>
+            <select style={s.input} value={inviteRole} onChange={e => setInviteRole(e.target.value)}>
               <option value="admin">Pentadbir</option>
               <option value="teacher">Guru</option>
             </select>
           </div>
-          {inviteRole === 'teacher' && (
-            <div style={{ flex: 1, minWidth: '200px' }}>
-              <label style={s.label}>🏫 Nama Sekolah <span style={{ color: '#e11d48' }}>*</span></label>
-              <input style={s.input} type="text" value={inviteSchool} onChange={e => setInviteSchool(e.target.value)} placeholder="cth. SJKC 1, SMK Taman Damai" maxLength={120} required={inviteRole === 'teacher'} />
-            </div>
-          )}
           <button style={s.btnPrimary} onClick={handleInvite} disabled={loading}>
             {loading ? 'Menghantar...' : '📧 Hantar Jemputan'}
           </button>
@@ -135,7 +127,6 @@ const ManageAdmins = ({ currentAdmin }) => {
                   </span>
                 </div>
                 <div style={s.adminEmail}>{admin.email}</div>
-                {admin.school && <div style={{ fontSize: '0.78rem', color: '#0d9488', marginTop: '2px' }}>🏫 {admin.school}</div>}
                 <div style={s.adminDate}>Sertai {new Date(admin.created_at).toLocaleDateString()}</div>
               </div>
               {/* Role change dropdown — only main_admin can see, and only for non-main_admin users */}

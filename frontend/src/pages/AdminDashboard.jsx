@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ManageVideos from '../admin/ManageVideos';
@@ -6,7 +6,6 @@ import ManageFacts from '../admin/ManageFacts';
 import ManageStudents from '../admin/ManageStudents';
 import Analytics from '../admin/Analytics';
 import ManageSessions from '../admin/ManageSessions';
-import TeacherSessionView from '../admin/TeacherSessionView';
 import ManageQuiz from '../admin/ManageQuiz';
 import ManageCrossword from '../admin/ManageCrossword';
 import AdminChat from '../admin/AdminChat';
@@ -29,7 +28,7 @@ const AdminDashboard = () => {
   const ALL_MENU = [
     { key: 'overview', icon: '📊', label: t('admin.overview'), roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'sessions', icon: '🎮', label: t('admin.sessions'), roles: ['main_admin', 'admin', 'teacher'] },
-    { key: 'students', icon: '👥', label: t('admin.players'), roles: ['main_admin', 'admin'] },
+    { key: 'students', icon: '👥', label: t('admin.players'), roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'chat', icon: '💬', label: t('admin.playerChat'), roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'staffchat', icon: '🏢', label: t('admin.staffChat'), roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'videos', icon: '📹', label: t('admin.videos'), roles: ['main_admin', 'admin'] },
@@ -55,7 +54,7 @@ const AdminDashboard = () => {
   const renderContent = () => {
     switch (active) {
       case 'overview': return <Overview admin={admin} setActive={setActive} menu={MENU} />;
-      case 'sessions': return admin?.role === 'teacher' ? <TeacherSessionView /> : <ManageSessions />;
+      case 'sessions': return <ManageSessions />;
       case 'students': return <ManageStudents />;
       case 'chat': return <AdminChat />;
       case 'staffchat': return <StaffChat />;

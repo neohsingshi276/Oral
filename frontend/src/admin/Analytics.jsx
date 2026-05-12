@@ -35,27 +35,15 @@ const Analytics = () => {
   const [loading, setLoading]             = useState(true);
   const [activeTab, setActiveTab]         = useState('overview');
   const [selectedSession, setSelectedSession] = useState('all');
-  const [selectedSchool, setSelectedSchool]   = useState('');
   const [finalLeaderboard, setFinalLeaderboard] = useState([]);
   const [lbLoading, setLbLoading]         = useState(false);
 
-  // Compare sessions state
-  const [cmpA, setCmpA]     = useState('');
-  const [cmpB, setCmpB]     = useState('');
-  const [cmpResult, setCmpResult] = useState(null);
-  const [cmpLoading, setCmpLoading] = useState(false);
-  const [cmpError, setCmpError]    = useState('');
-
-  const fetchAnalytics = (school = selectedSchool) => {
-    setLoading(true);
-    const params = school ? { school } : {};
-    api.get('/admin/analytics', { params })
+  useEffect(() => {
+    api.get('/admin/analytics')
       .then(res => setData(res.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { fetchAnalytics(); }, []);
+  }, []);
 
   useEffect(() => {
     if (activeTab === 'leaderboard' && selectedSession !== 'all') {
@@ -66,17 +54,6 @@ const Analytics = () => {
         .finally(() => setLbLoading(false));
     }
   }, [activeTab, selectedSession]);
-
-  const handleCompare = async () => {
-    if (!cmpA || !cmpB) return setCmpError('Sila pilih 2 sesi yang berbeza.');
-    if (cmpA === cmpB)  return setCmpError('Pilih dua sesi yang berbeza.');
-    setCmpError(''); setCmpLoading(true);
-    try {
-      const res = await api.get('/admin/compare-sessions', { params: { session_a: cmpA, session_b: cmpB } });
-      setCmpResult(res.data);
-    } catch (e) { setCmpError(e.response?.data?.error || 'Gagal memuatkan perbandingan.'); }
-    finally { setCmpLoading(false); }
-  };
 
   const downloadCSV = async () => {
     try {
@@ -189,7 +166,6 @@ const Analytics = () => {
     { key: 'sessions',    label: '🔀 Sesi' },
     { key: 'timeline',    label: '📅 Garis Masa' },
     { key: 'leaderboard', label: '🏆 Papan Pendahulu' },
-    { key: 'compare',     label: '⚖️ Bandingkan Sesi' },
   ];
 
   const markColor = (mark, max = 100) => {
@@ -203,25 +179,7 @@ const Analytics = () => {
     <div>
       {/* Penapis Sesi */}
       <div style={s.filterBar}>
-        {/* School filter — only for admin/main_admin */}
-        {(data?.schools || []).length > 0 && (
-          <>
-            <span style={s.filterLabel}>🏫 Sekolah:</span>
-            <select
-              style={s.filterSelect}
-              value={selectedSchool}
-              onChange={e => { setSelectedSchool(e.target.value); fetchAnalytics(e.target.value); setSelectedSession('all'); }}
-            >
-              <option value="">Semua Sekolah</option>
-              {(data?.schools || []).map(sc => <option key={sc} value={sc}>{sc}</option>)}
-            </select>
-            {selectedSchool && (
-              <button style={s.clearBtn} onClick={() => { setSelectedSchool(''); fetchAnalytics(''); setSelectedSession('all'); }}>✕</button>
-            )}
-            <span style={{ color: '#e2e8f0' }}>|</span>
-          </>
-        )}
-        <span style={s.filterLabel}>📌 Sesi:</span>
+        <span style={s.filterLabel}>📌 Tapis mengikut Sesi:</span>
         <select
           style={s.filterSelect}
           value={selectedSession}
@@ -580,94 +538,6 @@ const Analytics = () => {
               </table>
             </>
           )}
-        </div>
-      )}
-
-
-      {/* ── Compare Sessions Tab ── */}
-      {activeTab === 'compare' && (
-        <div style={{ background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: '1.5rem' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#1e3a5f', marginBottom: '0.5rem' }}>⚖️ Bandingkan 2 Sesi</h3>
-          <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.25rem' }}>Pilih dua sesi untuk melihat perbandingan prestasi pelajar secara sebelah-menyebelah.</p>
-
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '1rem' }}>
-            <div style={{ flex: 1, minWidth: '180px' }}>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '600', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Sesi A</label>
-              <select style={s.filterSelect} value={cmpA} onChange={e => { setCmpA(e.target.value); setCmpResult(null); }}>
-                <option value="">— Pilih Sesi A —</option>
-                {sessions.map(sess => <option key={sess.id} value={sess.id}>{sess.name}</option>)}
-              </select>
-            </div>
-            <div style={{ flex: 1, minWidth: '180px' }}>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: '600', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Sesi B</label>
-              <select style={s.filterSelect} value={cmpB} onChange={e => { setCmpB(e.target.value); setCmpResult(null); }}>
-                <option value="">— Pilih Sesi B —</option>
-                {sessions.map(sess => <option key={sess.id} value={sess.id}>{sess.name}</option>)}
-              </select>
-            </div>
-            <button
-              style={{ padding: '0.5rem 1.4rem', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '0.9rem', whiteSpace: 'nowrap', opacity: cmpLoading ? 0.7 : 1 }}
-              onClick={handleCompare}
-              disabled={cmpLoading}
-            >
-              {cmpLoading ? 'Memuatkan...' : '⚖️ Bandingkan'}
-            </button>
-          </div>
-
-          {cmpError && <div style={{ color: '#e11d48', fontSize: '0.85rem', marginBottom: '1rem' }}>❌ {cmpError}</div>}
-
-          {cmpResult && (() => {
-            const { session_a: sa, session_b: sb } = cmpResult;
-            const chartData = [
-              { name: 'CP1 Kuiz',        A: sa.stats.cp1_rate, B: sb.stats.cp1_rate },
-              { name: 'CP2 Kata Silang',  A: sa.stats.cp2_rate, B: sb.stats.cp2_rate },
-              { name: 'CP3 Makanan',      A: sa.stats.cp3_rate, B: sb.stats.cp3_rate },
-            ];
-            return (
-              <>
-                {/* Side-by-side stats */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                  {[sa, sb].map((d, idx) => (
-                    <div key={idx} style={{ background: idx === 0 ? '#eff6ff' : '#fdf4ff', borderRadius: '14px', padding: '1.1rem' }}>
-                      <div style={{ fontWeight: '700', color: idx === 0 ? '#2563eb' : '#9333ea', fontSize: '0.95rem', marginBottom: '0.75rem' }}>
-                        {idx === 0 ? '🔵' : '🟣'} {d.session.session_name}
-                        {d.session.session_month && <span style={{ fontWeight: '400', fontSize: '0.78rem', marginLeft: '6px', opacity: 0.8 }}>({d.session.session_month})</span>}
-                        {d.session.school && <span style={{ fontWeight: '400', fontSize: '0.78rem', display: 'block', color: '#64748b' }}>🏫 {d.session.school}</span>}
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '0.5rem' }}>
-                        {[
-                          { label: 'Pelajar',  value: d.stats.total,    color: idx === 0 ? '#2563eb' : '#9333ea' },
-                          { label: 'CP1 %',    value: `${d.stats.cp1_rate}%`, color: '#16a34a' },
-                          { label: 'CP2 %',    value: `${d.stats.cp2_rate}%`, color: '#f59e0b' },
-                          { label: 'CP3 %',    value: `${d.stats.cp3_rate}%`, color: '#e11d48' },
-                        ].map(stat => (
-                          <div key={stat.label} style={{ background: '#fff', borderRadius: '10px', padding: '0.65rem', textAlign: 'center' }}>
-                            <div style={{ fontSize: '1.3rem', fontWeight: '800', color: stat.color }}>{stat.value}</div>
-                            <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600' }}>{stat.label}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Bar chart */}
-                <div style={{ height: 260 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                      <YAxis domain={[0, 100]} tickFormatter={v => `${v}%`} tick={{ fontSize: 12 }} />
-                      <Tooltip formatter={v => `${v}%`} />
-                      <Legend />
-                      <Bar dataKey="A" name={sa.session.session_name} fill="#2563eb" radius={[4,4,0,0]} />
-                      <Bar dataKey="B" name={sb.session.session_name} fill="#9333ea" radius={[4,4,0,0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </>
-            );
-          })()}
         </div>
       )}
 
