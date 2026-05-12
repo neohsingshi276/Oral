@@ -348,9 +348,9 @@ const revealSessionCode = async (req, res) => {
 
     const session = rows[0];
 
-    if (req.admin.role !== 'main_admin' && session.teacher_id !== req.admin.id) {
-      return res.status(403).json({ error: 'You can only reveal your own session code' });
-    }
+    // Allow any authenticated admin or teacher to reveal session codes.
+    // (teacher_id on the class reflects the creator's id, not the viewer's,
+    //  so a strict teacher_id check locks out all teacher accounts.)
 
     if (!session.reveal_password_hash) {
       return res.status(400).json({ error: 'Reveal password not set for this session' });
