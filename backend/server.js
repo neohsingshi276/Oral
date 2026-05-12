@@ -54,6 +54,8 @@ app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/videos', require('./routes/learning.routes'));
 app.use('/api/game', require('./routes/game.routes'));
 app.use('/api/sessions', require('./routes/session.routes'));
+app.use('/api/schools', require('./routes/school.routes'));
+app.use('/api/classes', require('./routes/class.routes'));
 app.use('/api/chat', require('./routes/chat.routes'));
 app.use('/api/facts', require('./routes/facts.routes'));
 app.use('/api/admin', require('./routes/admin.routes'));
@@ -63,7 +65,7 @@ app.use('/api/crossword', require('./routes/crossword.routes'));
 app.use('/api/cp3', require('./routes/cp3.routes'));
 app.use('/api/activity', require('./routes/activity.routes'));
 app.use('/api/staff-chat', require('./routes/staffChat.routes'));
-
+app.use('/api/faq', require('./routes/faq.routes'));
 app.use('/uploads', express.static('uploads'));
 
 app.get('/api/health', (req, res) => {
