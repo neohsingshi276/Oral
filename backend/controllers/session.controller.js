@@ -38,10 +38,10 @@ const getSessions = async (req, res) => {
 
     const params = [];
 
-    if (req.admin.role === 'teacher') {
-      query += ` WHERE c.teacher_id = ?`;
-      params.push(req.admin.id);
-    }
+    // Teachers see ALL sessions (same as admin/main_admin).
+    // Previously filtered by c.teacher_id = req.admin.id, but sessions
+    // created by an admin store the admin's own id as teacher_id on the
+    // class — so teacher accounts never matched and always saw 0 sessions.
 
     query += ` ORDER BY s.created_at DESC`;
 
