@@ -69,6 +69,7 @@ const getSessions = async (req, res) => {
 
     res.json({ sessions });
   } catch (err) {
+    console.error('Session controller error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -298,6 +299,7 @@ const deleteSession = async (req, res) => {
     await db.query('DELETE FROM game_sessions WHERE id = ?', [req.params.id]);
     res.json({ message: 'Session deleted' });
   } catch (err) {
+    console.error('Session controller error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -318,6 +320,7 @@ const validateSession = async (req, res) => {
 
     res.json({ session: rows[0] });
   } catch (err) {
+    console.error('Session controller error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
