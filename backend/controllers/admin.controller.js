@@ -126,7 +126,7 @@ const getAnalytics = async (req, res) => {
 const getAllAdmins = async (req, res) => {
   try {
     const [rows] = await db.query(
-      'SELECT id, name, email, role, created_at FROM admins ORDER BY role DESC, created_at ASC'
+      'SELECT id, name, email, role, school, created_at FROM admins ORDER BY role DESC, created_at ASC'
     );
     const [invites] = await db.query(
       'SELECT * FROM admin_invitations WHERE used = FALSE AND expires_at > NOW() ORDER BY created_at DESC'
@@ -165,9 +165,10 @@ const inviteAdmin = async (req, res) => {
     const token = jwt.sign({ email, type: 'admin_invite', role: inviteRole }, process.env.JWT_SECRET, { expiresIn: '7d' });
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
+    const inviteSchool = (typeof req.body.school === 'string' ? req.body.school.trim() : '') || null;
     await db.query(
-      'INSERT INTO admin_invitations (email, token, role, expires_at) VALUES (?, ?, ?, ?)',
-      [email, token, inviteRole, expiresAt]
+      'INSERT INTO admin_invitations (email, token, role, school, expires_at) VALUES (?, ?, ?, ?, ?)',
+      [email, token, inviteRole, inviteSchool, expiresAt]
     );
 
     const inviteBaseUrl = process.env.ADMIN_URL || process.env.CLIENT_URL;
@@ -220,9 +221,10 @@ const completeRegistration = async (req, res) => {
 
     const inviteRole = invites[0].role || decoded.role || 'admin';
     const password_hash = await bcrypt.hash(password, 10);
+    const regSchool = invites[0].school || null;
     await db.query(
-      'INSERT INTO admins (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-      [name.trim(), email, password_hash, inviteRole]
+      'INSERT INTO admins (name, email, password_hash, role, school) VALUES (?, ?, ?, ?, ?)',
+      [name.trim(), email, password_hash, inviteRole, regSchool]
     );
     await db.query('UPDATE admin_invitations SET used = TRUE WHERE token = ?', [token]);
 
