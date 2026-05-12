@@ -32,7 +32,12 @@ const ManageSessions = () => {
   const [form, setForm] = useState(defaultForm);
 
   const fetchSessions = () => api.get('/sessions').then(res => setSessions(res.data.sessions));
-  const fetchQuestions = () => api.get('/quiz/admin/questions').then(res => setQuestions(res.data.questions));
+  const fetchQuestions = () => api.get('/quiz/admin/questions').then(res => {
+    const qs = res.data.questions || [];
+    setQuestions(qs);
+    // Cap default q_count to actual DB size
+    setForm(prev => ({ ...prev, q_count: Math.min(prev.q_count, qs.length || 10) }));
+  });
   const fetchWords = () => api.get('/crossword/admin').then(res => setWords(res.data.words));
 
   useEffect(() => {

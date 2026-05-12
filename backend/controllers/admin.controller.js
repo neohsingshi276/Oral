@@ -463,10 +463,127 @@ const updateAdminRole = async (req, res) => {
   }
 };
 
+
+// ─── getTeacherSessions ───────────────────────────────────────────────────────
+// Returns all sessions for the logged-in teacher, with usage_months derived
+// from the months players actually joined (via players.joined_at).
+const getTeacherSessions = async (req, res) => {
+  try {
+    const adminId = req.admin.id;
+
+    // Get teacher school name
+    const [adminRows] = await db.query('SELECT school FROM admins WHERE id = ?', [adminId]);
+    const school = adminRows[0]?.school || '';
+
+    // Sessions belonging to classes where this teacher is teacher_id
+    const [sessions] = await db.query(`
+      SELECT
+        s.id, s.session_name, s.unique_token, s.is_active,
+        s.created_at, s.school_id, s.class_id,
+        sch.school_name, c.class_name,
+        COUNT(DISTINCT p.id) AS player_count
+      FROM game_sessions s
+      LEFT JOIN classes c ON s.class_id = c.id
+      LEFT JOIN schools sch ON s.school_id = sch.id
+      LEFT JOIN players p ON p.session_id = s.id
+      WHERE c.teacher_id = ?
+      GROUP BY s.id
+      ORDER BY s.created_at DESC
+    `, [adminId]);
+
+    // For each session, get the distinct months that have players
+    const sessionIds = sessions.map(s => s.id);
+    let monthsBySession = {};
+
+    if (sessionIds.length > 0) {
+      const placeholders = sessionIds.map(() => '?').join(',');
+      const [monthRows] = await db.query(`
+        SELECT
+          session_id,
+          DATE_FORMAT(joined_at, '%Y-%m') AS ym,
+          DATE_FORMAT(joined_at, '%M %Y') AS label
+        FROM players
+        WHERE session_id IN (${placeholders})
+        GROUP BY session_id, ym, label
+        ORDER BY session_id, ym ASC
+      `, sessionIds);
+
+      for (const row of monthRows) {
+        if (!monthsBySession[row.session_id]) monthsBySession[row.session_id] = [];
+        monthsBySession[row.session_id].push({ ym: row.ym, label: row.label });
+      }
+    }
+
+    const result = sessions.map(s => ({
+      ...s,
+      usage_months: monthsBySession[s.id] || [],
+    }));
+
+    res.json({ sessions: result, school });
+  } catch (err) {
+    console.error('getTeacherSessions error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// ─── getSessionPlayersByMonth ─────────────────────────────────────────────────
+// Returns all players for a session filtered by month (YYYY-MM).
+const getSessionPlayersByMonth = async (req, res) => {
+  const sessionId = parseInt(req.params.id, 10);
+  const { month } = req.query; // e.g. "2025-01"
+
+  if (!sessionId) return res.status(400).json({ error: 'Invalid session id' });
+
+  try {
+    // Verify teacher owns this session
+    const [sessionRows] = await db.query(`
+      SELECT s.id FROM game_sessions s
+      LEFT JOIN classes c ON s.class_id = c.id
+      WHERE s.id = ? AND (c.teacher_id = ? OR ? = 'main_admin')
+    `, [sessionId, req.admin.id, req.admin.role]);
+
+    if (sessionRows.length === 0)
+      return res.status(403).json({ error: 'Access denied' });
+
+    let playerQuery = `
+      SELECT
+        p.id, p.nickname, p.joined_at,
+        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed ELSE 0 END) AS cp1_completed,
+        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts ELSE 0 END) AS cp1_attempts,
+        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed ELSE 0 END) AS cp2_completed,
+        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts ELSE 0 END) AS cp2_attempts,
+        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.completed ELSE 0 END) AS cp3_completed,
+        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts ELSE 0 END) AS cp3_attempts,
+        qs.score AS quiz_score,
+        qs.total_questions AS quiz_total,
+        cs3.score AS cp3_score
+      FROM players p
+      LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
+      LEFT JOIN quiz_scores qs ON qs.player_id = p.id AND qs.session_id = p.session_id
+      LEFT JOIN cp3_scores cs3 ON cs3.player_id = p.id AND cs3.session_id = p.session_id
+      WHERE p.session_id = ?
+    `;
+    const params = [sessionId];
+
+    if (month && /^\d{4}-\d{2}$/.test(month)) {
+      playerQuery += ` AND DATE_FORMAT(p.joined_at, '%Y-%m') = ?`;
+      params.push(month);
+    }
+
+    playerQuery += ` GROUP BY p.id ORDER BY p.joined_at DESC`;
+
+    const [players] = await db.query(playerQuery, params);
+    res.json({ players });
+  } catch (err) {
+    console.error('getSessionPlayersByMonth error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 module.exports = {
   getPlayers, downloadCSV, getAnalytics,
   getAllAdmins, inviteAdmin, resendInvite, cancelInvite,
   completeRegistration, verifyInviteToken,
   deleteAdmin, deletePlayer, updateProfile, changePassword,
-  updateAdminRole
+  updateAdminRole, getTeacherSessions, getSessionPlayersByMonth
 };

@@ -215,6 +215,10 @@ const TeacherSessionView = () => {
   const [deletingPlayer, setDeletingPlayer] = useState(null);
   const [copied, setCopied] = useState('');
   const [search, setSearch] = useState('');
+  const [revealedCodes, setRevealedCodes] = useState({});
+  const [passwordModal, setPasswordModal] = useState(null);
+  const [revealPassword, setRevealPassword] = useState('');
+  const [revealError, setRevealError] = useState('');
 
   useEffect(() => {
     api.get('/admin/teacher-sessions')
@@ -294,10 +298,24 @@ const TeacherSessionView = () => {
   };
 
   const copyCode = (code) => {
+    if (!code) return;
     navigator.clipboard.writeText(code).then(() => {
       setCopied(code);
       setTimeout(() => setCopied(''), 2000);
     });
+  };
+
+  const handleRevealCode = async () => {
+    if (!passwordModal) return;
+    setRevealError('');
+    try {
+      const res = await api.post(`/sessions/${passwordModal.id}/reveal-code`, { password: revealPassword });
+      setRevealedCodes(prev => ({ ...prev, [passwordModal.id]: res.data.unique_token }));
+      setPasswordModal(null);
+      setRevealPassword('');
+    } catch (err) {
+      setRevealError(err.response?.data?.error || 'Kata laluan salah');
+    }
   };
 
   const handleDeletePlayer = async (player) => {
@@ -349,12 +367,27 @@ const TeacherSessionView = () => {
               Kod sesi: <strong>{selectedSession.unique_token}</strong> · {selectedSession.is_active ? 'Aktif' : 'Tidak Aktif'} · {selectedSession.player_count || 0} pelajar
             </div>
           </div>
-          <button
-            style={{ ...s.copyBtn, background: copied === selectedSession.unique_token ? '#f0fdf4' : '#fff' }}
-            onClick={() => copyCode(selectedSession.unique_token)}
-          >
-            {copied === selectedSession.unique_token ? 'Disalin' : 'Salin Kod'}
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
+            {revealedCodes[selectedSession.id] ? (
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '0.3rem' }}>
+                  {revealedCodes[selectedSession.id].split('').map((c, i) => (
+                    <span key={i} style={{ ...s.codeDigit, background: '#fff', color: '#1e3a5f' }}>{c}</span>
+                  ))}
+                </div>
+                <button
+                  style={{ ...s.copyBtn, background: copied === revealedCodes[selectedSession.id] ? '#f0fdf4' : '#fff' }}
+                  onClick={() => copyCode(revealedCodes[selectedSession.id])}
+                >
+                  {copied === revealedCodes[selectedSession.id] ? '✅ Disalin' : 'Salin'}
+                </button>
+              </div>
+            ) : (
+              <button style={s.copyBtn} onClick={() => { setPasswordModal(selectedSession); setRevealError(''); }}>
+                🔒 Tunjuk Kod
+              </button>
+            )}
+          </div>
         </div>
 
         {availableMonths.length === 0 ? (
@@ -410,6 +443,30 @@ const TeacherSessionView = () => {
 
   return (
     <div>
+      {passwordModal && (
+        <div style={s.modalOverlay}>
+          <div style={s.modalBox}>
+            <h3 style={{ margin: '0 0 0.5rem', color: '#1e3a5f' }}>🔒 Masukkan Kata Laluan</h3>
+            <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '0 0 1rem' }}>
+              Masukkan kata laluan sesi untuk melihat kod permainan.
+            </p>
+            <input
+              type="password"
+              style={{ width: '100%', padding: '0.65rem 0.9rem', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.95rem', boxSizing: 'border-box', marginBottom: '0.5rem' }}
+              placeholder="Kata laluan sesi..."
+              value={revealPassword}
+              onChange={e => setRevealPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleRevealCode()}
+              autoFocus
+            />
+            {revealError && <div style={{ color: '#e11d48', fontSize: '0.82rem', marginBottom: '0.5rem' }}>{revealError}</div>}
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+              <button style={s.primaryBtn} onClick={handleRevealCode}>Tunjuk</button>
+              <button style={{ ...s.primaryBtn, background: '#f1f5f9', color: '#475569' }} onClick={() => { setPasswordModal(null); setRevealPassword(''); setRevealError(''); }}>Batal</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={s.headerCard}>
         <div>
           <div style={s.schoolText}>{data.school || 'Sekolah Anda'}</div>
@@ -436,9 +493,12 @@ const TeacherSessionView = () => {
               </div>
 
               <div style={s.codeRow}>
-                {(session.unique_token || '----').split('').map((char, index) => (
-                  <span key={index} style={s.codeDigit}>{char}</span>
-                ))}
+                {revealedCodes[session.id]
+                  ? revealedCodes[session.id].split('').map((char, index) => (
+                      <span key={index} style={s.codeDigit}>{char}</span>
+                    ))
+                  : <button style={s.revealBtn} onClick={() => { setPasswordModal(session); setRevealError(''); }}>🔒 Tunjuk Kod</button>
+                }
               </div>
 
               <div style={s.sessionFooter}>
@@ -511,6 +571,9 @@ const s = {
   monthSummaryLine: { color: '#64748b', fontSize: '0.8rem', marginTop: '0.2rem' },
   empty: { background: '#fff', color: '#94a3b8', borderRadius: '12px', padding: '2rem', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
   error: { background: '#fff1f2', color: '#e11d48', borderRadius: '12px', padding: '1rem' },
+  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
+  modalBox: { background: '#fff', borderRadius: '12px', padding: '1.5rem', width: '380px', maxWidth: '90vw', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' },
+  revealBtn: { background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '0.4rem 0.8rem', cursor: 'pointer', fontWeight: 800, fontSize: '0.82rem' },
 };
 
 export default TeacherSessionView;
