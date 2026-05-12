@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getPlayers, downloadCSV, getAnalytics, getAllAdmins, inviteAdmin, resendInvite, cancelInvite, completeRegistration, verifyInviteToken, deleteAdmin, deletePlayer, updateProfile, changePassword, updateAdminRole, getTeacherSessions, getSessionPlayersByMonth } = require('../controllers/admin.controller');
+const { getPlayers, downloadCSV, getAnalytics, getAllAdmins, inviteAdmin, resendInvite, cancelInvite, completeRegistration, verifyInviteToken, deleteAdmin, deletePlayer, updateProfile, changePassword, updateAdminRole } = require('../controllers/admin.controller');
 const verifyToken = require('../middleware/verifyToken');
 
 router.get('/players', verifyToken, getPlayers);
@@ -17,7 +17,5 @@ router.put('/admins/:id/role', verifyToken, updateAdminRole);
 router.delete('/players/:id', verifyToken, deletePlayer);
 router.put('/profile', verifyToken, updateProfile);
 router.put('/password', verifyToken, changePassword);
-router.get('/teacher-sessions', verifyToken, getTeacherSessions);
-router.get('/session-players/:id', verifyToken, getSessionPlayersByMonth);
 
 module.exports = router;

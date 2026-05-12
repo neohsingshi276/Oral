@@ -1,5 +1,4 @@
 const db = require('../db');
-const bcrypt = require('bcryptjs');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const generateCode = async () => {
@@ -23,29 +22,9 @@ const safeInt = (val, fallback, min = 0, max = 9999) => {
 // queries that fetch all settings at once, then merge them in JS.
 const getSessions = async (req, res) => {
   try {
-    let query = `
-      SELECT
-        s.*,
-        a.name AS admin_name,
-        sch.school_name,
-        c.class_name,
-        c.teacher_id
-      FROM game_sessions s
-      JOIN admins a ON s.admin_id = a.id
-      LEFT JOIN schools sch ON s.school_id = sch.id
-      LEFT JOIN classes c ON s.class_id = c.id
-    `;
-
-    const params = [];
-
-    if (req.admin.role === 'teacher') {
-      query += ` WHERE c.teacher_id = ?`;
-      params.push(req.admin.id);
-    }
-
-    query += ` ORDER BY s.created_at DESC`;
-
-    const [sessions] = await db.query(query, params);
+    const [sessions] = await db.query(
+      'SELECT s.*, a.name as admin_name FROM game_sessions s JOIN admins a ON s.admin_id = a.id ORDER BY s.created_at DESC'
+    );
 
     if (sessions.length === 0) return res.json({ sessions: [] });
 
@@ -53,30 +32,29 @@ const getSessions = async (req, res) => {
     const sessionIds = sessions.map(s => s.id);
     const placeholders = sessionIds.map(() => '?').join(',');
 
-    const [qRows] = await db.query(`SELECT * FROM quiz_settings      WHERE session_id IN (${placeholders})`, sessionIds);
-    const [cRows] = await db.query(`SELECT * FROM crossword_settings  WHERE session_id IN (${placeholders})`, sessionIds);
+    const [qRows]   = await db.query(`SELECT * FROM quiz_settings      WHERE session_id IN (${placeholders})`, sessionIds);
+    const [cRows]   = await db.query(`SELECT * FROM crossword_settings  WHERE session_id IN (${placeholders})`, sessionIds);
     const [cp3Rows] = await db.query(`SELECT * FROM cp3_settings        WHERE session_id IN (${placeholders})`, sessionIds);
 
-    const quizMap = Object.fromEntries(qRows.map(r => [r.session_id, r]));
-    const crosswordMap = Object.fromEntries(cRows.map(r => [r.session_id, r]));
-    const cp3Map = Object.fromEntries(cp3Rows.map(r => [r.session_id, r]));
+    const quizMap      = Object.fromEntries(qRows.map(r   => [r.session_id, r]));
+    const crosswordMap = Object.fromEntries(cRows.map(r   => [r.session_id, r]));
+    const cp3Map       = Object.fromEntries(cp3Rows.map(r => [r.session_id, r]));
 
     for (const s of sessions) {
-      s.quiz_settings = quizMap[s.id] || {};
+      s.quiz_settings      = quizMap[s.id]      || {};
       s.crossword_settings = crosswordMap[s.id] || {};
-      s.cp3_settings = cp3Map[s.id] || {};
+      s.cp3_settings       = cp3Map[s.id]       || {};
     }
 
     res.json({ sessions });
   } catch (err) {
-    console.error('Session controller error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
 
 // ─── createSession ────────────────────────────────────────────────────────────
 const createSession = async (req, res) => {
-  const { school_name, class_name, session_name, reveal_password, quiz_settings, crossword_settings, cp3_settings } = req.body;
+  const { session_name, quiz_settings, crossword_settings, cp3_settings } = req.body;
 
   if (!session_name || typeof session_name !== 'string' || session_name.trim().length === 0)
     return res.status(400).json({ error: 'Session name required' });
@@ -85,71 +63,9 @@ const createSession = async (req, res) => {
 
   try {
     const unique_token = await generateCode();
-
-    if (!school_name?.trim()) {
-      return res.status(400).json({ error: 'School name is required' });
-    }
-
-    if (!class_name?.trim()) {
-      return res.status(400).json({ error: 'Class name is required' });
-    }
-
-    // Find existing school
-    let [schoolRows] = await db.query(
-      'SELECT id FROM schools WHERE school_name = ?',
-      [school_name.trim()]
-    );
-
-    let schoolId;
-
-    // Create school if not exist
-    if (schoolRows.length > 0) {
-      schoolId = schoolRows[0].id;
-    } else {
-      const [newSchool] = await db.query(
-        'INSERT INTO schools (school_name) VALUES (?)',
-        [school_name.trim()]
-      );
-
-      schoolId = newSchool.insertId;
-    }
-
-    // Find existing class
-    let [classRows] = await db.query(
-      'SELECT id FROM classes WHERE class_name = ? AND school_id = ?',
-      [class_name.trim(), schoolId]
-    );
-
-    let classId;
-
-    // Create class if not exist
-    if (classRows.length > 0) {
-      classId = classRows[0].id;
-    } else {
-      // Use provided teacher_id (from form) so the class is linked to the right teacher.
-      // Fall back to req.admin.id only if not provided (e.g. teacher creating their own session).
-      const assignedTeacherId = req.body.teacher_id ? parseInt(req.body.teacher_id, 10) : req.admin.id;
-      const [newClass] = await db.query(
-        `INSERT INTO classes (school_id, teacher_id, class_name)
-     VALUES (?, ?, ?)`,
-        [schoolId, assignedTeacherId, class_name.trim()]
-      );
-
-      classId = newClass.insertId;
-    }
-
-    if (!reveal_password || reveal_password.length < 4) {
-      return res.status(400).json({ error: 'Reveal password must be at least 4 characters' });
-    }
-
-    const revealPasswordHash = await bcrypt.hash(reveal_password, 10);
-
-    // Create session
     const [result] = await db.query(
-      `INSERT INTO game_sessions
-    (admin_id, school_id, class_id, session_name, unique_token, reveal_password_hash, reveal_password_plain)
-    VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [req.admin.id, schoolId, classId, session_name.trim(), unique_token, revealPasswordHash, reveal_password]
+      'INSERT INTO game_sessions (admin_id, session_name, unique_token) VALUES (?, ?, ?)',
+      [req.admin.id, session_name.trim(), unique_token]
     );
     const sessionId = result.insertId;
 
@@ -199,21 +115,15 @@ const createSession = async (req, res) => {
 
 // ─── updateSession ────────────────────────────────────────────────────────────
 const updateSession = async (req, res) => {
-  const { is_active, school_id, class_id, session_name, quiz_settings, crossword_settings, cp3_settings } = req.body;
+  const { is_active, session_name, quiz_settings, crossword_settings, cp3_settings } = req.body;
   const sessionId = req.params.id;
 
   try {
     // FIX: Verify ownership before allowing updates — same rule as deleteSession
-    const [rows] = await db.query(
-      `SELECT s.admin_id, c.teacher_id
-      FROM game_sessions s
-      LEFT JOIN classes c ON s.class_id = c.id
-      WHERE s.id = ?`,
-      [sessionId]
-    );
+    const [rows] = await db.query('SELECT admin_id FROM game_sessions WHERE id = ?', [sessionId]);
     if (rows.length === 0)
       return res.status(404).json({ error: 'Session not found' });
-    if (req.admin.role !== 'main_admin' && rows[0].teacher_id !== req.admin.id)
+    if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin' && rows[0].admin_id !== req.admin.id)
       return res.status(403).json({ error: 'You can only edit your own sessions' });
 
     // Only main_admin can activate/deactivate session codes
@@ -221,13 +131,6 @@ const updateSession = async (req, res) => {
       if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin')
         return res.status(403).json({ error: 'Only Admins can activate or deactivate session codes' });
       await db.query('UPDATE game_sessions SET is_active = ? WHERE id = ?', [!!is_active, sessionId]);
-    }
-
-    if (school_id !== undefined || class_id !== undefined) {
-      await db.query(
-        'UPDATE game_sessions SET school_id = COALESCE(?, school_id), class_id = COALESCE(?, class_id) WHERE id = ?',
-        [school_id || null, class_id || null, sessionId]
-      );
     }
 
     if (session_name !== undefined) {
@@ -286,23 +189,16 @@ const updateSession = async (req, res) => {
 // FIX: Added ownership check — only the session creator or main_admin can delete.
 const deleteSession = async (req, res) => {
   try {
-    const [rows] = await db.query(
-      `SELECT s.admin_id, c.teacher_id
-      FROM game_sessions s
-      LEFT JOIN classes c ON s.class_id = c.id
-      WHERE s.id = ?`,
-      [req.params.id]
-    );
+    const [rows] = await db.query('SELECT admin_id FROM game_sessions WHERE id = ?', [req.params.id]);
     if (rows.length === 0)
       return res.status(404).json({ error: 'Session not found' });
 
-    if (req.admin.role !== 'main_admin' && rows[0].teacher_id !== req.admin.id)
+    if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin' && rows[0].admin_id !== req.admin.id)
       return res.status(403).json({ error: 'You can only delete your own sessions' });
 
     await db.query('DELETE FROM game_sessions WHERE id = ?', [req.params.id]);
     res.json({ message: 'Session deleted' });
   } catch (err) {
-    console.error('Session controller error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -323,63 +219,8 @@ const validateSession = async (req, res) => {
 
     res.json({ session: rows[0] });
   } catch (err) {
-    console.error('Session controller error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
 
-const revealSessionCode = async (req, res) => {
-  const { password } = req.body;
-  const sessionId = req.params.id;
-
-  if (!password) {
-    return res.status(400).json({ error: 'Password required' });
-  }
-
-  try {
-    const [rows] = await db.query(
-      `SELECT
-         s.unique_token,
-         s.reveal_password_hash,
-         c.teacher_id
-       FROM game_sessions s
-       LEFT JOIN classes c ON s.class_id = c.id
-       WHERE s.id = ?`,
-      [sessionId]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Session not found' });
-    }
-
-    const session = rows[0];
-
-    if (req.admin.role !== 'main_admin' && session.teacher_id !== req.admin.id) {
-      return res.status(403).json({ error: 'You can only reveal your own session code' });
-    }
-
-    if (!session.reveal_password_hash) {
-      return res.status(400).json({ error: 'Reveal password not set for this session' });
-    }
-
-    const isMatch = await bcrypt.compare(password, session.reveal_password_hash);
-
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Wrong password' });
-    }
-
-    res.json({ unique_token: session.unique_token });
-  } catch (err) {
-    console.error('Reveal code error:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-};
-
-module.exports = {
-  getSessions,
-  createSession,
-  updateSession,
-  deleteSession,
-  validateSession,
-  revealSessionCode
-};
+module.exports = { getSessions, createSession, updateSession, deleteSession, validateSession };

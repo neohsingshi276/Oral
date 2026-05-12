@@ -4,17 +4,7 @@ const getSessionQuestions = async (req, res) => {
   const { session_id } = req.params;
   try {
     const [settings] = await db.query('SELECT * FROM quiz_settings WHERE session_id = ?', [session_id]);
-    // Count total questions available so we never request more than exist
-    const [[{ total_questions }]] = await db.query('SELECT COUNT(*) AS total_questions FROM quiz_questions');
-    const defaultCount = Math.min(10, total_questions);
-    const raw = settings[0] || {};
-    const cfg = {
-      timer_seconds: raw.timer_seconds ?? 15,
-      question_order: raw.question_order ?? 'shuffle',
-      question_count: Math.min(raw.question_count ?? defaultCount, total_questions),
-      minimum_correct: raw.minimum_correct ?? 0,
-      selected_questions: raw.selected_questions ?? null,
-    };
+    const cfg = settings[0] || { timer_seconds: 15, question_order: 'shuffle', question_count: 10, minimum_correct: 0, selected_questions: null };
 
     let query = 'SELECT id, question, question_type, image_url, options, correct_answer FROM quiz_questions';
     let queryParams = [];

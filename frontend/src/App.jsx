@@ -16,19 +16,14 @@ import NotFoundPage from './pages/NotFoundPage';
 
 // VITE_APP_MODE = 'admin' or 'student'
 // Set this in Vercel environment variables for each deployment
-
-// Here
-// const MODE = import.meta.env.VITE_APP_MODE || 'student';
-// const MODE = 'student';
-const MODE = 'admin';
-// Here
+const MODE = import.meta.env.VITE_APP_MODE || 'student';
 
 function App() {
   return (
+    <LanguageProvider mode={MODE === 'admin' ? 'admin' : 'student'}>
     <BrowserRouter>
-      <LanguageProvider mode={MODE === 'admin' ? 'admin' : 'student'}>
-        <AuthProvider>
-          <Routes>
+      <AuthProvider>
+        <Routes>
           {MODE === 'admin' ? (
             // ── ADMIN DEPLOYMENT ──
             <>
@@ -54,9 +49,9 @@ function App() {
             </>
           )}
         </Routes>
-        </AuthProvider>
-      </LanguageProvider>
+      </AuthProvider>
     </BrowserRouter>
+    </LanguageProvider>
   );
 }
 
