@@ -126,10 +126,13 @@ const createSession = async (req, res) => {
     if (classRows.length > 0) {
       classId = classRows[0].id;
     } else {
+      // Use provided teacher_id (from form) so the class is linked to the right teacher.
+      // Fall back to req.admin.id only if not provided (e.g. teacher creating their own session).
+      const assignedTeacherId = req.body.teacher_id ? parseInt(req.body.teacher_id, 10) : req.admin.id;
       const [newClass] = await db.query(
         `INSERT INTO classes (school_id, teacher_id, class_name)
      VALUES (?, ?, ?)`,
-        [schoolId, req.admin.id, class_name.trim()]
+        [schoolId, assignedTeacherId, class_name.trim()]
       );
 
       classId = newClass.insertId;

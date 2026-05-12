@@ -9,6 +9,9 @@ const ManageSessions = () => {
   const [sessions, setSessions] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [words, setWords] = useState([]);
+  const [schools, setSchools] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [msg, setMsg] = useState('');
   const [copied, setCopied] = useState('');
   const [revealedCodes, setRevealedCodes] = useState({});
@@ -22,6 +25,7 @@ const ManageSessions = () => {
   const defaultForm = {
     school_name: '',
     class_name: '',
+    teacher_id: '',
     session_name: '',
     reveal_password: '',
     q_mode: 'random', q_timer: 15, q_order: 'shuffle', q_count: 10, q_min: 0, q_selected: [],
@@ -32,6 +36,9 @@ const ManageSessions = () => {
   const [form, setForm] = useState(defaultForm);
 
   const fetchSessions = () => api.get('/sessions').then(res => setSessions(res.data.sessions));
+  const fetchSchools = () => api.get('/schools').then(res => setSchools(res.data.schools || []));
+  const fetchClasses = () => api.get('/classes').then(res => setClasses(res.data.classes || []));
+  const fetchTeachers = () => api.get('/admin/admins').then(res => setTeachers((res.data.admins || []).filter(a => a.role === 'teacher')));
   const fetchQuestions = () => api.get('/quiz/admin/questions').then(res => {
     const qs = res.data.questions || [];
     setQuestions(qs);
@@ -44,6 +51,9 @@ const ManageSessions = () => {
     fetchSessions();
     fetchQuestions();
     fetchWords();
+    fetchSchools();
+    fetchClasses();
+    fetchTeachers();
   }, []);
 
   // LOAD EXISTING SETTINGS INTO THE WIZARD
@@ -69,6 +79,7 @@ const ManageSessions = () => {
     setForm({
       school_name: session.school_name || '',
       class_name: session.class_name || '',
+      teacher_id: session.teacher_id || '',
       session_name: session.session_name || '',
       q_mode: qSel.length > 0 ? 'manual' : 'random',
       q_timer: qs.timer_seconds || 15,
@@ -109,6 +120,7 @@ const ManageSessions = () => {
       const payload = {
         school_name: form.school_name,
         class_name: form.class_name,
+        teacher_id: form.teacher_id,
         session_name: form.session_name,
         reveal_password: form.reveal_password,
         quiz_settings: {
@@ -245,36 +257,65 @@ const ManageSessions = () => {
               <div style={s.stepContent}>
                 <h3 style={s.secTitle}>{t('admin.step1Info')}</h3>
 
+                {/* School: dropdown of existing + type new */}
                 <div style={s.field}>
-                  <label style={s.label}>School</label>
+                  <label style={s.label}>Sekolah</label>
                   <input
                     style={s.input}
+                    list="school-list"
                     value={form.school_name || ''}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        school_name: e.target.value
-                      })
-                    }
+                    onChange={e => setForm({ ...form, school_name: e.target.value, class_name: '', teacher_id: '' })}
                     required
-                    placeholder="e.g. SK Taman Mutiara"
+                    placeholder="Pilih atau taip nama sekolah..."
                   />
+                  <datalist id="school-list">
+                    {schools.map(sc => <option key={sc.id} value={sc.school_name} />)}
+                  </datalist>
+                  {schools.length === 0 && <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '4px' }}>Tiada sekolah lagi — taip nama baru untuk cipta.</div>}
                 </div>
 
+                {/* Teacher: dropdown filtered by school */}
                 <div style={s.field}>
-                  <label style={s.label}>Class</label>
-                  <input
+                  <label style={s.label}>Guru (Teacher)</label>
+                  <select
                     style={s.input}
-                    value={form.class_name || ''}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        class_name: e.target.value
-                      })
-                    }
+                    value={form.teacher_id || ''}
+                    onChange={e => setForm({ ...form, teacher_id: e.target.value, class_name: '' })}
                     required
-                    placeholder="e.g. Class 5A"
-                  />
+                  >
+                    <option value="">-- Pilih Guru --</option>
+                    {teachers.map(t => (
+                      <option key={t.id} value={t.id}>{t.name} ({t.email})</option>
+                    ))}
+                  </select>
+                  {teachers.length === 0 && <div style={{ fontSize: '0.78rem', color: '#e11d48', marginTop: '4px' }}>⚠️ Tiada guru dalam sistem. Jemput guru dahulu.</div>}
+                </div>
+
+                {/* Class: dropdown of existing classes for selected school+teacher, or type new */}
+                <div style={s.field}>
+                  <label style={s.label}>Kelas (Class)</label>
+                  {(() => {
+                    const filtered = classes.filter(c =>
+                      (!form.school_name || c.school_name === form.school_name) &&
+                      (!form.teacher_id || String(c.teacher_id) === String(form.teacher_id))
+                    );
+                    return (
+                      <>
+                        <input
+                          style={s.input}
+                          list="class-list"
+                          value={form.class_name || ''}
+                          onChange={e => setForm({ ...form, class_name: e.target.value })}
+                          required
+                          placeholder={filtered.length > 0 ? 'Pilih kelas atau taip baru...' : 'Taip nama kelas baru...'}
+                        />
+                        <datalist id="class-list">
+                          {filtered.map(c => <option key={c.id} value={c.class_name} />)}
+                        </datalist>
+                        {filtered.length > 0 && <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '4px' }}>{filtered.length} kelas sedia ada untuk guru ini.</div>}
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* Session Name */}
