@@ -10,6 +10,10 @@ if (!fs.existsSync('uploads')) {
 }
 
 const app = express();
+
+// Trust Railway/Vercel reverse proxy so express-rate-limit can read real client IPs
+app.set('trust proxy', 1);
+
 const { generalLimiter } = require('./middleware/rateLimiter');
 const { ensureSchema } = require('./services/schema.service');
 
