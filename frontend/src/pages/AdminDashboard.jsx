@@ -15,6 +15,7 @@ import ProfileSettings from '../admin/ProfileSettings';
 import EmailReminders from '../admin/EmailReminders';
 import ActivityLog from '../admin/ActivityLog';
 import AdminFAQ from '../admin/AdminFAQ';
+import LanguageToggle from '../components/LanguageToggle';
 
 const AdminDashboard = () => {
   const { admin, logout } = useAuth();
@@ -157,6 +158,7 @@ const AdminDashboard = () => {
             {MENU.find(m => m.key === active)?.icon} {MENU.find(m => m.key === active)?.label}
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <LanguageToggle compact />
             <span className="admin-welcome-text" style={styles.welcomeText}>Selamat datang, {admin?.name}! 👋</span>
             <button style={styles.profileBtn} onClick={() => setShowProfile(true)}>
               👤 Profil

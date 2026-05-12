@@ -41,6 +41,16 @@ const ManageSessions = () => {
     fetchWords();
   }, []);
 
+  // Auto-cap q_count to actual DB max once questions are loaded
+  useEffect(() => {
+    if (questions.length > 0) {
+      setForm(prev => ({
+        ...prev,
+        q_count: Math.min(prev.q_count, questions.length),
+      }));
+    }
+  }, [questions.length]);
+
   // LOAD EXISTING SETTINGS INTO THE WIZARD
   const handleEdit = (session) => {
     setEditId(session.id);
@@ -133,8 +143,15 @@ const ManageSessions = () => {
       setStep(1);
       setEditId(null);
       fetchSessions();
-    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Failed')); }
-    setTimeout(() => setMsg(''), 4000);
+    } catch (err) {
+      if (!err.response) {
+        // Network error — server unreachable
+        setMsg('❌ Cannot reach server. Check that the backend is running and VITE_API_URL is set correctly.');
+      } else {
+        setMsg('❌ ' + (err.response?.data?.error || err.response?.data?.message || 'Failed to save session.'));
+      }
+    }
+    setTimeout(() => setMsg(''), 5000);
   };
 
   const handleToggle = async (id, is_active) => { await api.put(`/sessions/${id}`, { is_active: !is_active }); fetchSessions(); };

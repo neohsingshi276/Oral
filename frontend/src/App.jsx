@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import HomePage from './pages/HomePage';
@@ -25,8 +26,9 @@ const MODE = 'admin';
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+      <LanguageProvider mode={MODE}>
+        <AuthProvider>
+          <Routes>
           {MODE === 'admin' ? (
             // ── ADMIN DEPLOYMENT ──
             <>
@@ -52,7 +54,8 @@ function App() {
             </>
           )}
         </Routes>
-      </AuthProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </BrowserRouter>
   );
 }
