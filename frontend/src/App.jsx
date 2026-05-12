@@ -16,12 +16,7 @@ import NotFoundPage from './pages/NotFoundPage';
 
 // VITE_APP_MODE = 'admin' or 'student'
 // Set this in Vercel environment variables for each deployment
-
-// Here
-// const MODE = import.meta.env.VITE_APP_MODE || 'student';
-// const MODE = 'student';
-const MODE = 'admin';
-// Here
+const MODE = import.meta.env.VITE_APP_MODE || 'student';
 
 function App() {
   return (
