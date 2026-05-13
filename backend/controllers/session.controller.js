@@ -39,8 +39,14 @@ const getSessions = async (req, res) => {
     const params = [];
 
     if (req.admin.role === 'teacher') {
-      query += ` WHERE c.teacher_id = ?`;
-      params.push(req.admin.id);
+      // Show sessions where either:
+      // (a) the class was directly assigned to this teacher, OR
+      // (b) the teacher was granted access via reveal-code (teacher_session_access)
+      query += `
+        LEFT JOIN teacher_session_access tsa ON s.id = tsa.session_id
+        WHERE (c.teacher_id = ? OR tsa.teacher_id = ?)
+      `;
+      params.push(req.admin.id, req.admin.id);
     }
 
     query += ` ORDER BY s.created_at DESC`;
@@ -214,8 +220,8 @@ const updateSession = async (req, res) => {
 
     // Only main_admin can activate/deactivate session codes
     if (is_active !== undefined) {
-      if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin')
-        return res.status(403).json({ error: 'Only Admins can activate or deactivate session codes' });
+      if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin' && req.admin.role !== 'teacher')
+        return res.status(403).json({ error: 'Only Admins or Teachers can activate or deactivate session codes' });
       await db.query('UPDATE game_sessions SET is_active = ? WHERE id = ?', [!!is_active, sessionId]);
     }
 
