@@ -1,4 +1,7 @@
 const db = require('../db');
+const sanitizeHtml = require('sanitize-html');
+
+const cleanText = (value) => sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} }).trim();
 
 const getAllFacts = async (req, res) => {
   try {
@@ -32,7 +35,7 @@ const addFact = async (req, res) => {
   try {
     const [result] = await db.query(
       'INSERT INTO facts (created_by, title, content, image_url) VALUES (?, ?, ?, ?)',
-      [req.admin.id, title.trim(), content, image_url]
+      [req.admin.id, cleanText(title), cleanText(content), image_url]
     );
     res.status(201).json({ message: 'Fact added', factId: result.insertId });
   } catch (err) {
@@ -55,9 +58,9 @@ const updateFact = async (req, res) => {
       // Convert new image to Base64 and overwrite — no old file to delete since it's in DB
       const base64 = req.file.buffer.toString('base64');
       const image_url = `data:${req.file.mimetype};base64,${base64}`;
-      await db.query('UPDATE facts SET title=?, content=?, image_url=? WHERE id=?', [title.trim(), content, image_url, req.params.id]);
+      await db.query('UPDATE facts SET title=?, content=?, image_url=? WHERE id=?', [cleanText(title), cleanText(content), image_url, req.params.id]);
     } else {
-      await db.query('UPDATE facts SET title=?, content=? WHERE id=?', [title.trim(), content, req.params.id]);
+      await db.query('UPDATE facts SET title=?, content=? WHERE id=?', [cleanText(title), cleanText(content), req.params.id]);
     }
     res.json({ message: 'Fact updated' });
   } catch (err) {

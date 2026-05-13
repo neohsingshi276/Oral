@@ -14,6 +14,14 @@ const safeId = (val) => {
   return isNaN(n) || n <= 0 ? null : n;
 };
 
+const requireTokenPlayer = (req, res, playerId) => {
+  if (!req.playerAuth || req.playerAuth.player_id !== playerId) {
+    res.status(403).json({ error: 'Access denied for this player' });
+    return false;
+  }
+  return true;
+};
+
 const createPlayerChatToken = (player) =>
   jwt.sign(
     {
@@ -23,7 +31,7 @@ const createPlayerChatToken = (player) =>
       nickname: player.nickname,
     },
     process.env.JWT_SECRET,
-    { expiresIn: '30d' }
+    { expiresIn: '24h' }
   );
 
 // ─── joinGame ─────────────────────────────────────────────────────────────────
@@ -79,29 +87,40 @@ const joinGame = async (req, res) => {
     }
 
     // ── New player path ───────────────────────────────────────────────────────
-    const [result] = await db.query(
-      'INSERT INTO players (session_id, nickname) VALUES (?, ?)',
-      [session.id, cleanNick]
-    );
-    const playerId = result.insertId;
-
-    await db.query(
-      'INSERT INTO player_positions (player_id, pos_x, pos_y, last_checkpoint) VALUES (?, ?, ?, ?)',
-      [playerId, START_X, START_Y, 0]
-    );
-
-    const player = {
-      id: playerId,
-      nickname: cleanNick,
-      session_id: session.id,
-      session_name: session.session_name,
-    };
-
-    for (let cp = 1; cp <= 3; cp++) {
-      await db.query(
-        'INSERT INTO checkpoint_attempts (player_id, session_id, checkpoint_number, attempts, completed) VALUES (?, ?, ?, 0, false)',
-        [playerId, session.id, cp]
+    const conn = await db.getConnection();
+    let player;
+    try {
+      await conn.beginTransaction();
+      const [result] = await conn.query(
+        'INSERT INTO players (session_id, nickname) VALUES (?, ?)',
+        [session.id, cleanNick]
       );
+      const playerId = result.insertId;
+
+      await conn.query(
+        'INSERT INTO player_positions (player_id, pos_x, pos_y, last_checkpoint) VALUES (?, ?, ?, ?)',
+        [playerId, START_X, START_Y, 0]
+      );
+
+      for (let cp = 1; cp <= 3; cp++) {
+        await conn.query(
+          'INSERT INTO checkpoint_attempts (player_id, session_id, checkpoint_number, attempts, completed) VALUES (?, ?, ?, 0, false)',
+          [playerId, session.id, cp]
+        );
+      }
+
+      await conn.commit();
+      player = {
+        id: playerId,
+        nickname: cleanNick,
+        session_id: session.id,
+        session_name: session.session_name,
+      };
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
     }
 
     res.status(201).json({
@@ -123,6 +142,7 @@ const savePosition = async (req, res) => {
 
   if (!player_id || isNaN(pos_x) || isNaN(pos_y) || isNaN(last_checkpoint))
     return res.status(400).json({ error: 'Invalid position data' });
+  if (!requireTokenPlayer(req, res, player_id)) return;
 
   // Clamp coordinates to the actual playable map bounds.
   const clampedX = Math.max(MAP_MIN_X, Math.min(MAP_MAX_X, pos_x));
@@ -144,6 +164,7 @@ const savePosition = async (req, res) => {
 const getPosition = async (req, res) => {
   const player_id = safeId(req.params.player_id);
   if (!player_id) return res.status(400).json({ error: 'Invalid player ID' });
+  if (!requireTokenPlayer(req, res, player_id)) return;
 
   try {
     const [rows] = await db.query(
@@ -163,6 +184,7 @@ const recordAttempt = async (req, res) => {
 
   if (!player_id || isNaN(checkpoint_number) || checkpoint_number < 1 || checkpoint_number > 3)
     return res.status(400).json({ error: 'Invalid data' });
+  if (!requireTokenPlayer(req, res, player_id)) return;
 
   try {
     const [result] = await db.query(
@@ -185,6 +207,7 @@ const completeCheckpoint = async (req, res) => {
 
   if (!player_id || isNaN(checkpoint_number) || checkpoint_number < 1 || checkpoint_number > 3)
     return res.status(400).json({ error: 'Invalid data' });
+  if (!requireTokenPlayer(req, res, player_id)) return;
 
   try {
     const [result] = await db.query(
@@ -204,6 +227,7 @@ const completeCheckpoint = async (req, res) => {
 const getProgress = async (req, res) => {
   const player_id = safeId(req.params.player_id);
   if (!player_id) return res.status(400).json({ error: 'Invalid player ID' });
+  if (!requireTokenPlayer(req, res, player_id)) return;
 
   try {
     const [rows] = await db.query(
@@ -231,6 +255,7 @@ const getCheckpointVideos = async (req, res) => {
 const playerExists = async (req, res) => {
   const player_id = safeId(req.params.player_id);
   if (!player_id) return res.status(400).json({ error: 'Invalid player ID' });
+  if (!requireTokenPlayer(req, res, player_id)) return;
   try {
     const [rows] = await db.query('SELECT id FROM players WHERE id = ?', [player_id]);
     res.json({ exists: rows.length > 0 });

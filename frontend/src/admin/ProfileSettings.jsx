@@ -17,8 +17,7 @@ const ProfileSettings = ({ onClose }) => {
       setMsg('✅ Profil berjaya dikemaskini!');
       // Refresh admin info
       const res = await api.get('/auth/me');
-      const token = localStorage.getItem('token');
-      login(token, res.data.admin);
+      login(null, res.data.admin);
     } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal')); }
     setTimeout(() => setMsg(''), 3000);
   };
@@ -93,7 +92,7 @@ const ProfileSettings = ({ onClose }) => {
             </div>
             <div style={s.field}>
               <label style={s.label}>Kata Laluan Baru</label>
-              <input style={s.input} type={showPass ? 'text' : 'password'} value={passwords.new_password} onChange={e => setPasswords({...passwords, new_password: e.target.value})} required placeholder="Min 6 aksara" minLength={6} maxLength={128} />
+              <input style={s.input} type={showPass ? 'text' : 'password'} value={passwords.new_password} onChange={e => setPasswords({...passwords, new_password: e.target.value})} required placeholder="Min 8 aksara" minLength={8} maxLength={128} />
             </div>
             <div style={s.field}>
               <label style={s.label}>Sahkan Kata Laluan Baru</label>

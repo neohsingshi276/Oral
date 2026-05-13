@@ -1,10 +1,28 @@
 const db = require('../db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
 const { sendOTPEmail } = require('../services/email.service');
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const setAdminCookie = (res, token) => {
+  res.cookie('admin_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+};
+
+const clearAdminCookie = (res) => {
+  res.clearCookie('admin_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  });
+};
 
 // ─── register ─────────────────────────────────────────────────────────────────
 // Only allowed when NO admins exist yet (first-time bootstrap).
@@ -30,8 +48,8 @@ const register = async (req, res) => {
     return res.status(400).json({ error: 'Email too long (max 120 characters)' });
   if (!emailRegex.test(email))
     return res.status(400).json({ error: 'Invalid email format' });
-  if (typeof password !== 'string' || password.length < 6)
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (typeof password !== 'string' || password.length < 8)
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
   if (password.length > 128)
     return res.status(400).json({ error: 'Password too long (max 128 characters)' });
 
@@ -72,12 +90,12 @@ const login = async (req, res) => {
     if (!isMatch) return res.status(401).json({ error: 'Invalid email or password' });
 
     const token = jwt.sign(
-      { id: admin.id, email: admin.email, role: admin.role },
+      { id: admin.id, email: admin.email, role: admin.role, token_version: admin.token_version || 0, jti: uuidv4() },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
+    setAdminCookie(res, token);
     res.json({
-      token,
       admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role, created_at: admin.created_at }
     });
   } catch (err) {
@@ -112,7 +130,8 @@ const forgotPassword = async (req, res) => {
 
   try {
     const [rows] = await db.query('SELECT id, name, email FROM admins WHERE email = ?', [email]);
-    if (rows.length === 0) return res.status(404).json({ error: 'No account found with this email' });
+    const genericMessage = 'If that email exists, we have sent an OTP.';
+    if (rows.length === 0) return res.json({ message: genericMessage });
 
     const admin = rows[0];
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
@@ -123,18 +142,19 @@ const forgotPassword = async (req, res) => {
 
     // Upsert into DB — replaces any existing pending OTP for this email
     await db.query(
-      `INSERT INTO otp_tokens (email, otp, admin_id, expires_at)
-       VALUES (?, ?, ?, ?)
+      `INSERT INTO otp_tokens (email, otp, admin_id, attempts, expires_at)
+       VALUES (?, ?, ?, 0, ?)
        ON DUPLICATE KEY UPDATE
          otp = VALUES(otp),
          admin_id = VALUES(admin_id),
+         attempts = 0,
          expires_at = VALUES(expires_at),
          created_at = NOW()`,
       [email, otp_hash, admin.id, expiresAt]
     );
 
     await sendOTPEmail(email, otp, admin.name);
-    res.json({ message: 'OTP sent to your email!' });
+    res.json({ message: genericMessage });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to send email. Please check your email address.' });
@@ -160,10 +180,16 @@ const verifyOTP = async (req, res) => {
       return res.status(400).json({ error: 'No OTP found or OTP has expired. Please request a new one.' });
 
     const stored = rows[0];
+    if (stored.attempts >= 3) {
+      await db.query('DELETE FROM otp_tokens WHERE email = ?', [email]);
+      return res.status(429).json({ error: 'Too many invalid OTP attempts. Please request a new OTP.' });
+    }
     // FIX: Compare against hashed OTP using bcrypt
     const isMatch = await bcrypt.compare(otp, stored.otp);
-    if (!isMatch)
+    if (!isMatch) {
+      await db.query('UPDATE otp_tokens SET attempts = attempts + 1 WHERE email = ?', [email]);
       return res.status(400).json({ error: 'Invalid OTP. Please try again.' });
+    }
 
     // Valid — delete OTP from DB and issue a short-lived reset token
     await db.query('DELETE FROM otp_tokens WHERE email = ?', [email]);
@@ -185,19 +211,35 @@ const resetPassword = async (req, res) => {
   const { resetToken, newPassword } = req.body;
   if (!resetToken || !newPassword)
     return res.status(400).json({ error: 'All fields required' });
-  if (typeof newPassword !== 'string' || newPassword.length < 6)
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (typeof newPassword !== 'string' || newPassword.length < 8)
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
   if (newPassword.length > 128)
     return res.status(400).json({ error: 'Password too long (max 128 characters)' });
 
   try {
     const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
     const hash = await bcrypt.hash(newPassword, 10);
-    await db.query('UPDATE admins SET password_hash = ? WHERE id = ?', [hash, decoded.adminId]);
+    await db.query('UPDATE admins SET password_hash = ?, token_version = token_version + 1 WHERE id = ?', [hash, decoded.adminId]);
     res.json({ message: 'Password reset successfully!' });
   } catch (err) {
     res.status(400).json({ error: 'Invalid or expired reset token' });
   }
 };
 
-module.exports = { register, login, getMe, forgotPassword, verifyOTP, resetPassword };
+const logout = async (req, res) => {
+  try {
+    if (req.admin?.jti && req.admin?.exp) {
+      await db.query(
+        'INSERT IGNORE INTO admin_token_blacklist (jti, admin_id, expires_at) VALUES (?, ?, FROM_UNIXTIME(?))',
+        [req.admin.jti, req.admin.id, req.admin.exp]
+      );
+    }
+    clearAdminCookie(res);
+    res.json({ message: 'Logged out' });
+  } catch (err) {
+    console.error('Logout error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+module.exports = { register, login, getMe, forgotPassword, verifyOTP, resetPassword, logout };

@@ -514,9 +514,6 @@ const ManageSessions = () => {
                               ))}
                             </div>
 
-                            <div style={{ fontSize: '0.85rem', color: '#475569' }}>
-                              Password: <strong>{session.reveal_password_plain || '-'}</strong>
-                            </div>
                           </>
                         ) : revealedCodes[session.id] ? (
                           <div style={s.codeBox}>

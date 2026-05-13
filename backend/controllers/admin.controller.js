@@ -6,6 +6,25 @@ const { sendInviteEmail, sendReminderEmail } = require('../services/email.servic
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const canAccessSession = async (admin, sessionId) => {
+  if (admin.role === 'main_admin' || admin.role === 'admin') return true;
+  const [rows] = await db.query(
+    `SELECT s.id
+     FROM game_sessions s
+     WHERE s.id = ?
+       AND (
+         s.admin_id = ?
+         OR s.id IN (
+           SELECT session_id
+           FROM teacher_session_access
+           WHERE teacher_id = ?
+         )
+       )`,
+    [sessionId, admin.id, admin.id]
+  );
+  return rows.length > 0;
+};
+
 // ─── getPlayers ───────────────────────────────────────────────────────────────
 const getPlayers = async (req, res) => {
   try {
@@ -30,10 +49,11 @@ const getPlayers = async (req, res) => {
       FROM teacher_session_access
       WHERE teacher_id = ?
     )
+    OR s.admin_id = ?
   )
   GROUP BY p.id
   ORDER BY p.joined_at DESC
-`, [req.admin.role, req.admin.id]);
+`, [req.admin.role, req.admin.id, req.admin.id]);
     res.json({ players: rows });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
@@ -59,8 +79,17 @@ const downloadCSV = async (req, res) => {
       LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
       LEFT JOIN quiz_scores qs          ON qs.player_id = p.id
       LEFT JOIN cp3_scores cp3          ON cp3.player_id = p.id
+      WHERE (
+        ? IN ('main_admin', 'admin')
+        OR s.admin_id = ?
+        OR s.id IN (
+          SELECT session_id
+          FROM teacher_session_access
+          WHERE teacher_id = ?
+        )
+      )
       GROUP BY p.id ORDER BY s.session_name, p.nickname
-    `);
+    `, [req.admin.role, req.admin.id, req.admin.id]);
 
     const headers = [
       'Nickname', 'Session', 'Joined At',
@@ -194,7 +223,7 @@ const inviteAdmin = async (req, res) => {
     res.json({ message: 'Invitation sent to ' + email });
   } catch (err) {
     console.error('Invite admin error:', err.code, err.message, err.sqlMessage || '');
-    res.status(500).json({ error: err.sqlMessage || 'Server error' });
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
@@ -208,8 +237,8 @@ const completeRegistration = async (req, res) => {
     return res.status(400).json({ error: 'Invalid name' });
   if (name.trim().length > 80)
     return res.status(400).json({ error: 'Name too long (max 80 characters)' });
-  if (typeof password !== 'string' || password.length < 6)
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (typeof password !== 'string' || password.length < 8)
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
   if (password.length > 128)
     return res.status(400).json({ error: 'Password too long (max 128 characters)' });
 
@@ -244,7 +273,7 @@ const completeRegistration = async (req, res) => {
       return res.status(400).json({ error: 'Invalid or expired invitation link' });
     }
     console.error('Complete registration error:', err.code, err.message, err.sqlMessage || '');
-    res.status(500).json({ error: err.sqlMessage || 'Server error' });
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
@@ -333,8 +362,8 @@ const changePassword = async (req, res) => {
 
   if (!current_password || !new_password)
     return res.status(400).json({ error: 'Both passwords required' });
-  if (typeof new_password !== 'string' || new_password.length < 6)
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (typeof new_password !== 'string' || new_password.length < 8)
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
   if (new_password.length > 128)
     return res.status(400).json({ error: 'New password too long (max 128 characters)' });
   if (typeof current_password !== 'string' || current_password.length > 128)
@@ -347,7 +376,7 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ error: 'Current password is incorrect' });
 
     const hash = await bcrypt.hash(new_password, 10);
-    await db.query('UPDATE admins SET password_hash=? WHERE id=?', [hash, req.admin.id]);
+    await db.query('UPDATE admins SET password_hash=?, token_version = token_version + 1 WHERE id=?', [hash, req.admin.id]);
     await logActivity(req.admin.id, 'Changed password');
     res.json({ message: 'Password changed successfully' });
   } catch (err) {
@@ -431,6 +460,8 @@ const deletePlayer = async (req, res) => {
     const [rows] = await db.query('SELECT nickname, session_id FROM players WHERE id = ?', [targetId]);
     if (rows.length === 0)
       return res.status(404).json({ error: 'Player not found' });
+    if (!(await canAccessSession(req.admin, rows[0].session_id)))
+      return res.status(403).json({ error: 'You can only delete players in your own sessions' });
 
     await db.query('DELETE FROM players WHERE id = ?', [targetId]);
     await logActivity(req.admin.id, 'Deleted player', `Deleted player: ${rows[0].nickname} (id ${targetId})`);

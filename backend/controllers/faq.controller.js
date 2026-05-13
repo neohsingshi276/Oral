@@ -1,4 +1,7 @@
 const db = require('../db');
+const sanitizeHtml = require('sanitize-html');
+
+const cleanText = (value) => sanitizeHtml(value || '', { allowedTags: [], allowedAttributes: {} }).trim();
 
 exports.getFAQ = async (req, res) => {
     try {
@@ -37,7 +40,7 @@ exports.askFAQ = async (req, res) => {
         await db.query(
             `INSERT INTO faq_questions (question, asked_by_admin_id, status)
        VALUES (?, ?, 'pending')`,
-            [question.trim(), adminId]
+            [cleanText(question), adminId]
         );
 
         res.json({ success: true, message: 'Question submitted' });
@@ -70,7 +73,7 @@ exports.answerFAQ = async (req, res) => {
             `UPDATE faq_questions
        SET answer = ?, answered_by_admin_id = ?, status = 'answered', answered_at = NOW()
        WHERE id = ?`,
-            [answer.trim(), admin.id, id]
+            [cleanText(answer), admin.id, id]
         );
 
         res.json({ success: true, message: 'FAQ answered' });
@@ -106,7 +109,7 @@ exports.updateInstruction = async (req, res) => {
             `UPDATE faq_instructions
        SET title = ?, content = ?, updated_by_admin_id = ?
        WHERE id = ?`,
-            [title, content, admin.id, id]
+            [cleanText(title), cleanText(content), admin.id, id]
         );
 
         res.json({
@@ -141,7 +144,7 @@ exports.updateFAQAnswer = async (req, res) => {
         status = 'answered',
         answered_at = NOW()
       WHERE id = ?`,
-            [answer, admin.id, id]
+            [cleanText(answer), admin.id, id]
         );
 
         res.json({

@@ -55,6 +55,9 @@ const submitQuiz = async (req, res) => {
   if (!player_id || !session_id || !Array.isArray(answers) || answers.length === 0) {
     return res.status(400).json({ error: 'Invalid submission data' });
   }
+  if (req.playerAuth?.player_id !== parseInt(player_id, 10) || req.playerAuth?.session_id !== parseInt(session_id, 10)) {
+    return res.status(403).json({ error: 'Access denied for this player' });
+  }
   if (answers.length > 100) return res.status(400).json({ error: 'Too many answers' });
 
   try {
@@ -108,12 +111,7 @@ const submitQuiz = async (req, res) => {
       [player_id, session_id]
     );
     if (existing.length > 0) {
-      if (score > existing[0].score) {
-        await db.query(
-          'UPDATE quiz_scores SET score=?, correct_answers=?, total_questions=?, time_taken=? WHERE id=?',
-          [score, correct, total, parseInt(time_taken, 10) || 0, existing[0].id]
-        );
-      }
+      return res.status(409).json({ error: 'Quiz already submitted for this player' });
     } else {
       await db.query(
         'INSERT INTO quiz_scores (player_id, session_id, score, correct_answers, total_questions, time_taken) VALUES (?,?,?,?,?,?)',

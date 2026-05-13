@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS admins (
   name VARCHAR(100) NOT NULL,
   email VARCHAR(100) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
+  token_version INT NOT NULL DEFAULT 0,
   role ENUM('admin', 'main_admin', 'teacher') DEFAULT 'admin',
   school VARCHAR(255) NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -31,8 +32,6 @@ CREATE TABLE IF NOT EXISTS game_sessions (
   session_month TINYINT NULL,
   unique_token VARCHAR(6) NOT NULL UNIQUE,
   reveal_password_hash VARCHAR(255) NULL,
-  reveal_password_plain VARCHAR(255) NULL,
-  reveal_password_text VARCHAR(100) NULL,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
@@ -247,8 +246,19 @@ CREATE TABLE IF NOT EXISTS otp_tokens (
   email       VARCHAR(120) NOT NULL UNIQUE,
   otp         VARCHAR(255) NOT NULL,
   admin_id    INT          NOT NULL,
+  attempts    INT          NOT NULL DEFAULT 0,
   expires_at  DATETIME     NOT NULL,
   created_at  DATETIME     DEFAULT NOW(),
+  FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS admin_token_blacklist (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  jti VARCHAR(64) NOT NULL UNIQUE,
+  admin_id INT NOT NULL,
+  expires_at DATETIME NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_admin_token_blacklist_expires (expires_at),
   FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -357,10 +367,16 @@ ALTER TABLE game_sessions
   ADD COLUMN IF NOT EXISTS reveal_password_hash VARCHAR(255) NULL AFTER unique_token;
 
 ALTER TABLE game_sessions
-  ADD COLUMN IF NOT EXISTS reveal_password_plain VARCHAR(255) NULL AFTER reveal_password_hash;
+  DROP COLUMN IF EXISTS reveal_password_plain;
 
 ALTER TABLE game_sessions
-  ADD COLUMN IF NOT EXISTS reveal_password_text VARCHAR(100) NULL AFTER reveal_password_plain;
+  DROP COLUMN IF EXISTS reveal_password_text;
+
+ALTER TABLE admins
+  ADD COLUMN IF NOT EXISTS token_version INT NOT NULL DEFAULT 0 AFTER password_hash;
+
+ALTER TABLE otp_tokens
+  ADD COLUMN IF NOT EXISTS attempts INT NOT NULL DEFAULT 0 AFTER admin_id;
 
 ALTER TABLE game_sessions
   ADD COLUMN IF NOT EXISTS session_month TINYINT NULL AFTER session_name;
