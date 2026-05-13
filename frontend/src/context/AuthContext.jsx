@@ -11,21 +11,25 @@ export const AuthProvider = ({ children }) => {
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // On app load, check the httpOnly admin cookie with the server.
+  // On app load, check if token exists and fetch admin info
   useEffect(() => {
-    api.get('/auth/me')
-      .then(res => setAdmin(res.data.admin))
-      .catch(() => localStorage.removeItem('token'))
-      .finally(() => setLoading(false));
+    const token = localStorage.getItem('token');
+    if (token) {
+      api.get('/auth/me')
+        .then(res => setAdmin(res.data.admin))
+        .catch(() => localStorage.removeItem('token'))
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const login = (token, adminData) => {
-    localStorage.removeItem('token');
+    localStorage.setItem('token', token);
     setAdmin(adminData);
   };
 
   const logout = () => {
-    api.post('/auth/logout').catch(() => {});
     localStorage.removeItem('token');
     setAdmin(null);
   };

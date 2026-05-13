@@ -1,19 +1,9 @@
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
 const dotenv = require('dotenv');
 const fs = require('fs');
 
 dotenv.config();
-
-const requiredEnv = ['JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_NAME'];
-const missingEnv = requiredEnv.filter((key) => !process.env[key]);
-if (missingEnv.length > 0) {
-  throw new Error(`Missing required environment variables: ${missingEnv.join(', ')}`);
-}
-if (!process.env.EMAIL_USER) {
-  console.warn('EMAIL_USER is not set. Password reset and reminder emails may fail until email environment variables are configured.');
-}
 
 if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads', { recursive: true });
@@ -25,7 +15,6 @@ const { ensureSchema } = require('./services/schema.service');
 
 app.set('trust proxy', 1);
 
-app.use(helmet());
 app.use(generalLimiter);
 
 const allowedOrigins = [
@@ -35,12 +24,21 @@ const allowedOrigins = [
   'http://localhost:5174',
 ].filter(Boolean);
 
+// Allow any *.vercel.app subdomain (covers all production + preview deployments)
+// and *.railway.app / *.onrender.com for flexibility across hosting platforms
+const allowedPatterns = [
+  /^https:\/\/[a-z0-9-]+\.vercel\.app$/,
+  /^https:\/\/[a-z0-9-]+\.up\.railway\.app$/,
+  /^https:\/\/[a-z0-9-]+\.onrender\.com$/,
+];
+
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
     const normalised = origin.replace(/\/$/, '');
     const exactMatch = allowedOrigins.map(o => o.replace(/\/$/, '')).includes(normalised);
-    if (exactMatch) {
+    const patternMatch = allowedPatterns.some(re => re.test(normalised));
+    if (exactMatch || patternMatch) {
       callback(null, true);
     } else {
       console.warn(`CORS blocked origin: ${origin}`);

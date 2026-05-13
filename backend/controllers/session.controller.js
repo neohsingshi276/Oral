@@ -28,15 +28,7 @@ const getSessions = async (req, res) => {
   try {
     let query = `
       SELECT
-        s.id,
-        s.admin_id,
-        s.school_id,
-        s.class_id,
-        s.session_name,
-        s.session_month,
-        s.unique_token,
-        s.is_active,
-        s.created_at,
+        s.*,
         a.name AS admin_name,
         sch.school_name,
         c.class_name,
@@ -52,18 +44,6 @@ const getSessions = async (req, res) => {
     // Teachers see ALL sessions — they use reveal-code (password) to prove ownership.
     // No WHERE filter needed; the password modal is the access control.
     // (Previously filtered by teacher_id which was always the admin's id — so always 0 results.)
-
-    if (req.admin.role === 'teacher') {
-      query += `
-        WHERE s.admin_id = ?
-           OR s.id IN (
-             SELECT session_id
-             FROM teacher_session_access
-             WHERE teacher_id = ?
-           )
-      `;
-      params.push(req.admin.id, req.admin.id);
-    }
 
     query += ` ORDER BY s.created_at DESC`;
 
@@ -163,9 +143,9 @@ const createSession = async (req, res) => {
     // Create session
     const [result] = await db.query(
       `INSERT INTO game_sessions
-       (admin_id, school_id, class_id, session_name, unique_token, reveal_password_hash)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [req.admin.id, schoolId, classId, session_name.trim(), unique_token, revealPasswordHash]
+       (admin_id, school_id, class_id, session_name, unique_token, reveal_password_hash, reveal_password_plain)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [req.admin.id, schoolId, classId, session_name.trim(), unique_token, revealPasswordHash, reveal_password]
     );
     const sessionId = result.insertId;
 
@@ -325,9 +305,7 @@ const validateSession = async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      `SELECT id, admin_id, school_id, class_id, session_name, session_month, unique_token, is_active, created_at
-       FROM game_sessions
-       WHERE unique_token = ? AND is_active = true`,
+      'SELECT * FROM game_sessions WHERE unique_token = ? AND is_active = true',
       [token]
     );
     if (rows.length === 0)

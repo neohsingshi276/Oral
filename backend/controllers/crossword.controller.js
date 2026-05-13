@@ -491,7 +491,7 @@ const addWord = async (req, res) => {
     res.status(201).json({ message: 'Perkataan ditambah', id: result.insertId });
   } catch (err) {
     console.error('Add crossword word error:', err.code, err.message, err.sqlMessage || '');
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: err.sqlMessage || 'Server error' });
   }
 };
 

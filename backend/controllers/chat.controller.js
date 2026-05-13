@@ -1,24 +1,7 @@
 const db = require('../db');
 
-const canTeacherAccessSession = async (teacherId, sessionId) => {
-  const [rows] = await db.query(
-    `SELECT s.id
-     FROM game_sessions s
-     WHERE s.id = ?
-       AND (
-         s.admin_id = ?
-         OR s.id IN (
-           SELECT session_id
-           FROM teacher_session_access
-           WHERE teacher_id = ?
-         )
-       )`,
-    [sessionId, teacherId, teacherId]
-  );
-  return rows.length > 0;
-};
-
 // ─── sendMessage (players only) ───────────────────────────────────────────────
+// sender_type is always forced to 'player' — players cannot spoof admin messages.
 const sendMessage = async (req, res) => {
   const player_id = parseInt(req.playerChat?.player_id, 10);
   const session_id = parseInt(req.playerChat?.session_id, 10);
@@ -39,8 +22,7 @@ const sendMessage = async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 };
 
-// ─── adminSendMessage ─────────────────────────────────────────────────────────
-// FIX: Teachers can only send messages to players in sessions they have access to.
+// ─── adminSendMessage (admin only, requires JWT via verifyToken) ───────────────
 const adminSendMessage = async (req, res) => {
   const { player_id, session_id, message } = req.body;
   if (!player_id || !session_id) return res.status(400).json({ error: 'player_id and session_id required' });
@@ -48,18 +30,11 @@ const adminSendMessage = async (req, res) => {
   if (typeof message !== 'string' || message.trim().length === 0) return res.status(400).json({ error: 'Message cannot be empty' });
   if (message.length > 200) return res.status(400).json({ error: 'Message too long (max 200 characters)' });
   try {
-    // Verify player exists in the given session
     const [playerRows] = await db.query(
       'SELECT id FROM players WHERE id = ? AND session_id = ?',
       [player_id, session_id]
     );
     if (playerRows.length === 0) return res.status(404).json({ error: 'Player not found in this session' });
-
-    // FIX: Teachers may only message players in sessions they have unlocked
-    if (req.admin.role === 'teacher') {
-      if (!(await canTeacherAccessSession(req.admin.id, session_id)))
-        return res.status(403).json({ error: 'You can only message players in your own sessions' });
-    }
 
     await db.query(
       'INSERT INTO chat_messages (player_id, session_id, sender_type, message) VALUES (?, ?, ?, ?)',
@@ -70,6 +45,7 @@ const adminSendMessage = async (req, res) => {
 };
 
 // ─── getMessages (player self-read only) ─────────────────────────────────────
+// Players authenticate with a signed chat token that binds them to one player_id.
 const getMessages = async (req, res) => {
   const player_id = parseInt(req.params.player_id, 10);
   const session_id = parseInt(req.playerChat?.session_id, 10);
@@ -79,11 +55,14 @@ const getMessages = async (req, res) => {
   }
 
   try {
+    // Verify this player actually belongs to that session
     const [playerRows] = await db.query(
       'SELECT id FROM players WHERE id = ? AND session_id = ?',
       [player_id, session_id]
     );
-    if (playerRows.length === 0) return res.status(403).json({ error: 'Access denied' });
+    if (playerRows.length === 0) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
 
     const [rows] = await db.query(
       'SELECT * FROM chat_messages WHERE player_id = ? ORDER BY sent_at ASC',
@@ -93,21 +72,10 @@ const getMessages = async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 };
 
-// ─── adminGetMessages ─────────────────────────────────────────────────────────
-// FIX: Teachers can only read messages for players in their accessible sessions.
+// ─── adminGetMessages (admin read, requires JWT) ──────────────────────────────
 const adminGetMessages = async (req, res) => {
   const player_id = parseInt(req.params.player_id, 10);
   try {
-    // Look up this player's session
-    const [playerRows] = await db.query('SELECT session_id FROM players WHERE id = ?', [player_id]);
-    if (playerRows.length === 0) return res.status(404).json({ error: 'Player not found' });
-
-    // FIX: Teachers restricted to their own sessions
-    if (req.admin.role === 'teacher') {
-      if (!(await canTeacherAccessSession(req.admin.id, playerRows[0].session_id)))
-        return res.status(403).json({ error: 'You can only view messages in your own sessions' });
-    }
-
     const [rows] = await db.query(
       `SELECT cm.*, p.nickname
        FROM chat_messages cm
@@ -120,35 +88,14 @@ const adminGetMessages = async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 };
 
-// ─── getAllChats ──────────────────────────────────────────────────────────────
-// FIX: Teachers only see chats from sessions they have access to.
+// ─── getAllChats (admin, requires JWT) ────────────────────────────────────────
 const getAllChats = async (req, res) => {
   try {
-    let query;
-    let params = [];
-
-    if (req.admin.role === 'teacher') {
-      query = `
-        SELECT cm.*, p.nickname, p.session_id FROM chat_messages cm
-        JOIN players p ON cm.player_id = p.id
-        WHERE p.session_id IN (
-          SELECT session_id FROM teacher_session_access WHERE teacher_id = ?
-        )
-        OR p.session_id IN (
-          SELECT id FROM game_sessions WHERE admin_id = ?
-        )
-        ORDER BY cm.sent_at ASC
-      `;
-      params = [req.admin.id, req.admin.id];
-    } else {
-      query = `
-        SELECT cm.*, p.nickname, p.session_id FROM chat_messages cm
-        JOIN players p ON cm.player_id = p.id
-        ORDER BY cm.sent_at ASC
-      `;
-    }
-
-    const [rows] = await db.query(query, params);
+    const [rows] = await db.query(`
+      SELECT cm.*, p.nickname, p.session_id FROM chat_messages cm
+      JOIN players p ON cm.player_id = p.id
+      ORDER BY cm.sent_at ASC
+    `);
     res.json({ messages: rows });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 };

@@ -15,9 +15,11 @@ const AdminFAQ = () => {
     const [editingInstruction, setEditingInstruction] = useState(null);
     const [editingFAQ, setEditingFAQ] = useState(null);
 
+    const token = localStorage.getItem('token');
+
     const fetchCurrentAdmin = async () => {
         const res = await fetch(`${API_URL}/auth/me`, {
-            credentials: 'include',
+            headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
         setAdmin(data.admin);
@@ -26,7 +28,7 @@ const AdminFAQ = () => {
     const fetchFAQ = async () => {
         try {
             const res = await fetch(`${API_URL}/faq`, {
-                credentials: 'include',
+                headers: { Authorization: `Bearer ${token}` },
             });
             const data = await res.json();
             setFaqs(Array.isArray(data) ? data : []);
@@ -37,7 +39,7 @@ const AdminFAQ = () => {
 
     const fetchInstructions = async () => {
         const res = await fetch(`${API_URL}/faq/instructions`, {
-            credentials: 'include',
+            headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
         setInstructions(Array.isArray(data) ? data : []);
@@ -54,9 +56,9 @@ const AdminFAQ = () => {
 
         const res = await fetch(`${API_URL}/faq`, {
             method: 'POST',
-            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ question }),
         });
@@ -72,9 +74,9 @@ const AdminFAQ = () => {
 
         const res = await fetch(`${API_URL}/faq/${id}/answer`, {
             method: 'PUT',
-            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ answer: answers[id] }),
         });
@@ -90,9 +92,9 @@ const AdminFAQ = () => {
 
         const res = await fetch(`${API_URL}/faq/instructions/${editingInstruction.id}`, {
             method: 'PUT',
-            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
                 title: editingInstruction.title,
@@ -111,9 +113,9 @@ const AdminFAQ = () => {
 
         const res = await fetch(`${API_URL}/faq/${editingFAQ.id}/edit`, {
             method: 'PUT',
-            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
                 question: editingFAQ.question,

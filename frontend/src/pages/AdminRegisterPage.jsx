@@ -27,7 +27,7 @@ const AdminRegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) { setError('Kata laluan tidak sepadan!'); return; }
-    if (password.length < 8) { setError('Kata laluan mesti sekurang-kurangnya 8 aksara'); return; }
+    if (password.length < 6) { setError('Kata laluan mesti sekurang-kurangnya 6 aksara'); return; }
     setLoading(true); setError('');
     try {
       await api.post('/admin/complete-registration', { token, name, password });
@@ -74,7 +74,7 @@ const AdminRegisterPage = () => {
               <div style={s.field}>
                 <label style={s.label}>Kata Laluan</label>
                 <div style={s.passWrap}>
-                  <input style={{...s.input, flex:1}} type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required placeholder="Min 8 aksara" minLength={8} maxLength={128} />
+                  <input style={{...s.input, flex:1}} type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required placeholder="Min 6 aksara" minLength={6} maxLength={128} />
                   <button type="button" style={s.eyeBtn} onClick={() => setShowPass(!showPass)}>{showPass ? '🙈' : '👁️'}</button>
                 </div>
               </div>

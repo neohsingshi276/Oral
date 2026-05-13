@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const c = require('../controllers/quiz.controller');
 const verifyToken = require('../middleware/verifyToken');
-const verifyPlayerToken = require('../middleware/verifyPlayerToken');
 const upload = require('../middleware/upload');
 
 // Wrap multer so file type/size errors return 400 instead of crashing with 500
@@ -15,7 +14,7 @@ const multerHandler = (req, res, next) => {
 
 // Player routes
 router.get('/session/:session_id', c.getSessionQuestions);
-router.post('/submit', verifyPlayerToken, c.submitQuiz);
+router.post('/submit', c.submitQuiz);
 router.get('/leaderboard/:session_id', c.getLeaderboard);
 
 // Admin routes
