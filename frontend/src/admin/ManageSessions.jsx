@@ -31,9 +31,19 @@ const ManageSessions = () => {
 
   const [form, setForm] = useState(defaultForm);
 
-  const fetchSessions = () => api.get('/sessions').then(res => setSessions(res.data.sessions));
-  const fetchQuestions = () => api.get('/quiz/admin/questions').then(res => setQuestions(res.data.questions));
-  const fetchWords = () => api.get('/crossword/admin').then(res => setWords(res.data.words));
+  const [fetchError, setFetchError] = useState('');
+
+  const fetchSessions = () => {
+    setFetchError('');
+    return api.get('/sessions')
+      .then(res => setSessions(res.data.sessions))
+      .catch(err => {
+        const msg = err.response?.data?.error || err.message || 'Failed to load sessions';
+        setFetchError('❌ ' + msg);
+      });
+  };
+  const fetchQuestions = () => api.get('/quiz/admin/questions').then(res => setQuestions(res.data.questions)).catch(() => {});
+  const fetchWords = () => api.get('/crossword/admin').then(res => setWords(res.data.words)).catch(() => {});
 
   useEffect(() => {
     fetchSessions();
@@ -441,6 +451,12 @@ const ManageSessions = () => {
       {/* ─── ACTIVE SESSIONS LIST ─── */}
       <div style={s.card}>
         <h2 style={s.cardTitle}>🎮 {t('admin.activeSessions')} ({sessions.length})</h2>
+        {fetchError && (
+          <div style={{ background: '#fff1f2', color: '#e11d48', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem', fontWeight: '600' }}>
+            {fetchError}
+            <button onClick={fetchSessions} style={{ marginLeft: '1rem', background: '#e11d48', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>Retry</button>
+          </div>
+        )}
         <div style={s.sessionList}>
 
           {Object.entries(groupedSessions).map(([schoolName, classGroups]) => (
