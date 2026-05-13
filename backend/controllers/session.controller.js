@@ -19,10 +19,11 @@ const safeInt = (val, fallback, min = 0, max = 9999) => {
 };
 
 // ─── getSessions ──────────────────────────────────────────────────────────────
-// FIX: Replace N+1 queries (3 extra DB calls per session) with 3 bulk
-// queries that fetch all settings at once, then merge them in JS.
-// FIX 2: Always include teacher_session_access JOIN in base query so the
-// WHERE clause can reference it without breaking SQL syntax.
+// Teachers see sessions in two ways:
+//   (a) Sessions they have already unlocked via reveal-code (teacher_session_access)
+//   (b) Sessions not yet unlocked — shown so they CAN unlock them via reveal-code
+//       (these are all sessions; teacher uses the password to prove they own them)
+// main_admin / admin see everything.
 const getSessions = async (req, res) => {
   try {
     let query = `
@@ -36,18 +37,13 @@ const getSessions = async (req, res) => {
       JOIN admins a ON s.admin_id = a.id
       LEFT JOIN schools sch ON s.school_id = sch.id
       LEFT JOIN classes c ON s.class_id = c.id
-      LEFT JOIN teacher_session_access tsa ON s.id = tsa.session_id
     `;
 
     const params = [];
 
-    if (req.admin.role === 'teacher') {
-      // Show sessions where either:
-      // (a) the class was directly assigned to this teacher, OR
-      // (b) the teacher was granted access via reveal-code (teacher_session_access)
-      query += ` WHERE (c.teacher_id = ? OR tsa.teacher_id = ?)`;
-      params.push(req.admin.id, req.admin.id);
-    }
+    // Teachers see ALL sessions — they use reveal-code (password) to prove ownership.
+    // No WHERE filter needed; the password modal is the access control.
+    // (Previously filtered by teacher_id which was always the admin's id — so always 0 results.)
 
     query += ` ORDER BY s.created_at DESC`;
 
@@ -115,7 +111,6 @@ const createSession = async (req, res) => {
         'INSERT INTO schools (school_name) VALUES (?)',
         [school_name.trim()]
       );
-
       schoolId = newSchool.insertId;
     }
 
@@ -133,10 +128,9 @@ const createSession = async (req, res) => {
     } else {
       const [newClass] = await db.query(
         `INSERT INTO classes (school_id, teacher_id, class_name)
-     VALUES (?, ?, ?)`,
+         VALUES (?, ?, ?)`,
         [schoolId, req.admin.id, class_name.trim()]
       );
-
       classId = newClass.insertId;
     }
 
@@ -149,8 +143,8 @@ const createSession = async (req, res) => {
     // Create session
     const [result] = await db.query(
       `INSERT INTO game_sessions
-    (admin_id, school_id, class_id, session_name, unique_token, reveal_password_hash, reveal_password_plain)
-    VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       (admin_id, school_id, class_id, session_name, unique_token, reveal_password_hash, reveal_password_plain)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [req.admin.id, schoolId, classId, session_name.trim(), unique_token, revealPasswordHash, reveal_password]
     );
     const sessionId = result.insertId;
@@ -205,20 +199,19 @@ const updateSession = async (req, res) => {
   const sessionId = req.params.id;
 
   try {
-    // FIX: Verify ownership before allowing updates — same rule as deleteSession
     const [rows] = await db.query(
       `SELECT s.admin_id, c.teacher_id
-      FROM game_sessions s
-      LEFT JOIN classes c ON s.class_id = c.id
-      WHERE s.id = ?`,
+       FROM game_sessions s
+       LEFT JOIN classes c ON s.class_id = c.id
+       WHERE s.id = ?`,
       [sessionId]
     );
     if (rows.length === 0)
       return res.status(404).json({ error: 'Session not found' });
-    if (req.admin.role !== 'main_admin' && rows[0].teacher_id !== req.admin.id)
+    if (req.admin.role !== 'main_admin' && rows[0].admin_id !== req.admin.id)
       return res.status(403).json({ error: 'You can only edit your own sessions' });
 
-    // FIX: Allow teachers to activate/deactivate their own sessions
+    // Allow admin and teacher to activate/deactivate sessions
     if (is_active !== undefined) {
       if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin' && req.admin.role !== 'teacher')
         return res.status(403).json({ error: 'Only Admins or Teachers can activate or deactivate session codes' });
@@ -285,20 +278,16 @@ const updateSession = async (req, res) => {
 };
 
 // ─── deleteSession ────────────────────────────────────────────────────────────
-// FIX: Added ownership check — only the session creator or main_admin can delete.
 const deleteSession = async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT s.admin_id, c.teacher_id
-      FROM game_sessions s
-      LEFT JOIN classes c ON s.class_id = c.id
-      WHERE s.id = ?`,
+      `SELECT s.admin_id FROM game_sessions s WHERE s.id = ?`,
       [req.params.id]
     );
     if (rows.length === 0)
       return res.status(404).json({ error: 'Session not found' });
 
-    if (req.admin.role !== 'main_admin' && rows[0].teacher_id !== req.admin.id)
+    if (req.admin.role !== 'main_admin' && rows[0].admin_id !== req.admin.id)
       return res.status(403).json({ error: 'You can only delete your own sessions' });
 
     await db.query('DELETE FROM game_sessions WHERE id = ?', [req.params.id]);
@@ -328,6 +317,11 @@ const validateSession = async (req, res) => {
   }
 };
 
+// ─── revealSessionCode ────────────────────────────────────────────────────────
+// FIX: Removed teacher_id ownership check — the reveal password IS the
+// authorisation mechanism. Any teacher with the correct password can unlock
+// a session. Previously teacher_id was always the admin's id (set at creation),
+// so teachers were always blocked with 403.
 const revealSessionCode = async (req, res) => {
   const { password } = req.body;
   const sessionId = req.params.id;
@@ -338,12 +332,8 @@ const revealSessionCode = async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      `SELECT
-         s.unique_token,
-         s.reveal_password_hash,
-         c.teacher_id
+      `SELECT s.unique_token, s.reveal_password_hash
        FROM game_sessions s
-       LEFT JOIN classes c ON s.class_id = c.id
        WHERE s.id = ?`,
       [sessionId]
     );
@@ -353,10 +343,6 @@ const revealSessionCode = async (req, res) => {
     }
 
     const session = rows[0];
-
-    if (req.admin.role !== 'main_admin' && session.teacher_id !== req.admin.id) {
-      return res.status(403).json({ error: 'You can only reveal your own session code' });
-    }
 
     if (!session.reveal_password_hash) {
       return res.status(400).json({ error: 'Reveal password not set for this session' });
@@ -368,6 +354,7 @@ const revealSessionCode = async (req, res) => {
       return res.status(401).json({ error: 'Wrong password' });
     }
 
+    // Record teacher access so they can be filtered to their sessions later
     if (req.admin.role === 'teacher') {
       await db.query(
         `INSERT IGNORE INTO teacher_session_access (teacher_id, session_id)
