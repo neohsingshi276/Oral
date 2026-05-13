@@ -9,19 +9,31 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // ─── getPlayers ───────────────────────────────────────────────────────────────
 const getPlayers = async (req, res) => {
   try {
+
     const [rows] = await db.query(`
-      SELECT p.*, s.session_name,
-        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
-        MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
-        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
-        MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts  END) as cp2_attempts,
-        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.completed END) as cp3_completed,
-        MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts
-      FROM players p
-      JOIN game_sessions s ON p.session_id = s.id
-      LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
-      GROUP BY p.id ORDER BY p.joined_at DESC
-    `);
+  SELECT p.*, s.session_name, sch.school_name, c.class_name,
+    MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
+    MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
+    MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.completed END) as cp2_completed,
+    MAX(CASE WHEN ca.checkpoint_number = 2 THEN ca.attempts  END) as cp2_attempts,
+    MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.completed END) as cp3_completed,
+    MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts
+  FROM players p
+  JOIN game_sessions s ON p.session_id = s.id
+  LEFT JOIN schools sch ON s.school_id = sch.id
+  LEFT JOIN classes c ON s.class_id = c.id
+  LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
+  WHERE (
+    ? IN ('main_admin', 'admin')
+    OR s.id IN (
+      SELECT session_id
+      FROM teacher_session_access
+      WHERE teacher_id = ?
+    )
+  )
+  GROUP BY p.id
+  ORDER BY p.joined_at DESC
+`, [req.admin.role, req.admin.id]);
     res.json({ players: rows });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });

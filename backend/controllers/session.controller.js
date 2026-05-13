@@ -38,10 +38,10 @@ const getSessions = async (req, res) => {
 
     const params = [];
 
-    // Teachers see ALL sessions (same as admin/main_admin).
-    // Previously filtered by c.teacher_id = req.admin.id, but sessions
-    // created by an admin store the admin's own id as teacher_id on the
-    // class — so teacher accounts never matched and always saw 0 sessions.
+    if (req.admin.role === 'teacher') {
+      query += ` WHERE c.teacher_id = ?`;
+      params.push(req.admin.id);
+    }
 
     query += ` ORDER BY s.created_at DESC`;
 
@@ -348,9 +348,9 @@ const revealSessionCode = async (req, res) => {
 
     const session = rows[0];
 
-    // Allow any authenticated admin or teacher to reveal session codes.
-    // (teacher_id on the class reflects the creator's id, not the viewer's,
-    //  so a strict teacher_id check locks out all teacher accounts.)
+    if (req.admin.role !== 'main_admin' && session.teacher_id !== req.admin.id) {
+      return res.status(403).json({ error: 'You can only reveal your own session code' });
+    }
 
     if (!session.reveal_password_hash) {
       return res.status(400).json({ error: 'Reveal password not set for this session' });
@@ -360,6 +360,14 @@ const revealSessionCode = async (req, res) => {
 
     if (!isMatch) {
       return res.status(401).json({ error: 'Wrong password' });
+    }
+
+    if (req.admin.role === 'teacher') {
+      await db.query(
+        `INSERT IGNORE INTO teacher_session_access (teacher_id, session_id)
+         VALUES (?, ?)`,
+        [req.admin.id, sessionId]
+      );
     }
 
     res.json({ unique_token: session.unique_token });

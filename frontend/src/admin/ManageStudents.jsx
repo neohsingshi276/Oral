@@ -7,6 +7,9 @@ const ManageStudents = () => {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [selectedSchool, setSelectedSchool] = useState('');
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('');
   const [deleting, setDeleting] = useState(null); // id currently being deleted
 
   const fetchPlayers = () => {
@@ -35,10 +38,73 @@ const ManageStudents = () => {
     }
   };
 
-  const filtered = players.filter(p =>
-    p.nickname?.toLowerCase().includes(search.toLowerCase()) ||
-    p.session_name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const uniqueSchools = [...new Set(players.map(p => p.school_name).filter(Boolean))];
+
+  const uniqueClasses = [
+    ...new Set(
+      players
+        .filter(p => selectedSchool === '' || p.school_name === selectedSchool)
+        .map(p => p.class_name)
+        .filter(Boolean)
+    )
+  ];
+
+  const uniqueMonths = [
+    ...new Set(
+      players.map(p => {
+        const d = new Date(p.joined_at);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      })
+    )
+  ];
+
+  const filtered = players.filter(p => {
+    const matchSearch =
+      p.nickname?.toLowerCase().includes(search.toLowerCase()) ||
+      p.session_name?.toLowerCase().includes(search.toLowerCase()) ||
+      p.school_name?.toLowerCase().includes(search.toLowerCase()) ||
+      p.class_name?.toLowerCase().includes(search.toLowerCase());
+
+    const matchSchool =
+      selectedSchool === '' || p.school_name === selectedSchool;
+
+    const matchClass =
+      selectedClass === '' || p.class_name === selectedClass;
+
+    const playerMonth = (() => {
+      const d = new Date(p.joined_at);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    })();
+
+    const matchMonth =
+      selectedMonth === '' || playerMonth === selectedMonth;
+
+    return matchSearch && matchSchool && matchClass && matchMonth;
+  });
+
+  const groupedPlayers = filtered.reduce((acc, player) => {
+    const school = player.school_name || 'No School';
+    const className = player.class_name || 'No Class';
+
+    const d = new Date(player.joined_at);
+    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const monthLabel = d.toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric'
+    });
+
+    if (!acc[school]) acc[school] = {};
+    if (!acc[school][className]) acc[school][className] = {};
+    if (!acc[school][className][monthKey]) {
+      acc[school][className][monthKey] = {
+        label: monthLabel,
+        players: []
+      };
+    }
+
+    acc[school][className][monthKey].players.push(player);
+    return acc;
+  }, {});
 
   const isMainAdmin = admin?.role === 'main_admin';
   const canDelete = ['main_admin', 'admin', 'teacher'].includes(admin?.role);
@@ -54,6 +120,51 @@ const ManageStudents = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
+          <select
+            style={s.search}
+            value={selectedSchool}
+            onChange={(e) => {
+              setSelectedSchool(e.target.value);
+              setSelectedClass('');
+            }}
+          >
+            <option value="">Semua Sekolah</option>
+            {uniqueSchools.map(school => (
+              <option key={school} value={school}>
+                {school}
+              </option>
+            ))}
+          </select>
+
+          <select
+            style={s.search}
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+          >
+            <option value="">Semua Kelas</option>
+            {uniqueClasses.map(cls => (
+              <option key={cls} value={cls}>
+                {cls}
+              </option>
+            ))}
+          </select>
+
+          <select
+            style={s.search}
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+          >
+            <option value="">Semua Bulan</option>
+            {uniqueMonths.map(month => (
+              <option key={month} value={month}>
+                {new Date(month + '-01').toLocaleDateString('en-US', {
+                  month: 'long',
+                  year: 'numeric'
+                })}
+              </option>
+            ))}
+          </select>
+
         </div>
 
         {canDelete && (
@@ -62,93 +173,130 @@ const ManageStudents = () => {
           </div>
         )}
 
+        {(selectedSchool || selectedClass) && (
+          <h3 style={s.filterTitle}>
+            {selectedSchool || 'Semua Sekolah'}
+            {selectedClass ? ` • ${selectedClass}` : ''}
+          </h3>
+        )}
+
         {loading ? (
           <p style={s.muted}>Memuatkan data pemain…</p>
         ) : (
-          <div style={s.tableWrap}>
-            <table style={s.table}>
-              <thead>
-                <tr style={s.thead}>
-                  <th style={s.th}>Nama Samaran</th>
-                  <th style={s.th}>Sesi</th>
-                  <th style={s.th}>CP1 Kuiz</th>
-                  <th style={s.th}>CP2 Teka Silang Kata</th>
-                  <th style={s.th}>CP3 Permainan Makanan</th>
-                  <th style={s.th}>Disertai Pada</th>
-                  {canDelete && <th style={s.th}>Tindakan</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((p, i) => (
-                  <tr key={p.id} style={i % 2 === 0 ? s.trEven : {}}>
-                    <td style={s.td}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={s.playerAvatar}>{p.nickname?.[0]?.toUpperCase()}</div>
-                        <strong data-no-translate="true">{p.nickname}</strong>
+
+          <div>
+            {Object.entries(groupedPlayers).map(([schoolName, classGroups]) => (
+              <div key={schoolName} style={s.schoolBlock}>
+                <h3 style={s.schoolTitle}>🏫 {schoolName}</h3>
+
+                {Object.entries(classGroups).map(([className, monthGroups]) => (
+                  <div key={className} style={s.classBlock}>
+                    <h4 style={s.classTitle}>📚 {className}</h4>
+                    {Object.entries(monthGroups).map(([monthKey, monthData]) => (
+                      <div key={monthKey} style={s.monthBlock}>
+                        <h4 style={s.monthTitle}>🗓️ {monthData.label}</h4>
+
+                        <div style={s.tableWrap}>
+                          <table style={s.table}>
+                            <thead>
+                              <tr style={s.thead}>
+                                <th style={s.th}>Nama Samaran</th>
+                                <th style={s.th}>Sesi</th>
+                                <th style={s.th}>CP1 Kuiz</th>
+                                <th style={s.th}>CP2 Teka Silang Kata</th>
+                                <th style={s.th}>CP3 Permainan Makanan</th>
+                                <th style={s.th}>Disertai Pada</th>
+                                {canDelete && <th style={s.th}>Tindakan</th>}
+                              </tr>
+                            </thead>
+
+                            <tbody>
+                              {monthData.players.map((p, i) => (
+                                <tr key={p.id} style={i % 2 === 0 ? s.trEven : {}}>
+                                  <td style={s.td}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                      <div style={s.playerAvatar}>{p.nickname?.[0]?.toUpperCase()}</div>
+                                      <strong data-no-translate="true">{p.nickname}</strong>
+                                    </div>
+                                  </td>
+
+                                  <td style={s.td}>
+                                    <span style={s.sessionBadge} data-no-translate="true">
+                                      {p.session_name || '—'}
+                                    </span>
+                                  </td>
+
+                                  <td style={s.td}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                      <span style={p.cp1_completed ? s.badgeGreen : s.badgeGray}>
+                                        {p.cp1_completed ? '✅ Selesai' : '❌ Belum Selesai'}
+                                      </span>
+                                      <span style={s.attemptBadge}>
+                                        🔄 {p.cp1_attempts || 0} Percubaan
+                                      </span>
+                                    </div>
+                                  </td>
+
+                                  <td style={s.td}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                      <span style={p.cp2_completed ? s.badgeGreen : s.badgeGray}>
+                                        {p.cp2_completed ? '✅ Selesai' : '❌ Belum Selesai'}
+                                      </span>
+                                      <span style={s.attemptBadge}>
+                                        🔄 {p.cp2_attempts || 0} Percubaan
+                                      </span>
+                                    </div>
+                                  </td>
+
+                                  <td style={s.td}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                      <span style={p.cp3_completed ? s.badgeGreen : s.badgeGray}>
+                                        {p.cp3_completed ? '✅ Selesai' : '❌ Belum Selesai'}
+                                      </span>
+                                      <span style={s.attemptBadge}>
+                                        🔄 {p.cp3_attempts || 0} Percubaan
+                                      </span>
+                                    </div>
+                                  </td>
+
+                                  <td style={s.td}>
+                                    <span style={s.dateText}>
+                                      {new Date(p.joined_at).toLocaleDateString(undefined, {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric'
+                                      })}
+                                    </span>
+                                  </td>
+
+                                  {canDelete && (
+                                    <td style={s.td}>
+                                      <button
+                                        style={{ ...s.btnDelete, opacity: deleting === p.id ? 0.5 : 1 }}
+                                        onClick={() => handleDelete(p)}
+                                        disabled={deleting === p.id}
+                                      >
+                                        {deleting === p.id ? '…' : '🗑️ Padam'}
+                                      </button>
+                                    </td>
+                                  )}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
-                    </td>
-                    <td style={s.td}>
-                      <span style={s.sessionBadge} data-no-translate="true">{p.session_name || '—'}</span>
-                    </td>
-                    <td style={s.td}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <span style={p.cp1_completed ? s.badgeGreen : s.badgeGray}>
-                          {p.cp1_completed ? '✅ Selesai' : '❌ Belum Selesai'}
-                        </span>
-                        <span style={s.attemptBadge}>
-                          🔄 {p.cp1_attempts || 0} Percubaan{(p.cp1_attempts || 0) !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    </td>
-                    <td style={s.td}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <span style={p.cp2_completed ? s.badgeGreen : s.badgeGray}>
-                          {p.cp2_completed ? '✅ Selesai' : '❌  Belum Selesai'}
-                        </span>
-                        <span style={s.attemptBadge}>
-                          🔄 {p.cp2_attempts || 0} Percubaan{(p.cp2_attempts || 0) !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    </td>
-                    <td style={s.td}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <span style={p.cp3_completed ? s.badgeGreen : s.badgeGray}>
-                          {p.cp3_completed ? '✅ Selesai' : '❌ Belum Selesai'}
-                        </span>
-                        <span style={s.attemptBadge}>
-                          🔄 {p.cp3_attempts || 0} Percubaan{(p.cp3_attempts || 0) !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    </td>
-                    <td style={s.td}>
-                      <span style={s.dateText}>
-                        {new Date(p.joined_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </span>
-                    </td>
-                    {canDelete && (
-                      <td style={s.td}>
-                        <button
-                          style={{ ...s.btnDelete, opacity: deleting === p.id ? 0.5 : 1 }}
-                          onClick={() => handleDelete(p)}
-                          disabled={deleting === p.id}
-                          title={`Remove ${p.nickname}`}
-                        >
-                          {deleting === p.id ? '…' : '🗑️ Padam'}
-                        </button>
-                      </td>
-                    )}
-                  </tr>
+                    ))}
+                  </div>
                 ))}
-                {filtered.length === 0 && (
-                  <tr>
-                    <td colSpan={canDelete ? 7 : 6} style={{ ...s.td, textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
-                      Tiada Pemain Ditemui
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+              </div>
+            ))}
+
+            {filtered.length === 0 && (
+              <p style={s.muted}>Tiada Pemain Ditemui</p>
+            )}
           </div>
+
         )}
       </div>
     </div>
@@ -161,6 +309,7 @@ const s = {
   cardTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#1e3a5f', margin: 0 },
   search: { padding: '0.5rem 1rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.9rem', outline: 'none', width: '240px' },
   hint: { background: '#fef9ee', border: '1px solid #fde68a', borderRadius: '8px', padding: '0.6rem 1rem', fontSize: '0.82rem', color: '#92400e', marginBottom: '1rem' },
+  filterTitle: { fontSize: '1rem', fontWeight: '700', color: '#1e3a5f', margin: '0.75rem 0 1rem' },
   tableWrap: { overflowX: 'auto' },
   table: { width: '100%', borderCollapse: 'collapse', minWidth: '600px' },
   thead: { background: '#f8fafc' },
@@ -175,6 +324,12 @@ const s = {
   muted: { color: '#94a3b8', fontSize: '0.9rem' },
   btnDelete: { background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', borderRadius: '7px', padding: '0.35rem 0.8rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.8rem', whiteSpace: 'nowrap', transition: 'opacity 0.2s' },
   attemptBadge: { background: '#f1f5f9', color: '#64748b', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: '600', whiteSpace: 'nowrap' },
+  schoolBlock: { marginTop: '1.2rem', marginBottom: '1.5rem' },
+  schoolTitle: { fontSize: '1.05rem', fontWeight: '800', color: '#1e3a5f', margin: '0 0 0.75rem', borderBottom: '2px solid #e2e8f0', paddingBottom: '0.5rem' },
+  classBlock: { marginLeft: '1rem', marginBottom: '1.25rem' },
+  classTitle: { fontSize: '0.95rem', fontWeight: '700', color: '#2563eb', margin: '0 0 0.6rem' },
+  monthBlock: { marginLeft: '1rem', marginBottom: '1rem' },
+  monthTitle: { fontSize: '0.9rem', fontWeight: '700', color: '#475569', margin: '0 0 0.5rem' },
 };
 
 export default ManageStudents;
