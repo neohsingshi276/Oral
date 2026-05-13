@@ -21,6 +21,8 @@ const safeInt = (val, fallback, min = 0, max = 9999) => {
 // ─── getSessions ──────────────────────────────────────────────────────────────
 // FIX: Replace N+1 queries (3 extra DB calls per session) with 3 bulk
 // queries that fetch all settings at once, then merge them in JS.
+// FIX 2: Always include teacher_session_access JOIN in base query so the
+// WHERE clause can reference it without breaking SQL syntax.
 const getSessions = async (req, res) => {
   try {
     let query = `
@@ -34,6 +36,7 @@ const getSessions = async (req, res) => {
       JOIN admins a ON s.admin_id = a.id
       LEFT JOIN schools sch ON s.school_id = sch.id
       LEFT JOIN classes c ON s.class_id = c.id
+      LEFT JOIN teacher_session_access tsa ON s.id = tsa.session_id
     `;
 
     const params = [];
@@ -42,10 +45,7 @@ const getSessions = async (req, res) => {
       // Show sessions where either:
       // (a) the class was directly assigned to this teacher, OR
       // (b) the teacher was granted access via reveal-code (teacher_session_access)
-      query += `
-        LEFT JOIN teacher_session_access tsa ON s.id = tsa.session_id
-        WHERE (c.teacher_id = ? OR tsa.teacher_id = ?)
-      `;
+      query += ` WHERE (c.teacher_id = ? OR tsa.teacher_id = ?)`;
       params.push(req.admin.id, req.admin.id);
     }
 
@@ -218,7 +218,7 @@ const updateSession = async (req, res) => {
     if (req.admin.role !== 'main_admin' && rows[0].teacher_id !== req.admin.id)
       return res.status(403).json({ error: 'You can only edit your own sessions' });
 
-    // Only main_admin can activate/deactivate session codes
+    // FIX: Allow teachers to activate/deactivate their own sessions
     if (is_active !== undefined) {
       if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin' && req.admin.role !== 'teacher')
         return res.status(403).json({ error: 'Only Admins or Teachers can activate or deactivate session codes' });
