@@ -1,6 +1,7 @@
 -- ============================================================
--- DentalQuest Complete Database Setup
--- Run this file once to set up the entire database
+-- DentalQuest Complete Database Setup (FIXED - Safe to run)
+-- ✅ Safe for fresh database
+-- ✅ Safe to re-run on existing database
 -- ============================================================
 
 CREATE DATABASE IF NOT EXISTS dental_health_app;
@@ -16,6 +17,7 @@ CREATE TABLE IF NOT EXISTS admins (
   email VARCHAR(100) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('admin', 'main_admin', 'teacher') DEFAULT 'admin',
+  school VARCHAR(255) NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -23,8 +25,14 @@ CREATE TABLE IF NOT EXISTS admins (
 CREATE TABLE IF NOT EXISTS game_sessions (
   id INT AUTO_INCREMENT PRIMARY KEY,
   admin_id INT NOT NULL,
+  school_id INT NULL,
+  class_id INT NULL,
   session_name VARCHAR(255) NOT NULL,
+  session_month TINYINT NULL,
   unique_token VARCHAR(6) NOT NULL UNIQUE,
+  reveal_password_hash VARCHAR(255) NULL,
+  reveal_password_plain VARCHAR(255) NULL,
+  reveal_password_text VARCHAR(100) NULL,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
@@ -88,7 +96,7 @@ CREATE TABLE IF NOT EXISTS facts (
   created_by INT NOT NULL,
   title VARCHAR(255) NOT NULL,
   content TEXT NOT NULL,
-  image_url VARCHAR(500) NULL,
+  image_url LONGTEXT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (created_by) REFERENCES admins(id) ON DELETE CASCADE
 );
@@ -110,7 +118,7 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
   id INT AUTO_INCREMENT PRIMARY KEY,
   question TEXT NOT NULL,
   question_type ENUM('multiple_choice', 'true_false', 'multi_select', 'match') NOT NULL DEFAULT 'multiple_choice',
-  image_url VARCHAR(500) NULL,
+  image_url LONGTEXT NULL,
   timer_seconds INT DEFAULT 15,
   options JSON NULL,
   correct_answer JSON NULL,
@@ -221,15 +229,19 @@ CREATE TABLE IF NOT EXISTS email_reminders (
   FOREIGN KEY (to_admin_id) REFERENCES admins(id) ON DELETE CASCADE
 );
 
+-- ── Admin Invitations ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS admin_invitations (
   id INT AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(100) NOT NULL,
   token VARCHAR(255) NOT NULL UNIQUE,
+  role ENUM('admin', 'teacher') DEFAULT 'admin',
+  school VARCHAR(255) NULL,
   expires_at TIMESTAMP NOT NULL,
   used BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ── OTP Tokens ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS otp_tokens (
   id          INT AUTO_INCREMENT PRIMARY KEY,
   email       VARCHAR(120) NOT NULL UNIQUE,
@@ -240,7 +252,7 @@ CREATE TABLE IF NOT EXISTS otp_tokens (
   FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Here
+-- ── FAQ Questions ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS faq_questions (
   id INT AUTO_INCREMENT PRIMARY KEY,
   question TEXT NOT NULL,
@@ -254,6 +266,7 @@ CREATE TABLE IF NOT EXISTS faq_questions (
   FOREIGN KEY (answered_by_admin_id) REFERENCES admins(id) ON DELETE SET NULL
 );
 
+-- ── FAQ Instructions ──────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS faq_instructions (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
@@ -264,18 +277,14 @@ CREATE TABLE IF NOT EXISTS faq_instructions (
   FOREIGN KEY (updated_by_admin_id) REFERENCES admins(id) ON DELETE SET NULL
 );
 
-INSERT INTO faq_instructions (title, content, display_order)
-VALUES
-('Cara Menggunakan Sistem DentalQuest', '1. Cipta sesi permainan di Sesi Permainan.\n2. Berikan kod 4 digit kepada murid.\n3. Pantau kemajuan murid di bahagian Pemain dan Analitik.\n4. Gunakan Sembang Pemain untuk membantu murid.\n5. Rujuk FAQ Dijawab untuk soalan biasa.', 1);
--- Here
-
--- Here
+-- ── Schools ───────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS schools (
   id INT AUTO_INCREMENT PRIMARY KEY,
   school_name VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
+-- ── Classes ───────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS classes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   school_id INT NOT NULL,
@@ -283,46 +292,78 @@ CREATE TABLE IF NOT EXISTS classes (
   class_name VARCHAR(100) NOT NULL,
   reveal_password_hash VARCHAR(255) NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
   CONSTRAINT fk_classes_school
-    FOREIGN KEY (school_id) REFERENCES schools(id)
-    ON DELETE CASCADE,
-
+    FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE,
   CONSTRAINT fk_classes_teacher
-    FOREIGN KEY (teacher_id) REFERENCES admins(id)
-    ON DELETE CASCADE
+    FOREIGN KEY (teacher_id) REFERENCES admins(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-ALTER TABLE game_sessions
-ADD COLUMN school_id INT NULL AFTER admin_id,
-ADD COLUMN class_id INT NULL AFTER school_id,
-ADD CONSTRAINT fk_session_school
-  FOREIGN KEY (school_id) REFERENCES schools(id)
-  ON DELETE CASCADE,
-ADD CONSTRAINT fk_session_class
-  FOREIGN KEY (class_id) REFERENCES classes(id)
-  ON DELETE CASCADE;
+-- ── Teacher Session Access ────────────────────────────────────
+-- ✅ FIX: Moved BEFORE any ALTER TABLE statements so it always gets created
+CREATE TABLE IF NOT EXISTS teacher_session_access (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  teacher_id INT NOT NULL,
+  session_id INT NOT NULL,
+  unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_teacher_session (teacher_id, session_id),
+  FOREIGN KEY (teacher_id) REFERENCES admins(id) ON DELETE CASCADE,
+  FOREIGN KEY (session_id) REFERENCES game_sessions(id) ON DELETE CASCADE
+);
 
-INSERT INTO schools (school_name)
-VALUES
-('SK Taman Mutiara'),
-('SK Seri Indah');
-
-INSERT INTO classes (school_id, teacher_id, class_name, reveal_password_hash)
-VALUES
-(1, 12, 'Class 5A', NULL),
-(1, 12, 'Class 5B', NULL),
-(2, 12, 'Class 6A', NULL);
+-- ============================================================
+-- ALTER TABLE — safe with IF NOT EXISTS (MySQL 8.0+)
+-- These are skipped automatically if columns already exist
+-- ============================================================
 
 ALTER TABLE game_sessions
-ADD COLUMN reveal_password_hash VARCHAR(255) NULL AFTER unique_token;
+  ADD COLUMN IF NOT EXISTS school_id INT NULL AFTER admin_id;
 
 ALTER TABLE game_sessions
-ADD COLUMN reveal_password_text VARCHAR(100) NULL AFTER reveal_password_hash;
+  ADD COLUMN IF NOT EXISTS class_id INT NULL AFTER school_id;
+
+-- Add foreign keys only if they don't already exist
+-- (wrapped in a procedure to avoid duplicate key errors)
+DROP PROCEDURE IF EXISTS add_fk_if_missing;
+DELIMITER $$
+CREATE PROCEDURE add_fk_if_missing()
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.TABLE_CONSTRAINTS
+    WHERE CONSTRAINT_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'game_sessions'
+      AND CONSTRAINT_NAME = 'fk_session_school'
+  ) THEN
+    ALTER TABLE game_sessions
+      ADD CONSTRAINT fk_session_school
+        FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.TABLE_CONSTRAINTS
+    WHERE CONSTRAINT_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'game_sessions'
+      AND CONSTRAINT_NAME = 'fk_session_class'
+  ) THEN
+    ALTER TABLE game_sessions
+      ADD CONSTRAINT fk_session_class
+        FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE;
+  END IF;
+END$$
+DELIMITER ;
+CALL add_fk_if_missing();
+DROP PROCEDURE IF EXISTS add_fk_if_missing;
 
 ALTER TABLE game_sessions
-ADD COLUMN reveal_password_plain VARCHAR(255) NULL AFTER reveal_password_hash;
--- Here
+  ADD COLUMN IF NOT EXISTS reveal_password_hash VARCHAR(255) NULL AFTER unique_token;
+
+ALTER TABLE game_sessions
+  ADD COLUMN IF NOT EXISTS reveal_password_plain VARCHAR(255) NULL AFTER reveal_password_hash;
+
+ALTER TABLE game_sessions
+  ADD COLUMN IF NOT EXISTS reveal_password_text VARCHAR(100) NULL AFTER reveal_password_plain;
+
+ALTER TABLE game_sessions
+  ADD COLUMN IF NOT EXISTS session_month TINYINT NULL AFTER session_name;
 
 -- ============================================================
 -- SAMPLE DATA
@@ -332,8 +373,14 @@ ADD COLUMN reveal_password_plain VARCHAR(255) NULL AFTER reveal_password_hash;
 INSERT IGNORE INTO admins (name, email, password_hash, role) VALUES
 ('Main Admin', 'admin@dentalquest.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'main_admin');
 
--- Sample Quiz Questions (Bahasa Malaysia)
-INSERT INTO quiz_questions (question, question_type, options, correct_answer, timer_seconds) VALUES
+-- FAQ Instructions
+INSERT IGNORE INTO faq_instructions (id, title, content, display_order)
+VALUES (1, 'Cara Menggunakan Sistem DentalQuest',
+'1. Cipta sesi permainan di Sesi Permainan.\n2. Berikan kod 4 digit kepada murid.\n3. Pantau kemajuan murid di bahagian Pemain dan Analitik.\n4. Gunakan Sembang Pemain untuk membantu murid.\n5. Rujuk FAQ Dijawab untuk soalan biasa.',
+1);
+
+-- Sample Quiz Questions
+INSERT IGNORE INTO quiz_questions (question, question_type, options, correct_answer, timer_seconds) VALUES
 ('Tabiat merokok tidak baik untuk kesihatan mulut.', 'true_false', '["Tidak", "Ya"]', '[1]', 15),
 ('Seseorang digalakkan berjumpa doktor gigi untuk pemeriksaan gigi ___________.', 'multiple_choice', '["Lima tahun sekali", "Hanya apabila gusi bengkak", "Hanya apabila gigi sakit", "Sekurang-kurangnya sekali setahun"]', '[3]', 15),
 ('Berikut adalah kepentingan gigi kecuali ___________.', 'multiple_choice', '["Pemakanan", "Pertuturan", "Penampilan dan keyakinan diri", "Pernafasan"]', '[3]', 15),
@@ -346,7 +393,7 @@ INSERT INTO quiz_questions (question, question_type, options, correct_answer, ti
 ('Seseorang yang tidak menjaga kebersihan mulut akan ___________.', 'multiple_choice', '["Mempunyai nafas yang lebih segar", "Disukai oleh rakan-rakan", "Disukai oleh doktor gigi", "Berisiko mendapat penyakit pergigian seperti karies gigi dan penyakit gusi"]', '[3]', 15);
 
 -- Sample Crossword Data
-INSERT INTO crossword_data (word, clue, direction, start_row, start_col) VALUES
+INSERT IGNORE INTO crossword_data (word, clue, direction, start_row, start_col) VALUES
 ('GIGI',   'Organ keras dalam mulut untuk mengunyah',       'across', 0, 0),
 ('GUSI',   'Tisu merah yang mengelilingi gigi',             'down',   0, 0),
 ('GOSOK',  'Tindakan membersihkan gigi dengan berus',       'across', 2, 1),
@@ -359,13 +406,13 @@ INSERT INTO crossword_data (word, clue, direction, start_row, start_col) VALUES
 ('DOKTOR', 'Pakar yang menjaga kesihatan gigi',             'down',   4, 8);
 
 -- Sample Learning Videos
-INSERT INTO learning_videos (title, youtube_url, description) VALUES
+INSERT IGNORE INTO learning_videos (title, youtube_url, description) VALUES
 ('Kenapa Kita Perlu Menjaga Kesihatan Gigi?', 'https://www.youtube.com/watch?v=lzBabM39SUE', 'Video tentang kepentingan menjaga kesihatan gigi'),
 ('Cara Memberus Gigi Yang Betul', 'https://www.youtube.com/watch?v=ZuysfO_GP9M', 'Teknik memberus gigi yang betul'),
 ('Makanan Sihat Untuk Gigi', 'https://www.youtube.com/watch?v=O6jGPTtBUMU', 'Makanan yang baik dan buruk untuk kesihatan gigi');
 
--- Sample Did You Know Facts
-INSERT INTO facts (created_by, title, content) VALUES
+-- Sample Facts
+INSERT IGNORE INTO facts (created_by, title, content) VALUES
 (1, 'Gigi Adalah Unik!', 'Gigi anda adalah unik seperti cap jari anda. Tiada dua set gigi yang sama!'),
 (1, 'Enamel Adalah Bahan Paling Keras', 'Enamel gigi adalah bahan paling keras dalam badan manusia, lebih keras daripada tulang!'),
 (1, 'Bakteria Dalam Mulut', 'Terdapat lebih 700 jenis bakteria dalam mulut manusia. Memberus gigi membantu mengurangkan bakteria berbahaya.');
@@ -378,21 +425,3 @@ SET SQL_SAFE_UPDATES = 1;
 -- Default login: admin@dentalquest.com / admin123
 -- ============================================================
 SELECT 'DentalQuest database setup complete!' as Status;
-
-ALTER TABLE facts MODIFY COLUMN image_url LONGTEXT NULL;
-ALTER TABLE quiz_questions MODIFY COLUMN image_url LONGTEXT NULL;
-
--- Migration: Fix crossword_data columns to have defaults (auto-layout makes stored values unused)
-ALTER TABLE crossword_data MODIFY COLUMN direction ENUM('across','down') DEFAULT 'across';
-ALTER TABLE crossword_data MODIFY COLUMN start_row INT DEFAULT 0;
-ALTER TABLE crossword_data MODIFY COLUMN start_col INT DEFAULT 0;
-
--- Migration: Add teacher role to admins
-ALTER TABLE admins MODIFY COLUMN role ENUM('admin', 'main_admin', 'teacher') DEFAULT 'admin';
-ALTER TABLE admin_invitations ADD COLUMN role ENUM('admin', 'teacher') DEFAULT 'admin' AFTER token;
-ALTER TABLE otp_tokens MODIFY COLUMN otp VARCHAR(255) NOT NULL;
-
--- Migration: Add school column to admins (for grouping teachers/admins by school)
-ALTER TABLE admins ADD COLUMN school VARCHAR(255) NULL AFTER role;
-ALTER TABLE admin_invitations ADD COLUMN school VARCHAR(255) NULL AFTER role;
-ALTER TABLE game_sessions ADD COLUMN session_month TINYINT NULL AFTER session_name;
