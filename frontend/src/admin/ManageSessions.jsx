@@ -14,6 +14,7 @@ const ManageSessions = () => {
   const [revealedCodes, setRevealedCodes] = useState({});
   const [passwordModal, setPasswordModal] = useState(null);
   const [revealPassword, setRevealPassword] = useState('');
+  const [revealError, setRevealError] = useState('');
 
   // Edit mode tracking
   const [editId, setEditId] = useState(null);
@@ -24,8 +25,8 @@ const ManageSessions = () => {
     class_name: '',
     session_name: '',
     reveal_password: '',
-    q_mode: 'random', q_timer: 15, q_order: 'shuffle', q_count: 10, q_min: 0, q_selected: [],
-    cw_mode: 'random', cw_count: 8, cw_selected: [], cw_min: 0,
+    q_mode: 'random', q_timer: 15, q_order: 'shuffle', q_count: 0, q_min: 0, q_selected: [],
+    cw_mode: 'random', cw_count: 0, cw_selected: [], cw_min: 0,
     cp3_timer: 60, cp3_min: 0
   };
 
@@ -37,10 +38,7 @@ const ManageSessions = () => {
     setFetchError('');
     return api.get('/sessions')
       .then(res => setSessions(res.data.sessions))
-      .catch(err => {
-        const msg = err.response?.data?.error || err.message || 'Failed to load sessions';
-        setFetchError('❌ ' + msg);
-      });
+      .catch(err => setFetchError('❌ ' + (err.response?.data?.error || err.message || 'Failed to load sessions')));
   };
   const fetchQuestions = () => api.get('/quiz/admin/questions').then(res => setQuestions(res.data.questions)).catch(() => {});
   const fetchWords = () => api.get('/crossword/admin').then(res => setWords(res.data.words)).catch(() => {});
@@ -50,6 +48,20 @@ const ManageSessions = () => {
     fetchQuestions();
     fetchWords();
   }, []);
+
+  // Once questions/words are loaded, set the default counts to the DB max
+  // (only if not editing and still at initial 0)
+  useEffect(() => {
+    if (questions.length > 0 && form.q_count === 0 && !editId) {
+      setForm(f => ({ ...f, q_count: questions.length }));
+    }
+  }, [questions]);
+
+  useEffect(() => {
+    if (words.length > 0 && form.cw_count === 0 && !editId) {
+      setForm(f => ({ ...f, cw_count: words.length }));
+    }
+  }, [words]);
 
   // LOAD EXISTING SETTINGS INTO THE WIZARD
   const handleEdit = (session) => {
@@ -97,7 +109,7 @@ const ManageSessions = () => {
 
   const handleCancelEdit = () => {
     setEditId(null);
-    setForm(defaultForm);
+    setForm({ ...defaultForm, q_count: questions.length || 0, cw_count: words.length || 0 });
     setStep(1);
     setMsg('');
   };
@@ -139,7 +151,7 @@ const ManageSessions = () => {
         setMsg(`✅ ${t('admin.sessionCreated')}`);
       }
 
-      setForm(defaultForm);
+      setForm({ ...defaultForm, q_count: questions.length || 0, cw_count: words.length || 0 });
       setStep(1);
       setEditId(null);
       fetchSessions();
@@ -452,9 +464,9 @@ const ManageSessions = () => {
       <div style={s.card}>
         <h2 style={s.cardTitle}>🎮 {t('admin.activeSessions')} ({sessions.length})</h2>
         {fetchError && (
-          <div style={{ background: '#fff1f2', color: '#e11d48', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem', fontWeight: '600' }}>
-            {fetchError}
-            <button onClick={fetchSessions} style={{ marginLeft: '1rem', background: '#e11d48', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>Retry</button>
+          <div style={{ background: '#fff1f2', color: '#e11d48', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>{fetchError}</span>
+            <button onClick={fetchSessions} style={{ background: '#e11d48', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>Retry</button>
           </div>
         )}
         <div style={s.sessionList}>
@@ -592,11 +604,18 @@ const ManageSessions = () => {
 
             <input
               type="password"
-              style={s.input}
+              style={{ ...s.input, ...(revealError ? { borderColor: '#e11d48', background: '#fff1f2' } : {}) }}
               placeholder="Enter password"
               value={revealPassword}
-              onChange={(e) => setRevealPassword(e.target.value)}
+              onChange={(e) => { setRevealPassword(e.target.value); setRevealError(''); }}
+              onKeyDown={(e) => e.key === 'Enter' && document.getElementById('reveal-btn')?.click()}
             />
+
+            {revealError && (
+              <div style={{ color: '#e11d48', fontSize: '0.88rem', fontWeight: '600', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                ❌ {revealError}
+              </div>
+            )}
 
             <div style={{
               display: 'flex',
@@ -604,26 +623,24 @@ const ManageSessions = () => {
               marginTop: '1rem'
             }}>
               <button
+                id="reveal-btn"
                 style={s.btnPrimary}
                 onClick={async () => {
+                  if (!revealPassword.trim()) { setRevealError('Please enter the password'); return; }
                   try {
                     const res = await api.post(
                       `/sessions/${passwordModal.id}/reveal-code`,
                       { password: revealPassword }
                     );
-
                     setRevealedCodes({
                       ...revealedCodes,
                       [passwordModal.id]: res.data.unique_token
                     });
-
+                    setRevealError('');
                     setPasswordModal(null);
                     setRevealPassword('');
                   } catch (err) {
-                    setMsg(
-                      err.response?.data?.error ||
-                      'Wrong password'
-                    );
+                    setRevealError(err.response?.data?.error || 'Wrong password');
                   }
                 }}
               >
@@ -635,6 +652,7 @@ const ManageSessions = () => {
                 onClick={() => {
                   setPasswordModal(null);
                   setRevealPassword('');
+                  setRevealError('');
                 }}
               >
                 Cancel

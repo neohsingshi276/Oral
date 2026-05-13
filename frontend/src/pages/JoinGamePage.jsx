@@ -29,6 +29,7 @@ const JoinGamePage = () => {
 
   const handleCodeChange = (idx, val) => {
     if (!/^\d*$/.test(val)) return;
+    if (error) setError(''); // clear error as soon as user re-types
     const newCode = [...code];
     newCode[idx] = val.slice(-1);
     setCode(newCode);
@@ -102,6 +103,8 @@ const JoinGamePage = () => {
         @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
         .code-input:focus { border-color: #D4A843 !important; background: #fff !important; box-shadow: 0 0 0 4px rgba(212,168,67,0.15) !important; }
         .join-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(1,48,107,0.4) !important; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
+        .shake { animation: shake 0.4s ease; }
       `}</style>
 
       {/* Background decorations */}
@@ -137,13 +140,13 @@ const JoinGamePage = () => {
             </div>
             <p style={s.subtitle}>{t('join.codeSubtitle')}</p>
             <form onSubmit={handleCodeSubmit}>
-              <div style={s.codeRow}>
+              <div style={s.codeRow} className={error ? 'shake' : ''}>
                 {code.map((digit, idx) => (
                   <input
                     key={idx}
                     id={`code-${idx}`}
                     className="code-input"
-                    style={s.codeInput}
+                    style={{ ...s.codeInput, ...(error ? { borderColor: '#e11d48', background: '#fff1f2' } : {}) }}
                     type="text"
                     inputMode="numeric"
                     maxLength={1}
