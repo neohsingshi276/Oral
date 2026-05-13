@@ -12,6 +12,18 @@ const safeAlter = async (sql) => {
 };
 
 const ensureSchema = async () => {
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS teacher_session_access (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      teacher_id INT NOT NULL,
+      session_id INT NOT NULL,
+      unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY unique_teacher_session (teacher_id, session_id),
+      FOREIGN KEY (teacher_id) REFERENCES admins(id) ON DELETE CASCADE,
+      FOREIGN KEY (session_id) REFERENCES game_sessions(id) ON DELETE CASCADE
+    )
+  `);
   await safeAlter("ALTER TABLE admins MODIFY COLUMN role ENUM('admin', 'main_admin', 'teacher') DEFAULT 'admin'");
   await safeAlter("ALTER TABLE crossword_data MODIFY COLUMN direction ENUM('across','down') DEFAULT 'across'");
   await safeAlter('ALTER TABLE crossword_data MODIFY COLUMN start_row INT DEFAULT 0');

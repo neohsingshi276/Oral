@@ -13,6 +13,8 @@ const app = express();
 const { generalLimiter } = require('./middleware/rateLimiter');
 const { ensureSchema } = require('./services/schema.service');
 
+app.set('trust proxy', 1);
+
 app.use(generalLimiter);
 
 const allowedOrigins = [
@@ -22,10 +24,12 @@ const allowedOrigins = [
   'http://localhost:5174',
 ].filter(Boolean);
 
-// Support dynamic Vercel preview URLs like:
-//   https://<project>-<hash>-<team>.vercel.app
+// Allow any *.vercel.app subdomain (covers all production + preview deployments)
+// and *.railway.app / *.onrender.com for flexibility across hosting platforms
 const allowedPatterns = [
-  /^https:\/\/[a-z0-9-]+-[a-z0-9]+-[a-z0-9-]+\.vercel\.app$/,
+  /^https:\/\/[a-z0-9-]+\.vercel\.app$/,
+  /^https:\/\/[a-z0-9-]+\.up\.railway\.app$/,
+  /^https:\/\/[a-z0-9-]+\.onrender\.com$/,
 ];
 
 const corsOptions = {
