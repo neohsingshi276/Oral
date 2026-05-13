@@ -6,10 +6,13 @@ const fs = require('fs');
 
 dotenv.config();
 
-const requiredEnv = ['JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_NAME', 'EMAIL_USER'];
+const requiredEnv = ['JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_NAME'];
 const missingEnv = requiredEnv.filter((key) => !process.env[key]);
 if (missingEnv.length > 0) {
   throw new Error(`Missing required environment variables: ${missingEnv.join(', ')}`);
+}
+if (!process.env.EMAIL_USER) {
+  console.warn('EMAIL_USER is not set. Password reset and reminder emails may fail until email environment variables are configured.');
 }
 
 if (!fs.existsSync('uploads')) {
