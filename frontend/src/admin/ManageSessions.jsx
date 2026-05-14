@@ -15,6 +15,7 @@ const ManageSessions = () => {
   const [passwordModal, setPasswordModal] = useState(null);
   const [revealPassword, setRevealPassword] = useState('');
   const [revealError, setRevealError] = useState('');
+  const [showRevealPass, setShowRevealPass] = useState(false);
   const formRef = useRef(null);
 
   // Edit mode tracking
@@ -437,19 +438,41 @@ const ManageSessions = () => {
 
                 <div style={s.field}>
                   <label style={s.label}>Password to Reveal Code</label>
-                  <input
-                    type="password"
-                    style={s.input}
-                    value={form.reveal_password}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        reveal_password: e.target.value
-                      })
-                    }
-                    required={!editId}
-                    placeholder={editId ? "Leave blank to keep existing password" : "Set password for this session code"}
-                  />
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <input
+                      type={showRevealPass ? 'text' : 'password'}
+                      style={{ ...s.input, paddingRight: '2.5rem' }}
+                      value={form.reveal_password}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          reveal_password: e.target.value
+                        })
+                      }
+                      required={!editId}
+                      placeholder={editId ? "Leave blank to keep existing password" : "Set password for this session code"}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRevealPass(v => !v)}
+                      style={{
+                        position: 'absolute',
+                        right: '0.6rem',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '0.2rem',
+                        color: '#64748b',
+                        fontSize: '1rem',
+                        lineHeight: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      title={showRevealPass ? 'Hide password' : 'Show password'}
+                    >
+                      {showRevealPass ? '\ud83d\ude48' : '\ud83d\udc41\ufe0f'}
+                    </button>
+                  </div>
                 </div>
 
 
