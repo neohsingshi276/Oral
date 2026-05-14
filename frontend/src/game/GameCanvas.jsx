@@ -5,7 +5,7 @@ import { START_POS } from './gameConfig';
 
 const SAVE_INTERVAL = 5000;
 
-const GameCanvas = ({ player, progress, onCheckpointReached }) => {
+const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) => {
   const containerRef = useRef(null);
   const gameRef = useRef(null);
   const sceneRef = useRef(null);
@@ -119,6 +119,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached }) => {
         });
 
         gameRef.current = game;
+        if (externalGameRef) externalGameRef.current = game;
 
         game.events.on('ready', () => {
           // Add and start the scene with data in one atomic call.

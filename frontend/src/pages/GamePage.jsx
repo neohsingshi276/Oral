@@ -104,6 +104,9 @@ const GamePage = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [crosswordKey, setCrosswordKey] = useState(0);
 
+  // Ref to the Phaser game instance — used to pause keyboard input while typing in chat
+  const gameInstanceRef = useRef(null);
+
   const getPlayerChatConfig = useCallback(() => (
     player?.chat_token
       ? { headers: { Authorization: `Bearer ${player.chat_token}` } }
@@ -298,7 +301,7 @@ const GamePage = () => {
 
       {/* Game Canvas */}
       <div style={s.canvasWrap}>
-        <GameCanvas player={player} progress={progress} onCheckpointReached={handleCheckpointReached} paused={isWorldPaused} />
+        <GameCanvas player={player} progress={progress} onCheckpointReached={handleCheckpointReached} paused={isWorldPaused} externalGameRef={gameInstanceRef} />
       </div>
 
       {/* Tutorial Overlay — 3-page walkthrough */}
@@ -598,7 +601,23 @@ const GamePage = () => {
               placeholder="Tanya soalan..."
               maxLength={200}
               disabled={!player?.chat_token}
-              onKeyDown={e => e.key === 'Enter' && sendChat()}
+              onKeyDown={e => {
+                // Prevent game from receiving these keystrokes
+                e.stopPropagation();
+                if (e.key === 'Enter') sendChat();
+              }}
+              onFocus={() => {
+                // Disable Phaser keyboard so WASD/E/Space don't move the player
+                if (gameInstanceRef.current?.input?.keyboard) {
+                  gameInstanceRef.current.input.keyboard.enabled = false;
+                }
+              }}
+              onBlur={() => {
+                // Re-enable Phaser keyboard when chat input loses focus
+                if (gameInstanceRef.current?.input?.keyboard) {
+                  gameInstanceRef.current.input.keyboard.enabled = true;
+                }
+              }}
             />
             <button style={{ ...s.chatSendBtn, opacity: player?.chat_token ? 1 : 0.5 }} onClick={sendChat} disabled={!player?.chat_token}>Hantar</button>
           </div>
