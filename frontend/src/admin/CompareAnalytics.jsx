@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
-import { useAuth } from '../context/AuthContext'; // adjust path if different
+import { useAuth } from '../context/AuthContext';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   Legend, ResponsiveContainer, RadarChart, Radar,
@@ -21,9 +21,9 @@ const computeMarks = (players) => {
     const totalExact = cp1Exact + cp2Exact + cp3Exact;
     return {
       ...p,
-      cp1_mark:   Math.round(cp1Exact),
-      cp2_mark:   Math.round(cp2Exact),
-      cp3_mark:   Math.round(cp3Exact),
+      cp1_mark: Math.round(cp1Exact),
+      cp2_mark: Math.round(cp2Exact),
+      cp3_mark: Math.round(cp3Exact),
       total_mark: totalExact >= 99.5 ? 100 : Math.floor(totalExact),
     };
   });
@@ -37,32 +37,34 @@ const avg = (arr, key) => arr.length > 0
 const buildStats = (players) => {
   if (!players.length) return null;
   const marked = computeMarks(players);
-  const total  = players.length;
+  const total = players.length;
   const cp1Done = players.filter(p => p.cp1_completed).length;
   const cp2Done = players.filter(p => p.cp2_completed).length;
   const cp3Done = players.filter(p => p.cp3_completed).length;
   const allDone = players.filter(p => p.cp1_completed && p.cp2_completed && p.cp3_completed).length;
-  const avgScore    = total > 0 ? Math.round(marked.reduce((s, p) => s + p.total_mark, 0) / total) : 0;
-  const avgCp1Mark  = total > 0 ? Math.round(marked.reduce((s, p) => s + p.cp1_mark, 0) / total) : 0;
-  const avgCp2Mark  = total > 0 ? Math.round(marked.reduce((s, p) => s + p.cp2_mark, 0) / total) : 0;
-  const avgCp3Mark  = total > 0 ? Math.round(marked.reduce((s, p) => s + p.cp3_mark, 0) / total) : 0;
-  const avgAtt1     = parseFloat(avg(players, 'cp1_attempts'));
-  const avgAtt2     = parseFloat(avg(players, 'cp2_attempts'));
-  const avgAtt3     = parseFloat(avg(players, 'cp3_attempts'));
+  const avgScore = total > 0 ? Math.round(marked.reduce((s, p) => s + p.total_mark, 0) / total) : 0;
+  const avgCp1Mark = total > 0 ? Math.round(marked.reduce((s, p) => s + p.cp1_mark, 0) / total) : 0;
+  const avgCp2Mark = total > 0 ? Math.round(marked.reduce((s, p) => s + p.cp2_mark, 0) / total) : 0;
+  const avgCp3Mark = total > 0 ? Math.round(marked.reduce((s, p) => s + p.cp3_mark, 0) / total) : 0;
+  const avgAtt1 = parseFloat(avg(players, 'cp1_attempts'));
+  const avgAtt2 = parseFloat(avg(players, 'cp2_attempts'));
+  const avgAtt3 = parseFloat(avg(players, 'cp3_attempts'));
   const leaderboard = [...marked]
     .sort((a, b) => b.total_mark - a.total_mark || a.nickname.localeCompare(b.nickname))
     .slice(0, 8);
-  return { total, cp1Done, cp2Done, cp3Done, allDone,
+  return {
+    total, cp1Done, cp2Done, cp3Done, allDone,
     cp1Pct: pct(cp1Done, total), cp2Pct: pct(cp2Done, total),
     cp3Pct: pct(cp3Done, total), allPct: pct(allDone, total),
     avgScore, avgCp1Mark, avgCp2Mark, avgCp3Mark,
-    avgAtt1, avgAtt2, avgAtt3, leaderboard };
+    avgAtt1, avgAtt2, avgAtt3, leaderboard
+  };
 };
 
 // ─── Colour palette ──────────────────────────────────────────────────────────
 const COLOR_A = '#2563eb';
 const COLOR_B = '#e11d48';
-const MEDAL   = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣'];
+const MEDAL = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣'];
 
 // ─── Month helpers ───────────────────────────────────────────────────────────
 const toMonthKey = (d) => {
@@ -72,7 +74,7 @@ const toMonthKey = (d) => {
 const monthLabel = (key) =>
   new Date(key + '-02').toLocaleDateString('ms-MY', { month: 'long', year: 'numeric' });
 
-// ─── Stat card ───────────────────────────────────────────────────────────────
+// ─── Stat row ────────────────────────────────────────────────────────────────
 const StatRow = ({ label, a, b, unit = '', higher = 'good' }) => {
   const numA = parseFloat(a);
   const numB = parseFloat(b);
@@ -93,33 +95,142 @@ const StatRow = ({ label, a, b, unit = '', higher = 'good' }) => {
 
 const td = {
   label: { padding: '0.6rem 0.75rem', fontSize: '0.82rem', color: '#64748b', fontWeight: '600', whiteSpace: 'nowrap' },
-  val:   { padding: '0.6rem 0.75rem', fontSize: '0.88rem', fontWeight: '700', textAlign: 'center', borderRadius: '4px', transition: 'background 0.2s' },
+  val: { padding: '0.6rem 0.75rem', fontSize: '0.88rem', fontWeight: '700', textAlign: 'center', borderRadius: '4px', transition: 'background 0.2s' },
 };
 
-// ─── MODE DEFINITIONS ────────────────────────────────────────────────────────
-// Admin modes:   session | month | school | class | school+class | school+month | school+class+month
-// Teacher modes: class | month | class+month
+// ─── Filter state shape ───────────────────────────────────────────────────────
+// Each side has: { type, session, school, class, month }
+// type: 'session' | 'filters'   (session = pick a session; filters = school/class/month combo)
+const emptyFilter = () => ({ type: 'filters', session: '', school: '', class: '', month: '' });
+
+// Apply a filter object to allPlayers
+const applyFilter = (allPlayers, f) => {
+  if (!f) return [];
+  if (f.type === 'session') {
+    if (!f.session) return [];
+    return allPlayers.filter(p => String(p.session_id) === String(f.session));
+  }
+  // type === 'filters' — all fields optional, at least one must be set
+  const anySet = f.school || f.class || f.month;
+  if (!anySet) return [];
+  return allPlayers.filter(p => {
+    if (f.school && String(p.school_id) !== String(f.school)) return false;
+    if (f.class && String(p.class_id) !== String(f.class)) return false;
+    if (f.month && toMonthKey(p.joined_at) !== f.month) return false;
+    return true;
+  });
+};
+
+// Derive a human label from a filter
+const buildLabel = (f, sessionOptions, schoolOptions, classOptions) => {
+  if (!f) return '';
+  if (f.type === 'session') {
+    if (!f.session) return '';
+    return sessionOptions.find(o => o.id === f.session)?.name || `Sesi ${f.session}`;
+  }
+  const parts = [];
+  if (f.school) parts.push(schoolOptions.find(o => o.id === f.school)?.name || `Sekolah ${f.school}`);
+  if (f.class) parts.push(classOptions.find(o => o.id === f.class)?.name || `Kelas ${f.class}`);
+  if (f.month) parts.push(monthLabel(f.month));
+  return parts.join(' — ') || '';
+};
+
+// Is a filter "ready" (has enough info to produce results)?
+const filterReady = (f) => {
+  if (!f) return false;
+  if (f.type === 'session') return !!f.session;
+  return !!(f.school || f.class || f.month);
+};
+
+// ─── One-side selector ───────────────────────────────────────────────────────
+const SideSelector = ({ color, label: sideLabel, filter, onChange, isAdmin, sessionOptions, schoolOptions, classOptions, monthOptions, otherFilter }) => {
+  const set = (key, val) => onChange({ ...filter, [key]: val });
+
+  // For session mode, exclude what the other side already picked
+  const otherSession = otherFilter?.type === 'session' ? otherFilter.session : null;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+      <label style={{ fontSize: '0.82rem', fontWeight: '700', color }}>{sideLabel}</label>
+
+      {/* Type toggle */}
+      {isAdmin && (
+        <div style={{ display: 'flex', gap: '0.35rem' }}>
+          <button
+            type="button"
+            style={{ ...s.typeBtn, ...(filter.type === 'filters' ? { background: color, color: '#fff', borderColor: color } : {}) }}
+            onClick={() => onChange({ ...emptyFilter(), type: 'filters' })}
+          >
+            🔽 Penapis
+          </button>
+          <button
+            type="button"
+            style={{ ...s.typeBtn, ...(filter.type === 'session' ? { background: color, color: '#fff', borderColor: color } : {}) }}
+            onClick={() => onChange({ ...emptyFilter(), type: 'session' })}
+          >
+            🎮 Sesi
+          </button>
+        </div>
+      )}
+
+      {/* Session picker */}
+      {filter.type === 'session' && (
+        <select style={{ ...s.select, borderColor: color }} value={filter.session} onChange={e => set('session', e.target.value)}>
+          <option value="">-- Pilih Sesi --</option>
+          {sessionOptions.filter(o => o.id !== otherSession).map(o => (
+            <option key={o.id} value={o.id}>{o.name}</option>
+          ))}
+        </select>
+      )}
+
+      {/* Filter pickers */}
+      {filter.type === 'filters' && (
+        <>
+          {isAdmin && (
+            <div>
+              <div style={s.subLabel}>🏫 Sekolah <span style={{ color: '#94a3b8', fontWeight: 400 }}>(pilihan)</span></div>
+              <select style={{ ...s.select, borderColor: color }} value={filter.school}
+                onChange={e => onChange({ ...filter, school: e.target.value, class: '' })}>
+                <option value="">-- Semua Sekolah --</option>
+                {schoolOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </select>
+            </div>
+          )}
+
+          <div>
+            <div style={s.subLabel}>📚 Kelas <span style={{ color: '#94a3b8', fontWeight: 400 }}>(pilihan)</span></div>
+            <select style={{ ...s.select, borderColor: color }} value={filter.class} onChange={e => set('class', e.target.value)}>
+              <option value="">-- Semua Kelas --</option>
+              {(isAdmin && filter.school
+                ? classOptions.filter(c => c.school_id === filter.school)
+                : classOptions
+              ).map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <div style={s.subLabel}>🗓️ Bulan <span style={{ color: '#94a3b8', fontWeight: 400 }}>(pilihan)</span></div>
+            <select style={{ ...s.select, borderColor: color }} value={filter.month} onChange={e => set('month', e.target.value)}>
+              <option value="">-- Semua Bulan --</option>
+              {monthOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 // ─── Main component ───────────────────────────────────────────────────────────
 const CompareAnalytics = () => {
   const { admin } = useAuth();
   const isTeacher = admin?.role === 'teacher';
-  const isAdmin   = !isTeacher; // main_admin or admin
+  const isAdmin = !isTeacher;
 
   const [allPlayers, setAllPlayers] = useState([]);
-  const [loading, setLoading]       = useState(true);
-
-  // mode: for admin — 'session'|'month'|'school'|'class'|'school_class'|'school_month'|'school_class_month'
-  //       for teacher — 'class'|'month'|'class_month'
-  const [mode, setMode] = useState(isTeacher ? 'class' : 'session');
-
-  // 3-filter state for admin's "school + class + month" mode
-  // selSchool is used as a pre-filter for class picker
-  const [selSchoolFilter, setSelSchoolFilter] = useState(''); // school pre-filter for side-A
-  const [selSchoolFilterB, setSelSchoolFilterB] = useState(''); // school pre-filter for side-B
-
-  const [selA, setSelA] = useState('');
-  const [selB, setSelB] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [filterA, setFilterA] = useState(emptyFilter());
+  const [filterB, setFilterB] = useState(emptyFilter());
 
   useEffect(() => {
     api.get('/admin/analytics')
@@ -127,15 +238,6 @@ const CompareAnalytics = () => {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
-
-  // Reset selections on mode change
-  const switchMode = (m) => {
-    setMode(m);
-    setSelA('');
-    setSelB('');
-    setSelSchoolFilter('');
-    setSelSchoolFilterB('');
-  };
 
   // ── Derived option lists ─────────────────────────────────────────────────────
   const sessionOptions = useMemo(() => {
@@ -171,112 +273,31 @@ const CompareAnalytics = () => {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [allPlayers]);
 
-  // Classes filtered by selected school (for school+class mode)
-  const classOptionsForSchoolA = useMemo(() =>
-    selSchoolFilter ? classOptions.filter(c => c.school_id === selSchoolFilter) : classOptions,
-  [classOptions, selSchoolFilter]);
+  // ── Filtered players & stats ──────────────────────────────────────────────────
+  const playersA = useMemo(() => applyFilter(allPlayers, filterA), [allPlayers, filterA]);
+  const playersB = useMemo(() => applyFilter(allPlayers, filterB), [allPlayers, filterB]);
+  const statsA = useMemo(() => buildStats(playersA), [playersA]);
+  const statsB = useMemo(() => buildStats(playersB), [playersB]);
 
-  const classOptionsForSchoolB = useMemo(() =>
-    selSchoolFilterB ? classOptions.filter(c => c.school_id === selSchoolFilterB) : classOptions,
-  [classOptions, selSchoolFilterB]);
+  const labelA = useMemo(() => buildLabel(filterA, sessionOptions, schoolOptions, classOptions), [filterA, sessionOptions, schoolOptions, classOptions]);
+  const labelB = useMemo(() => buildLabel(filterB, sessionOptions, schoolOptions, classOptions), [filterB, sessionOptions, schoolOptions, classOptions]);
 
-  // ── Filter players per side ──────────────────────────────────────────────────
-  const filterPlayers = (sel, schoolFilter) => {
-    if (!sel) return [];
-    switch (mode) {
-      case 'session':
-        return allPlayers.filter(p => String(p.session_id) === String(sel));
-      case 'month':
-        return allPlayers.filter(p => toMonthKey(p.joined_at) === sel);
-      case 'school':
-        return allPlayers.filter(p => String(p.school_id) === String(sel));
-      case 'class':
-        return allPlayers.filter(p => String(p.class_id) === String(sel));
-      case 'school_class': {
-        // sel = "schoolId::classId"
-        const [sId, cId] = sel.split('::');
-        return allPlayers.filter(p => String(p.school_id) === sId && String(p.class_id) === cId);
-      }
-      case 'school_month': {
-        // sel = "schoolId::monthKey"
-        const [sId, mKey] = sel.split('::');
-        return allPlayers.filter(p => String(p.school_id) === sId && toMonthKey(p.joined_at) === mKey);
-      }
-      case 'school_class_month': {
-        // sel = "schoolId::classId::monthKey"
-        const [sId, cId, mKey] = sel.split('::');
-        return allPlayers.filter(p =>
-          String(p.school_id) === sId &&
-          String(p.class_id) === cId &&
-          toMonthKey(p.joined_at) === mKey
-        );
-      }
-      case 'class_month': {
-        // sel = "classId::monthKey"
-        const [cId, mKey] = sel.split('::');
-        return allPlayers.filter(p => String(p.class_id) === cId && toMonthKey(p.joined_at) === mKey);
-      }
-      default:
-        return [];
-    }
-  };
-
-  const playersA = useMemo(() => filterPlayers(selA, selSchoolFilter),  [selA, allPlayers, mode, selSchoolFilter]);
-  const playersB = useMemo(() => filterPlayers(selB, selSchoolFilterB), [selB, allPlayers, mode, selSchoolFilterB]);
-  const statsA   = useMemo(() => buildStats(playersA), [playersA]);
-  const statsB   = useMemo(() => buildStats(playersB), [playersB]);
-
-  // ── Label derivation ────────────────────────────────────────────────────────
-  const getLabel = (sel, schoolFilter) => {
-    if (!sel) return '';
-    switch (mode) {
-      case 'session': return sessionOptions.find(o => o.id === sel)?.name || sel;
-      case 'month':   return monthLabel(sel);
-      case 'school':  return schoolOptions.find(o => o.id === sel)?.name || sel;
-      case 'class':   return classOptions.find(o => o.id === sel)?.name || sel;
-      case 'school_class': {
-        const [sId, cId] = sel.split('::');
-        const sName = schoolOptions.find(o => o.id === sId)?.name || sId;
-        const cName = classOptions.find(o => o.id === cId)?.name || cId;
-        return `${sName} — ${cName}`;
-      }
-      case 'school_month': {
-        const [sId, mKey] = sel.split('::');
-        const sName = schoolOptions.find(o => o.id === sId)?.name || sId;
-        return `${sName} — ${monthLabel(mKey)}`;
-      }
-      case 'school_class_month': {
-        const [sId, cId, mKey] = sel.split('::');
-        const sName = schoolOptions.find(o => o.id === sId)?.name || sId;
-        const cName = classOptions.find(o => o.id === cId)?.name || cId;
-        return `${sName} — ${cName} — ${monthLabel(mKey)}`;
-      }
-      case 'class_month': {
-        const [cId, mKey] = sel.split('::');
-        const cName = classOptions.find(o => o.id === cId)?.name || cId;
-        return `${cName} — ${monthLabel(mKey)}`;
-      }
-      default: return sel;
-    }
-  };
-
-  const labelA = getLabel(selA, selSchoolFilter);
-  const labelB = getLabel(selB, selSchoolFilterB);
+  const ready = filterReady(filterA) && filterReady(filterB);
 
   // ── Chart data ───────────────────────────────────────────────────────────────
   const barData = [
-    { name: 'CP1 Kuiz',        A: statsA?.cp1Pct ?? 0, B: statsB?.cp1Pct ?? 0 },
+    { name: 'CP1 Kuiz', A: statsA?.cp1Pct ?? 0, B: statsB?.cp1Pct ?? 0 },
     { name: 'CP2 Silang Kata', A: statsA?.cp2Pct ?? 0, B: statsB?.cp2Pct ?? 0 },
-    { name: 'CP3 Permainan',   A: statsA?.cp3Pct ?? 0, B: statsB?.cp3Pct ?? 0 },
-    { name: 'Semua Selesai',   A: statsA?.allPct ?? 0, B: statsB?.allPct ?? 0 },
+    { name: 'CP3 Permainan', A: statsA?.cp3Pct ?? 0, B: statsB?.cp3Pct ?? 0 },
+    { name: 'Semua Selesai', A: statsA?.allPct ?? 0, B: statsB?.allPct ?? 0 },
   ];
 
   const radarData = [
-    { subject: 'CP1 %',      A: statsA?.cp1Pct ?? 0,  B: statsB?.cp1Pct ?? 0 },
-    { subject: 'CP2 %',      A: statsA?.cp2Pct ?? 0,  B: statsB?.cp2Pct ?? 0 },
-    { subject: 'CP3 %',      A: statsA?.cp3Pct ?? 0,  B: statsB?.cp3Pct ?? 0 },
+    { subject: 'CP1 %', A: statsA?.cp1Pct ?? 0, B: statsB?.cp1Pct ?? 0 },
+    { subject: 'CP2 %', A: statsA?.cp2Pct ?? 0, B: statsB?.cp2Pct ?? 0 },
+    { subject: 'CP3 %', A: statsA?.cp3Pct ?? 0, B: statsB?.cp3Pct ?? 0 },
     { subject: 'Avg Markah', A: statsA?.avgScore ?? 0, B: statsB?.avgScore ?? 0 },
-    { subject: 'Semua CP',   A: statsA?.allPct ?? 0,   B: statsB?.allPct ?? 0 },
+    { subject: 'Semua CP', A: statsA?.allPct ?? 0, B: statsB?.allPct ?? 0 },
   ];
 
   const mergedLeaderboard = useMemo(() => {
@@ -290,166 +311,6 @@ const CompareAnalytics = () => {
 
   if (loading) return <div style={s.loading}>Memuatkan data perbandingan… 📊</div>;
 
-  const ready = selA && selB && selA !== selB;
-
-  // ── Admin mode buttons ───────────────────────────────────────────────────────
-  const adminModes = [
-    { key: 'session',           label: '🎮 Sesi vs Sesi' },
-    { key: 'month',             label: '🗓️ Bulan vs Bulan' },
-    { key: 'school',            label: '🏫 Sekolah vs Sekolah' },
-    { key: 'class',             label: '📚 Kelas vs Kelas' },
-    { key: 'school_class',      label: '🏫📚 Sekolah + Kelas' },
-    { key: 'school_month',      label: '🏫🗓️ Sekolah + Bulan' },
-    { key: 'school_class_month',label: '🏫📚🗓️ Sekolah + Kelas + Bulan' },
-  ];
-
-  const teacherModes = [
-    { key: 'class',       label: '📚 Kelas vs Kelas' },
-    { key: 'month',       label: '🗓️ Bulan vs Bulan' },
-    { key: 'class_month', label: '📚🗓️ Kelas + Bulan' },
-  ];
-
-  const currentModes = isTeacher ? teacherModes : adminModes;
-
-  // ── Compound selector for one side ──────────────────────────────────────────
-  // Returns the compound key for selA/selB
-  const CompoundSelector = ({ side }) => {
-    const isSideA = side === 'A';
-    const color      = isSideA ? COLOR_A : COLOR_B;
-    const schoolFilt = isSideA ? selSchoolFilter : selSchoolFilterB;
-    const setSchoolFilt = isSideA ? setSelSchoolFilter : setSelSchoolFilterB;
-    const sel        = isSideA ? selA : selB;
-    const setSel     = isSideA ? setSelA : setSelB;
-    const otherSel   = isSideA ? selB : selA;
-    const clsOpts    = isSideA ? classOptionsForSchoolA : classOptionsForSchoolB;
-
-    // Parse compound sel parts
-    const parts      = sel ? sel.split('::') : [];
-    const selSchool  = parts[0] || '';
-    const selClass   = parts[1] || '';
-    const selMonth   = parts[parts.length - 1] || '';
-
-    const buildKey = (s, c, m) => {
-      if (mode === 'school_class_month') return s && c && m ? `${s}::${c}::${m}` : '';
-      if (mode === 'school_class')       return s && c ? `${s}::${c}` : '';
-      if (mode === 'school_month')       return s && m ? `${s}::${m}` : '';
-      if (mode === 'class_month')        return c && m ? `${c}::${m}` : '';
-      return '';
-    };
-
-    const handleSchoolChange = (val) => {
-      setSchoolFilt(val);
-      // Reset dependent class
-      if (mode === 'school_class_month') setSel(buildKey(val, '', ''));
-      else if (mode === 'school_class')  setSel(buildKey(val, '', ''));
-      else if (mode === 'school_month')  setSel(buildKey(val, '', selMonth));
-      else setSel(val);
-    };
-
-    const handleClassChange = (val) => {
-      if (mode === 'school_class_month') setSel(buildKey(selSchool, val, selMonth));
-      else if (mode === 'school_class')  setSel(buildKey(selSchool, val, ''));
-      else if (mode === 'class_month')   setSel(buildKey(val, '', selMonth).replace('::', '').replace(/^::/, val + '::'));
-      else setSel(val);
-    };
-
-    const handleMonthChange = (val) => {
-      if (mode === 'school_class_month') setSel(buildKey(selSchool, selClass, val));
-      else if (mode === 'school_month')  setSel(buildKey(selSchool, '', val));
-      else if (mode === 'class_month')   setSel(buildKey('', selClass, val).replace(/^::/, selClass + '::'));
-      else setSel(val);
-    };
-
-    // Simple single-select modes
-    if (mode === 'session') {
-      return (
-        <select style={{ ...s.select, borderColor: color }} value={sel} onChange={e => setSel(e.target.value)}>
-          <option value="">-- Pilih Sesi --</option>
-          {sessionOptions.filter(o => o.id !== otherSel).map(o => (
-            <option key={o.id} value={o.id}>{o.name}</option>
-          ))}
-        </select>
-      );
-    }
-
-    if (mode === 'month') {
-      return (
-        <select style={{ ...s.select, borderColor: color }} value={sel} onChange={e => setSel(e.target.value)}>
-          <option value="">-- Pilih Bulan --</option>
-          {monthOptions.filter(o => o.id !== otherSel).map(o => (
-            <option key={o.id} value={o.id}>{o.name}</option>
-          ))}
-        </select>
-      );
-    }
-
-    if (mode === 'school') {
-      return (
-        <select style={{ ...s.select, borderColor: color }} value={sel} onChange={e => setSel(e.target.value)}>
-          <option value="">-- Pilih Sekolah --</option>
-          {schoolOptions.filter(o => o.id !== otherSel).map(o => (
-            <option key={o.id} value={o.id}>{o.name}</option>
-          ))}
-        </select>
-      );
-    }
-
-    if (mode === 'class') {
-      return (
-        <select style={{ ...s.select, borderColor: color }} value={sel} onChange={e => setSel(e.target.value)}>
-          <option value="">-- Pilih Kelas --</option>
-          {classOptions.filter(o => o.id !== otherSel).map(o => (
-            <option key={o.id} value={o.id}>{o.name}</option>
-          ))}
-        </select>
-      );
-    }
-
-    // Compound modes — multi-row dropdowns
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        {/* School picker (shown for all admin compound modes) */}
-        {isAdmin && (mode === 'school_class' || mode === 'school_month' || mode === 'school_class_month') && (
-          <div>
-            <div style={s.subLabel}>🏫 Sekolah</div>
-            <select style={{ ...s.select, borderColor: color }} value={selSchool || schoolFilt} onChange={e => handleSchoolChange(e.target.value)}>
-              <option value="">-- Pilih Sekolah --</option>
-              {schoolOptions.map(o => (
-                <option key={o.id} value={o.id}>{o.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* Class picker */}
-        {(mode === 'school_class' || mode === 'school_class_month' || mode === 'class_month' || mode === 'class') && (
-          <div>
-            <div style={s.subLabel}>📚 Kelas</div>
-            <select style={{ ...s.select, borderColor: color }} value={mode === 'class_month' ? selClass : selClass} onChange={e => handleClassChange(e.target.value)}>
-              <option value="">-- Pilih Kelas --</option>
-              {(isAdmin ? clsOpts : classOptions).map(o => (
-                <option key={o.id} value={o.id}>{o.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* Month picker */}
-        {(mode === 'school_month' || mode === 'school_class_month' || mode === 'class_month') && (
-          <div>
-            <div style={s.subLabel}>🗓️ Bulan</div>
-            <select style={{ ...s.select, borderColor: color }} value={selMonth} onChange={e => handleMonthChange(e.target.value)}>
-              <option value="">-- Pilih Bulan --</option>
-              {monthOptions.map(o => (
-                <option key={o.id} value={o.id}>{o.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div style={s.wrap}>
 
@@ -459,49 +320,54 @@ const CompareAnalytics = () => {
           <h2 style={s.title}>🔀 Perbandingan Analitik</h2>
           <p style={s.subtitle}>
             {isTeacher
-              ? 'Bandingkan prestasi antara kelas, bulan, atau kombinasi kelas dan bulan.'
-              : 'Bandingkan prestasi antara sesi, bulan, sekolah, kelas atau kombinasi tiga penapis.'}
+              ? 'Pilih kelas dan/atau bulan untuk setiap sisi bagi membandingkan prestasi.'
+              : 'Pilih kombinasi sekolah, kelas, bulan atau sesi untuk setiap sisi.'}
           </p>
         </div>
       </div>
 
-      {/* ── Mode toggle ── */}
+      {/* ── Selectors ── */}
       <div style={s.card}>
-        <div style={s.modeRow}>
-          <span style={s.modeLabel}>Mod Perbandingan:</span>
-          <div style={s.modeToggle}>
-            {currentModes.map(m => (
-              <button
-                key={m.key}
-                style={{ ...s.modeBtn, ...(mode === m.key ? s.modeBtnActive : {}) }}
-                onClick={() => switchMode(m.key)}
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Selectors ── */}
         <div style={s.selectorRow}>
-          <div style={s.selectorGroup}>
-            <label style={{ ...s.selectorLabel, color: COLOR_A }}>● Pilihan A</label>
-            <CompoundSelector side="A" />
-          </div>
+          <SideSelector
+            color={COLOR_A}
+            sideLabel="● Pilihan A"
+            filter={filterA}
+            onChange={setFilterA}
+            isAdmin={isAdmin}
+            sessionOptions={sessionOptions}
+            schoolOptions={schoolOptions}
+            classOptions={classOptions}
+            monthOptions={monthOptions}
+            otherFilter={filterB}
+          />
 
           <div style={s.vsCircle}>VS</div>
 
-          <div style={s.selectorGroup}>
-            <label style={{ ...s.selectorLabel, color: COLOR_B }}>● Pilihan B</label>
-            <CompoundSelector side="B" />
-          </div>
+          <SideSelector
+            color={COLOR_B}
+            sideLabel="● Pilihan B"
+            filter={filterB}
+            onChange={setFilterB}
+            isAdmin={isAdmin}
+            sessionOptions={sessionOptions}
+            schoolOptions={schoolOptions}
+            classOptions={classOptions}
+            monthOptions={monthOptions}
+            otherFilter={filterA}
+          />
         </div>
 
-        {schoolOptions.length === 0 && (mode === 'school' || mode.startsWith('school')) && (
-          <p style={s.empty}>Tiada data sekolah ditemui.</p>
-        )}
-        {classOptions.length === 0 && (mode === 'class' || mode.includes('class')) && (
-          <p style={s.empty}>Tiada data kelas ditemui.</p>
+        {/* Live preview of what each side resolves to */}
+        {(filterReady(filterA) || filterReady(filterB)) && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
+            <div style={{ fontSize: '0.78rem', color: COLOR_A, fontWeight: '600' }}>
+              A: {labelA || '—'} {filterReady(filterA) && <span style={{ color: '#64748b', fontWeight: 400 }}>({playersA.length} pemain)</span>}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: COLOR_B, fontWeight: '600' }}>
+              B: {labelB || '—'} {filterReady(filterB) && <span style={{ color: '#64748b', fontWeight: 400 }}>({playersB.length} pemain)</span>}
+            </div>
+          </div>
         )}
       </div>
 
@@ -510,7 +376,7 @@ const CompareAnalytics = () => {
         <div style={s.placeholder}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
           <p style={{ color: '#475569', fontWeight: '700', fontSize: '1rem' }}>
-            Pilih dua pilihan yang berbeza untuk mula membandingkan
+            Tetapkan sekurang-kurangnya satu penapis untuk setiap sisi bagi mula membandingkan
           </p>
           <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.35rem' }}>
             Carta, papan pendahulu dan analisis mendalam akan dipaparkan di sini
@@ -539,18 +405,18 @@ const CompareAnalytics = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <StatRow label="Jumlah Pemain"           a={statsA?.total ?? 0}        b={statsB?.total ?? 0}        />
-                  <StatRow label="Purata Markah (/100)"    a={statsA?.avgScore ?? 0}     b={statsB?.avgScore ?? 0}     />
-                  <StatRow label="Purata Markah CP1 (/33)" a={statsA?.avgCp1Mark ?? 0}   b={statsB?.avgCp1Mark ?? 0}   />
-                  <StatRow label="Purata Markah CP2 (/33)" a={statsA?.avgCp2Mark ?? 0}   b={statsB?.avgCp2Mark ?? 0}   />
-                  <StatRow label="Purata Markah CP3 (/33)" a={statsA?.avgCp3Mark ?? 0}   b={statsB?.avgCp3Mark ?? 0}   />
-                  <StatRow label="CP1 Selesai (%)"         a={statsA?.cp1Pct ?? 0}       b={statsB?.cp1Pct ?? 0}       unit="%" />
-                  <StatRow label="CP2 Selesai (%)"         a={statsA?.cp2Pct ?? 0}       b={statsB?.cp2Pct ?? 0}       unit="%" />
-                  <StatRow label="CP3 Selesai (%)"         a={statsA?.cp3Pct ?? 0}       b={statsB?.cp3Pct ?? 0}       unit="%" />
-                  <StatRow label="Semua CP Selesai (%)"    a={statsA?.allPct ?? 0}       b={statsB?.allPct ?? 0}       unit="%" />
-                  <StatRow label="Purata Percubaan CP1"    a={statsA?.avgAtt1 ?? 0}      b={statsB?.avgAtt1 ?? 0}      higher="low" />
-                  <StatRow label="Purata Percubaan CP2"    a={statsA?.avgAtt2 ?? 0}      b={statsB?.avgAtt2 ?? 0}      higher="low" />
-                  <StatRow label="Purata Percubaan CP3"    a={statsA?.avgAtt3 ?? 0}      b={statsB?.avgAtt3 ?? 0}      higher="low" />
+                  <StatRow label="Jumlah Pemain" a={statsA?.total ?? 0} b={statsB?.total ?? 0} />
+                  <StatRow label="Purata Markah (/100)" a={statsA?.avgScore ?? 0} b={statsB?.avgScore ?? 0} />
+                  <StatRow label="Purata Markah CP1 (/33)" a={statsA?.avgCp1Mark ?? 0} b={statsB?.avgCp1Mark ?? 0} />
+                  <StatRow label="Purata Markah CP2 (/33)" a={statsA?.avgCp2Mark ?? 0} b={statsB?.avgCp2Mark ?? 0} />
+                  <StatRow label="Purata Markah CP3 (/33)" a={statsA?.avgCp3Mark ?? 0} b={statsB?.avgCp3Mark ?? 0} />
+                  <StatRow label="CP1 Selesai (%)" a={statsA?.cp1Pct ?? 0} b={statsB?.cp1Pct ?? 0} unit="%" />
+                  <StatRow label="CP2 Selesai (%)" a={statsA?.cp2Pct ?? 0} b={statsB?.cp2Pct ?? 0} unit="%" />
+                  <StatRow label="CP3 Selesai (%)" a={statsA?.cp3Pct ?? 0} b={statsB?.cp3Pct ?? 0} unit="%" />
+                  <StatRow label="Semua CP Selesai (%)" a={statsA?.allPct ?? 0} b={statsB?.allPct ?? 0} unit="%" />
+                  <StatRow label="Purata Percubaan CP1" a={statsA?.avgAtt1 ?? 0} b={statsB?.avgAtt1 ?? 0} higher="low" />
+                  <StatRow label="Purata Percubaan CP2" a={statsA?.avgAtt2 ?? 0} b={statsB?.avgAtt2 ?? 0} higher="low" />
+                  <StatRow label="Purata Percubaan CP3" a={statsA?.avgAtt3 ?? 0} b={statsB?.avgAtt3 ?? 0} higher="low" />
                 </tbody>
               </table>
             </div>
@@ -668,12 +534,12 @@ const PanelHeader = ({ label, stats, color, side }) => (
       <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Tiada data</p>
     ) : (
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
-        <MiniStat label="Pemain"       value={stats.total}              color={color} />
+        <MiniStat label="Pemain" value={stats.total} color={color} />
         <MiniStat label="Purata Markah" value={`${stats.avgScore}/100`} color={color} />
-        <MiniStat label="CP1 ✅"        value={`${stats.cp1Pct}%`}      color={color} />
-        <MiniStat label="CP2 ✅"        value={`${stats.cp2Pct}%`}      color={color} />
-        <MiniStat label="CP3 ✅"        value={`${stats.cp3Pct}%`}      color={color} />
-        <MiniStat label="Semua CP ✅"   value={`${stats.allPct}%`}      color={color} />
+        <MiniStat label="CP1 ✅" value={`${stats.cp1Pct}%`} color={color} />
+        <MiniStat label="CP2 ✅" value={`${stats.cp2Pct}%`} color={color} />
+        <MiniStat label="CP3 ✅" value={`${stats.cp3Pct}%`} color={color} />
+        <MiniStat label="Semua CP ✅" value={`${stats.allPct}%`} color={color} />
       </div>
     )}
   </div>
@@ -722,33 +588,27 @@ const lbTd = { padding: '0.65rem 0.75rem', fontSize: '0.85rem', color: '#334155'
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const s = {
-  wrap:    { display: 'flex', flexDirection: 'column', gap: '1.25rem' },
+  wrap: { display: 'flex', flexDirection: 'column', gap: '1.25rem' },
   loading: { color: '#94a3b8', padding: '2rem', textAlign: 'center' },
-  header:  { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' },
-  title:   { fontSize: '1.2rem', fontWeight: '800', color: '#1e3a5f', margin: 0 },
-  subtitle:{ color: '#64748b', fontSize: '0.88rem', marginTop: '0.25rem' },
-  card:    { background: '#fff', borderRadius: '14px', padding: '1.25rem 1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
+  header: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' },
+  title: { fontSize: '1.2rem', fontWeight: '800', color: '#1e3a5f', margin: 0 },
+  subtitle: { color: '#64748b', fontSize: '0.88rem', marginTop: '0.25rem' },
+  card: { background: '#fff', borderRadius: '14px', padding: '1.25rem 1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
   sectionTitle: { fontSize: '0.95rem', fontWeight: '800', color: '#1e3a5f', margin: '0 0 1rem' },
 
-  modeRow:    { display: 'flex', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.25rem' },
-  modeLabel:  { fontWeight: '700', color: '#1e3a5f', fontSize: '0.9rem', paddingTop: '0.4rem' },
-  modeToggle: { display: 'flex', gap: '0.4rem', flexWrap: 'wrap' },
-  modeBtn:    { padding: '0.4rem 0.8rem', border: '1.5px solid #e2e8f0', borderRadius: '8px', background: '#f8fafc', color: '#64748b', fontWeight: '600', cursor: 'pointer', fontSize: '0.8rem', transition: 'all 0.15s' },
-  modeBtnActive: { background: '#1e3a5f', color: '#fff', borderColor: '#1e3a5f' },
+  selectorRow: { display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '1rem', alignItems: 'flex-start' },
+  subLabel: { fontSize: '0.75rem', fontWeight: '600', color: '#64748b', marginBottom: '0.2rem' },
+  select: { padding: '0.55rem 0.9rem', border: '2px solid', borderRadius: '9px', fontSize: '0.9rem', outline: 'none', background: '#fff', cursor: 'pointer', width: '100%' },
+  vsCircle: { width: '44px', height: '44px', borderRadius: '50%', background: '#1e3a5f', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: '0.85rem', flexShrink: 0, margin: '0 auto', marginTop: '1.6rem' },
 
-  selectorRow:  { display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '1rem', alignItems: 'flex-start' },
-  selectorGroup:{ display: 'flex', flexDirection: 'column', gap: '0.4rem' },
-  selectorLabel:{ fontSize: '0.82rem', fontWeight: '700' },
-  subLabel:     { fontSize: '0.75rem', fontWeight: '600', color: '#64748b', marginBottom: '0.2rem' },
-  select:       { padding: '0.55rem 0.9rem', border: '2px solid', borderRadius: '9px', fontSize: '0.9rem', outline: 'none', background: '#fff', cursor: 'pointer', width: '100%' },
-  vsCircle:     { width: '44px', height: '44px', borderRadius: '50%', background: '#1e3a5f', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: '0.85rem', flexShrink: 0, margin: '0 auto', marginTop: '1.6rem' },
+  typeBtn: { padding: '0.35rem 0.75rem', border: '1.5px solid #e2e8f0', borderRadius: '8px', background: '#f8fafc', color: '#64748b', fontWeight: '600', cursor: 'pointer', fontSize: '0.78rem' },
 
-  panels:     { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' },
-  panel:      { background: '#fff', borderRadius: '14px', padding: '1.25rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
+  panels: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' },
+  panel: { background: '#fff', borderRadius: '14px', padding: '1.25rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
 
-  placeholder:{ background: '#fff', borderRadius: '14px', padding: '3rem 2rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' },
-  empty:      { color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.75rem', textAlign: 'center' },
-  avatar:     { width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: '#fff', fontSize: '0.9rem', flexShrink: 0 },
+  placeholder: { background: '#fff', borderRadius: '14px', padding: '3rem 2rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' },
+  empty: { color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.75rem', textAlign: 'center' },
+  avatar: { width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', color: '#fff', fontSize: '0.9rem', flexShrink: 0 },
 };
 
 export default CompareAnalytics;
