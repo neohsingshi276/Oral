@@ -88,9 +88,8 @@ const StaffChat = () => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-  const visibleContacts = me?.role === 'main_admin' || me?.role === 'teacher'
-    ? contacts
-    : contacts.filter(c => c.role === 'main_admin');
+  // All roles can see and message all other staff (admins, teachers, main admin)
+  const visibleContacts = contacts;
 
   useEffect(() => {
     if (!selected && visibleContacts.length === 1) {
@@ -118,9 +117,7 @@ const StaffChat = () => {
         <div style={s.sidebarSub}>
           {me?.role === 'main_admin'
             ? 'Mesej daripada pentadbir anda'
-            : me?.role === 'teacher'
-              ? 'Hubungi pentadbir dan staf'
-              : 'Laporkan isu kepada Pentadbir Utama'}
+            : 'Hubungi pentadbir dan staf lain'}
         </div>
         <div style={s.contactList}>
           {visibleContacts.length === 0 && (
