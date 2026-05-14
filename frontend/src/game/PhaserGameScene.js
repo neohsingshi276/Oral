@@ -163,11 +163,8 @@ export default class PhaserGameScene extends Phaser.Scene {
     // ── Create tilemap ───────────────────────────────────────────────
     const map = this.make.tilemap({ key: 'mainmap' });
 
-    // const startX = this.initialPos?.x || START_POS.x;
-    // const startY = this.initialPos?.y || START_POS.y;
-
-    const startX = START_POS.x;
-    const startY = START_POS.y;
+    const startX = this.initialPos?.x || START_POS.x;
+    const startY = this.initialPos?.y || START_POS.y;
 
     // Add tilesets — order must match the JSON tileset array exactly.
     // The first arg is the tileset name in Tiled, second is the Phaser image key.

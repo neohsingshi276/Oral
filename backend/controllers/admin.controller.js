@@ -69,12 +69,33 @@ const downloadCSV = async (req, res) => {
       GROUP BY p.id ORDER BY s.session_name, p.nickname
     `, sessionParams);
 
+    // ── Compute marks for each row (mirrors score engine in frontend) ──────────
+    const CP_WEIGHT = 100 / 3;
+    const allCp3Scores = rows.map(r => r.cp3_score || 0);
+    const maxCP3 = Math.max(1, ...allCp3Scores);
+
+    rows.forEach(r => {
+      const allQuizScores = rows.map(x => x.quiz_score || 0);
+      const maxQuiz = Math.max(1, ...allQuizScores);
+      const cp1Exact = (r.quiz_correct != null && r.quiz_correct > 0 && r.quiz_total > 0)
+        ? (r.quiz_correct / r.quiz_total) * CP_WEIGHT
+        : (r.quiz_score > 0 ? (r.quiz_score / maxQuiz) * CP_WEIGHT : 0);
+      const cp2Exact = r.cp2_completed ? CP_WEIGHT : 0;
+      const cp3Exact = r.cp3_score ? Math.min(CP_WEIGHT, (r.cp3_score / maxCP3) * CP_WEIGHT) : 0;
+      const totalExact = cp1Exact + cp2Exact + cp3Exact;
+      r._cp1_mark   = Math.round(cp1Exact);
+      r._cp2_mark   = Math.round(cp2Exact);
+      r._cp3_mark   = Math.round(cp3Exact);
+      r._total_mark = totalExact >= 99.5 ? 100 : Math.floor(totalExact);
+    });
+
     const headers = [
       'Nickname', 'Session', 'Joined At',
       'CP1 Completed', 'CP1 Attempts',
       'CP2 Completed', 'CP2 Attempts',
       'CP3 Completed', 'CP3 Attempts',
-      'Quiz Score', 'Quiz Correct', 'Food Game Score'
+      'Quiz Score', 'Quiz Correct', 'Food Game Score',
+      'CP1 Mark (/33)', 'CP2 Mark (/33)', 'CP3 Mark (/33)', 'Overall Mark (/100)'
     ];
 
     const csvEscape = (val) => {
@@ -93,7 +114,8 @@ const downloadCSV = async (req, res) => {
         r.cp1_completed ? 'Yes' : 'No', r.cp1_attempts || 0,
         r.cp2_completed ? 'Yes' : 'No', r.cp2_attempts || 0,
         r.cp3_completed ? 'Yes' : 'No', r.cp3_attempts || 0,
-        r.quiz_score || 0, r.quiz_correct || 0, r.cp3_score || 0
+        r.quiz_score || 0, r.quiz_correct || 0, r.cp3_score || 0,
+        r._cp1_mark, r._cp2_mark, r._cp3_mark, r._total_mark
       ].map(csvEscape).join(','));
     });
 
