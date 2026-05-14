@@ -67,6 +67,9 @@ const getSessions = async (req, res) => {
       s.quiz_settings = quizMap[s.id] || {};
       s.crossword_settings = crosswordMap[s.id] || {};
       s.cp3_settings = cp3Map[s.id] || {};
+      // Expose a safe boolean instead of the hash itself
+      s.has_reveal_password = !!s.reveal_password_hash;
+      delete s.reveal_password_hash; // never send the hash to the frontend
     }
 
     res.json({ sessions });
@@ -345,7 +348,7 @@ const revealSessionCode = async (req, res) => {
     const session = rows[0];
 
     if (!session.reveal_password_hash) {
-      return res.status(400).json({ error: 'Reveal password not set for this session' });
+      return res.status(400).json({ error: 'No reveal password set for this session. Ask the main admin to edit the session and add one.' });
     }
 
     const isMatch = await bcrypt.compare(password, session.reveal_password_hash);

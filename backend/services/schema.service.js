@@ -33,6 +33,8 @@ const ensureSchema = async () => {
   await safeAlter("ALTER TABLE admins ADD COLUMN school VARCHAR(255) NULL AFTER role");
   await safeAlter("ALTER TABLE admin_invitations ADD COLUMN school VARCHAR(255) NULL AFTER role");
   await safeAlter("ALTER TABLE game_sessions ADD COLUMN session_month TINYINT NULL AFTER session_name");
+  // Fix: unique_token was VARCHAR(6) in original schema but codes are always 4 digits
+  await safeAlter("ALTER TABLE game_sessions MODIFY COLUMN unique_token VARCHAR(4) NOT NULL");
 };
 
 module.exports = { ensureSchema };

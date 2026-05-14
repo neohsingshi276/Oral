@@ -90,7 +90,7 @@ const ManageSessions = () => {
       q_mode: qSel.length > 0 ? 'manual' : 'random',
       q_timer: qs.timer_seconds || 15,
       q_order: qs.question_order || 'shuffle',
-      q_count: qs.question_count || 10,
+      q_count: qs.question_count || questions.length || 1,
       q_min: qs.minimum_correct || 0,
       q_selected: qSel,
 
