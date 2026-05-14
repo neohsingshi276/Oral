@@ -33,7 +33,17 @@ const ensureSchema = async () => {
   await safeAlter("ALTER TABLE admins ADD COLUMN school VARCHAR(255) NULL AFTER role");
   await safeAlter("ALTER TABLE admin_invitations ADD COLUMN school VARCHAR(255) NULL AFTER role");
   await safeAlter("ALTER TABLE game_sessions ADD COLUMN session_month TINYINT NULL AFTER session_name");
-  // Fix: unique_token was VARCHAR(6) in original schema but codes are always 4 digits
+
+  // Ensure reveal_password columns exist (were added after initial deploy)
+  await safeAlter("ALTER TABLE game_sessions ADD COLUMN reveal_password_hash VARCHAR(255) NULL AFTER unique_token");
+  await safeAlter("ALTER TABLE game_sessions ADD COLUMN reveal_password_plain VARCHAR(255) NULL AFTER reveal_password_hash");
+  await safeAlter("ALTER TABLE game_sessions ADD COLUMN reveal_password_text VARCHAR(100) NULL AFTER reveal_password_plain");
+
+  // Ensure school_id / class_id exist (added after initial deploy)
+  await safeAlter("ALTER TABLE game_sessions ADD COLUMN school_id INT NULL AFTER admin_id");
+  await safeAlter("ALTER TABLE game_sessions ADD COLUMN class_id INT NULL AFTER school_id");
+
+  // Fix unique_token column width (was VARCHAR(6), codes are always 4 digits)
   await safeAlter("ALTER TABLE game_sessions MODIFY COLUMN unique_token VARCHAR(4) NOT NULL");
 };
 
