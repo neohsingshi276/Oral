@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -15,6 +15,7 @@ const ManageSessions = () => {
   const [passwordModal, setPasswordModal] = useState(null);
   const [revealPassword, setRevealPassword] = useState('');
   const [revealError, setRevealError] = useState('');
+  const formRef = useRef(null);
 
   // Edit mode tracking
   const [editId, setEditId] = useState(null);
@@ -104,7 +105,10 @@ const ManageSessions = () => {
     });
 
     setStep(1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Scroll the edit form into view within the scrollable parent
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   };
 
   const handleCancelEdit = () => {
@@ -241,7 +245,7 @@ const ManageSessions = () => {
     <div>
       {/* ─── WIZARD FORM ─── */}
       {admin?.role === 'main_admin' && (
-        <div style={s.card}>
+        <div ref={formRef} style={s.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
             <h2 style={s.cardTitle}>{editId ? `✏️ ${t('admin.editSessionSettings')}` : `➕ ${t('admin.createGameSession')}`}</h2>
             {editId && <button type="button" onClick={handleCancelEdit} style={{ background: 'none', border: 'none', color: '#e11d48', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem' }}>❌ {t('admin.cancelEdit')}</button>}
@@ -422,11 +426,12 @@ const ManageSessions = () => {
                     onChange={v => setForm({ ...form, cp3_min: v })}
                     options={[
                       { value: 0, label: `0 (${t('admin.noMinimum')})` },
-                      { value: 500, label: `500 ${t('admin.points')}` },
-                      { value: 1000, label: `1000 ${t('admin.points')}` }
+                      { value: 1000, label: `1000 ${t('admin.points')}` },
+                      { value: 2000, label: `2000 ${t('admin.points')} (${t('admin.fullMark') || 'Full Mark'})` },
+                      { value: 3000, label: `3000 ${t('admin.points')}` }
                     ]}
                     min={0}
-                    max={5000}
+                    max={10000}
                   />
                 </div>
 

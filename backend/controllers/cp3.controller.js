@@ -173,8 +173,9 @@ const getFinalLeaderboard = async (req, res) => {
     );
 
     const adminTarget = cp3Settings[0]?.target_score || 0;
-    const maxCP3raw   = cp3Scores.length > 0 ? Math.max(...cp3Scores.map(s => s.score)) : 1;
-    const cp3Denom    = adminTarget > 0 ? adminTarget : maxCP3raw;
+    // Default CP3 denominator is 2000 (2000 pts = full mark).
+    // Admin target_score overrides if explicitly set.
+    const cp3Denom    = adminTarget > 0 ? adminTarget : 2000;
 
     const quizMap      = Object.fromEntries(quizScores.map(s     => [s.player_id, s]));
     const crosswordMap = Object.fromEntries(crosswordScores.map(s => [s.player_id, s]));

@@ -5,38 +5,38 @@ const DEFAULT_DURATION = 60;
 const TROLLEY_SPEED = 2.5;
 const TROLLEY_ACCELERATION = 0.18;
 const FOOD_FALL_SPEED = 2.5;
-const SPAWN_INTERVAL = 1200;
+const SPAWN_INTERVAL = 600;
 
 const GOOD_FOODS = [
-  { emoji: '🥛', name: 'Susu', points: 10, color: '#FFE5B4' },
-  { emoji: '🧀', name: 'Keju', points: 10, color: '#FFD700' },
-  { emoji: '🥕', name: 'Lobak Merah', points: 10, color: '#FF8C42' },
-  { emoji: '🥦', name: 'Brokoli', points: 10, color: '#90EE90' },
-  { emoji: '🍎', name: 'Epal', points: 10, color: '#FF6B6B' },
-  { emoji: '🥬', name: 'Sayur Berdaun', points: 10, color: '#7FFF7F' },
-  { emoji: '🥚', name: 'Telur', points: 10, color: '#FFEFD5' },
-  { emoji: '🐟', name: 'Ikan', points: 10, color: '#87CEFA' },
-  { emoji: '🍌', name: 'Pisang', points: 10, color: '#FFE135' },
-  { emoji: '🌽', name: 'Jagung', points: 10, color: '#F0C040' },
-  { emoji: '🥜', name: 'Kekacang', points: 10, color: '#D2A679' },
-  { emoji: '🍇', name: 'Anggur', points: 10, color: '#9B59B6' },
-  { emoji: '💧', name: 'Air', points: 10, color: '#B0E0E6' },
-  { emoji: '🍊', name: 'Oren', points: 10, color: '#FFA500' },
+  { emoji: '🥛', name: 'Susu', points: 100, color: '#FFE5B4' },
+  { emoji: '🧀', name: 'Keju', points: 100, color: '#FFD700' },
+  { emoji: '🥕', name: 'Lobak Merah', points: 100, color: '#FF8C42' },
+  { emoji: '🥦', name: 'Brokoli', points: 100, color: '#90EE90' },
+  { emoji: '🍎', name: 'Epal', points: 100, color: '#FF6B6B' },
+  { emoji: '🥬', name: 'Sayur Berdaun', points: 100, color: '#7FFF7F' },
+  { emoji: '🥚', name: 'Telur', points: 100, color: '#FFEFD5' },
+  { emoji: '🐟', name: 'Ikan', points: 100, color: '#87CEFA' },
+  { emoji: '🍌', name: 'Pisang', points: 100, color: '#FFE135' },
+  { emoji: '🌽', name: 'Jagung', points: 100, color: '#F0C040' },
+  { emoji: '🥜', name: 'Kekacang', points: 100, color: '#D2A679' },
+  { emoji: '🍇', name: 'Anggur', points: 100, color: '#9B59B6' },
+  { emoji: '💧', name: 'Air', points: 100, color: '#B0E0E6' },
+  { emoji: '🍊', name: 'Oren', points: 100, color: '#FFA500' },
 ];
 
 const BAD_FOODS = [
-  { emoji: '🍭', name: 'Lolipop', points: -5, color: '#FF69B4' },
-  { emoji: '🍬', name: 'Gula-gula', points: -5, color: '#DDA0DD' },
-  { emoji: '🍫', name: 'Coklat', points: -5, color: '#8B4513' },
-  { emoji: '🍩', name: 'Donat', points: -5, color: '#FFB6C1' },
-  { emoji: '🧁', name: 'Kek Cawan', points: -5, color: '#FF99CC' },
-  { emoji: '🥤', name: 'Soda', points: -5, color: '#87CEEB' },
-  { emoji: '🍪', name: 'Biskut', points: -5, color: '#D2691E' },
-  { emoji: '🎂', name: 'Kek', points: -5, color: '#FFB7C5' },
-  { emoji: '🍿', name: 'Bertih Jagung Karamel', points: -5, color: '#DAA520' },
-  { emoji: '🧃', name: 'Jus Kotak', points: -5, color: '#FFA07A' },
-  { emoji: '🍦', name: 'Aiskrim', points: -5, color: '#FFFDD0' },
-  { emoji: '🍡', name: 'Gula-gula Kapas', points: -5, color: '#FFB6D9' },
+  { emoji: '🍭', name: 'Lolipop', points: -70, color: '#FF69B4' },
+  { emoji: '🍬', name: 'Gula-gula', points: -70, color: '#DDA0DD' },
+  { emoji: '🍫', name: 'Coklat', points: -70, color: '#8B4513' },
+  { emoji: '🍩', name: 'Donat', points: -70, color: '#FFB6C1' },
+  { emoji: '🧁', name: 'Kek Cawan', points: -70, color: '#FF99CC' },
+  { emoji: '🥤', name: 'Soda', points: -70, color: '#87CEEB' },
+  { emoji: '🍪', name: 'Biskut', points: -70, color: '#D2691E' },
+  { emoji: '🎂', name: 'Kek', points: -70, color: '#FFB7C5' },
+  { emoji: '🍿', name: 'Bertih Jagung Karamel', points: -70, color: '#DAA520' },
+  { emoji: '🧃', name: 'Jus Kotak', points: -70, color: '#FFA07A' },
+  { emoji: '🍦', name: 'Aiskrim', points: -70, color: '#FFFDD0' },
+  { emoji: '🍡', name: 'Gula-gula Kapas', points: -70, color: '#FFB6D9' },
 ];
 
 const CP3Game = ({ player, onComplete }) => {
@@ -146,9 +146,9 @@ const CP3Game = ({ player, onComplete }) => {
         const trolleyY = gameAreaHeight - 120;
         return prev.map(item => {
           const newY = item.y + FOOD_FALL_SPEED * deltaTime;
-          if (newY >= trolleyY && newY <= trolleyY + 40 && !item.caught) {
-            const trolleyLeft = trolleyPosRef.current - 10;
-            const trolleyRight = trolleyPosRef.current + 10;
+          if (newY >= trolleyY && newY <= trolleyY + 30 && !item.caught) {
+            const trolleyLeft = trolleyPosRef.current - 5;
+            const trolleyRight = trolleyPosRef.current + 5;
             if (item.x >= trolleyLeft && item.x <= trolleyRight) {
               setScore(s => {
                 const ns = Math.max(0, s + item.points);
@@ -250,11 +250,11 @@ const CP3Game = ({ player, onComplete }) => {
         </div>
         <div style={s.foodCols}>
           <div style={s.goodCol}>
-            <div style={s.colTitle}>✅ Menangkap Ini! (+10)</div>
+            <div style={s.colTitle}>✅ Menangkap Ini! (+100)</div>
             <div style={s.foodRow}>{GOOD_FOODS.map((f, i) => <div key={i} style={s.foodChip}>{f.emoji}</div>)}</div>
           </div>
           <div style={s.badCol}>
-            <div style={s.colTitle}>❌ Elakkan Ini! (-5)</div>
+            <div style={s.colTitle}>❌ Elakkan Ini! (-70)</div>
             <div style={s.foodRow}>{BAD_FOODS.map((f, i) => <div key={i} style={s.foodChip}>{f.emoji}</div>)}</div>
           </div>
         </div>
@@ -351,9 +351,9 @@ const CP3Game = ({ player, onComplete }) => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff', padding: '0.35rem 0.75rem', borderRadius: '10px', border: '2px solid #e2e8f0' }}>
             <span style={{ fontSize: '0.72rem', color: '#888', fontWeight: '600' }}>✅</span>
-            <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#16a34a' }}>{GOOD_FOODS.map(f => f.emoji).slice(0, 4).join('')} +10</span>
+            <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#16a34a' }}>{GOOD_FOODS.map(f => f.emoji).slice(0, 4).join('')} +100</span>
             <span style={{ fontSize: '0.72rem', color: '#888', margin: '0 0.25rem' }}>|</span>
-            <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#e11d48' }}>{BAD_FOODS.map(f => f.emoji).slice(0, 4).join('')} -5</span>
+            <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#e11d48' }}>{BAD_FOODS.map(f => f.emoji).slice(0, 4).join('')} -70</span>
           </div>
           <div style={s.timerPanel}>
             <span style={{ ...s.timerVal, color: timeLeft <= 10 ? '#e11d48' : '#4ECDC4' }}>{timeLeft}</span>
