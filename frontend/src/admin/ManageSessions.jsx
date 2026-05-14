@@ -443,7 +443,7 @@ const ManageSessions = () => {
                       })
                     }
                     required={!editId}
-                    placeholder="Set password for this session code"
+                    placeholder={editId ? "Leave blank to keep existing password" : "Set password for this session code"}
                   />
                 </div>
 

@@ -67,9 +67,6 @@ const getSessions = async (req, res) => {
       s.quiz_settings = quizMap[s.id] || {};
       s.crossword_settings = crosswordMap[s.id] || {};
       s.cp3_settings = cp3Map[s.id] || {};
-      // Expose a safe boolean instead of the hash itself
-      s.has_reveal_password = !!s.reveal_password_hash;
-      delete s.reveal_password_hash; // never send the hash to the frontend
     }
 
     res.json({ sessions });
@@ -198,7 +195,7 @@ const createSession = async (req, res) => {
 
 // ─── updateSession ────────────────────────────────────────────────────────────
 const updateSession = async (req, res) => {
-  const { is_active, school_id, class_id, session_name, quiz_settings, crossword_settings, cp3_settings } = req.body;
+  const { is_active, school_id, class_id, session_name, reveal_password, quiz_settings, crossword_settings, cp3_settings } = req.body;
   const sessionId = req.params.id;
 
   try {
@@ -234,6 +231,14 @@ const updateSession = async (req, res) => {
       if (session_name.trim().length > 80)
         return res.status(400).json({ error: 'Session name too long (max 80 characters)' });
       await db.query('UPDATE game_sessions SET session_name = ? WHERE id = ?', [session_name.trim(), sessionId]);
+    }
+
+    if (reveal_password && reveal_password.trim().length >= 4) {
+      const revealPasswordHash = await bcrypt.hash(reveal_password.trim(), 10);
+      await db.query(
+        'UPDATE game_sessions SET reveal_password_hash = ?, reveal_password_plain = ? WHERE id = ?',
+        [revealPasswordHash, reveal_password.trim(), sessionId]
+      );
     }
 
     if (quiz_settings) {
@@ -348,7 +353,7 @@ const revealSessionCode = async (req, res) => {
     const session = rows[0];
 
     if (!session.reveal_password_hash) {
-      return res.status(400).json({ error: 'No reveal password set for this session. Ask the main admin to edit the session and add one.' });
+      return res.status(400).json({ error: 'Reveal password not set for this session' });
     }
 
     const isMatch = await bcrypt.compare(password, session.reveal_password_hash);
