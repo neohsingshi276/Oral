@@ -145,78 +145,128 @@ const filterReady = (f) => {
 // ─── One-side selector ───────────────────────────────────────────────────────
 const SideSelector = ({ color, label: sideLabel, filter, onChange, isAdmin, sessionOptions, schoolOptions, classOptions, monthOptions, otherFilter }) => {
   const set = (key, val) => onChange({ ...filter, [key]: val });
-
-  // For session mode, exclude what the other side already picked
   const otherSession = otherFilter?.type === 'session' ? otherFilter.session : null;
 
+  // Derive a light tint of the color for the panel background
+  const panelBg = color === '#2563eb' ? '#eff6ff' : '#fff1f2';
+  const panelBorder = color === '#2563eb' ? '#bfdbfe' : '#fecdd3';
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-      <label style={{ fontSize: '0.82rem', fontWeight: '700', color }}>{sideLabel}</label>
+    <div style={{
+      background: panelBg,
+      border: `1.5px solid ${panelBorder}`,
+      borderRadius: '14px',
+      overflow: 'hidden',
+    }}>
+      {/* Panel header */}
+      <div style={{
+        background: color,
+        padding: '0.65rem 1rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+      }}>
+        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#fff', opacity: 0.85 }} />
+        <span style={{ color: '#fff', fontWeight: '800', fontSize: '0.88rem', letterSpacing: '0.01em' }}>
+          {sideLabel}
+        </span>
+      </div>
 
-      {/* Type toggle */}
-      {isAdmin && (
-        <div style={{ display: 'flex', gap: '0.35rem' }}>
-          <button
-            type="button"
-            style={{ ...s.typeBtn, ...(filter.type === 'filters' ? { background: color, color: '#fff', borderColor: color } : {}) }}
-            onClick={() => onChange({ ...emptyFilter(), type: 'filters' })}
-          >
-            🔽 Penapis
-          </button>
-          <button
-            type="button"
-            style={{ ...s.typeBtn, ...(filter.type === 'session' ? { background: color, color: '#fff', borderColor: color } : {}) }}
-            onClick={() => onChange({ ...emptyFilter(), type: 'session' })}
-          >
-            🎮 Sesi
-          </button>
-        </div>
-      )}
+      {/* Body */}
+      <div style={{ padding: '0.9rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
 
-      {/* Session picker */}
-      {filter.type === 'session' && (
-        <select style={{ ...s.select, borderColor: color }} value={filter.session} onChange={e => set('session', e.target.value)}>
-          <option value="">-- Pilih Sesi --</option>
-          {sessionOptions.filter(o => o.id !== otherSession).map(o => (
-            <option key={o.id} value={o.id}>{o.name}</option>
-          ))}
-        </select>
-      )}
+        {/* Mode toggle — admin only */}
+        {isAdmin && (
+          <div style={{ display: 'flex', background: '#fff', borderRadius: '9px', padding: '3px', gap: '3px', border: `1px solid ${panelBorder}` }}>
+            {[
+              { key: 'filters', icon: '🔽', label: 'Penapis' },
+              { key: 'session', icon: '🎮', label: 'Sesi' },
+            ].map(({ key, icon, label }) => (
+              <button
+                key={key}
+                type="button"
+                style={{
+                  flex: 1,
+                  padding: '0.38rem 0',
+                  border: 'none',
+                  borderRadius: '7px',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  background: filter.type === key ? color : 'transparent',
+                  color: filter.type === key ? '#fff' : '#64748b',
+                }}
+                onClick={() => onChange({ ...emptyFilter(), type: key })}
+              >
+                {icon} {label}
+              </button>
+            ))}
+          </div>
+        )}
 
-      {/* Filter pickers */}
-      {filter.type === 'filters' && (
-        <>
-          {isAdmin && (
-            <div>
-              <div style={s.subLabel}>🏫 Sekolah <span style={{ color: '#94a3b8', fontWeight: 400 }}>(pilihan)</span></div>
-              <select style={{ ...s.select, borderColor: color }} value={filter.school}
-                onChange={e => onChange({ ...filter, school: e.target.value, class: '' })}>
-                <option value="">-- Semua Sekolah --</option>
-                {schoolOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-              </select>
+        {/* Session picker */}
+        {filter.type === 'session' && (
+          <div>
+            <div style={s.subLabel}>🎮 Pilih Sesi</div>
+            <select style={{ ...s.select, borderColor: panelBorder, background: '#fff' }} value={filter.session} onChange={e => set('session', e.target.value)}>
+              <option value="">-- Pilih Sesi --</option>
+              {sessionOptions.filter(o => o.id !== otherSession).map(o => (
+                <option key={o.id} value={o.id}>{o.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Filter pickers */}
+        {filter.type === 'filters' && (
+          <>
+            {/* School — full width (admin only) */}
+            {isAdmin && (
+              <div>
+                <div style={s.subLabel}>🏫 Sekolah <span style={{ color: '#94a3b8', fontWeight: 400 }}>(pilihan)</span></div>
+                <select
+                  style={{ ...s.select, borderColor: panelBorder, background: '#fff' }}
+                  value={filter.school}
+                  onChange={e => onChange({ ...filter, school: e.target.value, class: '' })}
+                >
+                  <option value="">— Semua Sekolah —</option>
+                  {schoolOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                </select>
+              </div>
+            )}
+
+            {/* Class + Month — side by side */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+              <div>
+                <div style={s.subLabel}>📚 Kelas</div>
+                <select
+                  style={{ ...s.select, borderColor: panelBorder, background: '#fff' }}
+                  value={filter.class}
+                  onChange={e => set('class', e.target.value)}
+                >
+                  <option value="">— Semua —</option>
+                  {(isAdmin && filter.school
+                    ? classOptions.filter(c => c.school_id === filter.school)
+                    : classOptions
+                  ).map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <div style={s.subLabel}>🗓️ Bulan</div>
+                <select
+                  style={{ ...s.select, borderColor: panelBorder, background: '#fff' }}
+                  value={filter.month}
+                  onChange={e => set('month', e.target.value)}
+                >
+                  <option value="">— Semua —</option>
+                  {monthOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                </select>
+              </div>
             </div>
-          )}
-
-          <div>
-            <div style={s.subLabel}>📚 Kelas <span style={{ color: '#94a3b8', fontWeight: 400 }}>(pilihan)</span></div>
-            <select style={{ ...s.select, borderColor: color }} value={filter.class} onChange={e => set('class', e.target.value)}>
-              <option value="">-- Semua Kelas --</option>
-              {(isAdmin && filter.school
-                ? classOptions.filter(c => c.school_id === filter.school)
-                : classOptions
-              ).map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <div style={s.subLabel}>🗓️ Bulan <span style={{ color: '#94a3b8', fontWeight: 400 }}>(pilihan)</span></div>
-            <select style={{ ...s.select, borderColor: color }} value={filter.month} onChange={e => set('month', e.target.value)}>
-              <option value="">-- Semua Bulan --</option>
-              {monthOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-            </select>
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 };
