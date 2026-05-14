@@ -15,6 +15,7 @@ import ProfileSettings from '../admin/ProfileSettings';
 import EmailReminders from '../admin/EmailReminders';
 import ActivityLog from '../admin/ActivityLog';
 import AdminFAQ from '../admin/AdminFAQ';
+import CompareAnalytics from '../admin/CompareAnalytics';
 import LanguageToggle from '../components/LanguageToggle';
 
 const AdminDashboard = () => {
@@ -35,6 +36,7 @@ const AdminDashboard = () => {
     { key: 'quiz', icon: '❓', label: 'Soalan Kuiz', roles: ['main_admin', 'admin'] },
     { key: 'crossword', icon: '🧩', label: 'Teka Silang Kata', roles: ['main_admin', 'admin'] },
     { key: 'analytics', icon: '📈', label: 'Analitik', roles: ['main_admin', 'admin', 'teacher'] },
+    { key: 'comparison', icon: '🔀', label: 'Perbandingan', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'admins', icon: '👨‍💼', label: 'Urus Pentadbir', roles: ['main_admin', 'admin'] },
     { key: 'email', icon: '✉️', label: admin?.role === 'main_admin' ? 'E-mel Peringatan' : 'Peti Masuk', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'faq', icon: '❔', label: 'FAQ Sistem', roles: ['main_admin', 'admin', 'teacher'] },
@@ -62,7 +64,8 @@ const AdminDashboard = () => {
       case 'facts': return <ManageFacts />;
       case 'quiz': return <ManageQuiz />;
       case 'crossword': return <ManageCrossword />;
-      case 'analytics': return <Analytics />;
+      case 'analytics': return <Analytics setActive={setActive} />;
+      case 'comparison': return <CompareAnalytics />;
       case 'admins': return <ManageAdmins currentAdmin={admin} />;
       case 'email': return <EmailReminders currentAdmin={admin} />;
       case 'faq': return <AdminFAQ currentAdmin={admin} />;

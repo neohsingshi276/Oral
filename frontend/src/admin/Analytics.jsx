@@ -30,7 +30,7 @@ const computeMarks = (players) => {
   });
 };
 
-const Analytics = () => {
+const Analytics = ({ setActive }) => {
   const [data, setData]                   = useState(null);
   const [loading, setLoading]             = useState(true);
   const [activeTab, setActiveTab]         = useState('overview');
@@ -192,6 +192,14 @@ const Analytics = () => {
         </select>
         {selectedSession !== 'all' && (
           <button style={s.clearBtn} onClick={() => setSelectedSession('all')}>✕ Kosongkan</button>
+        )}
+        {setActive && (
+          <button
+            style={{ marginLeft: 'auto', padding: '0.45rem 1rem', background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            onClick={() => setActive('comparison')}
+          >
+            🔀 Perbandingan
+          </button>
         )}
       </div>
 
