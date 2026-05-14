@@ -566,9 +566,22 @@ const GamePage = () => {
                 <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
                   {t('game.nextCheckpoint')}
                 </p>
-                <button style={{ ...s.continueBtn, background: '#16a34a' }} onClick={handleCloseCPModal}>
-                  Teruskan Pengembaraan!
-                </button>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button
+                    style={{ ...s.continueBtn, background: '#64748b', flex: '0 0 auto', width: 'auto', padding: '0.85rem 1.25rem', fontSize: '0.9rem' }}
+                    onClick={() => {
+                      api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }).catch(console.error);
+                      if (activeCP === 1) setQuizKey(prev => prev + 1);
+                      if (activeCP === 2) setCrosswordKey(prev => prev + 1);
+                      setCpStep('video');
+                    }}
+                  >
+                    🔄 Cuba Semula
+                  </button>
+                  <button style={{ ...s.continueBtn, background: '#16a34a', flex: 1 }} onClick={handleCloseCPModal}>
+                    Teruskan Pengembaraan! →
+                  </button>
+                </div>
               </div>
             )}
           </div>

@@ -69,11 +69,12 @@ const getLeaderboard = async (req, res) => {
 
   try {
     const [rows] = await db.query(`
-      SELECT c.player_id, c.score, p.nickname
+      SELECT c.player_id, MAX(c.score) as score, p.nickname
       FROM cp3_scores c
       JOIN players p ON c.player_id = p.id
       WHERE c.session_id = ?
-      ORDER BY c.score DESC LIMIT 20
+      GROUP BY c.player_id, p.nickname
+      ORDER BY score DESC LIMIT 20
     `, [sessionId]);
     res.json({ leaderboard: rows });
   } catch (err) {
@@ -166,7 +167,7 @@ const getFinalLeaderboard = async (req, res) => {
 
     // CP3: raw game score + admin-set target
     const [cp3Scores] = await db.query(
-      'SELECT player_id, score FROM cp3_scores WHERE session_id = ?', [sessionId]
+      'SELECT player_id, MAX(score) as score FROM cp3_scores WHERE session_id = ? GROUP BY player_id', [sessionId]
     );
     const [cp3Settings] = await db.query(
       'SELECT target_score FROM cp3_settings WHERE session_id = ?', [sessionId]

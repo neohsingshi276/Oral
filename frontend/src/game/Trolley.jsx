@@ -291,7 +291,15 @@ const CP3Game = ({ player, onComplete }) => {
           ))}
         </div>
         {(targetScore === 0 || finalScore >= targetScore) ? (
-          <button style={s.doneBtn} onClick={onComplete}>🎉 Tamat DentalQuest!</button>
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.25rem' }}>
+            <button
+              style={{ ...s.doneBtn, background: 'linear-gradient(135deg,#64748b,#475569)', flex: '0 0 auto', width: 'auto', padding: '0.85rem 1.25rem', fontSize: '0.9rem' }}
+              onClick={() => { setGameState('start'); setShowFinalLeaderboard(false); setShowLeaderboard(false); }}
+            >
+              🔄 Cuba Semula
+            </button>
+            <button style={{ ...s.doneBtn, flex: 1 }} onClick={onComplete}>🎉 Tamat DentalQuest!</button>
+          </div>
         ) : (
           <div style={{ textAlign: 'center' }}>
             <div style={{ background: '#fff1f2', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', border: '1px solid #fecdd3' }}>
