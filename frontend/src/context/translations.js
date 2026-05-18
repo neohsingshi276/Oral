@@ -1107,6 +1107,7 @@ export const exactTextTranslations = {
   'Memuatkan data perbandingan…': 'Loading comparison data…',
   'Tiada data': 'No data',
   'Tiada data pemain': 'No player data',
+  'pilihan': 'selection',
 
   // CompareAnalytics — stat row labels  
   'Statistik': 'Statistic',
@@ -1363,6 +1364,7 @@ export const exactTextTranslations = {
 
   // ManageCrossword submit button
   'Tambah': 'Add',
+  'Grid teka silang kata dijana secara automatik! Hanya tambah perkataan dan pembayang. Sistem memilih 8 perkataan rawak setiap permainan dan menyusunnya dengan mencari huruf yang bersilang.': 'Crossword grids are generated automatically! Just add words and clues. The system selects 8 random words per game and arranges them by finding intersecting letters.',
 
   // QuizGame UI strings
   'Tahniah! Kuiz Selesai!': 'Congratulations! Quiz Done!',
