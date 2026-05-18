@@ -628,8 +628,6 @@ export const exactTextTranslations = {
   'Purata Markah CP1': 'Average CP1 Score',
   'Purata Markah CP2': 'Average CP2 Score',
   'Purata Markah CP3': 'Average CP3 Score',
-  'Semua Pemain': 'All Players',
-
   'Purata Jumlah': 'Overall Average',
   'Ringkasan': 'Summary',
   'Penyelesaian': 'Completion',
@@ -991,7 +989,7 @@ export const exactTextTranslations = {
   'Keluarkan': 'Remove',
   'Gagal menukar peranan': 'Failed to change role',
   // ManageStudents
-  'Semua Pemain': 'All Players',
+  '👥 Semua Pemain': '👥 All Players',
   'Cari dengan nama atau sesi...': 'Search by name or session...',
   'Anda boleh memadam pemain. Tindakan ini memadamkan semua data mereka secara kekal.': 'You can delete players. This permanently deletes all their data.',
   'Memuatkan data pemain': 'Loading player data',
