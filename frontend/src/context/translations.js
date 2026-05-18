@@ -1377,7 +1377,8 @@ export const exactTextTranslations = {
   'Belum Lulus!': 'Not Passed Yet!',
   'Kuiz sedang dimuatkan...': 'Quiz loading...',
   'Teruskan Pengembaraan! 🗺️': 'Continue Adventure! 🗺️',
-
+  'Semua Fakta': 'All Facts',
+  'Selamat sejahtera,': 'Greetings,',
   // Trolley (Food Game) UI strings
   'Gerakkan troli!': 'Move the trolley!',
   'Penangkap Makanan!': 'Food Catcher!',
