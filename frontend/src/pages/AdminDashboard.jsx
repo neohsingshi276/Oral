@@ -38,7 +38,7 @@ const AdminDashboard = () => {
     { key: 'analytics', icon: '📈', label: 'Analitik', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'comparison', icon: '🔀', label: 'Perbandingan', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'admins', icon: '👨‍💼', label: 'Urus Pentadbir', roles: ['main_admin', 'admin'] },
-    { key: 'email', icon: '✉️', label: admin?.role === 'main_admin' ? 'E-mel Peringatan' : 'Peti Masuk', roles: ['main_admin', 'admin', 'teacher'] },
+    { key: 'email', icon: '✉️', label: admin?.role === 'main_admin' ? 'Peti Masuk' : 'Peti Masuk', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'faq', icon: '❔', label: 'FAQ Sistem', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'activity', icon: '📋', label: 'Log Aktiviti', roles: ['main_admin'] },
   ];
@@ -70,6 +70,7 @@ const AdminDashboard = () => {
       case 'email': return <EmailReminders currentAdmin={admin} />;
       case 'faq': return <AdminFAQ currentAdmin={admin} />;
       case 'activity': return <ActivityLog />;
+      case 'comparison': return <CompareAnalytics />;
       default: return <Overview admin={admin} setActive={setActive} menu={MENU} />;
     }
   };

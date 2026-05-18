@@ -1403,6 +1403,7 @@ export const exactTextTranslations = {
   'Rujuk FAQ Dijawab untuk soalan biasa.': 'Refer to Answered FAQ for common questions.',
 
   'Contoh: Gigi anda unik!': 'Example: Your teeth are unique!',
+  'Pergi': 'Go'
 };
 
 export const translations = { bm, bi };
