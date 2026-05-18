@@ -1392,6 +1392,7 @@ export const exactTextTranslations = {
   'Formula: (Skor CP / Skor Max) × 33.33 = Markah (Jumlah /100)': 'Formula: (CP Score / Max Score) × 33.33 = Mark (Total /100)',
 
   'guru@sekolah.com': 'teacher@school.com',
+  'Selamat datang,': 'Welcome,',
 
   'Panduan Menggunakan Sistem': 'System Usage Guide',
   'Cipta sesi permainan di bahagian Sesi Permainan.': 'Create a game session in the Game Sessions section.',
