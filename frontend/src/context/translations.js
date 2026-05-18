@@ -818,7 +818,7 @@ export const exactTextTranslations = {
   'Tambah Pasangan': 'Add Pair',
   'Kemaskini': 'Update',
   'Batal': 'Cancel',
-  'Semua Soalan': 'All Questions',
+  '❓ Semua Soalan ({questions.length})': '❓ All Questions ({questions.length})',
   'Tiada soalan lagi. Tambah soalan di atas!': 'No questions yet. Add a question above!',
   'Tetapan Kuiz Mengikut Sesi': 'Quiz Settings by Session',
   'Pilih Sesi': 'Select Session',
