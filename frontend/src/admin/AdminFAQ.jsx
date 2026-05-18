@@ -213,7 +213,7 @@ const AdminFAQ = () => {
                     <span style={styles.badge}>{answeredFAQ.length} soalan</span>
                 </div>
 
-                {loading && <p>Loading...</p>}
+                {loading && <p>Memuatkan...</p>}
                 {!loading && answeredFAQ.length === 0 && <p style={styles.empty}>Belum ada FAQ dijawab.</p>}
 
                 <div style={styles.faqGrid}>

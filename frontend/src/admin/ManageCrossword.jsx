@@ -16,10 +16,10 @@ const ManageCrossword = () => {
     try {
       if (editing) {
         await api.put(`/crossword/admin/${editing}`, { word: form.word.toUpperCase(), clue: form.clue });
-        setMsg('✅ Word updated!');
+        setMsg('✅ Perkataan dikemaskini!');
       } else {
         await api.post('/crossword/admin', { word: form.word.toUpperCase(), clue: form.clue });
-        setMsg('✅ Word added!');
+        setMsg('✅ Perkataan ditambah!');
       }
       setForm({ word: '', clue: '' });
       setEditing(null);

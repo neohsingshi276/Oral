@@ -943,8 +943,8 @@ export const exactTextTranslations = {
   'Tidak Betul': 'False',
   'Betul': 'True',
   // ManageCrossword additional
-  'Word updated!': 'Word updated!',
-  'Word added!': 'Word added!',
+  'Perkataan dikemaskini!': 'Word updated!',
+  'Perkataan ditambah!': 'Word added!',
   // HomePage
   'Cari fakta tentang gigi...': 'Search facts about teeth...',
   'Tiada keputusan ditemui': 'No results found',
@@ -1037,7 +1037,84 @@ export const exactTextTranslations = {
   'Padam fakta ini?': 'Delete this fact?',
   'Edit': 'Edit',
   'Ralat:': 'Error:',
-  // ActivityLog
+  // AdminDashboard nav labels missing
+  'Perbandingan': 'Comparison',
+  'FAQ Sistem': 'System FAQ',
+  'Panduan untuk pentadbir baharu memahami sistem': 'Guide for new admins to understand the system',
+
+  // ManageStudents filter dropdowns
+  'Semua Sekolah': 'All Schools',
+  'Semua Kelas': 'All Classes',
+  'Semua Bulan': 'All Months',
+
+  // Common error / action strings
+  'Gagal': 'Failed',
+  'Hantar ➤': 'Send ➤',
+  'Gagal Untuk Memuatkan Mesej': 'Failed to Load Messages',
+
+  // ManageCrossword fixed strings (corrected from English→English)
+  // template strings
+  'Peringatan Sesi 3 Bulan — DentalQuest': '3-Month Session Reminder — DentalQuest',
+  'cth. Peringatan Sesi 3 Bulan': 'e.g. 3-Month Session Reminder',
+
+  // CrosswordGame clue strings
+  'Tiada petunjuk lagi!': 'No hints left!',
+  'petunjuk berbaki — klik untuk dedahkan perkataan yang dipilih': 'hints left — click to reveal selected word',
+  'Petunjuk digunakan': 'Hint used',
+
+  // CompareAnalytics — stat table labels
+  'Purata Markah (/100)': 'Average Score (/100)',
+  'Purata Markah CP1 (/33)': 'Average CP1 Score (/33)',
+  'Purata Markah CP2 (/33)': 'Average CP2 Score (/33)',
+  'Purata Markah CP3 (/33)': 'Average CP3 Score (/33)',
+  'CP1 Selesai (%)': 'CP1 Completed (%)',
+  'CP2 Selesai (%)': 'CP2 Completed (%)',
+  'CP3 Selesai (%)': 'CP3 Completed (%)',
+  'Semua CP Selesai (%)': 'All CP Completed (%)',
+  'Purata Percubaan CP1': 'Average CP1 Attempts',
+  'Purata Percubaan CP2': 'Average CP2 Attempts',
+  'Purata Percubaan CP3': 'Average CP3 Attempts',
+  'Semua CP': 'All CP',
+  'Semua CP ✅': 'All CP ✅',
+  'Semua Selesai': 'All Completed',
+  'Avg Markah': 'Avg Score',
+  'CP1 ✅': 'CP1 ✅',
+  'CP2 ✅': 'CP2 ✅',
+  'CP3 ✅': 'CP3 ✅',
+  'Purata Markah': 'Average Score',
+
+  // CompareAnalytics — selector & UI labels
+  'Penapis': 'Filter',
+  '● Pilihan A': '● Option A',
+  '● Pilihan B': '● Option B',
+  '🎮 Pilih Sesi': '🎮 Select Session',
+  '🏫 Sekolah': '🏫 School',
+  '📚 Kelas': '📚 Class',
+  '🗓️ Bulan': '🗓️ Month',
+  '— Semua Sekolah —': '— All Schools —',
+  '— Semua —': '— All —',
+  '-- Pilih Sesi --': '-- Select Session --',
+  'Papan Pendahulu Gabungan (Top 10)': 'Combined Leaderboard (Top 10)',
+  'Perbandingan Analitik': 'Analytics Comparison',
+  'Pilih kelas dan/atau bulan untuk setiap sisi bagi membandingkan prestasi.': 'Select class and/or month for each side to compare performance.',
+  'Pilih kombinasi sekolah, kelas, bulan atau sesi untuk setiap sisi.': 'Select a combination of school, class, month or session for each side.',
+  'Tetapkan sekurang-kurangnya satu penapis untuk setiap sisi bagi mula membandingkan': 'Set at least one filter for each side to start comparing',
+  'Carta, papan pendahulu dan analisis mendalam akan dipaparkan di sini': 'Charts, leaderboard and in-depth analysis will appear here',
+  'Perbandingan Statistik': 'Statistics Comparison',
+  'Kadar Penyiapan Checkpoint (%)': 'Checkpoint Completion Rate (%)',
+  'Profil Keseluruhan': 'Overall Profile',
+  'Papan Pendahulu Gabungan': 'Combined Leaderboard',
+  'Memuatkan data perbandingan…': 'Loading comparison data…',
+  'Tiada data': 'No data',
+  'Tiada data pemain': 'No player data',
+
+  // CompareAnalytics — stat row labels  
+  'Statistik': 'Statistic',
+  '🟢 Hijau = lebih baik': '🟢 Green = better',
+  '▲ = menang dalam kategori ini': '▲ = winner in this category',
+  'Percubaan: kurang = lebih baik': 'Attempts: less = better',
+
+
   'Admin Monitoring': 'Admin Monitoring',
   'Activity Logs': 'Activity Logs',
   'Admin Session Monitoring': 'Admin Session Monitoring',
@@ -1200,14 +1277,121 @@ export const exactTextTranslations = {
   'Tiada peringatan dihantar lagi': 'No reminders sent yet',
   'Tiada mesej dalam peti masuk': 'No messages in inbox',
   'Gagal menghantar': 'Failed to send',
+  // CrosswordGame UI strings
+  'Masa Tamat!': 'Time is Up!',
+  'Menyerah Kalah': 'Give Up',
+  'Menyerah Kalah?': 'Give Up?',
+  'Tahniah! Selesai!': 'Congratulations! Finished!',
+  'Tiada perkataan dilengkapkan lagi': 'No words completed yet',
+  'Pilih perkataan dahulu sebelum guna petunjuk!': 'Select a word first before using a hint!',
+
+  // Trolley (Food Game) food item names
+  'Aiskrim': 'Ice Cream',
+  'Anggur': 'Grapes',
+  'Bertih Jagung Karamel': 'Caramel Popcorn',
+  'Biskut': 'Biscuit',
+  'Brokoli': 'Broccoli',
+  'Coklat': 'Chocolate',
+  'Donat': 'Doughnut',
+  'Epal': 'Apple',
+  'Gula-gula Kapas': 'Cotton Candy',
+  'Gula-gula': 'Sweets',
+  'Ikan': 'Fish',
+  'Jagung': 'Corn',
+  'Jus Kotak': 'Juice Box',
+  'Keju': 'Cheese',
+  'Kek Cawan': 'Cupcake',
+  'Kekacang': 'Nuts',
+  'Lobak Merah': 'Carrot',
+  'Lolipop': 'Lollipop',
+  'Oren': 'Orange',
+  'Pisang': 'Banana',
+  'Sayur Berdaun': 'Leafy Greens',
+  'Soda': 'Soda',
+  'Susu': 'Milk',
+  'Telur': 'Eggs',
+
   // LearningPage
   'Modul Pembelajaran': 'Learning Module',
   'Mula Belajar': 'Start Learning',
   'Menonton video': 'Watching videos',
   'Memuatkan video...': 'Loading videos...',
   'Tiada video tersedia': 'No videos available',
-  // Placeholder translations
+  // AdminFAQ show more/less toggle buttons
+  'Tunjuk Ringkas ↑': 'Show Less ↑',
+  'Tunjuk Lagi ↓': 'Show More ↓',
+  'soalan': 'questions',
+
+
+  'Pusat panduan dan soalan lazim untuk membantu pentadbir memahami sistem DentalQuest.': 'FAQ hub and guide to help admins understand the DentalQuest system.',
+  'Rujukan ringkas untuk pentadbir baharu.': 'Quick reference for new admins.',
+  'Soalan Menunggu Jawapan': 'Pending Questions',
+  'Ditanya oleh:': 'Asked by:',
+  'Dijawab oleh:': 'Answered by:',
+  'Tulis jawapan...': 'Write answer...',
+  'Jawab Soalan': 'Answer Question',
+  'Tiada soalan menunggu jawapan.': 'No questions pending.',
+  'FAQ Dijawab': 'Answered FAQ',
+  'Belum ada FAQ dijawab.': 'No FAQs answered yet.',
+  'Edit Jawapan': 'Edit Answer',
+  'Tunjuk Kurang ↑': 'Show Less ↑',
+  'Edit Panduan': 'Edit Guide',
+  'Simpan': 'Save',
+  'Edit FAQ Dijawab': 'Edit Answered FAQ',
+  'Tanya Main Admin': 'Ask Main Admin',
+  'Tulis soalan anda di sini...': 'Write your question here...',
+  'Hantar Soalan': 'Submit Question',
+  'Panduan Menggunakan Sistem': 'System Usage Guide',
+
+  // CompareAnalytics bar chart label
+  'CP2 Silang Kata': 'CP2 Crossword',
+
+  // CrosswordGame leaderboard
+  'Papan Markah': 'Leaderboard',
+  'Teruskan ke Papan Markah 🏆': 'Continue to Leaderboard 🏆',
+  'Lihat Papan Markah 🏆 & Teruskan': 'View Leaderboard 🏆 & Continue',
+
+  // QuizGame error message
+  'Gagal memuatkan kuiz. Sila cuba lagi.': 'Failed to load quiz. Please try again.',
+
+  // EmailReminders template subjects
+  'Selamat Datang ke DentalQuest!': 'Welcome to DentalQuest!',
+  'Laporan Isu Teknikal': 'Technical Issue Report',
+
+  // AdminDashboard admin role welcome text
+  'Urus program kesihatan pergigian anda dari sini.': 'Manage your dental health programme from here.',
+
+  // ManageCrossword submit button
+  'Tambah': 'Add',
+
+  // QuizGame UI strings
+  'Tahniah! Kuiz Selesai!': 'Congratulations! Quiz Done!',
+  'Padankan setiap pasangan yang betul': 'Match each correct pair',
+  'Tiada markah lagi': 'No scores yet',
+  'Pilih SEMUA jawapan yang betul': 'Select ALL correct answers',
+  'Padanan Betul:': 'Correct Matches:',
+  'Kamu perlu betulkan sekurang-kurangnya': 'You need to get at least',
+  'Cuba Semula Kuiz': 'Retry Quiz',
+  'Belum Lulus!': 'Not Passed Yet!',
+  'Kuiz sedang dimuatkan...': 'Quiz loading...',
+  'Teruskan Pengembaraan! 🗺️': 'Continue Adventure! 🗺️',
+
+  // Trolley (Food Game) UI strings
+  'Gerakkan troli!': 'Move the trolley!',
+  'Penangkap Makanan!': 'Food Catcher!',
+  'Skor Kamu': 'Your Score',
+  'Skor kamu': 'Your score',
+  'Titik Semak 3': 'Checkpoint 3',
+  'Papan Markah Akhir!': 'Final Leaderboard!',
+  'Lihat Papan Markah Akhir 🏆': 'View Final Leaderboard 🏆',
+  'mata.': 'points.',
+  'CP1 Quiz + CP2 Crossword + CP3 Food Game (masing-masing 33.33%)': 'CP1 Quiz + CP2 Crossword + CP3 Food Game (33.33% each)',
+  'Formula: (Skor CP / Skor Max) × 33.33 = Markah (Jumlah /100)': 'Formula: (CP Score / Max Score) × 33.33 = Mark (Total /100)',
+
+
   'guru@sekolah.com': 'teacher@school.com',
+
+
   'Contoh: Gigi anda unik!': 'Example: Your teeth are unique!',
 };
 

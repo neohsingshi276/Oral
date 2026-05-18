@@ -178,8 +178,13 @@ const GamePage = () => {
   const handleVideoWatched = () => setCpStep('activity');
 
   const handleActivityDone = async () => {
-    await api.post('/game/complete', { player_id: player.id, checkpoint_number: activeCP });
-    await fetchProgress(player.id);
+    try {
+      await api.post('/game/complete', { player_id: player.id, checkpoint_number: activeCP });
+      await fetchProgress(player.id);
+    } catch (err) {
+      console.error('Failed to save checkpoint completion:', err);
+      // Still advance the UI so the student isn't stuck
+    }
 
     // 🎉 Celebrate every checkpoint completion with confetti + sound
     playSuccessChime();
