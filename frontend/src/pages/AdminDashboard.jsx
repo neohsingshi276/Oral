@@ -190,6 +190,7 @@ const Overview = ({ admin, setActive, menu }) => {
     { icon: '👨‍💼', label: 'Urus Pentadbir', desc: 'Urus akaun pentadbir dan guru', key: 'admins', color: '#f5f3ff', accent: '#6d28d9' },
     { icon: '✉️', label: 'Peti Masuk', desc: 'Lihat mesej e-mel', key: 'email', color: '#FEF2F2', accent: '#CC0000' },
     { icon: '❔', label: 'FAQ Sistem', desc: 'Panduan untuk pentadbir baharu memahami sistem', key: 'faq', color: '#FFF7ED', accent: '#D4A843' },
+    { icon: '⚖️', label: 'Perbandingan', desc: 'Membandingkan hasil permainan', key: 'comparison', color: '#FFF7ED', accent: '#D4A843' },
     { icon: '📋', label: 'Log Aktiviti', desc: 'Lihat log aktiviti sistem', key: 'activity', color: '#f0f9ff', accent: '#0369a1' },
   ];
 
