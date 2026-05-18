@@ -1391,9 +1391,15 @@ export const exactTextTranslations = {
   'CP1 Quiz + CP2 Crossword + CP3 Food Game (masing-masing 33.33%)': 'CP1 Quiz + CP2 Crossword + CP3 Food Game (33.33% each)',
   'Formula: (Skor CP / Skor Max) × 33.33 = Markah (Jumlah /100)': 'Formula: (CP Score / Max Score) × 33.33 = Mark (Total /100)',
 
-
   'guru@sekolah.com': 'teacher@school.com',
 
+  'Panduan Menggunakan Sistem': 'System Usage Guide',
+  'Cipta sesi permainan di bahagian Sesi Permainan.': 'Create a game session in the Game Sessions section.',
+  'Berikan kod 4 digit kepada murid.': 'Give the 4-digit code to students.',
+  'Pantau kemajuan murid di bahagian Pemain.': 'Monitor student progress in the Players section.',
+  'Gunakan Analitik untuk melihat prestasi.': 'Use Analytics to view performance.',
+  'Gunakan Sembang Pemain untuk membantu murid.': 'Use Player Chat to help students.',
+  'Rujuk FAQ Dijawab untuk soalan biasa.': 'Refer to Answered FAQ for common questions.',
 
   'Contoh: Gigi anda unik!': 'Example: Your teeth are unique!',
 };
