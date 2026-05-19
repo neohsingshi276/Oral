@@ -30,13 +30,22 @@ const translateDomText = (root, language) => {
     if (!trimmed) return value;
     if (replacements[trimmed]) return value.replace(trimmed, replacements[trimmed]);
 
-    const match = trimmed.match(/^([^A-Za-zÀ-ž0-9]*)(.*?)(\s*\(\d+\))?$/);
+    // Match: optional emoji/symbol prefix + text core + optional " (N)" suffix or trailing " ("
+    // This handles JSX interpolated counts, e.g. "📹 Senarai Video (" where the number
+    // is in a sibling text node created by {videos.length} interpolation.
+    const match = trimmed.match(/^([^A-Za-zÀ-ž0-9]*)(.*?)(\s*\(\d+\)|\s*\()?$/);
     if (!match) return value;
 
-    const [, prefix = '', core = '', suffix = ''] = match;
+    let [, prefix = '', core = '', suffix = ''] = match;
+
+    // Handle trailing ")" left when a number appears before the word in JSX,
+    // e.g. the " pemain)" node produced by `{n} pemain)`.
+    const trailingClose = (core.trim().endsWith(')') && !core.includes('(')) ? ')' : '';
+    if (trailingClose) core = core.trim().slice(0, -1);
+
     const translatedCore = replacements[core.trim()];
     if (!translatedCore) return value;
-    return value.replace(trimmed, `${prefix}${translatedCore}${suffix}`);
+    return value.replace(trimmed, `${prefix}${translatedCore}${trailingClose}${suffix}`);
   };
 
   let node = walker.nextNode();

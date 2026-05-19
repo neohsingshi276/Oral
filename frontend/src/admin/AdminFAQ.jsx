@@ -116,6 +116,22 @@ const AdminFAQ = () => {
         }
     };
 
+    const deleteFAQ = async (id) => {
+        if (!window.confirm('Padam soalan/jawapan FAQ ini? Tindakan ini tidak boleh dibatalkan.')) return;
+
+        const res = await fetch(`${API_URL}/faq/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+            fetchFAQ();
+        } else {
+            const errData = await res.json().catch(() => ({}));
+            alert(errData.error || 'Gagal memadam FAQ');
+        }
+    };
+
     const updateFAQ = async () => {
         if (!editingFAQ) return;
 
@@ -136,6 +152,11 @@ const AdminFAQ = () => {
             fetchFAQ();
         }
     };
+
+    const role = admin?.role;
+    const canAsk = role === 'admin' || role === 'teacher';
+    const canAnswer = role === 'main_admin' || role === 'admin';
+    const canDelete = role === 'main_admin';
 
     const answeredFAQ = faqs.filter((faq) => faq.status === 'answered');
     const pendingFAQ = faqs.filter((faq) => faq.status === 'pending');
@@ -189,7 +210,7 @@ const AdminFAQ = () => {
                 )}
             </div>
 
-            {admin?.role === 'main_admin' && (
+            {canAnswer && (
                 <div style={styles.section}>
                     <h3 style={styles.sectionTitle}>📌 Soalan Menunggu Jawapan</h3>
 
@@ -207,9 +228,16 @@ const AdminFAQ = () => {
                                 style={styles.textarea}
                             />
 
-                            <button onClick={() => submitAnswer(item.id)} style={styles.button}>
-                                Jawab Soalan
-                            </button>
+                            <div style={styles.actionRow}>
+                                <button onClick={() => submitAnswer(item.id)} style={styles.button}>
+                                    Jawab Soalan
+                                </button>
+                                {canDelete && (
+                                    <button onClick={() => deleteFAQ(item.id)} style={styles.dangerButton}>
+                                        Padam
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -235,10 +263,15 @@ const AdminFAQ = () => {
                                 Dijawab oleh: {item.answered_by_name || 'Main Admin'}
                             </p>
 
-                            {admin?.role === 'main_admin' && (
-                                <button style={styles.secondaryButton} onClick={() => setEditingFAQ(item)}>
-                                    Edit Jawapan
-                                </button>
+                            {canDelete && (
+                                <div style={styles.actionRow}>
+                                    <button style={styles.secondaryButton} onClick={() => setEditingFAQ(item)}>
+                                        Edit Jawapan
+                                    </button>
+                                    <button onClick={() => deleteFAQ(item.id)} style={styles.dangerButton}>
+                                        Padam
+                                    </button>
+                                </div>
                             )}
                         </div>
                     ))}
@@ -251,24 +284,26 @@ const AdminFAQ = () => {
                 )}
             </div>
 
-            <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>
-                    {admin?.role === 'main_admin' ? '➕ Tambah Soalan Baharu' : '💬 Tanya Main Admin'}
-                </h3>
+            {canAsk && (
+                <div style={styles.section}>
+                    <h3 style={styles.sectionTitle}>
+                        {role === 'teacher' ? '💬 Tanya Pentadbir' : '💬 Tanya Soalan Baharu'}
+                    </h3>
 
-                <div style={styles.askCard}>
-                    <textarea
-                        value={question}
-                        onChange={(e) => setQuestion(e.target.value)}
-                        placeholder="Tulis soalan anda di sini..."
-                        style={styles.textarea}
-                    />
+                    <div style={styles.askCard}>
+                        <textarea
+                            value={question}
+                            onChange={(e) => setQuestion(e.target.value)}
+                            placeholder="Tulis soalan anda di sini..."
+                            style={styles.textarea}
+                        />
 
-                    <button onClick={submitQuestion} style={styles.button}>
-                        Hantar Soalan
-                    </button>
+                        <button onClick={submitQuestion} style={styles.button}>
+                            Hantar Soalan
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {editingInstruction && (
                 <div style={styles.modalOverlay}>
@@ -352,6 +387,8 @@ const styles = {
     input: { width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid #cbd5e1', marginBottom: '1rem', boxSizing: 'border-box' },
     button: { background: 'linear-gradient(135deg, #2563eb, #01306B)', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: '800', boxShadow: '0 4px 10px rgba(37,99,235,0.25)', marginRight: '0.5rem' },
     secondaryButton: { background: '#FFFFFF', color: '#01306B', border: '1px solid #cbd5e1', padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', fontWeight: '800', marginTop: '0.75rem' },
+    actionRow: { display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' },
+    dangerButton: { background: '#FEE2E2', color: '#B91C1C', border: '1px solid #FECACA', padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', fontWeight: '800' },
     linkButton: { background: 'transparent', color: '#2563eb', border: 'none', cursor: 'pointer', fontWeight: '900', padding: '0.4rem 0' },
     showButton: { marginTop: '1rem', background: '#01306B', color: '#fff', border: 'none', padding: '0.8rem 1.2rem', borderRadius: '999px', cursor: 'pointer', fontWeight: '900' },
     meta: { color: '#94a3b8', fontSize: '14px', marginBottom: '0.75rem', lineHeight: 1.5 },

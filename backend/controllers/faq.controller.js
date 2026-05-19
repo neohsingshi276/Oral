@@ -1,5 +1,11 @@
 const db = require('../db');
 
+const getAdmin = (req) => req.admin || req.user;
+
+const canAsk = (role) => role === 'admin' || role === 'teacher';
+const canAnswer = (role) => role === 'main_admin' || role === 'admin';
+const canDelete = (role) => role === 'main_admin';
+
 exports.getFAQ = async (req, res) => {
     try {
         const [rows] = await db.query(`
@@ -23,12 +29,18 @@ exports.getFAQ = async (req, res) => {
 
 exports.askFAQ = async (req, res) => {
     try {
-        const { question } = req.body;
-        const adminId = req.admin?.id || req.user?.id || req.user?.admin_id;
+        const admin = getAdmin(req);
 
-        if (!adminId) {
+        if (!admin?.id) {
             return res.status(401).json({ error: 'Admin ID not found from token' });
         }
+
+        if (!canAsk(admin.role)) {
+            return res.status(403).json({ error: 'Main Admin cannot submit questions' });
+        }
+
+        const { question } = req.body;
+        const adminId = admin.id;
 
         if (!question || !question.trim()) {
             return res.status(400).json({ error: 'Question is required' });
@@ -49,17 +61,17 @@ exports.askFAQ = async (req, res) => {
 
 exports.answerFAQ = async (req, res) => {
     try {
-        const admin = req.admin || req.user;
+        const admin = getAdmin(req);
 
-        if (admin.role !== 'main_admin') {
-            return res.status(403).json({ error: 'Only Main Admin can answer FAQ' });
+        if (!admin?.id) {
+            return res.status(401).json({ error: 'Admin ID not found from token' });
+        }
+
+        if (!canAnswer(admin.role)) {
+            return res.status(403).json({ error: 'You do not have permission to answer FAQ' });
         }
 
         const { answer } = req.body;
-        console.log("FAQ BODY:", req.body);
-        console.log("REQ ADMIN:", req.admin);
-        console.log("REQ USER:", req.user);
-
         const { id } = req.params;
 
         if (!answer || !answer.trim()) {
@@ -122,9 +134,35 @@ exports.updateInstruction = async (req, res) => {
     }
 };
 
+exports.deleteFAQ = async (req, res) => {
+    try {
+        const admin = getAdmin(req);
+
+        if (!admin?.id) {
+            return res.status(401).json({ error: 'Admin ID not found from token' });
+        }
+
+        if (!canDelete(admin.role)) {
+            return res.status(403).json({ error: 'Only Main Admin can delete FAQ' });
+        }
+
+        const { id } = req.params;
+        const [result] = await db.query('DELETE FROM faq_questions WHERE id = ?', [id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'FAQ not found' });
+        }
+
+        res.json({ success: true, message: 'FAQ deleted' });
+    } catch (err) {
+        console.error('FAQ delete error:', err);
+        res.status(500).json({ error: 'Failed to delete FAQ' });
+    }
+};
+
 exports.updateFAQAnswer = async (req, res) => {
     try {
-        const admin = req.admin || req.user;
+        const admin = getAdmin(req);
 
         if (!admin || admin.role !== 'main_admin') {
             return res.status(403).json({

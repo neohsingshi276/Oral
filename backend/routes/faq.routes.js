@@ -5,6 +5,7 @@ const {
     getFAQ,
     askFAQ,
     answerFAQ,
+    deleteFAQ,
     getInstructions,
     updateInstruction,
     updateFAQAnswer
@@ -19,5 +20,6 @@ router.get('/', verifyToken, getFAQ);
 router.post('/', verifyToken, askFAQ);
 router.put('/:id/answer', verifyToken, answerFAQ);
 router.put('/:id/edit', verifyToken, updateFAQAnswer);
+router.delete('/:id', verifyToken, deleteFAQ);
 
 module.exports = router;
