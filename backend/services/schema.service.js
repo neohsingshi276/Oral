@@ -14,6 +14,18 @@ const safeAlter = async (sql) => {
 const ensureSchema = async () => {
 
   await db.query(`
+    CREATE TABLE IF NOT EXISTS player_positions (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      player_id INT NOT NULL UNIQUE,
+      pos_x FLOAT DEFAULT 1376,
+      pos_y FLOAT DEFAULT 6896,
+      last_checkpoint INT DEFAULT 0,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+    )
+  `);
+
+  await db.query(`
     CREATE TABLE IF NOT EXISTS teacher_session_access (
       id INT AUTO_INCREMENT PRIMARY KEY,
       teacher_id INT NOT NULL,

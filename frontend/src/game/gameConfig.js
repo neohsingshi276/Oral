@@ -14,6 +14,61 @@ export const CHAR_SPEED = 180;
 // Start position — near the bottom of the map, beside Checkpoint 1
 export const START_POS = { x: 1376, y: 6896 };
 
+/** Reject legacy sea defaults and out-of-bounds saves from the API. */
+export const isValidSavedPosition = (x, y) =>
+  Number.isFinite(x) &&
+  Number.isFinite(y) &&
+  x >= 100 &&
+  y >= 100 &&
+  x <= MAP_WIDTH - 100 &&
+  y <= MAP_HEIGHT - 100;
+
+const positionCacheKey = (playerId) => `dq_map_pos_${playerId}`;
+
+const distanceFromStart = (pos) =>
+  Math.hypot(pos.x - START_POS.x, pos.y - START_POS.y);
+
+/** Browser backup so refresh works even before the server autosave runs. */
+export const readCachedPosition = (playerId) => {
+  try {
+    const raw = localStorage.getItem(positionCacheKey(playerId));
+    if (!raw) return null;
+    const { x, y } = JSON.parse(raw);
+    return isValidSavedPosition(x, y) ? { x, y } : null;
+  } catch {
+    return null;
+  }
+};
+
+export const writeCachedPosition = (playerId, x, y) => {
+  if (!playerId || !isValidSavedPosition(x, y)) return;
+  try {
+    localStorage.setItem(
+      positionCacheKey(playerId),
+      JSON.stringify({ x: Math.round(x), y: Math.round(y), savedAt: Date.now() })
+    );
+  } catch {
+    // Storage full or private mode — ignore
+  }
+};
+
+/**
+ * Pick spawn after refresh: prefer the saved spot farthest from map start
+ * (handles server still at START_POS while the player had already walked away).
+ */
+export const resolveSpawnPosition = (apiRow, playerId) => {
+  const apiPos =
+    apiRow && isValidSavedPosition(apiRow.pos_x, apiRow.pos_y)
+      ? { x: apiRow.pos_x, y: apiRow.pos_y }
+      : null;
+  const localPos = readCachedPosition(playerId);
+
+  if (apiPos && localPos) {
+    return distanceFromStart(localPos) >= distanceFromStart(apiPos) ? localPos : apiPos;
+  }
+  return localPos || apiPos || { ...START_POS };
+};
+
 // Checkpoints — match CHECKPOINT_DEFS in PhaserGameScene.js
 export const CHECKPOINTS = [
   { id: 1, x: 3040, y: 4960, radius: 60, color: '#7B2FBE', label: 'Checkpoint 1' },

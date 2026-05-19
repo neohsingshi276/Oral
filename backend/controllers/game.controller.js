@@ -6,7 +6,7 @@ const MAP_MAX_X = 5600;
 const MAP_MIN_Y = 0;
 const MAP_MAX_Y = 7600;
 const START_X = 1376;
-const START_Y = 6784;
+const START_Y = 6896;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const safeId = (val) => {
@@ -117,25 +117,28 @@ const joinGame = async (req, res) => {
 // ─── savePosition ─────────────────────────────────────────────────────────────
 const savePosition = async (req, res) => {
   const player_id = safeId(req.body.player_id);
-  const pos_x = parseInt(req.body.pos_x, 10);
-  const pos_y = parseInt(req.body.pos_y, 10);
+  const pos_x = Number(req.body.pos_x);
+  const pos_y = Number(req.body.pos_y);
   const last_checkpoint = parseInt(req.body.last_checkpoint, 10);
 
-  if (!player_id || isNaN(pos_x) || isNaN(pos_y) || isNaN(last_checkpoint))
+  if (!player_id || !Number.isFinite(pos_x) || !Number.isFinite(pos_y) || isNaN(last_checkpoint))
     return res.status(400).json({ error: 'Invalid position data' });
 
   // Clamp coordinates to the actual playable map bounds.
-  const clampedX = Math.max(MAP_MIN_X, Math.min(MAP_MAX_X, pos_x));
-  const clampedY = Math.max(MAP_MIN_Y, Math.min(MAP_MAX_Y, pos_y));
+  const clampedX = Math.max(MAP_MIN_X, Math.min(MAP_MAX_X, Math.round(pos_x)));
+  const clampedY = Math.max(MAP_MIN_Y, Math.min(MAP_MAX_Y, Math.round(pos_y)));
   const clampedCP = Math.max(0, Math.min(3, last_checkpoint));
 
   try {
     await db.query(
-      'UPDATE player_positions SET pos_x=?, pos_y=?, last_checkpoint=? WHERE player_id=?',
-      [clampedX, clampedY, clampedCP, player_id]
+      `INSERT INTO player_positions (player_id, pos_x, pos_y, last_checkpoint)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE pos_x = VALUES(pos_x), pos_y = VALUES(pos_y), last_checkpoint = VALUES(last_checkpoint)`,
+      [player_id, clampedX, clampedY, clampedCP]
     );
     res.json({ message: 'Position saved' });
   } catch (err) {
+    console.error('Save position error:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 };

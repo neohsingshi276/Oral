@@ -152,22 +152,11 @@ export default class PhaserGameScene extends Phaser.Scene {
   }
 
   create() {
-    console.log('🎮 SCENE CREATE RUNNING');
-
-    console.log('Player initial pos:', this.initialPos);
-    this.add.text(100, 100, 'GAME WORKING', {
-      fontSize: '32px',
-      color: '#ffffff'
-    }).setDepth(2000);
-
     // ── Create tilemap ───────────────────────────────────────────────
     const map = this.make.tilemap({ key: 'mainmap' });
 
-    // const startX = this.initialPos?.x || START_POS.x;
-    // const startY = this.initialPos?.y || START_POS.y;
-
-    const startX = START_POS.x;
-    const startY = START_POS.y;
+    const startX = this.initialPos?.x ?? START_POS.x;
+    const startY = this.initialPos?.y ?? START_POS.y;
 
     // Add tilesets — order must match the JSON tileset array exactly.
     // The first arg is the tileset name in Tiled, second is the Phaser image key.
@@ -737,7 +726,7 @@ export default class PhaserGameScene extends Phaser.Scene {
   setPlayerPosition(x, y) {
     if (this.playerBody) {
       this.matter.body.setPosition(this.playerBody, { x, y });
-      this.playerGraphic.setPosition(x, y);
+      this.playerGraphic.setPosition(x, y - 22);
     }
   }
 }

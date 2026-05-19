@@ -1,15 +1,19 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import PhaserGameScene from './PhaserGameScene';
 import api from '../services/api';
-import { START_POS } from './gameConfig';
+import { START_POS, resolveSpawnPosition, writeCachedPosition } from './gameConfig';
 
-const SAVE_INTERVAL = 5000;
+const SAVE_INTERVAL = 1500;
+const MOVE_SAVE_MIN_PX = 48;
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const POSITION_URL = API_BASE.endsWith('/api') ? `${API_BASE}/game/position` : `${API_BASE.replace(/\/$/, '')}/api/game/position`;
 
-const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) => {
+const GameCanvas = ({ player, progress, onCheckpointReached, paused, externalGameRef }) => {
   const containerRef = useRef(null);
   const gameRef = useRef(null);
   const sceneRef = useRef(null);
   const lastSave = useRef(Date.now());
+  const lastSavedCoords = useRef(null);
   const hasBooted = useRef(false);
 
   // Loading state
@@ -28,28 +32,48 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
   }, []);
 
   // ── Position save ──────────────────────────────────────────────────────────
-  const savePosition = useCallback(() => {
+  const buildPositionPayload = useCallback(() => {
     const scene = sceneRef.current;
-    if (!scene) return;
+    if (!scene || !player?.id) return null;
     const { x, y } = scene.getPlayerPosition();
     const completed = progressRef.current.filter(p => p.completed).map(p => p.checkpoint_number);
     const lastCP = completed.length > 0 ? Math.max(...completed) : 0;
-    api.post('/game/position', {
+    return {
       player_id: player.id,
-      pos_x: x,
-      pos_y: y,
+      pos_x: Math.round(x),
+      pos_y: Math.round(y),
       last_checkpoint: lastCP,
-    }).catch(() => { });
-  }, [player.id]);
+    };
+  }, [player?.id]);
+
+  const savePosition = useCallback((useKeepalive = false) => {
+    const payload = buildPositionPayload();
+    if (!payload) return;
+
+    writeCachedPosition(payload.player_id, payload.pos_x, payload.pos_y);
+    lastSavedCoords.current = { x: payload.pos_x, y: payload.pos_y };
+
+    if (useKeepalive) {
+      fetch(POSITION_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(() => { });
+      return;
+    }
+
+    api.post('/game/position', payload).catch(() => { });
+  }, [buildPositionPayload]);
+
+  const onCheckpointReachedRef = useRef(onCheckpointReached);
+  useEffect(() => {
+    onCheckpointReachedRef.current = onCheckpointReached;
+  }, [onCheckpointReached]);
 
   // ── Boot Phaser ────────────────────────────────────────────────────────────
   useEffect(() => {
-    console.log('🚀 BOOT PHASER useEffect triggered');
-
-    if (hasBooted.current) {
-      console.log('⚠️ Already booted, skipping...');
-      return;
-    }
+    if (hasBooted.current) return;
     hasBooted.current = true;
 
     if (!containerRef.current || gameRef.current) return;
@@ -62,28 +86,15 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
     api.get(`/game/position/${player.id}`)
       .then(res => {
         if (cancelled) return;
-        let initialPos = START_POS;
-        if (res.data?.position) {
-          const { pos_x, pos_y } = res.data.position;
-          // Reject positions that are clearly in the sea / outside the land area.
-          // The old backend default was (390, 1000) which is ocean — anything
-          // below x=500 or y=500 is off-map and should fall back to START.
-          const looksValid = pos_x > 500 && pos_y > 500 && pos_x < 9000 && pos_y < 9000;
-          if (looksValid) {
-            initialPos = { x: pos_x, y: pos_y };
-          }
-        }
+        const initialPos = resolveSpawnPosition(res.data?.position, player.id);
         bootPhaser(initialPos);
       })
       .catch(() => {
-        if (!cancelled) bootPhaser(START_POS);
+        if (!cancelled) bootPhaser(resolveSpawnPosition(null, player.id));
       });
 
     function bootPhaser(initialPos) {
-      if (gameRef.current) {
-        console.log('⚠️ Phaser already exists, skipping...');
-        return;
-      }
+      if (gameRef.current) return;
       import('phaser').then(({ default: Phaser }) => {
         if (cancelled || !containerRef.current) return;
 
@@ -93,7 +104,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
         // The scene data object is passed to init(data) before create() runs.
         // This is the ONLY reliable way to get data into a scene at startup.
         const sceneData = {
-          onCheckpointReached,
+          onCheckpointReached: (cpId) => onCheckpointReachedRef.current(cpId),
           getProgress,
           getIsCheckpointUnlocked,
           playerNickname: player.nickname,
@@ -142,9 +153,18 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
         };
         window.addEventListener('resize', onResize);
 
-        // Periodic position autosave
+        // Autosave on a timer and when the player moves far enough from last save
         const saveInterval = setInterval(() => {
-          if (Date.now() - lastSave.current > SAVE_INTERVAL) {
+          const scene = sceneRef.current;
+          if (!scene?.playerBody) return;
+
+          const { x, y } = scene.getPlayerPosition();
+          const last = lastSavedCoords.current;
+          const moved =
+            !last ||
+            Math.hypot(x - last.x, y - last.y) >= MOVE_SAVE_MIN_PX;
+
+          if (moved && Date.now() - lastSave.current >= SAVE_INTERVAL) {
             lastSave.current = Date.now();
             savePosition();
           }
@@ -155,17 +175,26 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
     }
 
     return () => {
-      console.log('⚠️ Cleanup skipped (prevent destroy)');
+      cancelled = true;
     };
-  }, []);
+  }, [player.id, player.nickname, externalGameRef]);
 
   useEffect(() => {
-    console.log('✅ GameCanvas MOUNTED');
+    const onPageHide = () => savePosition(true);
+    window.addEventListener('pagehide', onPageHide);
+    return () => window.removeEventListener('pagehide', onPageHide);
+  }, [savePosition]);
 
-    return () => {
-      console.log('❌ GameCanvas UNMOUNTED');
-    };
-  }, []);
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    if (paused) {
+      savePosition();
+      scene.pauseGame?.();
+    } else {
+      scene.resumeGame?.();
+    }
+  }, [paused, savePosition]);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
