@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 const DEFAULT_TIMER = 300;
 const DEFAULT_MIN_CORRECT = 0;
 const MAX_HINTS = 3;
 
 const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
+  const { t } = useLanguage();
   const [words, setWords] = useState([]);
   const [gridSize, setGridSize] = useState(12);
   const [grid, setGrid] = useState([]);
@@ -273,20 +275,33 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   const handleHint = () => {
     if (isGameOver || hintsUsed >= MAX_HINTS) return;
     if (!selectedWord) {
-      setHintToastMsg('💡 Pilih perkataan dahulu sebelum guna petunjuk!');
+      setHintToastMsg(`💡 ${t('game.selectWordFirst', 'Pilih perkataan dahulu sebelum guna petunjuk!')}`);
       setShowHintToast(true);
       setTimeout(() => setShowHintToast(false), 2500);
       return;
     }
-    // Reveal every letter of the selected word
-    const ng = userGrid.map(r => [...r]);
-    const newHinted = new Set(hintedCells);
-    selectedWord.word.toUpperCase().split('').forEach((letter, i) => {
+    // Find unrevealed letters in the selected word
+    const letters = selectedWord.word.toUpperCase().split('');
+    const unrevealed = [];
+    letters.forEach((letter, i) => {
       const r = selectedWord.direction === 'across' ? selectedWord.start_row : selectedWord.start_row + i;
       const c = selectedWord.direction === 'across' ? selectedWord.start_col + i : selectedWord.start_col;
-      ng[r][c] = letter;
-      newHinted.add(`${r}-${c}`);
+      if (userGrid[r]?.[c] !== letter) {
+        unrevealed.push({ r, c, letter, i });
+      }
     });
+    if (unrevealed.length === 0) {
+      setHintToastMsg(`💡 ${t('game.wordAlreadyDone', 'Perkataan ini sudah lengkap!')}`);
+      setShowHintToast(true);
+      setTimeout(() => setShowHintToast(false), 2500);
+      return;
+    }
+    // Reveal ONE random unrevealed letter
+    const pick = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+    const ng = userGrid.map(r => [...r]);
+    ng[pick.r][pick.c] = pick.letter;
+    const newHinted = new Set(hintedCells);
+    newHinted.add(`${pick.r}-${pick.c}`);
     setUserGrid(ng);
     setHintedCells(newHinted);
     checkWords(ng);
@@ -294,8 +309,8 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     const remaining = MAX_HINTS - hintsUsed - 1;
     setHintToastMsg(
       remaining === 0
-        ? `💡 Petunjuk digunakan untuk "${selectedWord.word}"! Tiada petunjuk lagi.`
-        : `💡 "${selectedWord.word}" didedahkan! ${remaining} petunjuk berbaki.`
+        ? `💡 ${t('game.hintLetterRevealed', 'Huruf didedahkan!')} ${t('game.noHintsLeft', 'Tiada petunjuk lagi.')}`
+        : `💡 ${t('game.hintLetterRevealed', 'Huruf didedahkan!')} ${remaining} ${t('game.hintsRemaining', 'petunjuk berbaki.')}`
     );
     setShowHintToast(true);
     setTimeout(() => setShowHintToast(false), 2500);
@@ -331,7 +346,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     if (selectedCell?.row === row && selectedCell?.col === col) return '#FFD700';
     if (checked && userGrid[row]?.[col] && userGrid[row][col] === grid[row][col]) return '#bbf7d0';
     if (checked && userGrid[row]?.[col] && userGrid[row][col] !== grid[row][col]) return '#fecaca';
-    if (hintedCells.has(`${row}-${col}`)) return '#fef3c7'; // amber tint for hinted cells
+    if (hintedCells.has(`${row}-${col}`)) return '#fef3c7';
     if (isCellInWord(row, col)) return '#bfdbfe';
     return '#fff';
   };
@@ -359,14 +374,14 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     <div style={s.fullPage}>
       <div style={s.center}>
         <div style={s.spinner} />
-        <p style={{ color: '#94a3b8', marginTop: '1rem' }}>Memuatkan crossword...</p>
+        <p style={{ color: '#94a3b8', marginTop: '1rem' }}>{t('common.loading', 'Memuatkan...')}</p>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     </div>
   );
 
   if (phase === 'error') return (
-    <div style={s.fullPage}><div style={s.center}><p style={{ color: '#e11d48' }}>❌ Gagal memuatkan crossword.</p></div></div>
+    <div style={s.fullPage}><div style={s.center}><p style={{ color: '#e11d48' }}>❌ {t('game.loadError', 'Gagal memuatkan crossword.')}</p></div></div>
   );
 
   const acrossWords = words.filter(w => w.direction === 'across');
@@ -381,17 +396,17 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
         <div style={s.overlay}>
           <div style={{ ...s.congratsCard, maxWidth: '340px' }}>
             <div style={{ fontSize: '3rem' }}>🏳️</div>
-            <h2 style={{ color: '#e11d48', fontSize: '1.3rem', fontWeight: '800', margin: '0.5rem 0' }}>Menyerah Kalah?</h2>
+            <h2 style={{ color: '#e11d48', fontSize: '1.3rem', fontWeight: '800', margin: '0.5rem 0' }}>{t('game.giveUp', 'Menyerah Kalah?')}</h2>
             <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-              Kamu telah menjawab <strong style={{ color: '#2563eb' }}>{completed.length}/{words.length}</strong> perkataan dengan betul.
-              Adakah kamu pasti mahu menyerah?
+              {t('game.youAnswered', 'Kamu telah menjawab')} <strong style={{ color: '#2563eb' }}>{completed.length}/{words.length}</strong> {t('game.wordsCorrectly', 'perkataan dengan betul.')}
+              <br/>{t('game.sureGiveUp', 'Adakah kamu pasti mahu menyerah?')}
             </p>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button style={{ ...s.doneBtn, background: '#64748b', flex: 1 }} onClick={() => setShowGiveUp(false)}>
-                Batal
+                {t('game.cancel', 'Batal')}
               </button>
               <button style={{ ...s.doneBtn, background: '#e11d48', flex: 1 }} onClick={handleGiveUp}>
-                Ya, Menyerah
+                {t('game.yesGiveUp', 'Ya, Menyerah')}
               </button>
             </div>
           </div>
@@ -401,9 +416,9 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       {/* Check Result Toast */}
       {showCheckResult && (
         <div style={s.toast}>
-          <span style={{ color: '#16a34a', fontWeight: '700' }}>✅ {checkResult.correct} betul</span>
-          {checkResult.wrong > 0 && <span style={{ color: '#e11d48', fontWeight: '700' }}>  ❌ {checkResult.wrong} salah</span>}
-          {checkResult.correct === 0 && checkResult.wrong === 0 && <span style={{ color: '#f59e0b' }}>Tiada perkataan dilengkapkan lagi</span>}
+          <span style={{ color: '#16a34a', fontWeight: '700' }}>✅ {checkResult.correct} {t('game.correct', 'betul')}</span>
+          {checkResult.wrong > 0 && <span style={{ color: '#e11d48', fontWeight: '700' }}>  ❌ {checkResult.wrong} {t('game.wrong', 'salah')}</span>}
+          {checkResult.correct === 0 && checkResult.wrong === 0 && <span style={{ color: '#f59e0b' }}>{t('game.noWordsDone', 'Tiada perkataan dilengkapkan lagi')}</span>}
         </div>
       )}
 
@@ -419,21 +434,20 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
         <div style={s.overlay}>
           <div style={s.congratsCard}>
             <div style={{ fontSize: '4rem' }}>🎉</div>
-            <h2 style={{ color: '#16a34a', fontSize: '1.5rem', fontWeight: '800', margin: '0.5rem 0' }}>Tahniah! Selesai!</h2>
-            <p style={{ color: '#64748b', margin: '0 0 0.5rem' }}>Kamu berjaya melengkapkan semua perkataan! 🧩</p>
-            <p style={{ color: '#2563eb', fontWeight: '700', margin: '0 0 0.25rem' }}>⏱️ Masa berbaki: {formatTime(timeLeft)}</p>
-            <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '0 0 1rem' }}>💡 Petunjuk digunakan: {hintsUsed}/{MAX_HINTS}</p>
+            <h2 style={{ color: '#16a34a', fontSize: '1.5rem', fontWeight: '800', margin: '0.5rem 0' }}>{t('game.congratsTitle', 'Tahniah! Selesai!')}</h2>
+            <p style={{ color: '#64748b', margin: '0 0 0.5rem' }}>{t('game.allWordsDone', 'Kamu berjaya melengkapkan semua perkataan! 🧩')}</p>
+            <p style={{ color: '#2563eb', fontWeight: '700', margin: '0 0 1rem' }}>⏱️ {t('game.timeLeft', 'Masa berbaki:')} {formatTime(timeLeft)}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
               <button style={{ ...s.doneBtn, background: '#f59e0b' }} onClick={() => {
                 setReviewingAnswers(true);
-              }}>👁️ Lihat Jawapan di Papan</button>
+              }}>👁️ {t('game.viewAnswers', 'Lihat Jawapan di Papan')}</button>
               <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={async () => {
                 try {
                   const res = await api.get(`/cp3/crossword-leaderboard/${sessionId}`);
                   setLbData(res.data.leaderboard || []);
                 } catch (err) { console.error(err); }
                 setShowLB(true);
-              }}>Teruskan ke Papan Markah 🏆</button>
+              }}>{t('game.toScoreboard', 'Teruskan ke Papan Markah 🏆')}</button>
             </div>
           </div>
         </div>
@@ -445,22 +459,19 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
           <div style={s.congratsCard}>
             <div style={{ fontSize: '4rem' }}>{passed ? '⭐' : '😢'}</div>
             <h2 style={{ color: passed ? '#16a34a' : '#e11d48', fontSize: '1.5rem', fontWeight: '800', margin: '0.5rem 0' }}>
-              {timeLeft === 0 ? 'Masa Tamat!' : 'Menyerah Kalah'}
+              {timeLeft === 0 ? t('game.timesUp', 'Masa Tamat!') : t('game.giveUp', 'Menyerah Kalah')}
             </h2>
-            <p style={{ color: '#64748b', margin: '0 0 0.25rem' }}>
-              Kamu selesaikan <strong style={{ color: '#2563eb' }}>{completed.length}/{words.length}</strong> perkataan ({pct}%)
-            </p>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0 0 1rem' }}>
-              💡 Petunjuk digunakan: {hintsUsed}/{MAX_HINTS}
+            <p style={{ color: '#64748b', margin: '0 0 1rem' }}>
+              {t('game.youCompleted', 'Kamu selesaikan')} <strong style={{ color: '#2563eb' }}>{completed.length}/{words.length}</strong> {t('game.words', 'perkataan')} ({pct}%)
             </p>
             {minCorrect > 0 && !passed && (
               <p style={{ color: '#f59e0b', margin: '0 0 1rem', fontSize: '0.88rem', background: '#fef9ee', padding: '0.5rem', borderRadius: '8px' }}>
-                ⚠️ Perlu sekurang-kurangnya <strong>{minCorrect} perkataan</strong> untuk lulus.
+                ⚠️ {t('game.needMinimum', 'Perlu sekurang-kurangnya')} <strong>{minCorrect} {t('game.words', 'perkataan')}</strong> {t('game.toPass', 'untuk lulus.')}
               </p>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem', width: '100%' }}>
               <button style={{ ...s.doneBtn, background: '#f59e0b' }} onClick={handleReveal}>
-                👁️ Tunjuk Semua Jawapan
+                👁️ {t('game.showAllAnswers', 'Tunjuk Semua Jawapan')}
               </button>
               {passed ? (
                 <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={async () => {
@@ -469,10 +480,10 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                     setLbData(res.data.leaderboard || []);
                   } catch (err) { console.error(err); }
                   setShowLB(true);
-                }}>Lihat Papan Markah 🏆 & Teruskan</button>
+                }}>{t('game.seeScoreboard', 'Lihat Papan Markah 🏆 & Teruskan')}</button>
               ) : (
                 <button style={{ ...s.doneBtn, background: '#e11d48' }} onClick={onRetry}>
-                  🔄 Cuba Semula
+                  🔄 {t('game.retry', 'Cuba Semula')}
                 </button>
               )}
             </div>
@@ -485,19 +496,19 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
         <div style={s.overlay}>
           <div style={s.congratsCard}>
             <div style={{ fontSize: '3rem' }}>🏆</div>
-            <h2 style={{ color: '#7c3aed', fontSize: '1.4rem', fontWeight: '800', margin: '0.5rem 0' }}>Papan Markah</h2>
+            <h2 style={{ color: '#7c3aed', fontSize: '1.4rem', fontWeight: '800', margin: '0.5rem 0' }}>{t('game.scoreboard', 'Papan Markah')}</h2>
             <div style={{ ...s.lbBox, margin: '0.5rem 0 1rem' }}>
               {lbData.length > 0 ? lbData.map((entry, i) => (
                 <div key={entry.player_id} style={s.lbRow}>
                   <span style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
                   <span style={s.lbName}>{entry.nickname}</span>
-                  <span style={{ ...s.lbScore, color: entry.completed ? '#16a34a' : '#e11d48' }}>{entry.completed ? '✅ Selesai' : `${entry.words_correct || 0}/${words.length}`}</span>
+                  <span style={{ ...s.lbScore, color: entry.completed ? '#16a34a' : '#e11d48' }}>{entry.completed ? `✅ ${t('game.done', 'Selesai')}` : `${entry.words_correct || 0}/${words.length}`}</span>
                 </div>
               )) : (
-                <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem', fontSize: '0.85rem' }}>Tiada data papan markah lagi.</p>
+                <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem', fontSize: '0.85rem' }}>{t('game.noScoreboardData', 'Tiada data papan markah lagi.')}</p>
               )}
             </div>
-            <button style={s.doneBtn} onClick={onComplete}>Teruskan Pengembaraan! 🗺️</button>
+            <button style={s.doneBtn} onClick={onComplete}>{t('game.continueAdventureMap', 'Teruskan Pengembaraan! 🗺️')}</button>
           </div>
         </div>
       )}
@@ -506,7 +517,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       {reviewingAnswers && !showLB && (
         <div style={s.reviewBar}>
           <div style={s.reviewBarInner}>
-            <span style={{ color: '#16a34a', fontWeight: '700', fontSize: '0.95rem' }}>👁️ Semua jawapan ditunjukkan — Semak jawapan anda!</span>
+            <span style={{ color: '#16a34a', fontWeight: '700', fontSize: '0.95rem' }}>👁️ {t('game.checkYourAnswers', 'Semua jawapan ditunjukkan — Semak jawapan anda!')}</span>
             <button
               style={{ ...s.doneBtn, width: 'auto', padding: '0.7rem 2rem', background: '#7c3aed', fontSize: '0.95rem', borderRadius: '12px', boxShadow: '0 4px 15px rgba(124,58,237,0.4)' }}
               onClick={async () => {
@@ -517,7 +528,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                 setShowLB(true);
               }}
             >
-              Teruskan → Lihat Papan Markah 🏆
+              {t('game.continueToScoreboard', 'Teruskan → Lihat Papan Markah 🏆')}
             </button>
           </div>
         </div>
@@ -526,7 +537,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       {/* Header */}
       <div style={s.header}>
         <div style={s.headerLeft}>
-          <span style={s.headerTitle}>🧩 Crossword — Checkpoint 2</span>
+          <span style={s.headerTitle}>🧩 {t('game.crosswordCp2', 'Crossword — Checkpoint 2')}</span>
         </div>
         <div style={s.headerRight}>
           {/* Timer */}
@@ -544,7 +555,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
           <div style={{ ...s.progressPill, background: hintsLeft > 0 ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)', color: hintsLeft > 0 ? '#fbbf24' : '#fca5a5' }}>
             💡 {hintsLeft}/{MAX_HINTS}
           </div>
-          <button style={s.checkBtn} onClick={handleCheck} disabled={isGameOver}>✅ Semak</button>
+          <button style={s.checkBtn} onClick={handleCheck} disabled={isGameOver}>✅ {t('game.checkBtn', 'Semak')}</button>
           <button
             style={{
               ...s.hintBtn,
@@ -555,12 +566,12 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
             }}
             onClick={handleHint}
             disabled={isGameOver || hintsLeft === 0}
-            title={hintsLeft === 0 ? 'Tiada petunjuk lagi!' : `${hintsLeft} petunjuk berbaki — klik untuk dedahkan perkataan yang dipilih`}
+            title={hintsLeft === 0 ? t('game.noHintsLeft', 'Tiada petunjuk lagi!') : `${hintsLeft} ${t('game.hintsRemaining', 'petunjuk berbaki')}`}
           >
-            💡 Petunjuk ({hintsLeft})
+            💡 {t('game.hintLabel', 'Petunjuk')} ({hintsLeft})
           </button>
           <button style={{ ...s.hintBtn, background: '#e11d48' }} onClick={() => setShowGiveUp(true)} disabled={isGameOver}>
-            🏳️ Menyerah
+            🏳️ {t('game.giveUpBtn', 'Menyerah')}
           </button>
         </div>
       </div>
@@ -570,14 +581,14 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div>
             {selectedWord
-              ? <><strong>{words.indexOf(selectedWord) + 1}. {selectedWord.direction === 'across' ? '→' : '↓'}</strong> {selectedWord.clue} <span style={{ color: '#93c5fd' }}>({selectedWord.word.length} huruf)</span></>
-              : <span style={{ color: '#475569' }}>Klik pada kotak untuk memilih perkataan</span>
+              ? <><strong>{words.indexOf(selectedWord) + 1}. {selectedWord.direction === 'across' ? '→' : '↓'}</strong> {selectedWord.clue} <span style={{ color: '#93c5fd' }}>({selectedWord.word.length} {t('game.letters', 'huruf')})</span></>
+              : <span style={{ color: '#475569' }}>{t('game.clickBoxToSelect', 'Klik pada kotak untuk memilih perkataan')}</span>
             }
           </div>
           <div style={{ display: 'flex', gap: '1rem', fontSize: '0.78rem', color: '#64748b', flexShrink: 0 }}>
-            <span>⏱️ Had masa: <strong style={{ color: '#93c5fd' }}>{formatTime(timerTotal)}</strong></span>
-            <span>💡 Petunjuk: <strong style={{ color: '#fbbf24' }}>{MAX_HINTS} kali</strong></span>
-            {minCorrect > 0 && <span>🎯 Lulus: <strong style={{ color: '#86efac' }}>{minCorrect} perkataan</strong></span>}
+            <span>⏱️ {t('game.timeLimit', 'Had masa:')} <strong style={{ color: '#93c5fd' }}>{formatTime(timerTotal)}</strong></span>
+            <span>💡 {t('game.hintLabel', 'Petunjuk:')} <strong style={{ color: '#fbbf24' }}>{MAX_HINTS} {t('game.times', 'kali')}</strong></span>
+            {minCorrect > 0 && <span>🎯 {t('game.passLimit', 'Lulus:')} <strong style={{ color: '#86efac' }}>{minCorrect} {t('game.words', 'perkataan')}</strong></span>}
           </div>
         </div>
       </div>
@@ -586,7 +597,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       <div style={s.mainLayout}>
         {/* Across clues */}
         <div style={s.cluesPanel}>
-          <div style={s.cluesPanelTitle}>→ Mendatar</div>
+          <div style={s.cluesPanelTitle}>→ {t('game.across', 'Mendatar')}</div>
           <div style={s.cluesList}>
             {acrossWords.map(w => {
               const isDone = completed.includes(w.id);
@@ -636,7 +647,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
 
         {/* Down clues */}
         <div style={s.cluesPanel}>
-          <div style={s.cluesPanelTitle}>↓ Menegak</div>
+          <div style={s.cluesPanelTitle}>↓ {t('game.down', 'Menegak')}</div>
           <div style={s.cluesList}>
             {downWords.map(w => {
               const isDone = completed.includes(w.id);

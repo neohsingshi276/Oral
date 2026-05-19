@@ -6,8 +6,10 @@
 // ============================================
 
 import { useEffect, useRef, useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 const YouTubePlayer = ({ videoId, onVideoEnd }) => {
+  const { t } = useLanguage();
   const containerRef = useRef(null);
   const playerRef = useRef(null);
   const [videoEnded, setVideoEnded] = useState(false);
@@ -129,14 +131,14 @@ const YouTubePlayer = ({ videoId, onVideoEnd }) => {
       <div style={styles.playerBox}>
         <div ref={containerRef} style={styles.player} />
         {!playerReady && (
-          <div style={styles.loading}>Memuatkan video... 🎬</div>
+          <div style={styles.loading}>{t('game.loadingVideo', 'Memuatkan video... 🎬')}</div>
         )}
       </div>
 
       {/* Custom play/pause button */}
       {playerReady && !videoEnded && (
         <button className="play-btn" style={styles.playBtn} onClick={handlePlayPause}>
-          {isPlaying ? '⏸️ Hentikan' : '▶️ Mainkan'}
+          {isPlaying ? `⏸️ ${t('game.stop', 'Hentikan')}` : `▶️ ${t('game.play', 'Mainkan')}`}
         </button>
       )}
 
@@ -145,24 +147,24 @@ const YouTubePlayer = ({ videoId, onVideoEnd }) => {
         <div style={styles.progressBar}>
           <div style={{ ...styles.progressFill, width: `${watchedPercent}%` }} />
         </div>
-        <span style={styles.progressText}>{watchedPercent}% watched</span>
+        <span style={styles.progressText}>{watchedPercent}% {t('game.watched', 'watched')}</span>
       </div>
 
       {/* Status message */}
       {!videoEnded && (
         <div style={styles.warningBox}>
-          🔒 Kawalan video dikunci — anda mesti menonton keseluruhan video tanpa melangkau!
+          🔒 {t('game.videoLocked', 'Kawalan video dikunci — anda mesti menonton keseluruhan video tanpa melangkau!')}
         </div>
       )}
 
       {/* Continue button — only shows when video ends */}
       {videoEnded ? (
         <button style={styles.continueBtn} onClick={onVideoEnd}>
-          ✅ Video Selesai! Teruskan! →
+          ✅ {t('game.videoDone', 'Video Selesai! Teruskan! →')}
         </button>
       ) : (
         <button style={styles.lockedBtn} disabled>
-          🔒 Habiskan video untuk meneruskan
+          🔒 {t('game.finishVideo', 'Habiskan video untuk meneruskan')}
         </button>
       )}
     </div>

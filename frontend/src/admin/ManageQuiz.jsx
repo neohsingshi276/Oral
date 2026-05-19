@@ -142,7 +142,7 @@ const ManageQuiz = () => {
     <div>
       {/* Tab navigasi */}
       <div style={s.tabs}>
-        <button style={{ ...s.tab, ...(tab === 'questions' ? s.tabActive : {}) }} onClick={() => setTab('questions')}>❓ Soalan ({questions.length})</button>
+        <button style={{ ...s.tab, ...(tab === 'questions' ? s.tabActive : {}) }} onClick={() => setTab('questions')}><span>❓ Soalan</span> ({questions.length})</button>
         <button style={{ ...s.tab, ...(tab === 'settings' ? s.tabActive : {}) }} onClick={() => setTab('settings')}>⚙️ Tetapan Kuiz</button>
       </div>
 
@@ -233,7 +233,7 @@ const ManageQuiz = () => {
 
           {/* Senarai soalan */}
           <div style={s.card}>
-            <h2 style={s.cardTitle}>❓ Semua Soalan ({questions.length})</h2>
+            <h2 style={s.cardTitle}><span>❓ Semua Soalan</span> ({questions.length})</h2>
             <div style={s.qList}>
               {questions.map((q, i) => {
                 const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]');
@@ -307,7 +307,7 @@ const ManageQuiz = () => {
             <div style={s.field}>
               <label style={s.label}>Bilangan Soalan</label>
               <input style={s.input} type="number" min="1" max={questions.length || 50} step="1" value={qSettings.question_count} onChange={e => setQSettings({ ...qSettings, question_count: parseInt(e.target.value) })} />
-              <p style={{ color: '#94a3b8', fontSize: '0.78rem', margin: '0.25rem 0 0' }}>Maks: {questions.length} soalan tersedia</p>
+              <p style={{ color: '#94a3b8', fontSize: '0.78rem', margin: '0.25rem 0 0' }}><span>Maks:</span> {questions.length} <span>soalan tersedia</span></p>
             </div>
           </div>
           <button style={s.btnPrimary} onClick={saveSettings}>💾 Simpan Tetapan</button>
