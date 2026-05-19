@@ -15,6 +15,7 @@ const StaffChat = () => {
   const [input, setInput] = useState('');
   const [loadingContacts, setLoadingContacts] = useState(true);
   const [sending, setSending] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState(null);
   const messagesEndRef = useRef(null);
   const msgPollRef = useRef(null);
   const contactPollRef = useRef(null);
@@ -42,6 +43,7 @@ const StaffChat = () => {
       const res = await api.get(`/staff-chat/${adminId}`);
       setMessages(res.data.messages || []);
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80);
+      setLastRefreshed(new Date());
     } catch (err) {
       console.error('Gagal Untuk Memuatkan Mesej', err);
     }
@@ -189,6 +191,11 @@ const StaffChat = () => {
               {me?.role !== 'main_admin' && (
                 <div style={s.reportHint}>📋 Saluran Laporan</div>
               )}
+              {lastRefreshed && (
+                <div style={{ fontSize: '0.7rem', color: '#94a3b8', textAlign: 'right', marginLeft: '0.5rem' }}>
+                  🔄 Dikemas kini<br />{lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </div>
+              )}
             </div>
 
             {/* Messages */}
@@ -228,17 +235,22 @@ const StaffChat = () => {
 
             {/* Input */}
             <div style={s.inputRow}>
-              <input
-                style={s.input}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKey}
-                placeholder={`Mesej kepada ${selected.name}…`}
-                maxLength={500}
-                disabled={sending}
-              />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <input
+                  style={{ ...s.input, borderColor: input.length > 450 ? '#f59e0b' : input.length >= 500 ? '#e11d48' : '#e2e8f0' }}
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={handleKey}
+                  placeholder={`Mesej kepada ${selected.name}…`}
+                  maxLength={500}
+                  disabled={sending}
+                />
+                <div style={{ fontSize: '0.68rem', color: input.length > 450 ? '#f59e0b' : '#94a3b8', textAlign: 'right', paddingRight: '2px' }}>
+                  {input.length}/500
+                </div>
+              </div>
               <button
-                style={{ ...s.sendBtn, opacity: (!input.trim() || sending) ? 0.5 : 1 }}
+                style={{ ...s.sendBtn, opacity: (!input.trim() || sending) ? 0.5 : 1, alignSelf: 'flex-start' }}
                 onClick={handleSend}
                 disabled={!input.trim() || sending}
               >

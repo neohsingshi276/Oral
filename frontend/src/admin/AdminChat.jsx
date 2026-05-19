@@ -72,6 +72,7 @@ const AdminChat = () => {
         const latest = Math.max(...msgs.map(m => new Date(m.sent_at).getTime()));
         lastSeenRef.current[playerId] = latest;
       }
+      setLastRefreshed(new Date());
     } catch (err) {
       console.error('fetchMessages error:', err);
     }
@@ -125,6 +126,8 @@ const AdminChat = () => {
       prev.map(x => x.player_id === p.player_id ? { ...x, unread: 0 } : x)
     );
   };
+
+  const [lastRefreshed, setLastRefreshed] = useState(null);
 
   const totalUnread = players.reduce((s, p) => s + (p.unread || 0), 0);
 
@@ -196,6 +199,11 @@ const AdminChat = () => {
                 <div style={s.chatName}>{selected.nickname}</div>
                 <div style={s.chatSub}>ID Pemain: {selected.player_id} · Sesi: {selected.session_id}</div>
               </div>
+              {lastRefreshed && (
+                <div style={{ fontSize: '0.7rem', color: '#94a3b8', textAlign: 'right' }}>
+                  🔄 Dikemas kini<br />{lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </div>
+              )}
             </div>
 
             {/* Messages */}
@@ -225,17 +233,22 @@ const AdminChat = () => {
 
             {/* Input */}
             <div style={s.inputRow}>
-              <input
-                style={s.input}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={`Balas kepada ${selected.nickname}…`}
-                maxLength={200}
-                disabled={sending}
-              />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <input
+                  style={{ ...s.input, borderColor: input.length > 180 ? '#f59e0b' : input.length >= 200 ? '#e11d48' : '#e2e8f0' }}
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={`Balas kepada ${selected.nickname}…`}
+                  maxLength={200}
+                  disabled={sending}
+                />
+                <div style={{ fontSize: '0.68rem', color: input.length > 180 ? '#f59e0b' : '#94a3b8', textAlign: 'right', paddingRight: '2px' }}>
+                  {input.length}/200
+                </div>
+              </div>
               <button
-                style={{ ...s.sendBtn, opacity: (!input.trim() || sending) ? 0.5 : 1 }}
+                style={{ ...s.sendBtn, opacity: (!input.trim() || sending) ? 0.5 : 1, alignSelf: 'flex-start' }}
                 onClick={handleSend}
                 disabled={!input.trim() || sending}
               >

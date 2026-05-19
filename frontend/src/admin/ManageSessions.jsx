@@ -123,7 +123,25 @@ const ManageSessions = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (step < 4) { setStep(step + 1); return; } // Go to next page
+
+    // Step-level validation before advancing
+    if (step === 2) {
+      const effectiveCount = form.q_mode === 'manual' ? form.q_selected.length : form.q_count;
+      if (form.q_min > effectiveCount) {
+        return setMsg(`❌ Minimum betul (${form.q_min}) tidak boleh melebihi jumlah soalan dipilih (${effectiveCount}). Sila kurangkan minimum atau tambah soalan.`);
+      }
+      if (form.q_mode === 'manual' && form.q_selected.length === 0) {
+        return setMsg('❌ Sila pilih sekurang-kurangnya satu soalan, atau tukar ke mod rawak.');
+      }
+    }
+    if (step === 3) {
+      const effectiveCwCount = form.cw_mode === 'manual' ? form.cw_selected.length : form.cw_count;
+      if (form.cw_min > effectiveCwCount) {
+        return setMsg(`❌ Minimum betul (${form.cw_min}) tidak boleh melebihi jumlah perkataan dipilih (${effectiveCwCount}).`);
+      }
+    }
+
+    if (step < 4) { setMsg(''); setStep(step + 1); return; } // Go to next page
 
     // Basic Validation Check against Database Limits before submitting
     if (form.q_mode === 'random' && form.q_count > questions.length) { setStep(2); return setMsg('❌ Quiz: Requested questions exceeds database limit!'); }

@@ -6,14 +6,25 @@ const AdminFAQ = () => {
     const [faqs, setFaqs] = useState([]);
     const [instructions, setInstructions] = useState([]);
     const [question, setQuestion] = useState('');
+    const [questionCategory, setQuestionCategory] = useState('Lain-lain');
     const [answers, setAnswers] = useState({});
     const [loading, setLoading] = useState(true);
     const [admin, setAdmin] = useState(null);
 
     const [showFullGuide, setShowFullGuide] = useState(false);
     const [showAllFAQ, setShowAllFAQ] = useState(false);
+    const [expandedAnswers, setExpandedAnswers] = useState({});
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('Semua');
     const [editingInstruction, setEditingInstruction] = useState(null);
     const [editingFAQ, setEditingFAQ] = useState(null);
+
+    const ANSWER_LIMIT = 180; // characters before truncation
+
+    const CATEGORIES = ['Semua', 'Sesi Permainan', 'Pemain', 'Analitik', 'Akaun', 'Teknikal', 'Lain-lain'];
+
+    const toggleAnswer = (id) =>
+        setExpandedAnswers(prev => ({ ...prev, [id]: !prev[id] }));
 
     const token = localStorage.getItem('token');
 
@@ -61,11 +72,12 @@ const AdminFAQ = () => {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ question }),
+                body: JSON.stringify({ question, category: questionCategory }),
             });
 
             if (res.ok) {
                 setQuestion('');
+                setQuestionCategory('Lain-lain');
                 fetchFAQ();
             } else {
                 const errData = await res.json().catch(() => ({}));
@@ -160,7 +172,16 @@ const AdminFAQ = () => {
 
     const answeredFAQ = faqs.filter((faq) => faq.status === 'answered');
     const pendingFAQ = faqs.filter((faq) => faq.status === 'pending');
-    const visibleFAQ = showAllFAQ ? answeredFAQ : answeredFAQ.slice(0, 3);
+
+    const filteredFAQ = answeredFAQ.filter(faq => {
+        const q = searchQuery.toLowerCase();
+        const matchesSearch = !q ||
+            faq.question?.toLowerCase().includes(q) ||
+            faq.answer?.toLowerCase().includes(q);
+        const matchesCat = selectedCategory === 'Semua' || faq.category === selectedCategory;
+        return matchesSearch && matchesCat;
+    });
+    const visibleFAQ = showAllFAQ ? filteredFAQ : filteredFAQ.slice(0, 3);
 
     const guide = instructions[0] || {
         title: 'Panduan Menggunakan Sistem',
@@ -246,17 +267,69 @@ const AdminFAQ = () => {
             <div style={styles.section}>
                 <div style={styles.sectionHeader}>
                     <h3 style={styles.sectionTitle}>✅ FAQ Dijawab</h3>
-                    <span style={styles.badge}>{answeredFAQ.length} soalan</span>
+                    <span style={styles.badge}>{filteredFAQ.length} / {answeredFAQ.length} soalan</span>
+                </div>
+
+                {/* Search bar */}
+                <input
+                    type="text"
+                    placeholder="🔍 Cari soalan atau jawapan..."
+                    value={searchQuery}
+                    onChange={e => { setSearchQuery(e.target.value); setShowAllFAQ(false); }}
+                    style={{ ...styles.input, marginBottom: '0.75rem', fontSize: '0.9rem' }}
+                />
+
+                {/* Category pills */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                    {CATEGORIES.map(cat => (
+                        <button
+                            key={cat}
+                            onClick={() => { setSelectedCategory(cat); setShowAllFAQ(false); }}
+                            style={{
+                                padding: '0.3rem 0.85rem',
+                                borderRadius: '999px',
+                                border: '1px solid',
+                                fontSize: '0.8rem',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                borderColor: selectedCategory === cat ? '#2563eb' : '#cbd5e1',
+                                background: selectedCategory === cat ? '#2563eb' : '#fff',
+                                color: selectedCategory === cat ? '#fff' : '#475569',
+                            }}
+                        >
+                            {cat}
+                        </button>
+                    ))}
                 </div>
 
                 {loading && <p>Memuatkan...</p>}
                 {!loading && answeredFAQ.length === 0 && <p style={styles.empty}>Belum ada FAQ dijawab.</p>}
+                {!loading && answeredFAQ.length > 0 && filteredFAQ.length === 0 && (
+                    <p style={styles.empty}>Tiada FAQ sepadan dengan carian atau kategori ini.</p>
+                )}
 
                 <div style={styles.faqGrid}>
-                    {visibleFAQ.map((item) => (
+                    {visibleFAQ.map((item) => {
+                        const isLong = (item.answer || '').length > ANSWER_LIMIT;
+                        const isExpanded = expandedAnswers[item.id];
+                        const displayAnswer = isLong && !isExpanded
+                            ? item.answer.slice(0, ANSWER_LIMIT) + '…'
+                            : item.answer;
+
+                        return (
                         <div key={item.id} style={styles.faqCard}>
+                            {item.category && item.category !== 'Lain-lain' && (
+                                <span style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: '700', background: '#EFF6FF', color: '#1d4ed8', padding: '0.15rem 0.6rem', borderRadius: '999px', marginBottom: '0.5rem' }}>
+                                    {item.category}
+                                </span>
+                            )}
                             <h4 style={styles.question}>{item.question}</h4>
-                            <p style={styles.answer}>{item.answer}</p>
+                            <p style={styles.answer}>{displayAnswer}</p>
+                            {isLong && (
+                                <button onClick={() => toggleAnswer(item.id)} style={styles.linkButton}>
+                                    {isExpanded ? 'Tunjuk Kurang ↑' : 'Tunjuk Lagi ↓'}
+                                </button>
+                            )}
 
                             <p style={styles.meta}>
                                 Ditanya oleh: {item.asked_by_name || 'Admin'} <br />
@@ -274,12 +347,13 @@ const AdminFAQ = () => {
                                 </div>
                             )}
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
-                {answeredFAQ.length > 3 && (
+                {filteredFAQ.length > 3 && (
                     <button onClick={() => setShowAllFAQ(!showAllFAQ)} style={styles.showButton}>
-                        {showAllFAQ ? 'Tunjuk Kurang ↑' : `Tunjuk Lagi ${answeredFAQ.length - 3} FAQ ↓`}
+                        {showAllFAQ ? 'Tunjuk Kurang ↑' : `Tunjuk Lagi ${filteredFAQ.length - 3} FAQ ↓`}
                     </button>
                 )}
             </div>
@@ -297,7 +371,20 @@ const AdminFAQ = () => {
                             placeholder="Tulis soalan anda di sini..."
                             style={styles.textarea}
                         />
-
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '700', display: 'block', marginBottom: '0.4rem' }}>
+                                Kategori
+                            </label>
+                            <select
+                                value={questionCategory}
+                                onChange={e => setQuestionCategory(e.target.value)}
+                                style={{ ...styles.input, marginBottom: 0, padding: '0.6rem 0.9rem', cursor: 'pointer' }}
+                            >
+                                {CATEGORIES.filter(c => c !== 'Semua').map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                        </div>
                         <button onClick={submitQuestion} style={styles.button}>
                             Hantar Soalan
                         </button>
