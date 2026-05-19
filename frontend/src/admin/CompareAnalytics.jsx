@@ -143,6 +143,24 @@ const filterReady = (f) => {
   return !!(f.school || f.class || f.month);
 };
 
+const escapeCell = (value) => String(value ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;');
+
+const downloadHtmlExcel = (filename, html) => {
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+
 // ─── One-side selector ───────────────────────────────────────────────────────
 const SideSelector = ({ color, label: sideLabel, filter, onChange, isAdmin, sessionOptions, schoolOptions, classOptions, monthOptions, otherFilter }) => {
   const set = (key, val) => onChange({ ...filter, [key]: val });
@@ -369,27 +387,73 @@ const CompareAnalytics = () => {
       .slice(0, 10);
   }, [statsA, statsB, labelA, labelB]);
 
-  const downloadComparisonCSV = () => {
-    const rows = [
-      ['Side', 'Comparison', 'Nickname', 'Session', 'School', 'Class', 'CP1 Mark', 'CP2 Mark', 'CP3 Mark', 'Total Mark', 'Joined At'],
-      ...computeMarks(playersA).map(p => ['A', labelA, p.nickname, p.session_name, p.school_name, p.class_name, p.cp1_mark, p.cp2_mark, p.cp3_mark, p.total_mark, p.joined_at]),
-      ...computeMarks(playersB).map(p => ['B', labelB, p.nickname, p.session_name, p.school_name, p.class_name, p.cp1_mark, p.cp2_mark, p.cp3_mark, p.total_mark, p.joined_at]),
+  const downloadComparisonExcel = () => {
+    const markedA = computeMarks(playersA).sort((x, y) => y.total_mark - x.total_mark || x.nickname.localeCompare(y.nickname));
+    const markedB = computeMarks(playersB).sort((x, y) => y.total_mark - x.total_mark || x.nickname.localeCompare(y.nickname));
+    const maxRows = Math.max(markedA.length, markedB.length);
+    const summaryRows = [
+      ['Total Players', statsA?.total ?? 0, statsB?.total ?? 0],
+      ['Average Score /100', statsA?.avgScore ?? 0, statsB?.avgScore ?? 0],
+      ['Average CP1 /33', statsA?.avgCp1Mark ?? 0, statsB?.avgCp1Mark ?? 0],
+      ['Average CP2 /33', statsA?.avgCp2Mark ?? 0, statsB?.avgCp2Mark ?? 0],
+      ['Average CP3 /33', statsA?.avgCp3Mark ?? 0, statsB?.avgCp3Mark ?? 0],
+      ['CP1 Completed %', statsA?.cp1Pct ?? 0, statsB?.cp1Pct ?? 0],
+      ['CP2 Completed %', statsA?.cp2Pct ?? 0, statsB?.cp2Pct ?? 0],
+      ['CP3 Completed %', statsA?.cp3Pct ?? 0, statsB?.cp3Pct ?? 0],
+      ['All CP Completed %', statsA?.allPct ?? 0, statsB?.allPct ?? 0],
     ];
-    const csv = rows
-      .map(row => row.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(','))
-      .join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'comparison_data.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    const bar = (value, color) => {
+      const width = Math.max(0, Math.min(100, Number(value) || 0));
+      return `<div style="width:160px;background:#e5e7eb;height:12px;border-radius:6px;overflow:hidden"><div style="width:${width}%;background:${color};height:12px"></div></div>`;
+    };
+    const html = `
+      <html><head><meta charset="utf-8" />
+      <style>
+        body{font-family:Arial,sans-serif;color:#1f2937} h1,h2{color:#1e3a5f}
+        table{border-collapse:collapse;margin-bottom:24px;width:100%}
+        th{background:#1e3a5f;color:#fff;font-weight:700}
+        th,td{border:1px solid #cbd5e1;padding:8px;font-size:12px;vertical-align:top}
+        .a{background:#eff6ff}.b{background:#fff1f2}.section{background:#f8fafc;font-weight:700;color:#1e3a5f}
+      </style></head><body>
+      <h1>DentalQuest Comparison Report</h1>
+      <table>
+        <tr><th></th><th class="a">A</th><th class="b">B</th></tr>
+        <tr><td class="section">Comparison</td><td>${escapeCell(labelA)}</td><td>${escapeCell(labelB)}</td></tr>
+        ${summaryRows.map(([metric, a, b]) => `<tr><td>${escapeCell(metric)}</td><td>${escapeCell(a)}</td><td>${escapeCell(b)}</td></tr>`).join('')}
+      </table>
+      <h2>Visual Summary</h2>
+      <table>
+        <tr><th>Metric</th><th class="a">A Value</th><th class="a">A Bar</th><th class="b">B Value</th><th class="b">B Bar</th></tr>
+        ${[
+          ['Average Score', statsA?.avgScore ?? 0, statsB?.avgScore ?? 0],
+          ['CP1 Completed', statsA?.cp1Pct ?? 0, statsB?.cp1Pct ?? 0],
+          ['CP2 Completed', statsA?.cp2Pct ?? 0, statsB?.cp2Pct ?? 0],
+          ['CP3 Completed', statsA?.cp3Pct ?? 0, statsB?.cp3Pct ?? 0],
+          ['All CP Completed', statsA?.allPct ?? 0, statsB?.allPct ?? 0],
+        ].map(([metric, a, b]) => `<tr><td>${escapeCell(metric)}</td><td>${escapeCell(a)}</td><td>${bar(a, COLOR_A)}</td><td>${escapeCell(b)}</td><td>${bar(b, COLOR_B)}</td></tr>`).join('')}
+      </table>
+      <h2>Players Side by Side</h2>
+      <table>
+        <tr><th colspan="9" class="a">A: ${escapeCell(labelA)}</th><th colspan="9" class="b">B: ${escapeCell(labelB)}</th></tr>
+        <tr>
+          <th class="a">Rank</th><th class="a">Nickname</th><th class="a">Session</th><th class="a">School</th><th class="a">Class</th><th class="a">CP1</th><th class="a">CP2</th><th class="a">CP3</th><th class="a">Total</th>
+          <th class="b">Rank</th><th class="b">Nickname</th><th class="b">Session</th><th class="b">School</th><th class="b">Class</th><th class="b">CP1</th><th class="b">CP2</th><th class="b">CP3</th><th class="b">Total</th>
+        </tr>
+        ${Array.from({ length: maxRows }, (_, index) => {
+          const a = markedA[index] || {};
+          const b = markedB[index] || {};
+          return `<tr>
+            <td>${a.id ? index + 1 : ''}</td><td>${escapeCell(a.nickname)}</td><td>${escapeCell(a.session_name)}</td><td>${escapeCell(a.school_name)}</td><td>${escapeCell(a.class_name)}</td><td>${escapeCell(a.cp1_mark)}</td><td>${escapeCell(a.cp2_mark)}</td><td>${escapeCell(a.cp3_mark)}</td><td>${escapeCell(a.total_mark)}</td>
+            <td>${b.id ? index + 1 : ''}</td><td>${escapeCell(b.nickname)}</td><td>${escapeCell(b.session_name)}</td><td>${escapeCell(b.school_name)}</td><td>${escapeCell(b.class_name)}</td><td>${escapeCell(b.cp1_mark)}</td><td>${escapeCell(b.cp2_mark)}</td><td>${escapeCell(b.cp3_mark)}</td><td>${escapeCell(b.total_mark)}</td>
+          </tr>`;
+        }).join('')}
+      </table>
+      </body></html>
+    `;
+    downloadHtmlExcel('comparison_report.xls', html);
     api.post('/activity/log', {
       action: 'Downloaded comparison data',
-      details: `Downloaded comparison CSV for A: ${labelA || 'none'} and B: ${labelB || 'none'}`
+      details: `Downloaded comparison Excel for A: ${labelA || 'none'} and B: ${labelB || 'none'}`
     }).catch(() => {});
   };
 
@@ -409,8 +473,8 @@ const CompareAnalytics = () => {
           </p>
         </div>
         {ready && (
-          <button style={s.downloadBtn} onClick={downloadComparisonCSV}>
-            📥 {t('admin.downloadComparisonData')}
+          <button style={s.downloadBtn} onClick={downloadComparisonExcel}>
+            📥 {t('admin.downloadComparisonExcel')}
           </button>
         )}
       </div>

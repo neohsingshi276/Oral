@@ -16,6 +16,8 @@ const ManageSessions = () => {
   const [revealPassword, setRevealPassword] = useState('');
   const [revealError, setRevealError] = useState('');
   const [showRevealPass, setShowRevealPass] = useState(false);
+  const [showModalPass, setShowModalPass] = useState(false);
+  const [visibleSessionPasswords, setVisibleSessionPasswords] = useState({});
   const formRef = useRef(null);
 
   // Edit mode tracking
@@ -542,8 +544,23 @@ const ManageSessions = () => {
                               ))}
                             </div>
 
-                            <div style={{ fontSize: '0.85rem', color: '#475569' }}>
-                              {t('admin.password')}: <strong>{session.reveal_password_plain || '-'}</strong>
+                            <div style={{ fontSize: '0.85rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                              <span>{t('admin.password')}:</span>
+                              <strong>
+                                {visibleSessionPasswords[session.id]
+                                  ? (session.reveal_password_plain || '-')
+                                  : (session.reveal_password_plain ? '*'.repeat(session.reveal_password_plain.length) : '-')}
+                              </strong>
+                              {session.reveal_password_plain && (
+                                <button
+                                  type="button"
+                                  onClick={() => setVisibleSessionPasswords(prev => ({ ...prev, [session.id]: !prev[session.id] }))}
+                                  style={s.iconBtn}
+                                  title={visibleSessionPasswords[session.id] ? 'Hide password' : 'Show password'}
+                                >
+                                  {visibleSessionPasswords[session.id] ? '🙈' : '👁️'}
+                                </button>
+                              )}
                             </div>
                           </>
                         ) : revealedCodes[session.id] ? (
@@ -630,14 +647,24 @@ const ManageSessions = () => {
           }}>
             <h3>🔒 {t('admin.enterClassPassword')}</h3>
 
-            <input
-              type="password"
-              style={{ ...s.input, ...(revealError ? { borderColor: '#e11d48', background: '#fff1f2' } : {}) }}
-              placeholder={t('admin.enterPassword')}
-              value={revealPassword}
-              onChange={(e) => { setRevealPassword(e.target.value); setRevealError(''); }}
-              onKeyDown={(e) => e.key === 'Enter' && document.getElementById('reveal-btn')?.click()}
-            />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                type={showModalPass ? 'text' : 'password'}
+                style={{ ...s.input, paddingRight: '2.6rem', ...(revealError ? { borderColor: '#e11d48', background: '#fff1f2' } : {}) }}
+                placeholder={t('admin.enterPassword')}
+                value={revealPassword}
+                onChange={(e) => { setRevealPassword(e.target.value); setRevealError(''); }}
+                onKeyDown={(e) => e.key === 'Enter' && document.getElementById('reveal-btn')?.click()}
+              />
+              <button
+                type="button"
+                onClick={() => setShowModalPass(v => !v)}
+                style={{ ...s.iconBtn, position: 'absolute', right: '0.6rem' }}
+                title={showModalPass ? 'Hide password' : 'Show password'}
+              >
+                {showModalPass ? '🙈' : '👁️'}
+              </button>
+            </div>
 
             {revealError && (
               <div style={{ color: '#e11d48', fontSize: '0.88rem', fontWeight: '600', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -667,6 +694,7 @@ const ManageSessions = () => {
                     setRevealError('');
                     setPasswordModal(null);
                     setRevealPassword('');
+                    setShowModalPass(false);
                   } catch (err) {
                     setRevealError(err.response?.data?.error || 'Wrong password');
                   }
@@ -680,6 +708,7 @@ const ManageSessions = () => {
                 onClick={() => {
                   setPasswordModal(null);
                   setRevealPassword('');
+                  setShowModalPass(false);
                   setRevealError('');
                 }}
               >
@@ -718,6 +747,7 @@ const s = {
 
   btnPrimary: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.75rem 1.5rem', fontWeight: '600', cursor: 'pointer', fontSize: '0.95rem' },
   btnSecondary: { background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', padding: '0.75rem 1.5rem', fontWeight: '600', cursor: 'pointer', fontSize: '0.95rem' },
+  iconBtn: { background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: '0.2rem', fontSize: '1rem', lineHeight: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
 
   success: { background: '#f0fdf4', color: '#16a34a', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' },
   error: { background: '#fff1f2', color: '#e11d48', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' },
