@@ -2,7 +2,6 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import PhaserGameScene from './PhaserGameScene';
 import api from '../services/api';
 import { START_POS } from './gameConfig';
-import { useLanguage } from '../context/LanguageContext';
 
 const SAVE_INTERVAL = 5000;
 
@@ -12,7 +11,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
   const sceneRef = useRef(null);
   const lastSave = useRef(Date.now());
   const hasBooted = useRef(false);
-  const { t } = useLanguage();
 
   // Loading state
   const [ready, setReady] = useState(false);
@@ -100,7 +98,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
           getIsCheckpointUnlocked,
           playerNickname: player.nickname,
           initialPos,                       // ← player spawns here, not (0,0)
-          tTextPressE: t('game.pressEtoEnter', 'Press E to enter'),
           onNearCheckpoint: () => { },
           onLoadProgress: (pct) => setLoadPct(Math.round(pct * 100)),
           onLoadComplete: () => setReady(true),
@@ -112,6 +109,9 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
           height: viewH,
           parent: containerRef.current,
           backgroundColor: '#1a1a2e',
+          pixelArt: true,
+          antialias: false,
+          roundPixels: true,
           physics: {
             default: 'matter',
             matter: { gravity: { y: 0 }, debug: false },
@@ -155,18 +155,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
     }
 
     return () => {
-      cancelled = true;
-      if (gameRef.current) {
-        if (gameRef.current._oralCleanup) {
-          window.removeEventListener('resize', gameRef.current._oralCleanup.onResize);
-          clearInterval(gameRef.current._oralCleanup.saveInterval);
-        }
-        savePosition();
-        gameRef.current.destroy(true);
-        gameRef.current = null;
-      }
-      if (externalGameRef) externalGameRef.current = null;
-      hasBooted.current = false;
+      console.log('⚠️ Cleanup skipped (prevent destroy)');
     };
   }, []);
 
@@ -227,6 +216,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
           overflow: 'hidden',
           border: '3px solid #1e3a5f',
           margin: '0 auto',
+          imageRendering: 'pixelated',
         }}
       />
     </div>

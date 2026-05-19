@@ -114,7 +114,6 @@ export default class PhaserGameScene extends Phaser.Scene {
     if (data?.getIsCheckpointUnlocked) this.getIsCheckpointUnlocked = data.getIsCheckpointUnlocked;
     if (data?.playerNickname) this.playerNickname = data.playerNickname;
     if (data?.initialPos) this.initialPos = data.initialPos;
-    if (data?.tTextPressE) this.tTextPressE = data.tTextPressE;
 
     // Safe defaults so create() never crashes on undefined callbacks
     this.onNearCheckpoint = this.onNearCheckpoint || (() => { });
@@ -125,7 +124,6 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.getIsCheckpointUnlocked = this.getIsCheckpointUnlocked || (() => true);
     this.playerNickname = this.playerNickname || 'Player';
     this.initialPos = this.initialPos || null;
-    this.tTextPressE = this.tTextPressE || 'Press E to enter';
   }
 
   preload() {
@@ -165,8 +163,11 @@ export default class PhaserGameScene extends Phaser.Scene {
     // ── Create tilemap ───────────────────────────────────────────────
     const map = this.make.tilemap({ key: 'mainmap' });
 
-    const startX = this.initialPos?.x || START_POS.x;
-    const startY = this.initialPos?.y || START_POS.y;
+    // const startX = this.initialPos?.x || START_POS.x;
+    // const startY = this.initialPos?.y || START_POS.y;
+
+    const startX = START_POS.x;
+    const startY = START_POS.y;
 
     // Add tilesets — order must match the JSON tileset array exactly.
     // The first arg is the tileset name in Tiled, second is the Phaser image key.
@@ -336,20 +337,21 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.playerGraphic = this.add.container(startX, startY);
 
     // Body (blue rectangle)
-    const body = this.add.rectangle(0, 3, 18, 20, 0x2563eb);
-    body.setOrigin(0.5, 0.5);
+    this.bodyPart = this.add.rectangle(0, 3, 18, 20, 0x2563eb);
+    this.bodyPart.setOrigin(0.5, 0.5);
+
+    this.headPart = this.add.circle(0, -12, 10, 0xFBBF24);
+    this.headPart.setStrokeStyle(1.5, 0xD97706);
+
+    this.eyeL = this.add.circle(-3, -13, 1.5, 0x1e3a5f);
+    this.eyeR = this.add.circle(3, -13, 1.5, 0x1e3a5f);
+
+    this.legL = this.add.rectangle(-4, 19, 6, 9, 0x1e3a5f);
+    this.legR = this.add.rectangle(4, 19, 6, 9, 0x1e3a5f);
 
     // Head (yellow circle)
     const head = this.add.circle(0, -12, 10, 0xFBBF24);
     head.setStrokeStyle(1.5, 0xD97706);
-
-    // Eyes
-    const eyeL = this.add.circle(-3, -13, 1.5, 0x1e3a5f);
-    const eyeR = this.add.circle(3, -13, 1.5, 0x1e3a5f);
-
-    // Legs
-    this.legL = this.add.rectangle(-4, 19, 6, 9, 0x1e3a5f);
-    this.legR = this.add.rectangle(4, 19, 6, 9, 0x1e3a5f);
 
     // Name label background
     const nameText = this.add.text(0, -30, this.playerNickname, {
@@ -363,7 +365,7 @@ export default class PhaserGameScene extends Phaser.Scene {
     const nameBg = this.add.rectangle(0, -25, nameText.width + 8, 14, 0x000000, 0.6);
     nameBg.setOrigin(0.5, 1);
 
-    this.playerGraphic.add([nameBg, nameText, body, head, eyeL, eyeR, this.legL, this.legR]);
+    this.playerGraphic.add([nameBg, nameText, this.bodyPart, this.headPart, this.eyeL, this.eyeR, this.legL, this.legR]);
     this.playerGraphic.setDepth(1000);
 
     // Physics body for player (invisible rectangle — avoids null-texture bug
@@ -375,6 +377,8 @@ export default class PhaserGameScene extends Phaser.Scene {
       inertia: Infinity,
       label: 'player'
     });
+
+    this.treeCollisions = new Set();
 
     this.matter.world.on('collisionstart', (event) => {
       event.pairs.forEach(pair => {
@@ -464,7 +468,7 @@ export default class PhaserGameScene extends Phaser.Scene {
       });
 
       // Press E hint
-      const hintText = this.add.text(0, 42, this.tTextPressE, {
+      const hintText = this.add.text(0, 42, 'Press E to enter', {
         fontSize: '10px',
         fontFamily: 'sans-serif',
         fontStyle: 'bold',
@@ -497,7 +501,8 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, mapWidthPx, mapHeightPx);
     this.cameras.main.startFollow(this.playerGraphic);
     this.cameras.main.centerOn(startX, startY);
-    this.cameras.main.setZoom(3);
+    this.cameras.main.setZoom(2);
+    this.cameras.main.roundPixels = true;
 
     // ── Input ────────────────────────────────────────────────────────
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -511,7 +516,6 @@ export default class PhaserGameScene extends Phaser.Scene {
 
     // ── State ────────────────────────────────────────────────────────
     this.nearCheckpointId = null;
-    this.treeCollisions = new Set();
     this.walkFrame = 0;
     this.isPaused = false;
 
@@ -568,6 +572,8 @@ export default class PhaserGameScene extends Phaser.Scene {
         this.playerBody.position.x,
         this.playerBody.position.y - 22
       );
+
+      this.updatePlayerOpacity();
 
       // ── ANIMATION ──
       const isMoving = vx !== 0 || vy !== 0;
@@ -676,18 +682,50 @@ export default class PhaserGameScene extends Phaser.Scene {
   }
 
   updatePlayerOpacity() {
-    const count = this.treeCollisions.size;
+    const parts = [
+      this.headPart,
+      this.eyeL,
+      this.eyeR,
+      this.bodyPart,
+      this.legL,
+      this.legR,
+    ];
 
-    const alpha = Phaser.Math.Clamp(1 - count * 0.60, 0.60, 1);
+    // reset first
+    parts.forEach(part => {
+      if (part) part.setAlpha(1);
+    });
 
-    this.tweens.add({
-      targets: this.playerGraphic,
-      alpha: alpha,
-      duration: 120,
-      ease: 'Power2'
+    if (!this.treeCollisions || this.treeCollisions.size === 0) return;
+
+    parts.forEach(part => {
+      if (!part) return;
+
+      const partBounds = part.getBounds();
+
+      this.matter.world.localWorld.bodies.forEach(body => {
+        if (body.label !== 'tree') return;
+        if (!this.treeCollisions.has(body.id)) return;
+
+        const treeBounds = {
+          left: body.bounds.min.x,
+          right: body.bounds.max.x,
+          top: body.bounds.min.y,
+          bottom: body.bounds.max.y,
+        };
+
+        const isOverlapping =
+          partBounds.right > treeBounds.left &&
+          partBounds.left < treeBounds.right &&
+          partBounds.bottom > treeBounds.top &&
+          partBounds.top < treeBounds.bottom;
+
+        if (isOverlapping) {
+          part.setAlpha(0.45);
+        }
+      });
     });
   }
-
 
   getPlayerPosition() {
     return {
