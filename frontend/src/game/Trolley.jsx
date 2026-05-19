@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../services/api';
 
 const DEFAULT_DURATION = 60;
-const TROLLEY_SPEED = 3.8;
-const TROLLEY_ACCELERATION = 0.35;
+const TROLLEY_SPEED = 2.0;
+const TROLLEY_ACCELERATION = 0.18;
 const FOOD_FALL_SPEED = 2.5;
 const SPAWN_INTERVAL = 600;
 

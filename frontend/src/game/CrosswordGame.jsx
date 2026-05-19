@@ -561,8 +561,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
               ...s.hintBtn,
               opacity: hintsLeft === 0 || isGameOver ? 0.5 : 1,
               cursor: hintsLeft === 0 || isGameOver ? 'not-allowed' : 'pointer',
-              animation: hintsLeft > 0 && !isGameOver && selectedWord ? 'hintPulse 1.5s ease-in-out infinite' : 'none',
-              boxShadow: hintsLeft > 0 && !isGameOver && selectedWord ? '0 0 8px rgba(245,158,11,0.6)' : 'none',
+              outline: hintsLeft > 0 && !isGameOver && selectedWord ? '2px solid #fbbf24' : 'none',
             }}
             onClick={handleHint}
             disabled={isGameOver || hintsLeft === 0}
@@ -685,8 +684,8 @@ const s = {
   timerBarWrap: { width: '70px', height: '8px', background: '#334155', borderRadius: '4px', overflow: 'hidden' },
   timerBarFill: { height: '100%', borderRadius: '4px', transition: 'width 1s linear, background 0.3s' },
   progressPill: { background: 'rgba(255,255,255,0.15)', color: '#fff', padding: '0.3rem 0.6rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '600' },
-  checkBtn: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 0.7rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.78rem' },
-  hintBtn: { background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 0.7rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.78rem' },
+  checkBtn: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 0.75rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.78rem', height: '32px', lineHeight: '1', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' },
+  hintBtn: { background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 0.75rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.78rem', height: '32px', lineHeight: '1', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' },
   hintBar: { background: '#1e293b', color: '#e2e8f0', padding: '0.5rem 1rem', fontSize: '0.83rem', lineHeight: 1.5, flexShrink: 0 },
   mainLayout: { flex: 1, display: 'flex', gap: '1rem', padding: '1rem 1.25rem', overflow: 'auto', alignItems: 'flex-start' },
   cluesPanel: { width: '220px', flexShrink: 0, background: '#1e293b', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', maxHeight: '100%' },

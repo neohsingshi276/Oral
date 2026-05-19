@@ -54,18 +54,26 @@ const AdminFAQ = () => {
     const submitQuestion = async () => {
         if (!question.trim()) return;
 
-        const res = await fetch(`${API_URL}/faq`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ question }),
-        });
+        try {
+            const res = await fetch(`${API_URL}/faq`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ question }),
+            });
 
-        if (res.ok) {
-            setQuestion('');
-            fetchFAQ();
+            if (res.ok) {
+                setQuestion('');
+                fetchFAQ();
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                alert(`Failed to submit question: ${errData.error || res.statusText}`);
+            }
+        } catch (err) {
+            console.error('FAQ submit error:', err);
+            alert('Network error — could not submit question. Please try again.');
         }
     };
 
