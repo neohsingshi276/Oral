@@ -1449,6 +1449,7 @@ export const exactTextTranslations = {
   'Cipta sesi permainan di bahagian Sesi Permainan.': 'Create a game session in the Game Sessions section.',
   'Berikan kod 4 digit kepada murid.': 'Give the 4-digit code to students.',
   'Pantau kemajuan murid di bahagian Pemain.': 'Monitor student progress in the Players section.',
+  'Pantau kemajuan murid di bahagian Pemain dan Analitik.': 'Monitor student progress in the Players and Analytics section.',
   'Gunakan Analitik untuk melihat prestasi.': 'Use Analytics to view performance.',
   'Gunakan Sembang Pemain untuk membantu murid.': 'Use Player Chat to help students.',
   'Rujuk FAQ Dijawab untuk soalan biasa.': 'Refer to Answered FAQ for common questions.',

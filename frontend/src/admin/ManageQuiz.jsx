@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 const TYPES = [
   { value: 'multiple_choice', label: '🔵 Pilihan Berganda' },
@@ -11,6 +12,7 @@ const TYPES = [
 const emptyForm = { question: '', question_type: 'multiple_choice', options: ['', '', '', ''], correct_answer: [], match_pairs: [{ left: '', right: '' }, { left: '', right: '' }], timer_seconds: 15 };
 
 const ManageQuiz = () => {
+  const { tx } = useLanguage();
   const [questions, setQuestions] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
@@ -195,7 +197,7 @@ const ManageQuiz = () => {
                         <button type="button" style={{ ...s.correctBtn, ...(form.correct_answer.includes(idx) ? s.correctBtnActive : {}) }} onClick={() => toggleCorrect(idx)}>
                           {form.correct_answer.includes(idx) ? '✓' : String.fromCharCode(65 + idx)}
                         </button>
-                        <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={opt} onChange={e => handleOptionChange(idx, e.target.value)} placeholder={`Pilihan ${String.fromCharCode(65 + idx)}`} required={form.question_type !== 'true_false'} disabled={form.question_type === 'true_false'} maxLength={200} />
+                        <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={form.question_type === 'true_false' ? tx(opt) : opt} onChange={e => handleOptionChange(idx, e.target.value)} placeholder={`Pilihan ${String.fromCharCode(65 + idx)}`} required={form.question_type !== 'true_false'} disabled={form.question_type === 'true_false'} maxLength={200} />
                         {form.question_type !== 'true_false' && (
                           <button type="button" style={s.removeOptBtn} onClick={() => removeOption(idx)}>✕</button>
                         )}
@@ -211,12 +213,12 @@ const ManageQuiz = () => {
               {/* Pasangan padanan */}
               {form.question_type === 'match' && (
                 <div style={s.field}>
-                  <label style={s.label}>Pasangan Padanan <span style={s.labelHint}>(kiri ↔ kanan)</span></label>
+                  <label style={s.label}>Pasangan Padanan <span style={s.labelHint}>({tx('kiri')} ↔ {tx('kanan')})</span></label>
                   {form.match_pairs.map((pair, idx) => (
                     <div key={idx} style={s.matchPairRow}>
-                      <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={pair.left} onChange={e => handleMatchChange(idx, 'left', e.target.value)} placeholder={`Kiri ${idx + 1}`} required maxLength={100} />
+                      <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={pair.left} onChange={e => handleMatchChange(idx, 'left', e.target.value)} placeholder={tx(`Kiri ${idx + 1}`)} required maxLength={100} />
                       <span style={s.matchArrow}>↔</span>
-                      <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={pair.right} onChange={e => handleMatchChange(idx, 'right', e.target.value)} placeholder={`Kanan ${idx + 1}`} required maxLength={100} />
+                      <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={pair.right} onChange={e => handleMatchChange(idx, 'right', e.target.value)} placeholder={tx(`Kanan ${idx + 1}`)} required maxLength={100} />
                       <button type="button" style={s.removeOptBtn} onClick={() => removeMatchPair(idx)}>✕</button>
                     </div>
                   ))}
