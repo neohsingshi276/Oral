@@ -1,5 +1,6 @@
 const db = require('../db');
 const bcrypt = require('bcryptjs');
+const { logActivity } = require('./activity.controller');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const generateCode = async () => {
@@ -186,6 +187,7 @@ const createSession = async (req, res) => {
       );
     }
 
+    await logActivity(req.admin.id, 'Created game session', `Created session "${session_name.trim()}" for ${school_name.trim()} / ${class_name.trim()}`);
     res.status(201).json({ message: 'Session created!', sessionId, unique_token });
   } catch (err) {
     console.error(err);
@@ -200,7 +202,7 @@ const updateSession = async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      `SELECT s.admin_id, c.teacher_id
+      `SELECT s.admin_id, s.session_name, c.teacher_id
        FROM game_sessions s
        LEFT JOIN classes c ON s.class_id = c.id
        WHERE s.id = ?`,
@@ -216,6 +218,7 @@ const updateSession = async (req, res) => {
       if (req.admin.role !== 'main_admin' && req.admin.role !== 'admin' && req.admin.role !== 'teacher')
         return res.status(403).json({ error: 'Only Admins or Teachers can activate or deactivate session codes' });
       await db.query('UPDATE game_sessions SET is_active = ? WHERE id = ?', [!!is_active, sessionId]);
+      await logActivity(req.admin.id, !!is_active ? 'Activated game session' : 'Deactivated game session', `Session: ${rows[0].session_name}`);
     }
 
     if (school_id !== undefined || class_id !== undefined) {
@@ -278,6 +281,9 @@ const updateSession = async (req, res) => {
       );
     }
 
+    if (is_active === undefined) {
+      await logActivity(req.admin.id, 'Updated game session', `Updated session: ${rows[0].session_name}`);
+    }
     res.json({ message: 'Session updated' });
   } catch (err) {
     console.error(err);
@@ -289,7 +295,7 @@ const updateSession = async (req, res) => {
 const deleteSession = async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT s.admin_id FROM game_sessions s WHERE s.id = ?`,
+      `SELECT s.admin_id, s.session_name FROM game_sessions s WHERE s.id = ?`,
       [req.params.id]
     );
     if (rows.length === 0)
@@ -299,6 +305,7 @@ const deleteSession = async (req, res) => {
       return res.status(403).json({ error: 'You can only delete your own sessions' });
 
     await db.query('DELETE FROM game_sessions WHERE id = ?', [req.params.id]);
+    await logActivity(req.admin.id, 'Deleted game session', `Deleted session: ${rows[0].session_name}`);
     res.json({ message: 'Session deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
