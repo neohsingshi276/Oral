@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line
@@ -31,6 +32,7 @@ const computeMarks = (players) => {
 };
 
 const Analytics = ({ setActive }) => {
+  const { t } = useLanguage();
   const [data, setData]                   = useState(null);
   const [loading, setLoading]             = useState(true);
   const [activeTab, setActiveTab]         = useState('overview');
@@ -117,15 +119,15 @@ const Analytics = ({ setActive }) => {
     ? Math.round(displayPlayers.reduce((s, p) => s + p.total_mark, 0) / displayPlayers.length) : 0;
 
   const completionData = [
-    { name: 'CP1 Kuiz',          completed: filteredCP1, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP1 / displayPlayers.length) * 100) : 0, avgMark: avgCP1Mark },
-    { name: 'CP2 Kata Silang',   completed: filteredCP2, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP2 / displayPlayers.length) * 100) : 0, avgMark: avgCP2Mark },
-    { name: 'CP3 Permainan Makanan', completed: filteredCP3, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP3 / displayPlayers.length) * 100) : 0, avgMark: avgCP3Mark },
+    { name: t('admin.cp1Quiz'), completed: filteredCP1, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP1 / displayPlayers.length) * 100) : 0, avgMark: avgCP1Mark },
+    { name: t('admin.cp2Crossword'), completed: filteredCP2, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP2 / displayPlayers.length) * 100) : 0, avgMark: avgCP2Mark },
+    { name: t('admin.cp3FoodGame'), completed: filteredCP3, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP3 / displayPlayers.length) * 100) : 0, avgMark: avgCP3Mark },
   ];
 
   const attemptData = [
-    { name: 'CP1 Kuiz',          avgAttempts: displayPlayers.length ? (displayPlayers.reduce((s, p) => s + (p.cp1_attempts || 0), 0) / displayPlayers.length).toFixed(1) : 0 },
-    { name: 'CP2 Kata Silang',   avgAttempts: displayPlayers.length ? (displayPlayers.reduce((s, p) => s + (p.cp2_attempts || 0), 0) / displayPlayers.length).toFixed(1) : 0 },
-    { name: 'CP3 Permainan Makanan', avgAttempts: displayPlayers.length ? (displayPlayers.reduce((s, p) => s + (p.cp3_attempts || 0), 0) / displayPlayers.length).toFixed(1) : 0 },
+    { name: t('admin.cp1Quiz'), avgAttempts: displayPlayers.length ? (displayPlayers.reduce((s, p) => s + (p.cp1_attempts || 0), 0) / displayPlayers.length).toFixed(1) : 0 },
+    { name: t('admin.cp2Crossword'), avgAttempts: displayPlayers.length ? (displayPlayers.reduce((s, p) => s + (p.cp2_attempts || 0), 0) / displayPlayers.length).toFixed(1) : 0 },
+    { name: t('admin.cp3FoodGame'), avgAttempts: displayPlayers.length ? (displayPlayers.reduce((s, p) => s + (p.cp3_attempts || 0), 0) / displayPlayers.length).toFixed(1) : 0 },
   ];
 
   const sessionMap = {};
@@ -160,12 +162,12 @@ const Analytics = ({ setActive }) => {
     .sort((a, b) => b.total_mark - a.total_mark || a.nickname.localeCompare(b.nickname));
 
   const TABS = [
-    { key: 'overview',    label: '📊 Ringkasan' },
-    { key: 'completion',  label: '📈 Penyelesaian' },
-    { key: 'attempts',    label: '🔁 Percubaan' },
-    { key: 'sessions',    label: '🔀 Sesi' },
-    { key: 'timeline',    label: '📅 Garis Masa' },
-    { key: 'leaderboard', label: '🏆 Papan Pendahulu' },
+    { key: 'overview',    label: `📊 ${t('admin.tabSummary')}` },
+    { key: 'completion',  label: `📈 ${t('admin.tabCompletion')}` },
+    { key: 'attempts',    label: `🔁 ${t('admin.tabAttempts')}` },
+    { key: 'sessions',    label: `🔀 ${t('admin.tabSessions')}` },
+    { key: 'timeline',    label: `📅 ${t('admin.tabTimeline')}` },
+    { key: 'leaderboard', label: `🏆 ${t('admin.tabLeaderboard')}` },
   ];
 
   const markColor = (mark, max = 100) => {
@@ -549,10 +551,6 @@ const Analytics = ({ setActive }) => {
         </div>
       )}
 
-      {/* Bar Muat Turun */}
-      <div style={s.downloadBar}>
-        <button style={s.downloadBtn} onClick={downloadCSV}>⬇️ Muat Turun Laporan Penuh (CSV)</button>
-      </div>
     </div>
   );
 };

@@ -70,6 +70,9 @@ const ensureSchema = async () => {
   await safeAlter("ALTER TABLE admins ADD COLUMN school VARCHAR(255) NULL AFTER role");
   await safeAlter("ALTER TABLE admin_invitations ADD COLUMN school VARCHAR(255) NULL AFTER role");
   await safeAlter("ALTER TABLE game_sessions ADD COLUMN session_month TINYINT NULL AFTER session_name");
+  await safeAlter("ALTER TABLE email_reminders MODIFY COLUMN to_admin_id INT NULL");
+  await safeAlter("ALTER TABLE email_reminders ADD COLUMN to_email VARCHAR(120) NULL AFTER to_admin_id");
+  await safeAlter("ALTER TABLE email_reminders ADD COLUMN to_name VARCHAR(120) NULL AFTER to_email");
 
   // Ensure reveal_password columns exist (were added after initial deploy)
   await safeAlter("ALTER TABLE game_sessions ADD COLUMN reveal_password_hash VARCHAR(255) NULL AFTER unique_token");

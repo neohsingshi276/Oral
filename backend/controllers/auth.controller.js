@@ -2,6 +2,7 @@ const db = require('../db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendOTPEmail } = require('../services/email.service');
+const { logActivity } = require('./activity.controller');
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -71,6 +72,8 @@ const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, admin.password_hash);
     if (!isMatch) return res.status(401).json({ error: 'Invalid email or password' });
 
+    await logActivity(admin.id, 'Logged in', `Signed in as ${admin.email}`);
+
     const token = jwt.sign(
       { id: admin.id, email: admin.email, role: admin.role },
       process.env.JWT_SECRET,
@@ -134,6 +137,7 @@ const forgotPassword = async (req, res) => {
     );
 
     await sendOTPEmail(email, otp, admin.name);
+    await logActivity(admin.id, 'Requested password reset OTP', `OTP sent to ${email}`);
     res.json({ message: 'OTP sent to your email!' });
   } catch (err) {
     console.error(err);
@@ -194,6 +198,7 @@ const resetPassword = async (req, res) => {
     const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
     const hash = await bcrypt.hash(newPassword, 10);
     await db.query('UPDATE admins SET password_hash = ? WHERE id = ?', [hash, decoded.adminId]);
+    await logActivity(decoded.adminId, 'Reset password', `Password reset completed for ${decoded.email}`);
     res.json({ message: 'Password reset successfully!' });
   } catch (err) {
     res.status(400).json({ error: 'Invalid or expired reset token' });

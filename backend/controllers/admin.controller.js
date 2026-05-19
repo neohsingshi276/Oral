@@ -458,6 +458,7 @@ const resendInvite = async (req, res) => {
     } catch (e) {
       console.error('Resend email failed:', e.message);
     }
+    await logActivity(req.admin.id, 'Resent admin invitation', `Resent invitation to ${invite.email}`);
 
     res.json({ message: 'Invitation resent!' });
   } catch (err) {
@@ -467,22 +468,20 @@ const resendInvite = async (req, res) => {
 };
 
 // ─── cancelInvite ─────────────────────────────────────────────────────────────
-// FIX: Added a check so only main_admin can cancel any invite;
-// regular admins can only cancel invites they created (if we track that),
-// or we restrict to main_admin only to keep it simple and safe.
 const cancelInvite = async (req, res) => {
-  // FIX: Enforce role check — only main_admin can cancel invitations
-  if (req.admin.role !== 'main_admin')
-    return res.status(403).json({ error: 'Only the main admin can cancel invitations' });
+  // main_admin and admin can cancel pending invitations.
+  if (!['main_admin', 'admin'].includes(req.admin.role))
+    return res.status(403).json({ error: 'Only admins can cancel invitations' });
 
   try {
     const [invites] = await db.query(
-      'SELECT id FROM admin_invitations WHERE id = ?', [req.params.id]
+      'SELECT id, email FROM admin_invitations WHERE id = ?', [req.params.id]
     );
     if (invites.length === 0)
       return res.status(404).json({ error: 'Invitation not found' });
 
     await db.query('DELETE FROM admin_invitations WHERE id = ?', [req.params.id]);
+    await logActivity(req.admin.id, 'Cancelled admin invitation', `Cancelled invitation to ${invites[0].email}`);
     res.json({ message: 'Invitation cancelled' });
   } catch (err) {
     console.error(err);

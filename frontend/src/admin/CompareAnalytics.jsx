@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   Legend, ResponsiveContainer, RadarChart, Radar,
@@ -274,6 +275,7 @@ const SideSelector = ({ color, label: sideLabel, filter, onChange, isAdmin, sess
 // ─── Main component ───────────────────────────────────────────────────────────
 const CompareAnalytics = () => {
   const { admin } = useAuth();
+  const { t } = useLanguage();
   const isTeacher = admin?.role === 'teacher';
   const isAdmin = !isTeacher;
 
@@ -281,8 +283,16 @@ const CompareAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const [filterA, setFilterA] = useState(emptyFilter());
   const [filterB, setFilterB] = useState(emptyFilter());
+  const loggedViewRef = useRef(false);
 
   useEffect(() => {
+    if (!loggedViewRef.current) {
+      loggedViewRef.current = true;
+      api.post('/activity/log', {
+        action: 'Viewed comparison analytics',
+        details: 'Opened the comparison analytics page'
+      }).catch(() => {});
+    }
     api.get('/admin/analytics')
       .then(res => setAllPlayers(res.data.players || []))
       .catch(console.error)
@@ -336,18 +346,18 @@ const CompareAnalytics = () => {
 
   // ── Chart data ───────────────────────────────────────────────────────────────
   const barData = [
-    { name: 'CP1 Kuiz', A: statsA?.cp1Pct ?? 0, B: statsB?.cp1Pct ?? 0 },
-    { name: 'CP2 Silang Kata', A: statsA?.cp2Pct ?? 0, B: statsB?.cp2Pct ?? 0 },
-    { name: 'CP3 Permainan', A: statsA?.cp3Pct ?? 0, B: statsB?.cp3Pct ?? 0 },
-    { name: 'Semua Selesai', A: statsA?.allPct ?? 0, B: statsB?.allPct ?? 0 },
+    { name: t('admin.cp1Quiz'), A: statsA?.cp1Pct ?? 0, B: statsB?.cp1Pct ?? 0 },
+    { name: t('admin.cp2Crossword'), A: statsA?.cp2Pct ?? 0, B: statsB?.cp2Pct ?? 0 },
+    { name: t('admin.cp3FoodGame'), A: statsA?.cp3Pct ?? 0, B: statsB?.cp3Pct ?? 0 },
+    { name: t('admin.allCompleted'), A: statsA?.allPct ?? 0, B: statsB?.allPct ?? 0 },
   ];
 
   const radarData = [
     { subject: 'CP1 %', A: statsA?.cp1Pct ?? 0, B: statsB?.cp1Pct ?? 0 },
     { subject: 'CP2 %', A: statsA?.cp2Pct ?? 0, B: statsB?.cp2Pct ?? 0 },
     { subject: 'CP3 %', A: statsA?.cp3Pct ?? 0, B: statsB?.cp3Pct ?? 0 },
-    { subject: 'Avg Markah', A: statsA?.avgScore ?? 0, B: statsB?.avgScore ?? 0 },
-    { subject: 'Semua CP', A: statsA?.allPct ?? 0, B: statsB?.allPct ?? 0 },
+    { subject: t('admin.avgScore'), A: statsA?.avgScore ?? 0, B: statsB?.avgScore ?? 0 },
+    { subject: t('admin.allCp'), A: statsA?.allPct ?? 0, B: statsB?.allPct ?? 0 },
   ];
 
   const mergedLeaderboard = useMemo(() => {
@@ -358,6 +368,30 @@ const CompareAnalytics = () => {
       .sort((x, y) => y.total_mark - x.total_mark || x.nickname.localeCompare(y.nickname))
       .slice(0, 10);
   }, [statsA, statsB, labelA, labelB]);
+
+  const downloadComparisonCSV = () => {
+    const rows = [
+      ['Side', 'Comparison', 'Nickname', 'Session', 'School', 'Class', 'CP1 Mark', 'CP2 Mark', 'CP3 Mark', 'Total Mark', 'Joined At'],
+      ...computeMarks(playersA).map(p => ['A', labelA, p.nickname, p.session_name, p.school_name, p.class_name, p.cp1_mark, p.cp2_mark, p.cp3_mark, p.total_mark, p.joined_at]),
+      ...computeMarks(playersB).map(p => ['B', labelB, p.nickname, p.session_name, p.school_name, p.class_name, p.cp1_mark, p.cp2_mark, p.cp3_mark, p.total_mark, p.joined_at]),
+    ];
+    const csv = rows
+      .map(row => row.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'comparison_data.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    api.post('/activity/log', {
+      action: 'Downloaded comparison data',
+      details: `Downloaded comparison CSV for A: ${labelA || 'none'} and B: ${labelB || 'none'}`
+    }).catch(() => {});
+  };
 
   if (loading) return <div style={s.loading}>Memuatkan data perbandingan… 📊</div>;
 
@@ -374,6 +408,11 @@ const CompareAnalytics = () => {
               : 'Pilih kombinasi sekolah, kelas, bulan atau sesi untuk setiap sisi.'}
           </p>
         </div>
+        {ready && (
+          <button style={s.downloadBtn} onClick={downloadComparisonCSV}>
+            📥 {t('admin.downloadComparisonData')}
+          </button>
+        )}
       </div>
 
       {/* ── Selectors ── */}
@@ -643,6 +682,7 @@ const s = {
   header: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' },
   title: { fontSize: '1.2rem', fontWeight: '800', color: '#1e3a5f', margin: 0 },
   subtitle: { color: '#64748b', fontSize: '0.88rem', marginTop: '0.25rem' },
+  downloadBtn: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.65rem 1rem', fontWeight: '700', cursor: 'pointer', fontSize: '0.85rem' },
   card: { background: '#fff', borderRadius: '14px', padding: '1.25rem 1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
   sectionTitle: { fontSize: '0.95rem', fontWeight: '800', color: '#1e3a5f', margin: '0 0 1rem' },
 

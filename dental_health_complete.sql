@@ -220,7 +220,9 @@ CREATE TABLE IF NOT EXISTS admin_activity_logs (
 CREATE TABLE IF NOT EXISTS email_reminders (
   id INT AUTO_INCREMENT PRIMARY KEY,
   from_admin_id INT NOT NULL,
-  to_admin_id INT NOT NULL,
+  to_admin_id INT NULL,
+  to_email VARCHAR(120) NULL,
+  to_name VARCHAR(120) NULL,
   subject VARCHAR(255) NOT NULL,
   message TEXT NOT NULL,
   is_read BOOLEAN DEFAULT FALSE,

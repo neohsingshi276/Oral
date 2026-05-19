@@ -268,7 +268,7 @@ const ManageSessions = () => {
                 <h3 style={s.secTitle}>{t('admin.step1Info')}</h3>
 
                 <div style={s.field}>
-                  <label style={s.label}>School</label>
+                  <label style={s.label}>{t('admin.school')}</label>
                   <input
                     style={s.input}
                     value={form.school_name || ''}
@@ -284,7 +284,7 @@ const ManageSessions = () => {
                 </div>
 
                 <div style={s.field}>
-                  <label style={s.label}>Class</label>
+                  <label style={s.label}>{t('admin.class')}</label>
                   <input
                     style={s.input}
                     value={form.class_name || ''}
@@ -437,7 +437,7 @@ const ManageSessions = () => {
                 </div>
 
                 <div style={s.field}>
-                  <label style={s.label}>Password to Reveal Code</label>
+                  <label style={s.label}>{t('admin.passwordToRevealCode')}</label>
                   <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                     <input
                       type={showRevealPass ? 'text' : 'password'}
@@ -543,7 +543,7 @@ const ManageSessions = () => {
                             </div>
 
                             <div style={{ fontSize: '0.85rem', color: '#475569' }}>
-                              Password: <strong>{session.reveal_password_plain || '-'}</strong>
+                              {t('admin.password')}: <strong>{session.reveal_password_plain || '-'}</strong>
                             </div>
                           </>
                         ) : revealedCodes[session.id] ? (
@@ -554,7 +554,7 @@ const ManageSessions = () => {
                           </div>
                         ) : (
                           <button style={s.btnCopy} onClick={() => setPasswordModal(session)}>
-                            🔒 Reveal Code
+                            🔒 {t('admin.revealCode')}
                           </button>
                         )}
 
@@ -565,7 +565,7 @@ const ManageSessions = () => {
                                 style={s.btnEdit}
                                 onClick={() => handleEdit(session)}
                               >
-                                ✏️ Edit
+                                ✏️ {t('admin.edit')}
                               </button>
 
                               <button
@@ -582,8 +582,8 @@ const ManageSessions = () => {
                                 }
                               >
                                 {session.is_active
-                                  ? 'Deactivate'
-                                  : 'Activate'}
+                                  ? t('admin.deactivate')
+                                  : t('admin.activate')}
                               </button>
 
                               <button
@@ -592,7 +592,7 @@ const ManageSessions = () => {
                                   handleDelete(session.id)
                                 }
                               >
-                                🗑️ Delete
+                                🗑️ {t('admin.delete')}
                               </button>
                             </>
                           )}
@@ -628,12 +628,12 @@ const ManageSessions = () => {
             borderRadius: '12px',
             width: '400px'
           }}>
-            <h3>🔒 Enter Class Password</h3>
+            <h3>🔒 {t('admin.enterClassPassword')}</h3>
 
             <input
               type="password"
               style={{ ...s.input, ...(revealError ? { borderColor: '#e11d48', background: '#fff1f2' } : {}) }}
-              placeholder="Enter password"
+              placeholder={t('admin.enterPassword')}
               value={revealPassword}
               onChange={(e) => { setRevealPassword(e.target.value); setRevealError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && document.getElementById('reveal-btn')?.click()}
@@ -654,7 +654,7 @@ const ManageSessions = () => {
                 id="reveal-btn"
                 style={s.btnPrimary}
                 onClick={async () => {
-                  if (!revealPassword.trim()) { setRevealError('Please enter the password'); return; }
+                  if (!revealPassword.trim()) { setRevealError(t('admin.enterPassword')); return; }
                   try {
                     const res = await api.post(
                       `/sessions/${passwordModal.id}/reveal-code`,
@@ -672,7 +672,7 @@ const ManageSessions = () => {
                   }
                 }}
               >
-                Reveal
+                {t('admin.reveal')}
               </button>
 
               <button

@@ -39,6 +39,7 @@ const ManageAdmins = ({ currentAdmin }) => {
   };
 
   const handleCancel = async (id) => {
+    if (!['main_admin', 'admin'].includes(currentAdmin?.role)) return;
     if (!confirm('Batalkan jemputan ini?')) return;
     try {
       await api.delete(`/admin/invitations/${id}`);
@@ -103,7 +104,7 @@ const ManageAdmins = ({ currentAdmin }) => {
                 </div>
                 <span style={s.pendingBadge}>⏳ Tertangguh</span>
                 <button style={s.btnResend} onClick={() => handleResend(invite.id)}>📧 Hantar Semula</button>
-                {currentAdmin?.role === 'main_admin' && (
+                {['main_admin', 'admin'].includes(currentAdmin?.role) && (
                   <button style={s.btnCancel} onClick={() => handleCancel(invite.id)}>✕ Batal</button>
                 )}
               </div>

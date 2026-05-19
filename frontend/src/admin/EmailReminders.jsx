@@ -30,7 +30,7 @@ const COPY = {
     read: '✅ Dibaca',
     unread: '⏳ Belum Dibaca',
     markRead: 'Tandai Sudah Dibaca ✓',
-    emptySent: 'Tiada peringatan dihantar lagi',
+    emptySent: 'Tiada mesej dihantar lagi',
     emptyInbox: 'Tiada mesej dalam peti masuk',
     sendFail: 'Gagal menghantar',
     templates: {
@@ -78,7 +78,7 @@ const COPY = {
     read: '✅ Read',
     unread: '⏳ Unread',
     markRead: 'Mark As Read ✓',
-    emptySent: 'No reminders sent yet',
+    emptySent: 'No sent messages yet',
     emptyInbox: 'No messages in inbox',
     sendFail: 'Failed to send',
     templates: {
@@ -224,7 +224,7 @@ const EmailReminders = ({ currentAdmin }) => {
                   <span style={s.emailDate}>{new Date(item.created_at).toLocaleDateString()}</span>
                 </div>
                 <div style={s.emailSubject} data-no-translate="true">{item.subject}</div>
-                <div style={s.emailPreview} data-no-translate="true">{item.message.slice(0, 100)}...</div>
+                <div style={s.emailBody} data-no-translate="true">{item.message}</div>
                 <div style={{ ...s.readBadge, ...(item.is_read ? s.readBadgeRead : s.readBadgeUnread) }}>
                   {item.is_read ? c.read : c.unread}
                 </div>

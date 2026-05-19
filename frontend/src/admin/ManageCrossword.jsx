@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 const ManageCrossword = () => {
+  const { t } = useLanguage();
   const [words, setWords] = useState([]);
   const [form, setForm] = useState({ word: '', clue: '' });
   const [editing, setEditing] = useState(null);
@@ -63,7 +65,7 @@ const ManageCrossword = () => {
                 value={form.word}
                 onChange={e => setForm({ ...form, word: e.target.value.toUpperCase() })}
                 required
-                placeholder="cth. GIGI"
+                placeholder={t('admin.wordExample')}
                 maxLength={15}
               />
               <p style={s.hint}>Maksimum 15 huruf. Sekarang: {form.word.length} huruf</p>
@@ -75,7 +77,7 @@ const ManageCrossword = () => {
                 value={form.clue}
                 onChange={e => setForm({ ...form, clue: e.target.value })}
                 required
-                placeholder="cth. Organ keras dalam mulut untuk mengunyah"
+                placeholder={t('admin.clueExample')}
                 maxLength={200}
               />
             </div>

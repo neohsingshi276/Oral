@@ -10,6 +10,19 @@ const logActivity = async (admin_id, action, details = null) => {
   } catch (err) { console.error('Activity log error:', err); }
 };
 
+const createActivityLog = async (req, res) => {
+  const { action, details } = req.body;
+  if (!action || typeof action !== 'string' || action.trim().length === 0)
+    return res.status(400).json({ error: 'Action is required' });
+  if (action.length > 120)
+    return res.status(400).json({ error: 'Action is too long' });
+  if (details && (typeof details !== 'string' || details.length > 500))
+    return res.status(400).json({ error: 'Details are too long' });
+
+  await logActivity(req.admin.id, action.trim(), details || null);
+  res.status(201).json({ message: 'Activity logged' });
+};
+
 // Get all activity logs (Main Admin only)
 const getActivityLogs = async (req, res) => {
   try {
@@ -49,4 +62,4 @@ const getAdminMonitoring = async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 };
 
-module.exports = { logActivity, getActivityLogs, getAdminMonitoring };
+module.exports = { logActivity, createActivityLog, getActivityLogs, getAdminMonitoring };

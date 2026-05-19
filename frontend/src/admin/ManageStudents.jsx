@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const ManageStudents = () => {
   const { admin } = useAuth();
+  const { t } = useLanguage();
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -113,10 +115,10 @@ const ManageStudents = () => {
     <div>
       <div style={s.card}>
         <div style={s.topRow}>
-          <h2 style={s.cardTitle}>👥 Semua Pemain ({players.length})</h2>
+          <h2 style={s.cardTitle}>👥 {t('admin.allPlayers')} ({players.length})</h2>
           <input
             style={s.search}
-            placeholder="🔍 Cari dengan nama atau sesi..."
+            placeholder={`🔍 ${t('admin.searchByNameOrSession')}`}
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -128,7 +130,7 @@ const ManageStudents = () => {
               setSelectedClass('');
             }}
           >
-            <option value="">Semua Sekolah</option>
+            <option value="">{t('admin.allSchools')}</option>
             {uniqueSchools.map(school => (
               <option key={school} value={school}>
                 {school}
@@ -141,7 +143,7 @@ const ManageStudents = () => {
             value={selectedClass}
             onChange={(e) => setSelectedClass(e.target.value)}
           >
-            <option value="">Semua Kelas</option>
+            <option value="">{t('admin.allClasses')}</option>
             {uniqueClasses.map(cls => (
               <option key={cls} value={cls}>
                 {cls}
@@ -154,7 +156,7 @@ const ManageStudents = () => {
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
           >
-            <option value="">Semua Bulan</option>
+            <option value="">{t('admin.allMonths')}</option>
             {uniqueMonths.map(month => (
               <option key={month} value={month}>
                 {new Date(month + '-01').toLocaleDateString('en-US', {
@@ -175,7 +177,7 @@ const ManageStudents = () => {
 
         {(selectedSchool || selectedClass) && (
           <h3 style={s.filterTitle}>
-            {selectedSchool || 'Semua Sekolah'}
+            {selectedSchool || t('admin.allSchools')}
             {selectedClass ? ` • ${selectedClass}` : ''}
           </h3>
         )}

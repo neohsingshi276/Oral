@@ -1,5 +1,6 @@
 const db = require('../db');
 const { sendReminderEmail } = require('../services/email.service');
+const { logActivity } = require('./activity.controller');
 
 const sendReminder = async (req, res) => {
   const { to_admin_id, to_email, to_name, subject, message } = req.body;
@@ -31,6 +32,7 @@ const sendReminder = async (req, res) => {
         try { await sendReminderEmail(admin.email, admin.name, subject, message, sender[0].name); }
         catch (e) { console.error('Email send failed for', admin.email, e.message); }
       }
+      await logActivity(req.admin.id, 'Sent email reminder', `Sent to all staff (${admins.length} recipient(s)): ${subject}`);
       res.json({ message: `Reminder sent to ${admins.length} admin(s)!` });
     } else if (to_admin_id === 'custom') {
       try {
@@ -39,6 +41,11 @@ const sendReminder = async (req, res) => {
         console.error('Email send failed:', e.message);
         return res.status(500).json({ error: 'Failed to send email' });
       }
+      await db.query(
+        'INSERT INTO email_reminders (from_admin_id, to_admin_id, to_email, to_name, subject, message) VALUES (?, NULL, ?, ?, ?, ?)',
+        [req.admin.id, to_email, to_name || to_email, subject, message]
+      );
+      await logActivity(req.admin.id, 'Sent email reminder', `Sent to ${to_name || to_email}: ${subject}`);
       res.json({ message: 'Email sent!' });
     } else {
       const [toAdmin] = await db.query('SELECT name, email FROM admins WHERE id = ?', [to_admin_id]);
@@ -49,6 +56,7 @@ const sendReminder = async (req, res) => {
       );
       try { await sendReminderEmail(toAdmin[0].email, toAdmin[0].name, subject, message, sender[0].name); }
       catch (e) { console.error('Email send failed:', e.message); }
+      await logActivity(req.admin.id, 'Sent email reminder', `Sent to ${toAdmin[0].name} (${toAdmin[0].email}): ${subject}`);
       res.json({ message: 'Reminder sent!' });
     }
   } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
@@ -75,8 +83,9 @@ const markRead = async (req, res) => {
 const getSentReminders = async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT er.*, a.name as to_name FROM email_reminders er
-      JOIN admins a ON er.to_admin_id = a.id
+      SELECT er.*, COALESCE(a.name, er.to_name, er.to_email) as to_name
+      FROM email_reminders er
+      LEFT JOIN admins a ON er.to_admin_id = a.id
       WHERE er.from_admin_id = ? ORDER BY er.created_at DESC
     `, [req.admin.id]);
     res.json({ reminders: rows });
