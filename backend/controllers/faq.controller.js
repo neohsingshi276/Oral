@@ -85,6 +85,7 @@ exports.getInstructions = async (req, res) => {
         const [rows] = await db.query('SELECT * FROM faq_instructions ORDER BY id ASC');
         res.json(rows);
     } catch (err) {
+        console.error('FAQ instructions fetch error:', err);
         res.status(500).json({ error: 'Failed to fetch instructions' });
     }
 };

@@ -24,6 +24,43 @@ const ensureSchema = async () => {
       FOREIGN KEY (session_id) REFERENCES game_sessions(id) ON DELETE CASCADE
     )
   `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS faq_questions (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      question TEXT NOT NULL,
+      answer TEXT NULL,
+      asked_by_admin_id INT NOT NULL,
+      answered_by_admin_id INT NULL,
+      status ENUM('pending', 'answered') DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      answered_at TIMESTAMP NULL,
+      FOREIGN KEY (asked_by_admin_id) REFERENCES admins(id) ON DELETE CASCADE,
+      FOREIGN KEY (answered_by_admin_id) REFERENCES admins(id) ON DELETE SET NULL
+    )
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS faq_instructions (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      content TEXT NOT NULL,
+      display_order INT DEFAULT 1,
+      updated_by_admin_id INT NULL,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (updated_by_admin_id) REFERENCES admins(id) ON DELETE SET NULL
+    )
+  `);
+
+  await db.query(`
+    INSERT IGNORE INTO faq_instructions (id, title, content, display_order)
+    VALUES (
+      1,
+      'Cara Menggunakan Sistem DentalQuest',
+      '1. Cipta sesi permainan di Sesi Permainan.\\n2. Berikan kod 4 digit kepada murid.\\n3. Pantau kemajuan murid di bahagian Pemain dan Analitik.\\n4. Gunakan Sembang Pemain untuk membantu murid.\\n5. Rujuk FAQ Dijawab untuk soalan biasa.',
+      1
+    )
+  `);
   await safeAlter("ALTER TABLE admins MODIFY COLUMN role ENUM('admin', 'main_admin', 'teacher') DEFAULT 'admin'");
   await safeAlter("ALTER TABLE crossword_data MODIFY COLUMN direction ENUM('across','down') DEFAULT 'across'");
   await safeAlter('ALTER TABLE crossword_data MODIFY COLUMN start_row INT DEFAULT 0');
