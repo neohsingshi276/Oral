@@ -16,6 +16,20 @@ const ManageVideos = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (form.order_num !== '') {
+      const orderNum = Number(form.order_num);
+      if (!Number.isInteger(orderNum) || orderNum < 1) {
+        setMsg('❌ Nombor susunan mesti nombor bulat 1 atau lebih besar');
+        setTimeout(() => setMsg(''), 3000);
+        return;
+      }
+    } else if (editing) {
+      setMsg('❌ Sila masukkan nombor susunan (1, 2, 3…)');
+      setTimeout(() => setMsg(''), 3000);
+      return;
+    }
+
     try {
       if (editing) {
         await api.put(`/videos/${editing}`, form);
@@ -57,7 +71,20 @@ const ManageVideos = () => {
             </div>
             <div style={s.field}>
               <label style={s.label}>Nombor Susunan</label>
-              <input style={s.input} type="number" value={form.order_num} onChange={e => setForm({ ...form, order_num: e.target.value })} placeholder="1, 2, 3..." />
+              <input
+                style={s.input}
+                type="number"
+                min={1}
+                step={1}
+                value={form.order_num}
+                onChange={e => setForm({ ...form, order_num: e.target.value })}
+                placeholder={editing ? '1, 2, 3…' : 'Kosongkan untuk susunan automatik'}
+              />
+              <p style={s.hint}>
+                {editing
+                  ? 'Nombor 1 = pertama dalam senarai. Tidak boleh negatif atau 0.'
+                  : 'Biarkan kosong untuk letak video di hujung senarai.'}
+              </p>
             </div>
           </div>
           <div style={s.field}>
@@ -111,6 +138,7 @@ const s = {
   formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' },
   field: { marginBottom: '1rem' },
   label: { display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.4rem' },
+  hint: { margin: '0.35rem 0 0', fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.4 },
   input: { width: '100%', padding: '0.65rem 0.9rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' },
   btnPrimary: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.65rem 1.5rem', fontWeight: '600', cursor: 'pointer', fontSize: '0.9rem' },
   btnSecondary: { background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', padding: '0.65rem 1.5rem', fontWeight: '600', cursor: 'pointer', fontSize: '0.9rem' },
