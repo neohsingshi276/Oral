@@ -22,7 +22,7 @@ const JoinGamePage = () => {
       key: 'move',
       icon: '🎮',
       title: t('game.moveCharacter'),
-      subtitle: '1 / 7',
+      subtitle: '1 / 4',
       rows: [{ icon: '🕹️', title: 'Move Around', desc: 'Press W A S D or the Arrow Keys to move your player around the map.', bg: '#eff6ff' }],
       keys: ['W', 'A', 'S', 'D', '↑', '↓', '←', '→'],
     },
@@ -30,7 +30,7 @@ const JoinGamePage = () => {
       key: 'enter',
       icon: '🚩',
       title: t('game.enterCheckpoint'),
-      subtitle: '2 / 7',
+      subtitle: '2 / 4',
       rows: [{ icon: '⌨️', title: 'Enter Checkpoint', desc: 'Stand close to a checkpoint circle, then press E to enter.', bg: '#f0fdf4' }],
       keys: ['E'],
     },
@@ -38,46 +38,15 @@ const JoinGamePage = () => {
       key: 'chat',
       icon: '💬',
       title: t('game.chatButton'),
-      subtitle: '3 / 7',
+      subtitle: '3 / 4',
       rows: [{ icon: '💬', title: 'Chat With Teacher', desc: 'Use the chat button at the bottom-right corner when you need help.', bg: '#fff7ed' }],
-    },
-    {
-      key: 'progress',
-      icon: '🏁',
-      title: 'Progress',
-      subtitle: '4 / 7',
-      rows: [{ icon: '✅', title: 'Complete In Order', desc: 'Checkpoint 2 unlocks after Checkpoint 1. Checkpoint 3 unlocks after Checkpoint 2.', bg: '#ecfdf5' }],
     },
     {
       key: 'save',
       icon: '💾',
       title: t('game.autosave'),
-      subtitle: '5 / 7',
+      subtitle: '4 / 4',
       rows: [{ icon: '💾', title: 'Progress Save', desc: 'Your map position, checkpoint progress, and score are saved automatically.', bg: '#fdf4ff' }],
-    },
-    {
-      key: 'checkpoints',
-      icon: '🏁',
-      title: t('game.checkpointsTitle'),
-      subtitle: `${t('game.checkpointsSub')} • 6 / 7`,
-      rows: [
-        { icon: '🎬', title: t('game.stepWatchTitle'), desc: t('game.stepWatchDesc'), bg: '#eff6ff' },
-        { icon: '🎮', title: t('game.stepActivityTitle'), desc: t('game.stepActivityDesc'), bg: '#f0fdf4' },
-        { icon: '⚠️', title: t('game.retryTitle'), desc: t('game.retryDesc'), bg: '#fff7ed' },
-        { icon: '🏆', title: t('game.scoreboardTitle'), desc: t('game.scoreboardDesc'), bg: '#fdf4ff' },
-      ],
-    },
-    {
-      key: 'details',
-      icon: '🦷',
-      title: t('game.checkpointDetailsTitle'),
-      subtitle: `${t('game.activityList')} • 7 / 7`,
-      rows: [
-        { badge: 'CP1', accent: '#7B2FBE', title: `${t('game.cp1Title')} ?`, desc: t('game.cp1Desc'), bg: '#ede9fe' },
-        { badge: 'CP2', accent: '#CC3380', title: `${t('game.cp2Title')} 🧩`, desc: t('game.cp2Desc'), bg: '#fce7f3' },
-        { badge: 'CP3', accent: '#E85D04', title: `${t('game.cp3Title')} 🍎`, desc: t('game.cp3Desc'), bg: '#fff7ed' },
-      ],
-      note: t('game.scoreboardNote'),
     },
   ];
 
@@ -100,7 +69,7 @@ const JoinGamePage = () => {
     if (step !== 'guide' || isLastGuidePage) return;
     const timer = setTimeout(() => {
       setGuidePage(page => Math.min(page + 1, guidePages.length - 1));
-    }, 3000);
+    }, 4000);
     return () => clearTimeout(timer);
   }, [step, guidePage, isLastGuidePage]);
 
@@ -168,7 +137,6 @@ const JoinGamePage = () => {
   };
 
   const handlePlayGame = () => {
-    localStorage.setItem('tutorial_seen', '1');
     navigate(`/game/${session.unique_token}`);
   };
 
@@ -308,6 +276,23 @@ const JoinGamePage = () => {
               <p style={s.guideSubtitle}>{currentGuide.subtitle}</p>
             </div>
 
+            <div style={s.tabGrid}>
+              {guidePages.map((page, idx) => (
+                <button
+                  key={page.key}
+                  type="button"
+                  style={{
+                    ...s.tabBtn,
+                    ...(idx === guidePage ? { background: '#16a34a', color: '#fff', borderColor: '#16a34a' } : {}),
+                  }}
+                  onClick={() => setGuidePage(idx)}
+                >
+                  <span style={s.tabIcon}>{page.icon}</span>
+                  <span>{page.key === 'move' ? 'Move' : page.key === 'enter' ? 'Enter' : page.key === 'chat' ? 'Chat' : 'Save'}</span>
+                </button>
+              ))}
+            </div>
+
             <div style={s.guideRows}>
               {currentGuide.rows.map((row, idx) => (
                 <div key={idx} className="guide-row" style={{ ...s.guideRow, background: row.bg }}>
@@ -369,8 +354,7 @@ const JoinGamePage = () => {
             ) : (
               <div className="guide-actions" style={s.finalActions}>
                 <button style={s.homeBtn} type="button" onClick={handleBackHome}>Back Home</button>
-                <button style={s.firstBtn} type="button" onClick={() => setGuidePage(0)}>Back to First</button>
-                <button className="join-btn" style={s.playBtn} type="button" onClick={handlePlayGame}>Play Game</button>
+                <button className="join-btn" style={s.playBtn} type="button" onClick={handlePlayGame}>Play the Game</button>
               </div>
             )}
           </>
@@ -419,6 +403,9 @@ const s = {
   guideHeroIcon: { fontSize: '3.7rem', lineHeight: 1, marginBottom: '0.6rem' },
   guideTitle: { color: '#01306B', fontSize: '2rem', fontWeight: '900', margin: '0.25rem 0' },
   guideSubtitle: { color: '#64748b', fontSize: '1.08rem', margin: 0, fontWeight: '600' },
+  tabGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '0.65rem', marginBottom: '1rem' },
+  tabBtn: { minHeight: '78px', border: '2px solid #111827', borderRadius: '14px', background: '#fff', color: '#01306B', cursor: 'pointer', fontSize: '1rem', fontWeight: '900', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', transition: 'all 0.2s' },
+  tabIcon: { fontSize: '1.65rem', lineHeight: 1 },
   guideRows: { display: 'flex', flexDirection: 'column', gap: '0.85rem', margin: '1.2rem 0' },
   guideRow: { display: 'flex', alignItems: 'center', gap: '1.2rem', borderRadius: '14px', padding: '1.15rem 1.35rem', textAlign: 'left' },
   rowIcon: { fontSize: '2.1rem', width: '52px', flexShrink: 0, textAlign: 'center' },
@@ -432,7 +419,7 @@ const s = {
   dots: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.45rem', margin: '0.5rem 0 1rem' },
   dot: { height: '10px', borderRadius: '999px', border: 'none', cursor: 'pointer', transition: 'all 0.2s' },
   guideNav: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' },
-  finalActions: { display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: '0.75rem' },
+  finalActions: { display: 'grid', gridTemplateColumns: '1fr 1.25fr', gap: '0.75rem' },
   homeBtn: { padding: '1rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.08rem', fontWeight: '850', cursor: 'pointer' },
   firstBtn: { padding: '1rem', background: '#01306B', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.08rem', fontWeight: '850', cursor: 'pointer' },
   nextBtn: { padding: '1rem', background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.08rem', fontWeight: '900', cursor: 'pointer', boxShadow: '0 8px 20px rgba(37,99,235,0.3)' },

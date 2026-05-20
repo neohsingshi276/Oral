@@ -268,6 +268,24 @@ const GamePage = () => {
     return () => clearInterval(interval);
   }, [player, token, navigate]);
 
+  const mapTutorialPages = [
+    { icon: '🎬', title: t('game.stepWatchTitle'), subtitle: `${t('game.checkpointsTitle')} • 1 / 7`, desc: t('game.stepWatchDesc'), bg: '#eff6ff' },
+    { icon: '🎮', title: t('game.stepActivityTitle'), subtitle: `${t('game.checkpointsTitle')} • 2 / 7`, desc: t('game.stepActivityDesc'), bg: '#f0fdf4' },
+    { icon: '⚠️', title: t('game.retryTitle'), subtitle: `${t('game.checkpointsTitle')} • 3 / 7`, desc: t('game.retryDesc'), bg: '#fff7ed' },
+    { icon: '🏆', title: t('game.scoreboardTitle'), subtitle: `${t('game.checkpointsTitle')} • 4 / 7`, desc: t('game.scoreboardDesc'), bg: '#fdf4ff' },
+    { badge: 'CP1', accent: '#7B2FBE', title: `${t('game.cp1Title')} ?`, subtitle: `${t('game.checkpointDetailsTitle')} • 5 / 7`, desc: t('game.cp1Desc'), bg: '#ede9fe' },
+    { badge: 'CP2', accent: '#CC3380', title: `${t('game.cp2Title')} 🧩`, subtitle: `${t('game.checkpointDetailsTitle')} • 6 / 7`, desc: t('game.cp2Desc'), bg: '#fce7f3' },
+    { badge: 'CP3', accent: '#E85D04', title: `${t('game.cp3Title')} 🍎`, subtitle: `${t('game.checkpointDetailsTitle')} • 7 / 7`, desc: t('game.cp3Desc'), bg: '#fff7ed', note: t('game.scoreboardNote') },
+  ];
+
+  useEffect(() => {
+    if (!showTutorial || tutorialPage >= mapTutorialPages.length - 1) return;
+    const timer = setTimeout(() => {
+      setTutorialPage(page => Math.min(page + 1, mapTutorialPages.length - 1));
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [showTutorial, tutorialPage, mapTutorialPages.length]);
+
   if (!player) return <div style={s.loading}>Permainan sedang dimuatkan...</div>;
 
   const showFullQuiz = activeCP === 1 && cpStep === 'activity';
@@ -311,6 +329,66 @@ const GamePage = () => {
 
       {/* Tutorial Overlay — 3-page walkthrough */}
       {showTutorial && (() => {
+        const page = mapTutorialPages[tutorialPage] || mapTutorialPages[0];
+        const isLast = tutorialPage === mapTutorialPages.length - 1;
+
+        return (
+          <div style={s.overlay}>
+            <div style={{ ...s.doneCard, maxWidth: '560px', padding: '2.25rem' }}>
+              <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                <div style={{ fontSize: '4rem', lineHeight: 1, marginBottom: '0.6rem' }}>{page.badge ? '🦷' : page.icon}</div>
+                <h2 style={{ ...s.doneTitle, fontSize: '1.75rem', margin: '0.5rem 0 0.25rem' }}>{page.title}</h2>
+                <p style={{ color: '#64748b', fontSize: '1rem', margin: 0, fontWeight: 700 }}>{page.subtitle}</p>
+              </div>
+
+              <div style={{ background: page.bg, borderRadius: '16px', padding: '1.35rem', display: 'flex', alignItems: 'center', gap: '1rem', textAlign: 'left', margin: '1.25rem 0' }}>
+                {page.badge ? (
+                  <div style={{ color: '#fff', background: page.accent, borderRadius: '10px', padding: '0.5rem 0.8rem', fontSize: '1rem', fontWeight: 900, flexShrink: 0 }}>{page.badge}</div>
+                ) : (
+                  <span style={{ fontSize: '2.3rem', width: '52px', textAlign: 'center', flexShrink: 0 }}>{page.icon}</span>
+                )}
+                <p style={{ margin: 0, color: '#334155', fontSize: '1.1rem', lineHeight: 1.6, fontWeight: 650 }}>{page.desc}</p>
+              </div>
+
+              {page.note && (
+                <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '12px', padding: '0.95rem 1rem', color: '#15803d', fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>
+                  🏆 {page.note}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '0.45rem', margin: '0.5rem 0 1rem' }}>
+                {mapTutorialPages.map((item, i) => (
+                  <button
+                    key={item.title}
+                    type="button"
+                    aria-label={`Go to tutorial page ${i + 1}`}
+                    onClick={() => setTutorialPage(i)}
+                    style={{ height: '10px', width: i === tutorialPage ? '24px' : '10px', borderRadius: '999px', border: 'none', cursor: 'pointer', background: i === tutorialPage ? '#2563eb' : '#cbd5e1' }}
+                  />
+                ))}
+              </div>
+
+              {!isLast ? (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <button style={{ ...s.continueBtn, background: '#64748b', opacity: tutorialPage === 0 ? 0.45 : 1 }} disabled={tutorialPage === 0} onClick={() => setTutorialPage(pageIndex => Math.max(pageIndex - 1, 0))}>← {t('game.back')}</button>
+                    <button style={s.continueBtn} onClick={() => setTutorialPage(pageIndex => Math.min(pageIndex + 1, mapTutorialPages.length - 1))}>{t('game.next')} →</button>
+                  </div>
+                  <div style={{ marginTop: '0.75rem', color: '#64748b', fontSize: '0.9rem', fontWeight: 700 }}>Auto next in 4 seconds</div>
+                </>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.15fr', gap: '0.75rem' }}>
+                  <button style={{ ...s.continueBtn, background: '#64748b' }} onClick={() => { localStorage.removeItem('player'); navigate('/'); }}>Back Home</button>
+                  <button style={{ ...s.continueBtn, background: '#1e3a5f' }} onClick={() => setTutorialPage(0)}>Back to First</button>
+                  <button style={{ ...s.continueBtn, background: '#16a34a' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}>Play Game</button>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {false && showTutorial && (() => {
         // tut must be defined first — const is not hoisted
         const tut = {
           row: (bg) => ({ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', background: bg, padding: '0.85rem', borderRadius: '10px' }),
