@@ -74,6 +74,7 @@ app.use('/api/cp3', require('./routes/cp3.routes'));
 app.use('/api/activity', require('./routes/activity.routes'));
 app.use('/api/staff-chat', require('./routes/staffChat.routes'));
 app.use('/api/faq', require('./routes/faq.routes'));
+app.use('/api/translate', require('./routes/translation.routes'));
 app.use('/uploads', express.static('uploads'));
 
 app.get('/api/health', (req, res) => {

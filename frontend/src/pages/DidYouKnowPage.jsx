@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
+import useContentTranslation from '../hooks/useContentTranslation';
 
 
 const CARD_COLORS = [
@@ -25,13 +26,14 @@ const FACT_IMAGES = [
 ];
 
 const DidYouKnowPage = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [facts, setFacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [flipped, setFlipped] = useState({});
   const [visible, setVisible] = useState({});
   const [heroIndex, setHeroIndex] = useState(0);
+  const translatedFacts = useContentTranslation(facts, language, [facts]);
 
   useEffect(() => {
     api.get('/facts')
@@ -55,7 +57,7 @@ const DidYouKnowPage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const filtered = facts.filter(f =>
+  const filtered = translatedFacts.filter(f =>
     f.title.toLowerCase().includes(search.toLowerCase()) ||
     f.content.toLowerCase().includes(search.toLowerCase())
   );

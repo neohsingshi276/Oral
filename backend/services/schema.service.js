@@ -65,6 +65,21 @@ const ensureSchema = async () => {
   `);
 
   await db.query(`
+    CREATE TABLE IF NOT EXISTS content_translations (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      source_lang VARCHAR(10) NOT NULL DEFAULT 'ms',
+      target_lang VARCHAR(10) NOT NULL,
+      source_hash CHAR(64) NOT NULL,
+      source_text TEXT NOT NULL,
+      translated_text TEXT NOT NULL,
+      provider VARCHAR(40) DEFAULT 'mymemory',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY unique_translation (source_lang, target_lang, source_hash)
+    )
+  `);
+
+  await db.query(`
     INSERT IGNORE INTO faq_instructions (id, title, content, display_order)
     VALUES (
       1,
