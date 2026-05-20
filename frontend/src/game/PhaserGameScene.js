@@ -32,7 +32,7 @@ const TILESET_ASSETS = [
   { key: 'PathAndObjects', file: 'PathAndObjects.png' },
   { key: 'town', file: 'town.png' },
   { key: 'tileset_preview', file: 'tileset_preview.png' },
-  { key: 'trees_plants', file: 'trees_plants.png' },
+  { key: 'trees_plants', file: 'trees_plants_rocks.png' }, // map.json references trees_plants_rocks.png,
   { key: 'transparent-bg-tiles', file: 'transparent-bg-tiles.png' },
   { key: 'forrestup', file: 'forrestup.png' },
   { key: 'chicken_walk', file: 'chicken_walk.png' },
@@ -130,6 +130,9 @@ export default class PhaserGameScene extends Phaser.Scene {
     // Loading progress
     this.load.on('progress', (value) => {
       this.onLoadProgress(value);
+    });
+    this.load.on('loaderror', (file) => {
+      console.error('[Phaser] Failed to load asset:', file.key, file.src);
     });
     this.load.on('complete', () => {
       // We defer this.onLoadComplete() until the end of create()
