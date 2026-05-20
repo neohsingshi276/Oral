@@ -1,14 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
-import { useLanguage } from '../context/LanguageContext';
-import useContentTranslation from '../hooks/useContentTranslation';
 
 
 const QuizGame = ({ player, onQuizComplete, onRetry }) => {
-  const { language } = useLanguage();
   const [phase, setPhase] = useState('loading');
   const [questions, setQuestions] = useState([]);
-  const translatedQuestions = useContentTranslation(questions, language, [questions]);
   const [settings, setSettings] = useState({});
   const [currentQ, setCurrentQ] = useState(0);
   const [selected, setSelected] = useState([]);
@@ -299,9 +295,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
   );
 
   const q = questions[currentQ];
-  const displayQ = translatedQuestions[currentQ] || q;
   const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]');
-  const displayOpts = Array.isArray(displayQ.options) ? displayQ.options : JSON.parse(displayQ.options || '[]');
   const ca = Array.isArray(q.correct_answer) ? q.correct_answer : JSON.parse(q.correct_answer || '[]');
   const timerPct = (timeLeft / (settings.timer_seconds || 15)) * 100;
   const timerColor = timeLeft > 10 ? '#16a34a' : timeLeft > 5 ? '#f59e0b' : '#e11d48';
@@ -324,7 +318,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
         {q.image_url && (
           <img src={q.image_url} alt="question" style={s.questionImg} onError={e => e.target.style.display = 'none'} />
         )}
-        <p style={s.questionText}>{displayQ.question}</p>
+        <p style={s.questionText}>{q.question}</p>
         {q.question_type === 'multi_select' && <p style={s.multiHint}>Pilih SEMUA jawapan yang betul</p>}
         {q.question_type === 'match' && <p style={s.multiHint}>Padankan setiap pasangan yang betul</p>}
       </div>
@@ -333,7 +327,6 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
       {(q.question_type === 'multiple_choice' || q.question_type === 'true_false') && (
         <div style={{ ...s.optGrid, gridTemplateColumns: opts.length <= 2 ? '1fr 1fr' : opts.length <= 4 ? '1fr 1fr' : 'repeat(3, 1fr)' }}>
           {opts.map((opt, idx) => {
-            const displayOpt = displayOpts[idx] ?? opt;
             let bg = OPTION_COLORS[idx % OPTION_COLORS.length];
             if (answered) {
               if (isCorrect(q, idx)) bg = '#16a34a';
@@ -343,7 +336,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
             return (
               <button key={idx} style={{ ...s.optBtn, background: bg, opacity: answered && !isCorrect(q, idx) && !selected.includes(idx) ? 0.5 : 1 }} onClick={() => handleMCSelect(idx)} disabled={answered}>
                 <span style={s.optIcon}>{OPTION_ICONS[idx % OPTION_ICONS.length]}</span>
-                <span style={s.optText}>{displayOpt}</span>
+                <span style={s.optText}>{opt}</span>
                 {answered && isCorrect(q, idx) && <span style={s.optCheck}>✓</span>}
                 {answered && selected.includes(idx) && !isCorrect(q, idx) && <span style={s.optCheck}>✗</span>}
               </button>
@@ -357,7 +350,6 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
         <>
           <div style={{ ...s.optGrid, gridTemplateColumns: opts.length <= 4 ? '1fr 1fr' : 'repeat(3, 1fr)' }}>
             {opts.map((opt, idx) => {
-              const displayOpt = displayOpts[idx] ?? opt;
               let bg = OPTION_COLORS[idx % OPTION_COLORS.length];
               if (answered) {
                 if (isCorrect(q, idx)) bg = '#16a34a';
@@ -369,7 +361,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
               return (
                 <button key={idx} style={{ ...s.optBtn, background: bg, border: selected.includes(idx) && !answered ? '3px solid #FFD700' : '3px solid transparent' }} onClick={() => handleMultiToggle(idx)} disabled={answered}>
                   <span style={s.optIcon}>{OPTION_ICONS[idx % OPTION_ICONS.length]}</span>
-                  <span style={s.optText}>{displayOpt}</span>
+                  <span style={s.optText}>{opt}</span>
                   {selected.includes(idx) && !answered && <span style={s.optCheck}>✓</span>}
                 </button>
               );
@@ -389,21 +381,17 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
           <div style={s.matchWrap}>
             <div style={s.matchCol}>
               <p style={s.matchColTitle}>Soalan</p>
-              {opts.map((pair, idx) => {
-                const displayPair = displayOpts[idx] || pair;
-                return (
-                  <button key={idx} style={{ ...s.matchBtn, ...s.matchLeft, background: leftSelected === idx ? '#1e3a5f' : matchLines.find(l => l[0] === idx) ? '#2563eb' : '#e2e8f0', color: leftSelected === idx || matchLines.find(l => l[0] === idx) ? '#fff' : '#1e293b' }} onClick={() => handleMatchLeft(idx)} disabled={answered}>
-                    {displayPair.left || displayPair}
-                    {matchLines.find(l => l[0] === idx) && <span style={s.matchConnected}> →{matchLines.find(l => l[0] === idx)[1] + 1}</span>}
-                  </button>
-                );
-              })}
+              {opts.map((pair, idx) => (
+                <button key={idx} style={{ ...s.matchBtn, ...s.matchLeft, background: leftSelected === idx ? '#1e3a5f' : matchLines.find(l => l[0] === idx) ? '#2563eb' : '#e2e8f0', color: leftSelected === idx || matchLines.find(l => l[0] === idx) ? '#fff' : '#1e293b' }} onClick={() => handleMatchLeft(idx)} disabled={answered}>
+                  {pair.left || pair}
+                  {matchLines.find(l => l[0] === idx) && <span style={s.matchConnected}> →{matchLines.find(l => l[0] === idx)[1] + 1}</span>}
+                </button>
+              ))}
             </div>
             <div style={s.matchArrow}>↔</div>
             <div style={s.matchCol}>
               <p style={s.matchColTitle}>Jawapan</p>
               {opts.map((pair, idx) => {
-                const displayPair = displayOpts[idx] || pair;
                 const isLinked = matchLines.find(l => l[1] === idx);
                 let bg = '#e2e8f0';
                 if (answered) {
@@ -414,7 +402,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
                 } else if (isLinked) bg = '#7c3aed';
                 return (
                   <button key={idx} style={{ ...s.matchBtn, ...s.matchRight, background: bg, color: isLinked || answered ? '#fff' : '#1e293b' }} onClick={() => handleMatchRight(idx)} disabled={answered || leftSelected === null}>
-                    {displayPair.right || displayPair}
+                    {pair.right || pair}
                   </button>
                 );
               })}
@@ -430,7 +418,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
               <p style={{ fontWeight: '700', color: '#1e3a5f', margin: 0 }}>Padanan Betul:</p>
               {ca.map((pair, i) => (
                 <p key={i} style={{ color: '#16a34a', margin: '0.25rem 0', fontSize: '0.88rem' }}>
-                  {displayOpts[pair[0]]?.left || displayOpts[pair[0]] || opts[pair[0]]?.left || opts[pair[0]]} ↔ {displayOpts[pair[1]]?.right || displayOpts[pair[1]] || opts[pair[1]]?.right || opts[pair[1]]}
+                  {opts[pair[0]]?.left || opts[pair[0]]} ↔ {opts[pair[1]]?.right || opts[pair[1]]}
                 </p>
               ))}
             </div>
@@ -441,12 +429,12 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
       {answered && q.question_type !== 'match' && (
         <div style={{ ...s.answerFeedback, background: isCorrect(q, selected[0]) && q.question_type !== 'multi_select' ? '#f0fdf4' : '#fff1f2' }}>
           {q.question_type === 'multi_select'
-            ? `Jawapan betul: ${ca.map(i => displayOpts[i] ?? opts[i] ?? '').join(', ')}`
+            ? `Jawapan betul: ${ca.map(i => opts[i] ?? '').join(', ')}`
             : selected.length === 0
-              ? `⏱️ Masa tamat! Jawapan betul: ${displayOpts[ca[0]] ?? opts[ca[0]] ?? ''}`
+              ? `⏱️ Masa tamat! Jawapan betul: ${opts[ca[0]] ?? ''}`
               : isCorrect(q, selected[0])
                 ? '✅ Betul!'
-                : `❌ Jawapan betul: ${displayOpts[ca[0]] ?? opts[ca[0]] ?? ''}`
+                : `❌ Jawapan betul: ${opts[ca[0]] ?? ''}`
           }
         </div>
       )}

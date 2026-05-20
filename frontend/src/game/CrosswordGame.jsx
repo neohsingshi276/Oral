@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
-import useContentTranslation from '../hooks/useContentTranslation';
 
 const DEFAULT_TIMER = 300;
 const DEFAULT_MIN_CORRECT = 0;
 const MAX_HINTS = 3;
 
 const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [words, setWords] = useState([]);
   const [gridSize, setGridSize] = useState(12);
   const [grid, setGrid] = useState([]);
@@ -40,7 +39,6 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   const [lbData, setLbData] = useState([]);
   const [settings, setSettings] = useState({ minimum_correct: DEFAULT_MIN_CORRECT });
   const [timerTotal, setTimerTotal] = useState(DEFAULT_TIMER);
-  const translatedClues = useContentTranslation(words.map(w => w.clue), language, [words]);
 
   useEffect(() => {
     const endpoint = sessionId ? `/crossword/${sessionId}` : '/crossword';
@@ -365,10 +363,6 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     const idx = words.findIndex(w => w.start_row === row && w.start_col === col);
     return idx >= 0 ? idx + 1 : null;
   };
-  const getDisplayClue = (wordObj) => {
-    const idx = words.findIndex(w => w.id === wordObj?.id);
-    return idx >= 0 ? translatedClues[idx] || wordObj.clue : wordObj?.clue;
-  };
 
   const cellSize = gridSize > 18 ? 44 : gridSize > 14 ? 52 : 62;
   const fontSize = gridSize > 18 ? '0.95rem' : gridSize > 14 ? '1.1rem' : '1.3rem';
@@ -586,7 +580,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div>
             {selectedWord
-              ? <><strong>{words.indexOf(selectedWord) + 1}. {selectedWord.direction === 'across' ? '→' : '↓'}</strong> {getDisplayClue(selectedWord)} <span style={{ color: '#93c5fd' }}>({selectedWord.word.length} {t('game.letters', 'huruf')})</span></>
+              ? <><strong>{words.indexOf(selectedWord) + 1}. {selectedWord.direction === 'across' ? '→' : '↓'}</strong> {selectedWord.clue} <span style={{ color: '#93c5fd' }}>({selectedWord.word.length} {t('game.letters', 'huruf')})</span></>
               : <span style={{ color: '#475569' }}>{t('game.clickBoxToSelect', 'Klik pada kotak untuk memilih perkataan')}</span>
             }
           </div>
@@ -613,7 +607,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                   onClick={() => { if (!isGameOver) { setSelectedWord(w); setSelectedCell({ row: w.start_row, col: w.start_col }); inputRefs.current[`${w.start_row}-${w.start_col}`]?.focus(); } }}
                 >
                   <span style={s.clueNum}>{words.indexOf(w) + 1}.</span>
-                  <span style={{ ...s.clueText, textDecoration: isDone ? 'line-through' : 'none', color: isDone ? '#16a34a' : isFull ? '#f87171' : '#cbd5e1' }}>{getDisplayClue(w)}</span>
+                  <span style={{ ...s.clueText, textDecoration: isDone ? 'line-through' : 'none', color: isDone ? '#16a34a' : isFull ? '#f87171' : '#cbd5e1' }}>{w.clue}</span>
                   {isDone && <span style={{ color: '#16a34a', flexShrink: 0 }}>✓</span>}
                 </div>
               );
@@ -663,7 +657,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                   onClick={() => { if (!isGameOver) { setSelectedWord(w); setSelectedCell({ row: w.start_row, col: w.start_col }); inputRefs.current[`${w.start_row}-${w.start_col}`]?.focus(); } }}
                 >
                   <span style={s.clueNum}>{words.indexOf(w) + 1}.</span>
-                  <span style={{ ...s.clueText, textDecoration: isDone ? 'line-through' : 'none', color: isDone ? '#16a34a' : isFull ? '#f87171' : '#cbd5e1' }}>{getDisplayClue(w)}</span>
+                  <span style={{ ...s.clueText, textDecoration: isDone ? 'line-through' : 'none', color: isDone ? '#16a34a' : isFull ? '#f87171' : '#cbd5e1' }}>{w.clue}</span>
                   {isDone && <span style={{ color: '#16a34a', flexShrink: 0 }}>✓</span>}
                 </div>
               );

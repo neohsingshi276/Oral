@@ -2,15 +2,12 @@ import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
-import useContentTranslation from '../hooks/useContentTranslation';
 
 const LearningPage = () => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [videos, setVideos] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
-  const translatedVideos = useContentTranslation(videos, language, [videos]);
-  const selectedDisplay = translatedVideos.find(video => video.id === selected?.id) || selected;
 
   useEffect(() => {
     api.get('/videos')
@@ -146,20 +143,20 @@ const LearningPage = () => {
               <iframe
                 style={styles.iframe}
                 src={getEmbedUrl(selected.youtube_url)}
-                title={selectedDisplay?.title || selected.title}
+                title={selected.title}
                 frameBorder="0"
                 allowFullScreen
               />
               <div style={styles.playerInfo}>
-                <h3 style={styles.playerTitle} data-no-translate="true">{selectedDisplay?.title || selected.title}</h3>
-                <p style={styles.playerDesc} data-no-translate="true">{selectedDisplay?.description || selected.description}</p>
+                <h3 style={styles.playerTitle} data-no-translate="true">{selected.title}</h3>
+                <p style={styles.playerDesc} data-no-translate="true">{selected.description}</p>
               </div>
             </div>
           )}
 
           {/* Video Cards Row */}
           <div style={styles.videoGrid}>
-            {translatedVideos.map((video, index) => (
+            {videos.map((video, index) => (
               <div
                 key={video.id}
                 style={{ ...styles.videoCard, ...(selected?.id === video.id ? styles.videoCardActive : {}) }}
