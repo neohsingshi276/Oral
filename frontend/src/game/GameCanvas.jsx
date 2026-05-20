@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import PhaserGameScene from './PhaserGameScene';
 import api from '../services/api';
-import { START_POS } from './gameConfig';
+import { START_POS, resolveSpawnPosition, writeCachedPosition } from './gameConfig';
 
 const SAVE_INTERVAL = 5000;
 
@@ -32,6 +32,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
     const scene = sceneRef.current;
     if (!scene) return;
     const { x, y } = scene.getPlayerPosition();
+    writeCachedPosition(player.id, x, y);
     const completed = progressRef.current.filter(p => p.completed).map(p => p.checkpoint_number);
     const lastCP = completed.length > 0 ? Math.max(...completed) : 0;
     api.post('/game/position', {
@@ -73,10 +74,11 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
             initialPos = { x: pos_x, y: pos_y };
           }
         }
+        initialPos = resolveSpawnPosition(res.data?.position, player.id);
         bootPhaser(initialPos);
       })
       .catch(() => {
-        if (!cancelled) bootPhaser(START_POS);
+        if (!cancelled) bootPhaser(resolveSpawnPosition(null, player.id));
       });
 
     function bootPhaser(initialPos) {
@@ -141,6 +143,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
           game.scale.resize(window.innerWidth - 32, window.innerHeight - 130);
         };
         window.addEventListener('resize', onResize);
+        window.addEventListener('beforeunload', savePosition);
 
         // Periodic position autosave
         const saveInterval = setInterval(() => {
@@ -150,7 +153,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
           }
         }, SAVE_INTERVAL);
 
-        game._oralCleanup = { onResize, saveInterval };
+        game._oralCleanup = { onResize, saveInterval, savePosition };
       });
     }
 

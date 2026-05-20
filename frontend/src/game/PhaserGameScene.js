@@ -163,11 +163,8 @@ export default class PhaserGameScene extends Phaser.Scene {
     // ── Create tilemap ───────────────────────────────────────────────
     const map = this.make.tilemap({ key: 'mainmap' });
 
-    // const startX = this.initialPos?.x || START_POS.x;
-    // const startY = this.initialPos?.y || START_POS.y;
-
-    const startX = START_POS.x;
-    const startY = START_POS.y;
+    const startX = Number.isFinite(this.initialPos?.x) ? this.initialPos.x : START_POS.x;
+    const startY = Number.isFinite(this.initialPos?.y) ? this.initialPos.y : START_POS.y;
 
     // Add tilesets — order must match the JSON tileset array exactly.
     // The first arg is the tileset name in Tiled, second is the Phaser image key.
@@ -729,14 +726,14 @@ updatePlayerOpacity() {
 
   getPlayerPosition() {
     return {
-      x: this.playerBody?.position?.x || START_POS.x,
-      y: this.playerBody?.position?.y || START_POS.y,
+      x: this.playerGraphic?.x || START_POS.x,
+      y: this.playerGraphic?.y || START_POS.y,
     };
   }
 
   setPlayerPosition(x, y) {
     if (this.playerBody) {
-      this.matter.body.setPosition(this.playerBody, { x, y });
+      this.matter.body.setPosition(this.playerBody, { x, y: y + 22 });
       this.playerGraphic.setPosition(x, y);
     }
   }
