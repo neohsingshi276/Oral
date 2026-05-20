@@ -101,6 +101,7 @@ const GamePage = () => {
   const [quizKey, setQuizKey] = useState(0);
   const [showTutorial, setShowTutorial] = useState(() => !localStorage.getItem('tutorial_seen'));
   const [tutorialPage, setTutorialPage] = useState(0); // 0=movement, 1=checkpoints, 2=cp details
+  const [checkpointHint, setCheckpointHint] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [crosswordKey, setCrosswordKey] = useState(0);
 
@@ -206,8 +207,10 @@ const GamePage = () => {
   };
 
   const handleCloseCPModal = () => {
+    const nextHint = activeCP === 1 ? 2 : activeCP === 2 ? 3 : null;
     setActiveCP(null);
     setCpStep('video');
+    if (nextHint) setCheckpointHint(nextHint);
   };
 
   const sendChat = async () => {
@@ -278,6 +281,36 @@ const GamePage = () => {
     { badge: 'CP3', accent: '#E85D04', title: `${t('game.cp3Title')} 🍎`, subtitle: `${t('game.checkpointDetailsTitle')} • 7 / 7`, desc: t('game.cp3Desc'), bg: '#fff7ed', note: t('game.scoreboardNote') },
   ];
 
+  const checkpointHints = {
+    1: {
+      title: 'Welcome to Checkpoint 1',
+      badge: 'CP1',
+      accent: '#7B2FBE',
+      bg: '#ede9fe',
+      heading: 'A quick question trail waits nearby.',
+      clue: 'Look for the first bright marker where the adventure path begins. Watch closely first; the answers like to hide inside the video.',
+      activity: 'Quiz',
+    },
+    2: {
+      title: 'Welcome to Checkpoint 2',
+      badge: 'CP2',
+      accent: '#CC3380',
+      bg: '#fce7f3',
+      heading: 'Words are the next gate.',
+      clue: 'The next stop is not too eager to reveal itself. Follow the route onward and keep an eye out for a place that feels like a puzzle waiting to be filled.',
+      activity: 'Crossword',
+    },
+    3: {
+      title: 'Welcome to Checkpoint 3',
+      badge: 'CP3',
+      accent: '#E85D04',
+      bg: '#fff7ed',
+      heading: 'The final challenge is about choices.',
+      clue: 'For the last stop, think about what keeps teeth strong. The path will lead you toward something that asks you to choose carefully, not just quickly.',
+      activity: 'Food Game',
+    },
+  };
+
   useEffect(() => {
     if (!showTutorial || tutorialPage >= mapTutorialPages.length - 1) return;
     const timer = setTimeout(() => {
@@ -291,7 +324,7 @@ const GamePage = () => {
   const showFullQuiz = activeCP === 1 && cpStep === 'activity';
   const showFullCP3 = activeCP === 3 && cpStep === 'activity';
   const showModal = activeCP && !showFullQuiz && !showFullCP3;
-  const isWorldPaused = showTutorial || !!allDone || !!showModal || !!showFullQuiz || !!showFullCP3;
+  const isWorldPaused = showTutorial || !!checkpointHint || !!allDone || !!showModal || !!showFullQuiz || !!showFullCP3;
 
   return (
     <div style={s.page}>
@@ -380,9 +413,35 @@ const GamePage = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.15fr', gap: '0.75rem' }}>
                   <button style={{ ...s.continueBtn, background: '#64748b' }} onClick={() => { localStorage.removeItem('player'); navigate('/'); }}>Back Home</button>
                   <button style={{ ...s.continueBtn, background: '#1e3a5f' }} onClick={() => setTutorialPage(0)}>Back to First</button>
-                  <button style={{ ...s.continueBtn, background: '#16a34a' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}>Play Game</button>
+                  <button style={{ ...s.continueBtn, background: '#16a34a' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); setCheckpointHint(1); }}>Play Game</button>
                 </div>
               )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {checkpointHint && (() => {
+        const hint = checkpointHints[checkpointHint];
+        return (
+          <div style={s.overlay}>
+            <div style={{ ...s.doneCard, maxWidth: '520px', padding: '2.25rem' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '70px', height: '70px', borderRadius: '20px', background: hint.accent, color: '#fff', fontWeight: 900, fontSize: '1.25rem', marginBottom: '1rem' }}>
+                {hint.badge}
+              </div>
+              <h2 style={{ ...s.doneTitle, fontSize: '1.8rem', margin: '0 0 0.35rem' }}>{hint.title}</h2>
+              <p style={{ color: '#64748b', fontSize: '1rem', fontWeight: 700, margin: '0 0 1.25rem' }}>
+                Next activity: {hint.activity}
+              </p>
+
+              <div style={{ background: hint.bg, borderRadius: '16px', padding: '1.35rem', textAlign: 'left', marginBottom: '1.35rem' }}>
+                <h3 style={{ color: '#1e3a5f', margin: '0 0 0.55rem', fontSize: '1.25rem', fontWeight: 900 }}>{hint.heading}</h3>
+                <p style={{ color: '#334155', margin: 0, fontSize: '1.05rem', lineHeight: 1.65, fontWeight: 600 }}>{hint.clue}</p>
+              </div>
+
+              <button style={{ ...s.continueBtn, background: hint.accent }} onClick={() => setCheckpointHint(null)}>
+                Play Game
+              </button>
             </div>
           </div>
         );
