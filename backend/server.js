@@ -15,8 +15,6 @@ const { ensureSchema } = require('./services/schema.service');
 
 app.set('trust proxy', 1);
 
-app.use(generalLimiter);
-
 const allowedOrigins = [
   process.env.STUDENT_URL,
   process.env.ADMIN_URL,
@@ -50,8 +48,14 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
+// ✅ CORS and OPTIONS must come BEFORE rate limiter
+// so that rate-limit responses still include CORS headers
 app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
+
+// Rate limiter applied AFTER cors so blocked responses still have CORS headers
+app.use(generalLimiter);
+
 app.use(express.json({ limit: '1mb' }));
 
 app.use('/api/auth', require('./routes/auth.routes'));
