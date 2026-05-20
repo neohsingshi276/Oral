@@ -1220,8 +1220,9 @@ export const exactTextTranslations = {
   'Sekolah':'School',
   'Kelas':'Class',
   'Bulan':'Month',
+  'Jumlah':'Total',
   '🟢 Hijau = lebih baik  ·  ▲ = menang dalam kategori ini  ·  Percubaan: kurang = lebih baik': '🟢 Green = better  ·  ▲ = winner in this category  ·  Attempts: less = better',
-  
+
 
   // CompareAnalytics — stat row labels  
   'Statistik': 'Statistic',

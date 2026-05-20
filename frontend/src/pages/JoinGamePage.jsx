@@ -11,9 +11,54 @@ const JoinGamePage = () => {
   const [nickname, setNickname] = useState('');
   const [step, setStep] = useState('code');
   const [session, setSession] = useState(null);
+  const [joinedPlayer, setJoinedPlayer] = useState(null);
+  const [guideTab, setGuideTab] = useState('move');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { code: urlCode } = useParams();
+
+  const guideTabs = [
+    {
+      key: 'move',
+      label: 'Move',
+      icon: '🎮',
+      title: t('game.moveCharacter'),
+      desc: `${t('join.movementTip')}.`,
+      detail: 'Use W A S D or Arrow Keys to walk around the map and find each checkpoint.',
+      color: '#eff6ff',
+      accent: '#2563eb',
+    },
+    {
+      key: 'enter',
+      label: 'Enter',
+      icon: '🚩',
+      title: t('game.enterCheckpoint'),
+      desc: 'Stand near a checkpoint and press E to enter.',
+      detail: 'Complete checkpoints in order. Watch the video first, then finish the activity.',
+      color: '#f0fdf4',
+      accent: '#16a34a',
+    },
+    {
+      key: 'chat',
+      label: 'Chat',
+      icon: '💬',
+      title: t('game.chatButton'),
+      desc: t('game.chatButtonDesc'),
+      detail: 'Your teacher can reply while you are playing, so ask when you need help.',
+      color: '#fff7ed',
+      accent: '#f97316',
+    },
+    {
+      key: 'save',
+      label: 'Save',
+      icon: '💾',
+      title: t('game.autosave'),
+      desc: t('game.autosaveDesc'),
+      detail: 'Your position and checkpoint progress are saved automatically when you play.',
+      color: '#fdf4ff',
+      accent: '#a855f7',
+    },
+  ];
 
   useEffect(() => {
     if (urlCode && urlCode.length === 4) {
@@ -85,12 +130,25 @@ const JoinGamePage = () => {
         resume_player_id: resumePlayerId,
       });
       localStorage.setItem('player', JSON.stringify(res.data.player));
-      navigate(`/game/${session.unique_token}`);
+      setJoinedPlayer(res.data.player);
+      setStep('guide');
+      setGuideTab('move');
     } catch (err) {
       setError(err.response?.data?.error || t('join.joinFailed'));
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePlayGame = () => {
+    localStorage.setItem('tutorial_seen', '1');
+    navigate(`/game/${session.unique_token}`);
+  };
+
+  const handleBackHome = () => {
+    localStorage.removeItem('player');
+    localStorage.removeItem('tutorial_seen');
+    navigate('/');
   };
 
   return (
@@ -214,6 +272,72 @@ const JoinGamePage = () => {
             </div>
           </>
         )}
+
+        {step === 'guide' && session && joinedPlayer && (
+          <>
+            <div style={s.sessionFound}>
+              <div style={s.sessionFoundIcon}>✅</div>
+              <p style={s.sessionFoundText}>
+                {joinedPlayer.nickname}, read this before playing
+              </p>
+            </div>
+
+            <h2 style={s.guideTitle}>How To Play</h2>
+            <p style={s.guideSubtitle}>Choose each tab to learn the controls.</p>
+
+            <div style={s.tabGrid}>
+              {guideTabs.map(tab => {
+                const active = guideTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    style={{
+                      ...s.tabBtn,
+                      ...(active ? { background: tab.accent, color: '#fff', borderColor: tab.accent } : {}),
+                    }}
+                    onClick={() => setGuideTab(tab.key)}
+                  >
+                    <span style={s.tabIcon}>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {guideTabs.filter(tab => tab.key === guideTab).map(tab => (
+              <div key={tab.key} style={{ ...s.guidePanel, background: tab.color, borderColor: tab.accent }}>
+                <div style={{ ...s.guidePanelIcon, background: tab.accent }}>{tab.icon}</div>
+                <div style={s.guidePanelBody}>
+                  <h3 style={s.guidePanelTitle}>{tab.title}</h3>
+                  <p style={s.guidePanelDesc}>{tab.desc}</p>
+                  <p style={s.guidePanelDetail}>{tab.detail}</p>
+                  {tab.key === 'move' && (
+                    <div style={s.keyRow}>
+                      {['W', 'A', 'S', 'D', '↑', '↓', '←', '→'].map(key => (
+                        <kbd key={key} style={s.keyCap}>{key}</kbd>
+                      ))}
+                    </div>
+                  )}
+                  {tab.key === 'enter' && (
+                    <div style={s.keyRow}>
+                      <kbd style={s.keyCap}>E</kbd>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            <div style={s.guideActions}>
+              <button style={s.homeBtn} type="button" onClick={handleBackHome}>
+                Back to Home
+              </button>
+              <button className="join-btn" style={s.playBtn} type="button" onClick={handlePlayGame}>
+                Play the Game
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -228,7 +352,7 @@ const s = {
   bubble2: { position: 'absolute', top: '20%', right: '10%', fontSize: '2.5rem', animation: 'float 2.5s ease-in-out infinite 0.5s', opacity: 0.3 },
   bubble3: { position: 'absolute', bottom: '20%', left: '12%', fontSize: '2rem', animation: 'float 2s ease-in-out infinite 1s', opacity: 0.3 },
   bubble4: { position: 'absolute', bottom: '15%', right: '8%', fontSize: '3rem', animation: 'float 3.5s ease-in-out infinite 0.3s', opacity: 0.3 },
-  card: { background: 'rgba(255,255,255,0.97)', borderRadius: '28px', padding: '2.5rem', width: '100%', maxWidth: '440px', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.3)', animation: 'fadeIn 0.6s ease', position: 'relative', zIndex: 1, overflow: 'hidden' },
+  card: { background: 'rgba(255,255,255,0.97)', borderRadius: '28px', padding: '2.5rem', width: '100%', maxWidth: '620px', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.3)', animation: 'fadeIn 0.6s ease', position: 'relative', zIndex: 1, overflow: 'hidden' },
   accentBar: { position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #01306B, #D4A843, #CC0000, #D4A843, #01306B)', borderRadius: '28px 28px 0 0' },
   iconWrap: { marginBottom: '0.75rem' },
   iconBg: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '80px', height: '80px', borderRadius: '24px', background: 'linear-gradient(135deg, #FFF9F0, #FEF3C7)', border: '2px solid rgba(212,168,67,0.3)' },
@@ -255,6 +379,22 @@ const s = {
   tipIcon: { fontSize: '1.5rem', marginBottom: '0.5rem' },
   tipTitle: { fontWeight: '700', color: '#01306B', margin: '0 0 0.5rem', fontSize: '0.95rem' },
   tipText: { color: '#64748b', fontSize: '0.9rem', margin: '0.3rem 0', lineHeight: 1.6 },
+  guideTitle: { color: '#01306B', fontSize: '2rem', fontWeight: '900', margin: '0.25rem 0' },
+  guideSubtitle: { color: '#64748b', fontSize: '1.15rem', margin: '0 0 1.25rem', fontWeight: '600' },
+  tabGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.65rem', marginBottom: '1rem' },
+  tabBtn: { minHeight: '78px', border: '2px solid #e2e8f0', borderRadius: '14px', background: '#fff', color: '#01306B', cursor: 'pointer', fontSize: '1rem', fontWeight: '850', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', transition: 'all 0.2s' },
+  tabIcon: { fontSize: '1.65rem', lineHeight: 1 },
+  guidePanel: { display: 'flex', alignItems: 'flex-start', gap: '1.1rem', border: '2px solid', borderRadius: '18px', padding: '1.35rem', textAlign: 'left', marginBottom: '1.1rem' },
+  guidePanelIcon: { width: '58px', height: '58px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '2rem', flexShrink: 0 },
+  guidePanelBody: { flex: 1 },
+  guidePanelTitle: { margin: '0 0 0.45rem', color: '#01306B', fontSize: '1.45rem', fontWeight: '900' },
+  guidePanelDesc: { margin: '0 0 0.45rem', color: '#1e3a5f', fontSize: '1.12rem', lineHeight: 1.55, fontWeight: '700' },
+  guidePanelDetail: { margin: 0, color: '#475569', fontSize: '1.02rem', lineHeight: 1.6, fontWeight: '500' },
+  keyRow: { display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.85rem' },
+  keyCap: { background: '#1e293b', color: '#FFD700', border: '1px solid #334155', borderRadius: '8px', padding: '0.35rem 0.55rem', fontSize: '1rem', fontFamily: 'monospace', fontWeight: '900', minWidth: '34px', textAlign: 'center' },
+  guideActions: { display: 'grid', gridTemplateColumns: '1fr 1.25fr', gap: '0.75rem' },
+  homeBtn: { padding: '1rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.1rem', fontWeight: '800', cursor: 'pointer' },
+  playBtn: { padding: '1rem', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.1rem', fontWeight: '900', cursor: 'pointer', boxShadow: '0 8px 20px rgba(22,163,74,0.3)' },
 };
 
 export default JoinGamePage;
