@@ -1215,6 +1215,13 @@ export const exactTextTranslations = {
   'Tiada data': 'No data',
   'Tiada data pemain': 'No player data',
   'pilihan': 'selection',
+  'Nama Pemain': 'Player Name',
+  'Kumpulan': 'Group',
+  'Sekolah':'School',
+  'Kelas':'Class',
+  'Bulan':'Month',
+  '🟢 Hijau = lebih baik  ·  ▲ = menang dalam kategori ini  ·  Percubaan: kurang = lebih baik': '🟢 Green = better  ·  ▲ = winner in this category  ·  Attempts: less = better',
+  
 
   // CompareAnalytics — stat row labels  
   'Statistik': 'Statistic',
