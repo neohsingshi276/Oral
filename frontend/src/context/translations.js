@@ -1106,6 +1106,7 @@ export const exactTextTranslations = {
   'Disertai Pada': 'Joined On',
   'Tindakan': 'Actions',
   'Selesai': 'Completed',
+  'Cipta sesi permainan di Sesi Permainan.': 'Create game sessions in Game Sessions.',
   'Belum Selesai': 'Not Completed',
   'Tiada Pemain Ditemui': 'No Players Found',
   'Gagal untuk memadamkan pemain': 'Failed to delete player',
