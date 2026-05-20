@@ -364,58 +364,104 @@ const GamePage = () => {
       {showTutorial && (() => {
         const page = mapTutorialPages[tutorialPage] || mapTutorialPages[0];
         const isLast = tutorialPage === mapTutorialPages.length - 1;
+        const accentColor = page.accent || '#2563eb';
+        const stepNum = tutorialPage + 1;
+        const totalSteps = mapTutorialPages.length;
+
+        // === PHOTO TEMPLATES — add a photo URL per tutorial step ===
+        // e.g. tutorialPhotos[0] = '/assets/watch-video-photo.jpg'
+        const tutorialPhotos = [null, null, null, null, null, null, null];
+        const currentPhoto = tutorialPhotos[tutorialPage] || null;
 
         return (
           <div style={s.overlay}>
-            <div style={{ ...s.doneCard, maxWidth: '560px', padding: '2.25rem' }}>
-              <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                <div style={{ fontSize: '4rem', lineHeight: 1, marginBottom: '0.6rem' }}>{page.badge ? '🦷' : page.icon}</div>
-                <h2 style={{ ...s.doneTitle, fontSize: '1.75rem', margin: '0.5rem 0 0.25rem' }}>{page.title}</h2>
-                <p style={{ color: '#64748b', fontSize: '1rem', margin: 0, fontWeight: 700 }}>{page.subtitle}</p>
-              </div>
+            <div style={{ ...s.doneCard, maxWidth: '600px', padding: 0, overflow: 'hidden', position: 'relative' }}>
 
-              <div style={{ background: page.bg, borderRadius: '16px', padding: '1.35rem', display: 'flex', alignItems: 'center', gap: '1rem', textAlign: 'left', margin: '1.25rem 0' }}>
+              {/* ── Colored top banner ── */}
+              <div style={{ background: page.bg, padding: '2rem 2.2rem 1.6rem', textAlign: 'center', borderBottom: `3px solid ${page.accent || '#e2e8f0'}` }}>
+
+                {/* Step counter pill */}
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(4px)', borderRadius: '999px', padding: '0.35rem 1rem', marginBottom: '1.1rem', fontSize: '1rem', fontWeight: 800, color: accentColor, border: `1.5px solid ${accentColor}44` }}>
+                  <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: accentColor, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.88rem', fontWeight: 900 }}>{stepNum}</span>
+                  <span>Step {stepNum} of {totalSteps}</span>
+                </div>
+
+                {/* Big icon / badge */}
                 {page.badge ? (
-                  <div style={{ color: '#fff', background: page.accent, borderRadius: '10px', padding: '0.5rem 0.8rem', fontSize: '1rem', fontWeight: 900, flexShrink: 0 }}>{page.badge}</div>
-                ) : (
-                  <span style={{ fontSize: '2.3rem', width: '52px', textAlign: 'center', flexShrink: 0 }}>{page.icon}</span>
-                )}
-                <p style={{ margin: 0, color: '#334155', fontSize: '1.1rem', lineHeight: 1.6, fontWeight: 650 }}>{page.desc}</p>
-              </div>
-
-              {page.note && (
-                <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '12px', padding: '0.95rem 1rem', color: '#15803d', fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>
-                  🏆 {page.note}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '0.45rem', margin: '0.5rem 0 1rem' }}>
-                {mapTutorialPages.map((item, i) => (
-                  <button
-                    key={item.title}
-                    type="button"
-                    aria-label={`Go to tutorial page ${i + 1}`}
-                    onClick={() => setTutorialPage(i)}
-                    style={{ height: '10px', width: i === tutorialPage ? '24px' : '10px', borderRadius: '999px', border: 'none', cursor: 'pointer', background: i === tutorialPage ? '#2563eb' : '#cbd5e1' }}
-                  />
-                ))}
-              </div>
-
-              {!isLast ? (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                    <button style={{ ...s.continueBtn, background: '#64748b', opacity: tutorialPage === 0 ? 0.45 : 1 }} disabled={tutorialPage === 0} onClick={() => setTutorialPage(pageIndex => Math.max(pageIndex - 1, 0))}>← {t('game.back')}</button>
-                    <button style={s.continueBtn} onClick={() => setTutorialPage(pageIndex => Math.min(pageIndex + 1, mapTutorialPages.length - 1))}>{t('game.next')} →</button>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '90px', height: '90px', borderRadius: '24px', background: page.accent, color: '#fff', fontWeight: 900, fontSize: '2rem', marginBottom: '0.9rem', boxShadow: `0 8px 24px ${page.accent}55` }}>
+                    {page.badge}
                   </div>
-                  <div style={{ marginTop: '0.75rem', color: '#64748b', fontSize: '0.9rem', fontWeight: 700 }}>Auto next in 4 seconds</div>
-                </>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.15fr', gap: '0.75rem' }}>
-                  <button style={{ ...s.continueBtn, background: '#64748b' }} onClick={() => { localStorage.removeItem('player'); navigate('/'); }}>Back Home</button>
-                  <button style={{ ...s.continueBtn, background: '#1e3a5f' }} onClick={() => setTutorialPage(0)}>Back to First</button>
-                  <button style={{ ...s.continueBtn, background: '#16a34a' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); setCheckpointHint(1); }}>Play Game</button>
+                ) : (
+                  <div style={{ fontSize: '5rem', lineHeight: 1, marginBottom: '0.9rem' }}>{page.icon}</div>
+                )}
+
+                <h2 style={{ fontSize: '2.2rem', fontWeight: 900, color: '#1e3a5f', margin: '0 0 0.35rem', lineHeight: 1.2 }}>{page.title}</h2>
+                <p style={{ color: '#475569', fontSize: '1.1rem', margin: 0, fontWeight: 700 }}>{page.subtitle}</p>
+              </div>
+
+              {/* ── Card body ── */}
+              <div style={{ padding: '1.8rem 2.2rem 2rem' }}>
+
+                {/* Photo slot — only renders when a photo URL is set */}
+                {currentPhoto && (
+                  <div style={{ width: '100%', height: '160px', borderRadius: '16px', overflow: 'hidden', marginBottom: '1.5rem' }}>
+                    <img src={currentPhoto} alt="Step photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                )}
+
+                {/* Description row */}
+                <div style={{ background: page.bg, borderRadius: '16px', padding: '1.4rem 1.5rem', display: 'flex', alignItems: 'flex-start', gap: '1.1rem', textAlign: 'left', marginBottom: '1.5rem', border: `1.5px solid ${page.accent || '#e2e8f0'}33` }}>
+                  {page.badge ? (
+                    <div style={{ color: '#fff', background: page.accent, borderRadius: '10px', padding: '0.45rem 0.8rem', fontSize: '1.05rem', fontWeight: 900, flexShrink: 0, marginTop: '2px' }}>{page.badge}</div>
+                  ) : (
+                    <span style={{ fontSize: '2.5rem', width: '56px', textAlign: 'center', flexShrink: 0, lineHeight: 1, marginTop: '2px' }}>{page.icon}</span>
+                  )}
+                  <p style={{ margin: 0, color: '#1e293b', fontSize: '1.2rem', lineHeight: 1.65, fontWeight: 700 }}>{page.desc}</p>
                 </div>
-              )}
+
+                {page.note && (
+                  <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '14px', padding: '1rem 1.1rem', color: '#15803d', fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem' }}>
+                    🏆 {page.note}
+                  </div>
+                )}
+
+                {/* Dot progress */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', margin: '0 0 1.25rem' }}>
+                  {mapTutorialPages.map((item, i) => (
+                    <button
+                      key={item.title}
+                      type="button"
+                      aria-label={`Go to step ${i + 1}`}
+                      onClick={() => setTutorialPage(i)}
+                      style={{ height: '10px', width: i === tutorialPage ? '28px' : '10px', borderRadius: '999px', border: 'none', cursor: 'pointer', background: i === tutorialPage ? (page.accent || '#2563eb') : '#cbd5e1', transition: 'all 0.2s' }}
+                    />
+                  ))}
+                </div>
+
+                {/* Navigation buttons */}
+                {!isLast ? (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '0.75rem' }}>
+                      <button
+                        style={{ padding: '1rem', background: tutorialPage === 0 ? '#e2e8f0' : '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.1rem', fontWeight: 800, cursor: tutorialPage === 0 ? 'default' : 'pointer', opacity: tutorialPage === 0 ? 0.5 : 1 }}
+                        disabled={tutorialPage === 0}
+                        onClick={() => setTutorialPage(p => Math.max(p - 1, 0))}
+                      >← {t('game.back')}</button>
+                      <button
+                        style={{ padding: '1rem', background: `linear-gradient(135deg, ${page.accent || '#2563eb'}, ${page.accent || '#2563eb'}cc)`, color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.15rem', fontWeight: 900, cursor: 'pointer', boxShadow: `0 6px 20px ${page.accent || '#2563eb'}44` }}
+                        onClick={() => setTutorialPage(p => Math.min(p + 1, mapTutorialPages.length - 1))}
+                      >{t('game.next')} →</button>
+                    </div>
+                    <div style={{ marginTop: '0.75rem', color: '#94a3b8', fontSize: '0.95rem', fontWeight: 700, textAlign: 'center' }}>⏱ Auto next in 4 seconds</div>
+                  </>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: '0.75rem' }}>
+                    <button style={{ padding: '1rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1rem', fontWeight: 800, cursor: 'pointer' }} onClick={() => { localStorage.removeItem('player'); navigate('/'); }}>🏠 Home</button>
+                    <button style={{ padding: '1rem', background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1rem', fontWeight: 800, cursor: 'pointer' }} onClick={() => setTutorialPage(0)}>↺ Restart</button>
+                    <button style={{ padding: '1rem', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.1rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 6px 20px rgba(22,163,74,0.4)' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); setCheckpointHint(1); }}>🚀 Play Game</button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         );
@@ -425,23 +471,53 @@ const GamePage = () => {
         const hint = checkpointHints[checkpointHint];
         return (
           <div style={s.overlay}>
-            <div style={{ ...s.doneCard, maxWidth: '520px', padding: '2.25rem' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '70px', height: '70px', borderRadius: '20px', background: hint.accent, color: '#fff', fontWeight: 900, fontSize: '1.25rem', marginBottom: '1rem' }}>
-                {hint.badge}
-              </div>
-              <h2 style={{ ...s.doneTitle, fontSize: '1.8rem', margin: '0 0 0.35rem' }}>{hint.title}</h2>
-              <p style={{ color: '#64748b', fontSize: '1rem', fontWeight: 700, margin: '0 0 1.25rem' }}>
-                Next activity: {hint.activity}
-              </p>
+            <div style={{ ...s.doneCard, maxWidth: '580px', padding: 0, overflow: 'hidden', position: 'relative' }}>
 
-              <div style={{ background: hint.bg, borderRadius: '16px', padding: '1.35rem', textAlign: 'left', marginBottom: '1.35rem' }}>
-                <h3 style={{ color: '#1e3a5f', margin: '0 0 0.55rem', fontSize: '1.25rem', fontWeight: 900 }}>{hint.heading}</h3>
-                <p style={{ color: '#334155', margin: 0, fontSize: '1.05rem', lineHeight: 1.65, fontWeight: 600 }}>{hint.clue}</p>
+              {/* ── Colored top banner ── */}
+              <div style={{ background: hint.bg, padding: '2rem 2.2rem 1.8rem', textAlign: 'center', borderBottom: `3px solid ${hint.accent}66`, position: 'relative' }}>
+
+                {/* Decorative large faded badge behind */}
+                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '9rem', fontWeight: 900, color: hint.accent, opacity: 0.06, pointerEvents: 'none', lineHeight: 1, userSelect: 'none' }}>
+                  {hint.badge}
+                </div>
+
+                {/* Big badge */}
+                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '110px', height: '110px', borderRadius: '28px', background: hint.accent, color: '#fff', fontWeight: 900, fontSize: '2.4rem', marginBottom: '1rem', boxShadow: `0 10px 32px ${hint.accent}55`, position: 'relative' }}>
+                  {hint.badge}
+                </div>
+
+                <h2 style={{ fontSize: '2.4rem', fontWeight: 900, color: '#1e3a5f', margin: '0 0 0.5rem', lineHeight: 1.2 }}>{hint.title}</h2>
+
+                {/* Activity pill */}
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: hint.accent, color: '#fff', padding: '0.45rem 1.2rem', borderRadius: '999px', fontSize: '1.1rem', fontWeight: 800 }}>
+                  <span>Next:</span>
+                  <span>{hint.activity}</span>
+                </div>
               </div>
 
-              <button style={{ ...s.continueBtn, background: hint.accent }} onClick={() => setCheckpointHint(null)}>
-                Play Game
-              </button>
+              {/* ── Card body ── */}
+              <div style={{ padding: '1.8rem 2.2rem 2rem' }}>
+
+                {/* Photo — only shows when hint.photo is set, no empty space otherwise */}
+                {hint.photo && (
+                  <div style={{ width: '100%', height: '165px', borderRadius: '16px', overflow: 'hidden', marginBottom: '1.5rem' }}>
+                    <img src={hint.photo} alt={hint.badge} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                )}
+
+                {/* Clue box */}
+                <div style={{ background: hint.bg, borderRadius: '18px', padding: '1.5rem 1.6rem', textAlign: 'left', marginBottom: '1.6rem', border: `1.5px solid ${hint.accent}33` }}>
+                  <h3 style={{ color: '#1e3a5f', margin: '0 0 0.65rem', fontSize: '1.45rem', fontWeight: 900, lineHeight: 1.3 }}>{hint.heading}</h3>
+                  <p style={{ color: '#334155', margin: 0, fontSize: '1.18rem', lineHeight: 1.7, fontWeight: 600 }}>{hint.clue}</p>
+                </div>
+
+                <button
+                  style={{ width: '100%', padding: '1.1rem', background: `linear-gradient(135deg, ${hint.accent}, ${hint.accent}cc)`, color: '#fff', border: 'none', borderRadius: '16px', fontSize: '1.25rem', fontWeight: 900, cursor: 'pointer', boxShadow: `0 8px 24px ${hint.accent}44`, letterSpacing: '0.01em' }}
+                  onClick={() => setCheckpointHint(null)}
+                >
+                  Let&apos;s Go! 🚀
+                </button>
+              </div>
             </div>
           </div>
         );
