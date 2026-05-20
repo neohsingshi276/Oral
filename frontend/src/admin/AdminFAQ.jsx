@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import api from '../services/api';
 
 const AdminFAQ = () => {
     const [faqs, setFaqs] = useState([]);
@@ -26,34 +25,23 @@ const AdminFAQ = () => {
     const toggleAnswer = (id) =>
         setExpandedAnswers(prev => ({ ...prev, [id]: !prev[id] }));
 
-    const token = localStorage.getItem('token');
-
     const fetchCurrentAdmin = async () => {
-        const res = await fetch(`${API_URL}/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        setAdmin(data.admin);
+        const res = await api.get('/auth/me');
+        setAdmin(res.data.admin);
     };
 
     const fetchFAQ = async () => {
         try {
-            const res = await fetch(`${API_URL}/faq`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            const data = await res.json();
-            setFaqs(Array.isArray(data) ? data : []);
+            const res = await api.get('/faq');
+            setFaqs(Array.isArray(res.data) ? res.data : []);
         } finally {
             setLoading(false);
         }
     };
 
     const fetchInstructions = async () => {
-        const res = await fetch(`${API_URL}/faq/instructions`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        setInstructions(Array.isArray(data) ? data : []);
+        const res = await api.get('/faq/instructions');
+        setInstructions(Array.isArray(res.data) ? res.data : []);
     };
 
     useEffect(() => {
@@ -66,102 +54,67 @@ const AdminFAQ = () => {
         if (!question.trim()) return;
 
         try {
-            const res = await fetch(`${API_URL}/faq`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ question, category: questionCategory }),
-            });
-
-            if (res.ok) {
-                setQuestion('');
-                setQuestionCategory('Lain-lain');
-                fetchFAQ();
-            } else {
-                const errData = await res.json().catch(() => ({}));
-                alert(`Failed to submit question: ${errData.error || res.statusText}`);
-            }
+            await api.post('/faq', { question, category: questionCategory });
+            setQuestion('');
+            setQuestionCategory('Lain-lain');
+            fetchFAQ();
         } catch (err) {
-            console.error('FAQ submit error:', err);
-            alert('Network error — could not submit question. Please try again.');
+            const errMsg = err.response?.data?.error || err.message;
+            alert(`Failed to submit question: ${errMsg}`);
         }
     };
 
     const submitAnswer = async (id) => {
         if (!answers[id]?.trim()) return;
 
-        const res = await fetch(`${API_URL}/faq/${id}/answer`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ answer: answers[id] }),
-        });
-
-        if (res.ok) {
+        try {
+            await api.put(`/faq/${id}/answer`, { answer: answers[id] });
             setAnswers({ ...answers, [id]: '' });
             fetchFAQ();
+        } catch (err) {
+            console.error('FAQ answer error:', err);
         }
     };
 
     const updateInstruction = async () => {
         if (!editingInstruction) return;
 
-        const res = await fetch(`${API_URL}/faq/instructions/${editingInstruction.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
+        try {
+            await api.put(`/faq/instructions/${editingInstruction.id}`, {
                 title: editingInstruction.title,
                 content: editingInstruction.content,
-            }),
-        });
-
-        if (res.ok) {
+            });
             setEditingInstruction(null);
             fetchInstructions();
+        } catch (err) {
+            console.error('Update instruction error:', err);
         }
     };
 
     const deleteFAQ = async (id) => {
         if (!window.confirm('Padam soalan/jawapan FAQ ini? Tindakan ini tidak boleh dibatalkan.')) return;
 
-        const res = await fetch(`${API_URL}/faq/${id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (res.ok) {
+        try {
+            await api.delete(`/faq/${id}`);
             fetchFAQ();
-        } else {
-            const errData = await res.json().catch(() => ({}));
-            alert(errData.error || 'Gagal memadam FAQ');
+        } catch (err) {
+            const errMsg = err.response?.data?.error || 'Gagal memadam FAQ';
+            alert(errMsg);
         }
     };
 
     const updateFAQ = async () => {
         if (!editingFAQ) return;
 
-        const res = await fetch(`${API_URL}/faq/${editingFAQ.id}/edit`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
+        try {
+            await api.put(`/faq/${editingFAQ.id}/edit`, {
                 question: editingFAQ.question,
                 answer: editingFAQ.answer,
-            }),
-        });
-
-        if (res.ok) {
+            });
             setEditingFAQ(null);
             fetchFAQ();
+        } catch (err) {
+            console.error('Update FAQ error:', err);
         }
     };
 
