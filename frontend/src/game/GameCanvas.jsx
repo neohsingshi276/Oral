@@ -83,7 +83,13 @@ const GameCanvas = ({ player, progress, onCheckpointReached, paused, externalGam
     // Fetch saved position FIRST — only boot Phaser once we have it.
     // This guarantees init(data) receives the correct position before
     // create() runs, so the player always spawns in the right place.
-    api.get(`/game/position/${player.id}`)
+    // A 3-second timeout prevents Railway cold-starts from holding up
+    // the loading screen at 0% indefinitely — we fall back to the
+    // localStorage cached position or START_POS and boot immediately.
+    const positionTimeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 3000)
+    );
+    Promise.race([api.get(`/game/position/${player.id}`), positionTimeout])
       .then(res => {
         if (cancelled) return;
         const initialPos = resolveSpawnPosition(res.data?.position, player.id);
