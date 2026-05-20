@@ -32,7 +32,7 @@ const TILESET_ASSETS = [
   { key: 'PathAndObjects', file: 'PathAndObjects.png' },
   { key: 'town', file: 'town.png' },
   { key: 'tileset_preview', file: 'tileset_preview.png' },
-  { key: 'trees_plants', file: 'trees_plants_rocks.png' }, // map.json references trees_plants_rocks.png,
+  { key: 'trees_plants', file: 'trees_plants.png' },
   { key: 'transparent-bg-tiles', file: 'transparent-bg-tiles.png' },
   { key: 'forrestup', file: 'forrestup.png' },
   { key: 'chicken_walk', file: 'chicken_walk.png' },
@@ -131,9 +131,6 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.load.on('progress', (value) => {
       this.onLoadProgress(value);
     });
-    this.load.on('loaderror', (file) => {
-      console.error('[Phaser] Failed to load asset:', file.key, file.src);
-    });
     this.load.on('complete', () => {
       // We defer this.onLoadComplete() until the end of create()
       // to keep the loading screen up while the tilemap is parsed and built.
@@ -155,11 +152,22 @@ export default class PhaserGameScene extends Phaser.Scene {
   }
 
   create() {
+    console.log('🎮 SCENE CREATE RUNNING');
+
+    console.log('Player initial pos:', this.initialPos);
+    this.add.text(100, 100, 'GAME WORKING', {
+      fontSize: '32px',
+      color: '#ffffff'
+    }).setDepth(2000);
+
     // ── Create tilemap ───────────────────────────────────────────────
     const map = this.make.tilemap({ key: 'mainmap' });
 
-    const startX = this.initialPos?.x ?? START_POS.x;
-    const startY = this.initialPos?.y ?? START_POS.y;
+    // const startX = this.initialPos?.x || START_POS.x;
+    // const startY = this.initialPos?.y || START_POS.y;
+
+    const startX = START_POS.x;
+    const startY = START_POS.y;
 
     // Add tilesets — order must match the JSON tileset array exactly.
     // The first arg is the tileset name in Tiled, second is the Phaser image key.
@@ -357,7 +365,7 @@ export default class PhaserGameScene extends Phaser.Scene {
     const nameBg = this.add.rectangle(0, -25, nameText.width + 8, 14, 0x000000, 0.6);
     nameBg.setOrigin(0.5, 1);
 
-    this.playerGraphic.add([nameBg, nameText, this.bodyPart, this.headPart, this.eyeL, this.eyeR, this.legL, this.legR]);
+    this.playerGraphic.add([ nameBg, nameText, this.bodyPart, this.headPart, this.eyeL, this.eyeR, this.legL, this.legR ]);
     this.playerGraphic.setDepth(1000);
 
     // Physics body for player (invisible rectangle — avoids null-texture bug
@@ -673,51 +681,51 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.isPaused = false;
   }
 
-  updatePlayerOpacity() {
-    const parts = [
-      this.headPart,
-      this.eyeL,
-      this.eyeR,
-      this.bodyPart,
-      this.legL,
-      this.legR,
-    ];
+updatePlayerOpacity() {
+  const parts = [
+    this.headPart,
+    this.eyeL,
+    this.eyeR,
+    this.bodyPart,
+    this.legL,
+    this.legR,
+  ];
 
-    // reset first
-    parts.forEach(part => {
-      if (part) part.setAlpha(1);
+  // reset first
+  parts.forEach(part => {
+    if (part) part.setAlpha(1);
+  });
+
+  if (!this.treeCollisions || this.treeCollisions.size === 0) return;
+
+  parts.forEach(part => {
+    if (!part) return;
+
+    const partBounds = part.getBounds();
+
+    this.matter.world.localWorld.bodies.forEach(body => {
+      if (body.label !== 'tree') return;
+      if (!this.treeCollisions.has(body.id)) return;
+
+      const treeBounds = {
+        left: body.bounds.min.x,
+        right: body.bounds.max.x,
+        top: body.bounds.min.y,
+        bottom: body.bounds.max.y,
+      };
+
+      const isOverlapping =
+        partBounds.right > treeBounds.left &&
+        partBounds.left < treeBounds.right &&
+        partBounds.bottom > treeBounds.top &&
+        partBounds.top < treeBounds.bottom;
+
+      if (isOverlapping) {
+        part.setAlpha(0.45);
+      }
     });
-
-    if (!this.treeCollisions || this.treeCollisions.size === 0) return;
-
-    parts.forEach(part => {
-      if (!part) return;
-
-      const partBounds = part.getBounds();
-
-      this.matter.world.localWorld.bodies.forEach(body => {
-        if (body.label !== 'tree') return;
-        if (!this.treeCollisions.has(body.id)) return;
-
-        const treeBounds = {
-          left: body.bounds.min.x,
-          right: body.bounds.max.x,
-          top: body.bounds.min.y,
-          bottom: body.bounds.max.y,
-        };
-
-        const isOverlapping =
-          partBounds.right > treeBounds.left &&
-          partBounds.left < treeBounds.right &&
-          partBounds.bottom > treeBounds.top &&
-          partBounds.top < treeBounds.bottom;
-
-        if (isOverlapping) {
-          part.setAlpha(0.45);
-        }
-      });
-    });
-  }
+  });
+}
 
   getPlayerPosition() {
     return {
@@ -729,7 +737,7 @@ export default class PhaserGameScene extends Phaser.Scene {
   setPlayerPosition(x, y) {
     if (this.playerBody) {
       this.matter.body.setPosition(this.playerBody, { x, y });
-      this.playerGraphic.setPosition(x, y - 22);
+      this.playerGraphic.setPosition(x, y);
     }
   }
 }
