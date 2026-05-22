@@ -5,7 +5,8 @@ import { useLanguage } from '../context/LanguageContext';
 const ManageCrossword = () => {
   const { t } = useLanguage();
   const [words, setWords] = useState([]);
-  const [form, setForm] = useState({ word: '', clue: '', clue_bi: '' });
+  const emptyForm = { word: '', clue: '', clue_translation: '', clue_bi: '', source_language: 'bm', manual_translation: false };
+  const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
   const [msg, setMsg] = useState('');
 
@@ -17,13 +18,13 @@ const ManageCrossword = () => {
     if (!form.word.trim() || !form.clue.trim()) return;
     try {
       if (editing) {
-        await api.put(`/crossword/admin/${editing}`, { word: form.word.toUpperCase(), clue: form.clue, ...(form.clue_bi.trim() && { clue_bi: form.clue_bi.trim() }) });
+        await api.put(`/crossword/admin/${editing}`, { word: form.word.toUpperCase(), clue: form.clue, source_language: form.source_language, ...(form.manual_translation && form.clue_translation.trim() && { clue_translation: form.clue_translation.trim() }) });
         setMsg('✅ Perkataan dikemaskini!');
       } else {
-        await api.post('/crossword/admin', { word: form.word.toUpperCase(), clue: form.clue, ...(form.clue_bi.trim() && { clue_bi: form.clue_bi.trim() }) });
+        await api.post('/crossword/admin', { word: form.word.toUpperCase(), clue: form.clue, source_language: form.source_language, ...(form.manual_translation && form.clue_translation.trim() && { clue_translation: form.clue_translation.trim() }) });
         setMsg('✅ Perkataan ditambah!');
       }
-      setForm({ word: '', clue: '', clue_bi: '' });
+      setForm(emptyForm);
       setEditing(null);
       fetchWords();
     } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal')); }
@@ -32,7 +33,7 @@ const ManageCrossword = () => {
 
   const handleEdit = (w) => {
     setEditing(w.id);
-    setForm({ word: w.word, clue: w.clue, clue_bi: w.clue_bi || '' });
+    setForm({ ...emptyForm, word: w.word, clue: w.clue, clue_translation: w.clue_bi || '', clue_bi: w.clue_bi || '', manual_translation: Boolean(w.clue_bi) });
   };
 
   const handleDelete = async (id) => {
@@ -71,19 +72,47 @@ const ManageCrossword = () => {
               <p style={s.hint}>Maksimum 15 huruf. Sekarang: {form.word.length} huruf</p>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Pembayang</label>
+              <div style={s.translationPanel}>
+                <div style={s.translationHeader}>
+                  <div>
+                    <label style={s.label}>Bahasa pembayang</label>
+                    <select style={s.compactSelect} value={form.source_language} onChange={e => setForm({ ...form, source_language: e.target.value, clue: '', clue_translation: '' })}>
+                      <option value="bm">Bahasa Melayu</option>
+                      <option value="bi">English</option>
+                    </select>
+                  </div>
+                  <label style={s.checkLabel}>
+                    <input type="checkbox" checked={form.manual_translation} onChange={e => setForm({ ...form, manual_translation: e.target.checked })} />
+                    Saya mahu terjemah sendiri
+                  </label>
+                </div>
+                <p style={s.translationHint}>{form.source_language === 'bm' ? 'Masukkan pembayang BM. English akan auto jika manual tidak ditanda.' : 'Enter the English clue. BM akan auto jika manual tidak ditanda.'}</p>
+              </div>
+              <label style={s.label}>{form.source_language === 'bm' ? 'Pembayang (BM)' : 'Clue (English)'}</label>
               <textarea
                 style={{ ...s.input, height: '80px', resize: 'vertical' }}
                 value={form.clue}
                 onChange={e => setForm({ ...form, clue: e.target.value })}
                 required
-                placeholder={t('admin.clueExample')}
+                placeholder={form.source_language === 'bm' ? t('admin.clueExample') : 'Example: Helps clean teeth'}
                 maxLength={200}
               />
             </div>
+            {form.manual_translation && (
+              <div style={s.manualBox}>
+                <label style={s.manualLabel}>{form.source_language === 'bm' ? 'English clue' : 'Pembayang BM'}</label>
+                <textarea
+                  style={{ ...s.input, height: '70px', resize: 'vertical', borderColor: '#93c5fd' }}
+                  value={form.clue_translation}
+                  onChange={e => setForm({ ...form, clue_translation: e.target.value })}
+                  maxLength={200}
+                  placeholder={form.source_language === 'bm' ? 'Write English clue here' : 'Tulis pembayang BM di sini'}
+                />
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button style={s.btnPrimary} type="submit">{editing ? 'Kemaskini' : 'Tambah'}</button>
-              {editing && (
+              {false && editing && (
                 <>
                   <div style={{ background: '#eff6ff', borderRadius: '10px', padding: '0.75rem', border: '1px solid #bfdbfe', marginBottom: '1rem' }}>
                     <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#2563eb', marginBottom: '0.4rem' }}>
@@ -97,11 +126,12 @@ const ManageCrossword = () => {
                       placeholder="Auto-translated if left empty"
                     />
                   </div>
-                  <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm({ word: '', clue: '', clue_bi: '' }); }}>
+                  <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm(emptyForm); }}>
                     Batal
                   </button>
                 </>
               )}
+              {editing && <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm(emptyForm); }}>Batal</button>}
             </div>
           </form>
         </div>
@@ -179,6 +209,13 @@ const s = {
   label: { display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.4rem' },
   input: { width: '100%', padding: '0.65rem 0.9rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', color: '#1e293b' },
   hint: { color: '#94a3b8', fontSize: '0.75rem', margin: '0.25rem 0 0' },
+  translationPanel: { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.85rem', marginBottom: '1rem' },
+  translationHeader: { display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' },
+  compactSelect: { minWidth: '180px', padding: '0.55rem 0.75rem', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#fff', color: '#1e293b', fontSize: '0.9rem' },
+  checkLabel: { display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1e3a5f', fontSize: '0.86rem', fontWeight: '700', cursor: 'pointer' },
+  translationHint: { margin: '0.55rem 0 0', color: '#64748b', fontSize: '0.78rem' },
+  manualBox: { marginBottom: '1rem', background: '#eff6ff', borderRadius: '8px', padding: '0.75rem', border: '1px solid #bfdbfe' },
+  manualLabel: { display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#2563eb', marginBottom: '0.4rem' },
   btnPrimary: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.65rem 1.5rem', fontWeight: '600', cursor: 'pointer', fontSize: '0.9rem' },
   btnSecondary: { background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', padding: '0.65rem 1.5rem', fontWeight: '600', cursor: 'pointer', fontSize: '0.9rem' },
   success: { background: '#f0fdf4', color: '#16a34a', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' },

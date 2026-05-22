@@ -1,5 +1,5 @@
 const db = require('../db');
-const { translateBmToBi, translateOptionsBmToBi } = require('../services/translate.service');
+const { translateBmToBi, translateBiToBm, translateOptions } = require('../services/translate.service');
 
 const getSessionQuestions = async (req, res) => {
   const { session_id } = req.params;
@@ -167,6 +167,40 @@ const getAllQuestions = async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 };
 
+const parseJsonField = (value, fieldName) => {
+  if (value === undefined || value === null || value === '') return undefined;
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value);
+  } catch (e) {
+    const err = new Error(`Invalid ${fieldName} format`);
+    err.status = 400;
+    throw err;
+  }
+};
+
+const resolveQuizTranslations = async ({ question, options, body }) => {
+  const sourceLanguage = body.source_language === 'bi' ? 'bi' : 'bm';
+  const manualQuestion = (body.question_translation || body.question_bm || body.question_bi || '').trim();
+  const manualOptions = parseJsonField(body.options_translation || body.options_bm || body.options_bi, 'options_translation');
+
+  if (sourceLanguage === 'bi') {
+    return {
+      questionBm: manualQuestion || await translateBiToBm(question.trim()),
+      questionBi: question.trim(),
+      optionsBm: manualOptions ? JSON.stringify(manualOptions) : await translateOptions(options, 'en', 'ms'),
+      optionsBi: JSON.stringify(options),
+    };
+  }
+
+  return {
+    questionBm: question.trim(),
+    questionBi: manualQuestion || await translateBmToBi(question.trim()),
+    optionsBm: JSON.stringify(options),
+    optionsBi: manualOptions ? JSON.stringify(manualOptions) : await translateOptions(options, 'ms', 'en'),
+  };
+};
+
 // Save image as Base64 into DB — no disk storage (Railway ephemeral filesystem fix)
 const addQuestion = async (req, res) => {
   let { question, question_type, options, correct_answer, timer_seconds } = req.body;
@@ -194,14 +228,13 @@ const addQuestion = async (req, res) => {
   }
 
   try {
-    const question_bi = await translateBmToBi(question.trim());
-    const options_bi = await translateOptionsBmToBi(options);
+    const { questionBm, questionBi, optionsBm, optionsBi } = await resolveQuizTranslations({ question, options, body: req.body });
     const [result] = await db.query(
       'INSERT INTO quiz_questions (question, question_bi, question_type, image_url, options, options_bi, correct_answer, timer_seconds) VALUES (?,?,?,?,?,?,?,?)',
-      [question, question_bi, question_type, image_url, JSON.stringify(options), options_bi, JSON.stringify(correct_answer), timer_seconds || 15]
+      [questionBm, questionBi, question_type, image_url, optionsBm, optionsBi, JSON.stringify(correct_answer), timer_seconds || 15]
     );
     res.status(201).json({ message: 'Question added', id: result.insertId });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) { res.status(err.status || 500).json({ error: err.status ? err.message : 'Server error' }); }
 };
 
 const updateQuestion = async (req, res) => {
@@ -224,26 +257,23 @@ const updateQuestion = async (req, res) => {
     return res.status(400).json({ error: 'Too many options (max 8)' });
 
   try {
+    const { questionBm, questionBi, optionsBm, optionsBi } = await resolveQuizTranslations({ question, options, body: req.body });
     if (req.file) {
       // Convert new image to Base64 — old image was in DB so nothing to delete from disk
       const base64 = req.file.buffer.toString('base64');
       const image_url = `data:${req.file.mimetype};base64,${base64}`;
-      const question_bi_upd1 = await translateBmToBi(question.trim());
-      const options_bi_upd1 = await translateOptionsBmToBi(options);
       await db.query(
         'UPDATE quiz_questions SET question=?,question_bi=?,question_type=?,image_url=?,options=?,options_bi=?,correct_answer=?,timer_seconds=? WHERE id=?',
-        [question, question_bi_upd1, question_type, image_url, JSON.stringify(options), options_bi_upd1, JSON.stringify(correct_answer), timer_seconds || 15, req.params.id]
+        [questionBm, questionBi, question_type, image_url, optionsBm, optionsBi, JSON.stringify(correct_answer), timer_seconds || 15, req.params.id]
       );
     } else {
-      const question_bi_upd2 = await translateBmToBi(question.trim());
-      const options_bi_upd2 = await translateOptionsBmToBi(options);
       await db.query(
         'UPDATE quiz_questions SET question=?,question_bi=?,question_type=?,options=?,options_bi=?,correct_answer=?,timer_seconds=? WHERE id=?',
-        [question, question_bi_upd2, question_type, JSON.stringify(options), options_bi_upd2, JSON.stringify(correct_answer), timer_seconds || 15, req.params.id]
+        [questionBm, questionBi, question_type, optionsBm, optionsBi, JSON.stringify(correct_answer), timer_seconds || 15, req.params.id]
       );
     }
     res.json({ message: 'Question updated' });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) { res.status(err.status || 500).json({ error: err.status ? err.message : 'Server error' }); }
 };
 
 const deleteQuestion = async (req, res) => {

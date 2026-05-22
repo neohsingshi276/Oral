@@ -9,7 +9,28 @@ const TYPES = [
   { value: 'match', label: '🔗 Padanan' },
 ];
 
-const emptyForm = { question: '', question_bi: '', question_type: 'multiple_choice', options: ['', '', '', ''], correct_answer: [], match_pairs: [{ left: '', right: '' }, { left: '', right: '' }], timer_seconds: 15 };
+const makeOptionList = (sourceLanguage = 'bm') => sourceLanguage === 'bi'
+  ? ['', '', '', '']
+  : ['', '', '', ''];
+
+const makeTrueFalseOptions = (sourceLanguage = 'bm') => sourceLanguage === 'bi'
+  ? ['False', 'True']
+  : ['Tidak Betul', 'Betul'];
+
+const emptyForm = {
+  source_language: 'bm',
+  manual_translation: false,
+  question: '',
+  question_translation: '',
+  question_bi: '',
+  question_type: 'multiple_choice',
+  options: makeOptionList(),
+  options_translation: makeOptionList(),
+  correct_answer: [],
+  match_pairs: [{ left: '', right: '' }, { left: '', right: '' }],
+  match_pairs_translation: [{ left: '', right: '' }, { left: '', right: '' }],
+  timer_seconds: 15
+};
 
 const ManageQuiz = () => {
   const { tx } = useLanguage();
@@ -55,16 +76,39 @@ const ManageQuiz = () => {
     setForm({ ...form, options: opts });
   };
 
+  const handleOptionTranslationChange = (idx, val) => {
+    const opts = [...form.options_translation];
+    opts[idx] = val;
+    setForm({ ...form, options_translation: opts });
+  };
+
+  const handleSourceLanguageChange = (source_language) => {
+    const isTrueFalse = form.question_type === 'true_false';
+    setForm({
+      ...form,
+      source_language,
+      question: '',
+      question_translation: '',
+      question_bi: '',
+      options: isTrueFalse ? makeTrueFalseOptions(source_language) : form.options.map(() => ''),
+      options_translation: isTrueFalse ? makeTrueFalseOptions(source_language === 'bm' ? 'bi' : 'bm') : form.options_translation.map(() => ''),
+      match_pairs: form.match_pairs.map(() => ({ left: '', right: '' })),
+      match_pairs_translation: form.match_pairs_translation.map(() => ({ left: '', right: '' })),
+      correct_answer: []
+    });
+  };
+
   const addOption = () => {
     if (form.options.length >= 6) return;
-    setForm({ ...form, options: [...form.options, ''] });
+    setForm({ ...form, options: [...form.options, ''], options_translation: [...form.options_translation, ''] });
   };
 
   const removeOption = (idx) => {
     if (form.options.length <= 2) return;
     const opts = form.options.filter((_, i) => i !== idx);
+    const optsTranslation = form.options_translation.filter((_, i) => i !== idx);
     const ca = form.correct_answer.filter(i => i !== idx).map(i => i > idx ? i - 1 : i);
-    setForm({ ...form, options: opts, correct_answer: ca });
+    setForm({ ...form, options: opts, options_translation: optsTranslation, correct_answer: ca });
   };
 
   const toggleCorrect = (idx) => {
@@ -85,13 +129,50 @@ const ManageQuiz = () => {
     setForm({ ...form, match_pairs: pairs });
   };
 
-  const addMatchPair = () => setForm({ ...form, match_pairs: [...form.match_pairs, { left: '', right: '' }] });
-  const removeMatchPair = (idx) => { if (form.match_pairs.length <= 2) return; setForm({ ...form, match_pairs: form.match_pairs.filter((_, i) => i !== idx) }); };
+  const handleMatchTranslationChange = (idx, side, val) => {
+    const pairs = [...form.match_pairs_translation];
+    pairs[idx] = { ...pairs[idx], [side]: val };
+    setForm({ ...form, match_pairs_translation: pairs });
+  };
+
+  const addMatchPair = () => setForm({
+    ...form,
+    match_pairs: [...form.match_pairs, { left: '', right: '' }],
+    match_pairs_translation: [...form.match_pairs_translation, { left: '', right: '' }]
+  });
+  const removeMatchPair = (idx) => {
+    if (form.match_pairs.length <= 2) return;
+    setForm({
+      ...form,
+      match_pairs: form.match_pairs.filter((_, i) => i !== idx),
+      match_pairs_translation: form.match_pairs_translation.filter((_, i) => i !== idx)
+    });
+  };
 
   const handleTypeChange = (type) => {
-    if (type === 'true_false') setForm({ ...form, question_type: type, options: ['Tidak Betul', 'Betul'], correct_answer: [] });
-    else if (type === 'match') setForm({ ...form, question_type: type, options: [], correct_answer: [], match_pairs: [{ left: '', right: '' }, { left: '', right: '' }] });
-    else setForm({ ...form, question_type: type, options: ['', '', '', ''], correct_answer: [] });
+    if (type === 'true_false') setForm({
+      ...form,
+      question_type: type,
+      options: makeTrueFalseOptions(form.source_language),
+      options_translation: makeTrueFalseOptions(form.source_language === 'bm' ? 'bi' : 'bm'),
+      correct_answer: []
+    });
+    else if (type === 'match') setForm({
+      ...form,
+      question_type: type,
+      options: [],
+      options_translation: [],
+      correct_answer: [],
+      match_pairs: [{ left: '', right: '' }, { left: '', right: '' }],
+      match_pairs_translation: [{ left: '', right: '' }, { left: '', right: '' }]
+    });
+    else setForm({
+      ...form,
+      question_type: type,
+      options: ['', '', '', ''],
+      options_translation: ['', '', '', ''],
+      correct_answer: []
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -100,15 +181,27 @@ const ManageQuiz = () => {
     try {
       const fd = new FormData();
       fd.append('question', form.question);
-      if (form.question_bi?.trim()) fd.append('question_bi', form.question_bi.trim());
+      fd.append('source_language', form.source_language);
+      if (form.manual_translation && form.question_translation?.trim()) {
+        fd.append('question_translation', form.question_translation.trim());
+      } else if (form.question_bi?.trim()) {
+        fd.append('question_bi', form.question_bi.trim());
+      }
       fd.append('question_type', form.question_type);
       fd.append('timer_seconds', form.timer_seconds);
       if (form.question_type === 'match') {
         fd.append('options', JSON.stringify(form.match_pairs));
+        if (form.manual_translation && form.match_pairs_translation.some(pair => pair.left.trim() || pair.right.trim())) {
+          fd.append('options_translation', JSON.stringify(form.match_pairs_translation));
+        }
         const ca = form.match_pairs.map((_, i) => [i, i]);
         fd.append('correct_answer', JSON.stringify(ca));
       } else {
         fd.append('options', JSON.stringify(form.options.filter(o => o.trim())));
+        if (form.manual_translation) {
+          const translatedOptions = form.options_translation.slice(0, form.options.filter(o => o.trim()).length);
+          if (translatedOptions.some(opt => opt.trim())) fd.append('options_translation', JSON.stringify(translatedOptions));
+        }
         fd.append('correct_answer', JSON.stringify(form.correct_answer));
       }
       if (imageFile) fd.append('image', imageFile);
@@ -125,9 +218,38 @@ const ManageQuiz = () => {
   const handleEdit = (q) => {
     setEditing(q.id);
     const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]');
+    const optsBi = Array.isArray(q.options_bi) ? q.options_bi : JSON.parse(q.options_bi || '[]');
     const ca = Array.isArray(q.correct_answer) ? q.correct_answer : JSON.parse(q.correct_answer || '[]');
-    if (q.question_type === 'match') setForm({ question: q.question, question_bi: q.question_bi || '', question_type: q.question_type, options: [], correct_answer: [], match_pairs: opts.map(p => ({ left: p.left || p, right: p.right || p })), timer_seconds: q.timer_seconds || 15 });
-    else setForm({ question: q.question, question_bi: q.question_bi || '', question_type: q.question_type, options: opts, correct_answer: ca, match_pairs: [{ left: '', right: '' }, { left: '', right: '' }], timer_seconds: q.timer_seconds || 15 });
+    if (q.question_type === 'match') setForm({
+      ...emptyForm,
+      source_language: 'bm',
+      manual_translation: Boolean(q.question_bi),
+      question: q.question,
+      question_translation: q.question_bi || '',
+      question_bi: q.question_bi || '',
+      question_type: q.question_type,
+      options: [],
+      options_translation: [],
+      correct_answer: [],
+      match_pairs: opts.map(p => ({ left: p.left || p, right: p.right || p })),
+      match_pairs_translation: optsBi.map(p => ({ left: p.left || p, right: p.right || p })),
+      timer_seconds: q.timer_seconds || 15
+    });
+    else setForm({
+      ...emptyForm,
+      source_language: 'bm',
+      manual_translation: Boolean(q.question_bi),
+      question: q.question,
+      question_translation: q.question_bi || '',
+      question_bi: q.question_bi || '',
+      question_type: q.question_type,
+      options: opts,
+      options_translation: optsBi.length ? optsBi : opts.map(() => ''),
+      correct_answer: ca,
+      match_pairs: [{ left: '', right: '' }, { left: '', right: '' }],
+      match_pairs_translation: [{ left: '', right: '' }, { left: '', right: '' }],
+      timer_seconds: q.timer_seconds || 15
+    });
     setImagePreview(q.image_url || null);
     setTab('questions');
   };
@@ -168,23 +290,48 @@ const ManageQuiz = () => {
                 </div>
               </div>
 
+              <div style={s.translationPanel}>
+                <div style={s.translationHeader}>
+                  <div>
+                    <label style={s.label}>Bahasa input</label>
+                    <select style={s.compactSelect} value={form.source_language} onChange={e => handleSourceLanguageChange(e.target.value)}>
+                      <option value="bm">Bahasa Melayu</option>
+                      <option value="bi">English</option>
+                    </select>
+                  </div>
+                  <label style={s.checkLabel}>
+                    <input type="checkbox" checked={form.manual_translation} onChange={e => setForm({ ...form, manual_translation: e.target.checked })} />
+                    Saya mahu terjemah sendiri
+                  </label>
+                </div>
+                <p style={s.translationHint}>
+                  {form.source_language === 'bm'
+                    ? 'Masukkan BM. Sistem akan isi English secara automatik jika manual tidak ditanda.'
+                    : 'Enter English. Sistem akan isi BM secara automatik jika manual tidak ditanda.'}
+                </p>
+              </div>
+
               {/* Teks soalan */}
               <div style={s.field}>
-                <label style={s.label}>Soalan</label>
-                <textarea style={{ ...s.input, height: '80px', resize: 'vertical' }} value={form.question} onChange={e => setForm({ ...form, question: e.target.value })} required placeholder="Tulis soalan di sini..." maxLength={500} />
+                <label style={s.label}>{form.source_language === 'bm' ? 'Soalan (BM)' : 'Question (English)'}</label>
+                <textarea style={{ ...s.input, height: '80px', resize: 'vertical' }} value={form.question} onChange={e => setForm({ ...form, question: e.target.value })} required placeholder={form.source_language === 'bm' ? 'Tulis soalan di sini...' : 'Write the question here...'} maxLength={500} />
                 <p style={{ color: form.question.length > 450 ? '#e11d48' : '#94a3b8', fontSize: '0.75rem', margin: '0.2rem 0 0', textAlign: 'right' }}>{form.question.length}/500</p>
               </div>
-              {/* BI Question */}
+              {form.manual_translation && (
+              <>
+              {/* Translation Question */}
               <div style={{ marginBottom: '1rem', background: '#eff6ff', borderRadius: '10px', padding: '0.75rem', border: '1px solid #bfdbfe' }}>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#2563eb', marginBottom: '0.4rem' }}>
-                  🇬🇧 Question (BI) — <span style={{ fontWeight: 400 }}>kosongkan untuk terjemahan automatik</span>
+                  {form.source_language === 'bm' ? 'English translation' : 'Terjemahan Bahasa Melayu'}
                 </label>
-                <textarea style={{ ...s.input, height: '70px', resize: 'vertical', borderColor: '#bfdbfe' }} value={form.question_bi}
-                  onChange={e => setForm({ ...form, question_bi: e.target.value })} maxLength={500}
-                  placeholder="Auto-translated if left empty" />
+                <textarea style={{ ...s.input, height: '70px', resize: 'vertical', borderColor: '#bfdbfe' }} value={form.question_translation}
+                  onChange={e => setForm({ ...form, question_translation: e.target.value })} maxLength={500}
+                  placeholder={form.source_language === 'bm' ? 'Write English translation here' : 'Tulis terjemahan BM di sini'} />
               </div>
               <div style={{ display: 'none' }}>
               </div>
+              </>
+              )}
 
               {/* Muat naik gambar */}
               <div style={s.field}>
@@ -210,6 +357,9 @@ const ManageQuiz = () => {
                           {form.correct_answer.includes(idx) ? '✓' : String.fromCharCode(65 + idx)}
                         </button>
                         <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={form.question_type === 'true_false' ? tx(opt) : opt} onChange={e => handleOptionChange(idx, e.target.value)} placeholder={`Pilihan ${String.fromCharCode(65 + idx)}`} required={form.question_type !== 'true_false'} disabled={form.question_type === 'true_false'} maxLength={200} />
+                        {form.manual_translation && (
+                          <input style={{ ...s.input, flex: 1, marginBottom: 0, borderColor: '#bfdbfe' }} value={form.options_translation[idx] || ''} onChange={e => handleOptionTranslationChange(idx, e.target.value)} placeholder={form.source_language === 'bm' ? `English ${String.fromCharCode(65 + idx)}` : `BM ${String.fromCharCode(65 + idx)}`} disabled={form.question_type === 'true_false'} maxLength={200} />
+                        )}
                         {form.question_type !== 'true_false' && (
                           <button type="button" style={s.removeOptBtn} onClick={() => removeOption(idx)}>✕</button>
                         )}
@@ -341,6 +491,11 @@ const s = {
   label: { display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.4rem' },
   labelHint: { color: '#94a3b8', fontSize: '0.75rem', fontWeight: '400' },
   input: { width: '100%', padding: '0.65rem 0.9rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', marginBottom: '0' },
+  translationPanel: { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.85rem', marginBottom: '1rem' },
+  translationHeader: { display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' },
+  compactSelect: { minWidth: '180px', padding: '0.55rem 0.75rem', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#fff', color: '#1e293b', fontSize: '0.9rem' },
+  checkLabel: { display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1e3a5f', fontSize: '0.86rem', fontWeight: '700', cursor: 'pointer' },
+  translationHint: { margin: '0.55rem 0 0', color: '#64748b', fontSize: '0.78rem' },
   typeBtns: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap' },
   typeBtn: { padding: '0.4rem 0.9rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#475569', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '500' },
   typeBtnActive: { background: '#2563eb', color: '#fff', border: '1px solid #2563eb' },
