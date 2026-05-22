@@ -1,10 +1,23 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
+const emptyForm = {
+  title: '',
+  description: '',
+  youtube_url: '',
+  order_num: '',
+  title_translation: '',
+  description_translation: '',
+  title_bi: '',
+  description_bi: '',
+  source_language: 'bm',
+  manual_translation: false
+};
+
 const ManageVideos = () => {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ title: '', description: '', youtube_url: '', order_num: '', title_bi: '', description_bi: '' });
+  const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
   const [msg, setMsg] = useState('');
   const [translating, setTranslating] = useState(false);
@@ -31,8 +44,9 @@ const ManageVideos = () => {
         description: form.description,
         youtube_url: form.youtube_url,
         order_num: form.order_num,
-        ...(form.title_bi.trim() && { title_bi: form.title_bi.trim() }),
-        ...(form.description_bi.trim() && { description_bi: form.description_bi.trim() }),
+        source_language: form.source_language,
+        ...(form.manual_translation && form.title_translation.trim() && { title_translation: form.title_translation.trim() }),
+        ...(form.manual_translation && form.description_translation.trim() && { description_translation: form.description_translation.trim() }),
       };
       if (editing) {
         await api.put(`/videos/${editing}`, payload);
@@ -41,7 +55,7 @@ const ManageVideos = () => {
         await api.post('/videos', payload);
         setMsg('✅ Video Ditambah! (BI auto-diterjemah jika kosong)');
       }
-      setForm({ title: '', description: '', youtube_url: '', order_num: '', title_bi: '', description_bi: '' });
+      setForm(emptyForm);
       setEditing(null);
       fetchVideos();
     } catch (err) {
@@ -56,6 +70,10 @@ const ManageVideos = () => {
     setForm({
       title: video.title, description: video.description,
       youtube_url: video.youtube_url, order_num: video.order_num,
+      source_language: 'bm',
+      manual_translation: Boolean(video.title_bi || video.description_bi),
+      title_translation: video.title_bi || '',
+      description_translation: video.description_bi || '',
       title_bi: video.title_bi || '', description_bi: video.description_bi || '',
     });
   };
@@ -72,13 +90,30 @@ const ManageVideos = () => {
         {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
         <form onSubmit={handleSubmit}>
 
+          <div style={s.translationPanel}>
+            <div style={s.translationHeader}>
+              <div>
+                <label style={s.label}>Bahasa input</label>
+                <div style={s.segmented}>
+                  <button type="button" style={{ ...s.segmentBtn, ...(form.source_language === 'bm' ? s.segmentActive : {}) }} onClick={() => setForm({ ...form, source_language: 'bm', title: '', description: '', title_translation: '', description_translation: '' })}>BM</button>
+                  <button type="button" style={{ ...s.segmentBtn, ...(form.source_language === 'bi' ? s.segmentActive : {}) }} onClick={() => setForm({ ...form, source_language: 'bi', title: '', description: '', title_translation: '', description_translation: '' })}>English</button>
+                </div>
+              </div>
+              <label style={s.checkLabel}>
+                <input type="checkbox" checked={form.manual_translation} onChange={e => setForm({ ...form, manual_translation: e.target.checked })} />
+                Saya mahu terjemah sendiri
+              </label>
+            </div>
+            <p style={s.translationHint}>{form.source_language === 'bm' ? 'Masukkan kandungan BM. English akan auto jika manual tidak ditanda.' : 'Enter English content. BM akan auto jika manual tidak ditanda.'}</p>
+          </div>
+
           {/* BM Section */}
           <div style={s.langSection}>
             <div style={s.langBadge}>🇲🇾 Bahasa Melayu (BM)</div>
             <div style={s.formGrid}>
               <div style={s.field}>
-                <label style={s.label}>Tajuk</label>
-                <input style={s.input} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required placeholder="Tajuk Video" maxLength={150} />
+                <label style={s.label}>{form.source_language === 'bm' ? 'Tajuk' : 'Title'}</label>
+                <input style={s.input} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required placeholder={form.source_language === 'bm' ? 'Tajuk Video' : 'Video Title'} maxLength={150} />
               </div>
               <div style={s.field}>
                 <label style={s.label}>Nombor Susunan</label>
@@ -93,35 +128,37 @@ const ManageVideos = () => {
               <input style={s.input} value={form.youtube_url} onChange={e => setForm({ ...form, youtube_url: e.target.value })} required placeholder="https://youtu.be/..." maxLength={200} />
             </div>
             <div style={s.field}>
-              <label style={s.label}>Deskripsi</label>
+              <label style={s.label}>{form.source_language === 'bm' ? 'Deskripsi' : 'Description'}</label>
               <textarea style={{ ...s.input, height: '70px', resize: 'vertical' }} value={form.description}
-                onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Deskripsi Pendek..." maxLength={500} />
+                onChange={e => setForm({ ...form, description: e.target.value })} placeholder={form.source_language === 'bm' ? 'Deskripsi Pendek...' : 'Short description...'} maxLength={500} />
             </div>
           </div>
 
           {/* BI Section */}
+          {form.manual_translation && (
           <div style={s.langSectionBi}>
             <div style={{ ...s.langBadge, background: '#eff6ff', color: '#2563eb', borderColor: '#bfdbfe' }}>
               🇬🇧 Bahasa Inggeris (BI) — <span style={{ fontWeight: 400 }}>kosongkan untuk terjemahan automatik</span>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Title (BI)</label>
-              <input style={{ ...s.input, borderColor: '#bfdbfe' }} value={form.title_bi}
-                onChange={e => setForm({ ...form, title_bi: e.target.value })} maxLength={150} placeholder="Auto-translated if left empty" />
+              <label style={s.label}>{form.source_language === 'bm' ? 'Title (English)' : 'Tajuk (BM)'}</label>
+              <input style={{ ...s.input, borderColor: '#bfdbfe' }} value={form.title_translation}
+                onChange={e => setForm({ ...form, title_translation: e.target.value })} maxLength={150} placeholder={form.source_language === 'bm' ? 'Write English title' : 'Tulis tajuk BM'} />
             </div>
             <div style={s.field}>
-              <label style={s.label}>Description (BI)</label>
+              <label style={s.label}>{form.source_language === 'bm' ? 'Description (English)' : 'Deskripsi (BM)'}</label>
               <textarea style={{ ...s.input, height: '70px', resize: 'vertical', borderColor: '#bfdbfe' }}
-                value={form.description_bi} onChange={e => setForm({ ...form, description_bi: e.target.value })}
-                maxLength={500} placeholder="Auto-translated if left empty" />
+                value={form.description_translation} onChange={e => setForm({ ...form, description_translation: e.target.value })}
+                maxLength={500} placeholder={form.source_language === 'bm' ? 'Write English description' : 'Tulis deskripsi BM'} />
             </div>
           </div>
+          )}
 
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <button style={{ ...s.btnPrimary, opacity: translating ? 0.7 : 1 }} type="submit" disabled={translating}>
               {translating ? '⏳ Menerjemah...' : editing ? 'Update Video' : 'Tambah Video'}
             </button>
-            {editing && <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm({ title: '', description: '', youtube_url: '', order_num: '', title_bi: '', description_bi: '' }); }}>Cancel</button>}
+            {editing && <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm(emptyForm); }}>Cancel</button>}
           </div>
         </form>
       </div>
@@ -159,6 +196,13 @@ const s = {
   langSection: { border: '1px solid #fde68a', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', background: '#fffbeb' },
   langSectionBi: { border: '1px solid #bfdbfe', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', background: '#eff6ff' },
   langBadge: { fontSize: '0.78rem', fontWeight: '700', color: '#92400e', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '6px', padding: '0.25rem 0.6rem', display: 'inline-block', marginBottom: '0.75rem' },
+  translationPanel: { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.9rem', marginBottom: '1rem' },
+  translationHeader: { display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' },
+  segmented: { display: 'inline-flex', border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden', background: '#fff' },
+  segmentBtn: { padding: '0.5rem 0.9rem', border: 'none', background: '#fff', color: '#475569', cursor: 'pointer', fontWeight: '700' },
+  segmentActive: { background: '#2563eb', color: '#fff' },
+  checkLabel: { display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1e3a5f', fontSize: '0.86rem', fontWeight: '700', cursor: 'pointer' },
+  translationHint: { margin: '0.55rem 0 0', color: '#64748b', fontSize: '0.78rem' },
   formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' },
   field: { marginBottom: '0.75rem' },
   label: { display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.4rem' },

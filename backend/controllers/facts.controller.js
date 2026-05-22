@@ -1,5 +1,5 @@
 const db = require('../db');
-const { translateBmToBi } = require('../services/translate.service');
+const { translateBmToBi, translateBiToBm } = require('../services/translate.service');
 
 const getAllFacts = async (req, res) => {
   try {
@@ -11,6 +11,28 @@ const getAllFacts = async (req, res) => {
     console.error('Get facts error:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
+};
+
+const resolveFactTranslations = async ({ title, content, body }) => {
+  const sourceLanguage = body.source_language === 'bi' ? 'bi' : 'bm';
+  const manualTitle = (body.title_translation || body.title_bi || body.title_bm || '').trim();
+  const manualContent = (body.content_translation || body.content_bi || body.content_bm || '').trim();
+
+  if (sourceLanguage === 'bi') {
+    return {
+      titleBm: manualTitle || await translateBiToBm(title.trim()),
+      contentBm: manualContent || await translateBiToBm(content),
+      titleBi: title.trim(),
+      contentBi: content,
+    };
+  }
+
+  return {
+    titleBm: title.trim(),
+    contentBm: content,
+    titleBi: manualTitle || await translateBmToBi(title.trim()),
+    contentBi: manualContent || await translateBmToBi(content),
+  };
 };
 
 const addFact = async (req, res) => {
@@ -30,15 +52,12 @@ const addFact = async (req, res) => {
   }
 
   // Auto-translate to BI (fails silently — saves BM if API is down)
-  const [title_bi, content_bi] = await Promise.all([
-    translateBmToBi(title.trim()),
-    translateBmToBi(content),
-  ]);
+  const { titleBm, contentBm, titleBi, contentBi } = await resolveFactTranslations({ title, content, body: req.body });
 
   try {
     const [result] = await db.query(
       'INSERT INTO facts (created_by, title, content, image_url, title_bi, content_bi) VALUES (?, ?, ?, ?, ?, ?)',
-      [req.admin.id, title.trim(), content, image_url, title_bi, content_bi]
+      [req.admin.id, titleBm, contentBm, image_url, titleBi, contentBi]
     );
     res.status(201).json({ message: 'Fact added', factId: result.insertId });
   } catch (err) {
@@ -48,16 +67,13 @@ const addFact = async (req, res) => {
 };
 
 const updateFact = async (req, res) => {
-  const { title, content, title_bi: manualTitleBi, content_bi: manualContentBi } = req.body;
+  const { title, content } = req.body;
   if (!title || !content) return res.status(400).json({ error: 'Title and content required' });
   if (title.length > 120) return res.status(400).json({ error: 'Title too long (max 120 characters)' });
   if (content.length > 1000) return res.status(400).json({ error: 'Content too long (max 1000 characters)' });
 
   // Use manually provided BI if given, otherwise re-translate
-  const [title_bi, content_bi] = await Promise.all([
-    manualTitleBi !== undefined ? Promise.resolve(manualTitleBi) : translateBmToBi(title.trim()),
-    manualContentBi !== undefined ? Promise.resolve(manualContentBi) : translateBmToBi(content),
-  ]);
+  const { titleBm, contentBm, titleBi, contentBi } = await resolveFactTranslations({ title, content, body: req.body });
 
   try {
     if (req.file) {
@@ -68,12 +84,12 @@ const updateFact = async (req, res) => {
       const image_url = `data:${req.file.mimetype};base64,${base64}`;
       await db.query(
         'UPDATE facts SET title=?, content=?, image_url=?, title_bi=?, content_bi=? WHERE id=?',
-        [title.trim(), content, image_url, title_bi, content_bi, req.params.id]
+        [titleBm, contentBm, image_url, titleBi, contentBi, req.params.id]
       );
     } else {
       await db.query(
         'UPDATE facts SET title=?, content=?, title_bi=?, content_bi=? WHERE id=?',
-        [title.trim(), content, title_bi, content_bi, req.params.id]
+        [titleBm, contentBm, titleBi, contentBi, req.params.id]
       );
     }
     res.json({ message: 'Fact updated' });

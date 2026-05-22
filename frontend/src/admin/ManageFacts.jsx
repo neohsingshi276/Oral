@@ -1,9 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 
+const emptyForm = {
+  title: '',
+  content: '',
+  title_translation: '',
+  content_translation: '',
+  title_bi: '',
+  content_bi: '',
+  source_language: 'bm',
+  manual_translation: false
+};
+
 const ManageFacts = () => {
   const [facts, setFacts] = useState([]);
-  const [form, setForm] = useState({ title: '', content: '', title_bi: '', content_bi: '' });
+  const [form, setForm] = useState(emptyForm);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [editing, setEditing] = useState(null);
@@ -28,9 +39,10 @@ const ManageFacts = () => {
       const formData = new FormData();
       formData.append('title', form.title);
       formData.append('content', form.content);
+      formData.append('source_language', form.source_language);
       // Send BI overrides — backend uses these if provided, auto-translates if empty
-      if (form.title_bi.trim()) formData.append('title_bi', form.title_bi.trim());
-      if (form.content_bi.trim()) formData.append('content_bi', form.content_bi.trim());
+      if (form.manual_translation && form.title_translation.trim()) formData.append('title_translation', form.title_translation.trim());
+      if (form.manual_translation && form.content_translation.trim()) formData.append('content_translation', form.content_translation.trim());
       if (imageFile) formData.append('image', imageFile);
 
       if (editing) {
@@ -50,7 +62,7 @@ const ManageFacts = () => {
   };
 
   const resetForm = () => {
-    setForm({ title: '', content: '', title_bi: '', content_bi: '' });
+    setForm(emptyForm);
     setImageFile(null); setImagePreview(null); setEditing(null);
     if (fileRef.current) fileRef.current.value = '';
   };
@@ -60,6 +72,10 @@ const ManageFacts = () => {
     setForm({
       title: fact.title,
       content: fact.content,
+      source_language: 'bm',
+      manual_translation: Boolean(fact.title_bi || fact.content_bi),
+      title_translation: fact.title_bi || '',
+      content_translation: fact.content_bi || '',
       title_bi: fact.title_bi || '',
       content_bi: fact.content_bi || '',
     });
@@ -80,40 +96,59 @@ const ManageFacts = () => {
         {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
         <form onSubmit={handleSubmit}>
 
+          <div style={s.translationPanel}>
+            <div style={s.translationHeader}>
+              <div>
+                <label style={s.label}>Bahasa input</label>
+                <div style={s.segmented}>
+                  <button type="button" style={{ ...s.segmentBtn, ...(form.source_language === 'bm' ? s.segmentActive : {}) }} onClick={() => setForm({ ...form, source_language: 'bm', title: '', content: '', title_translation: '', content_translation: '' })}>BM</button>
+                  <button type="button" style={{ ...s.segmentBtn, ...(form.source_language === 'bi' ? s.segmentActive : {}) }} onClick={() => setForm({ ...form, source_language: 'bi', title: '', content: '', title_translation: '', content_translation: '' })}>English</button>
+                </div>
+              </div>
+              <label style={s.checkLabel}>
+                <input type="checkbox" checked={form.manual_translation} onChange={e => setForm({ ...form, manual_translation: e.target.checked })} />
+                Saya mahu terjemah sendiri
+              </label>
+            </div>
+            <p style={s.translationHint}>{form.source_language === 'bm' ? 'Masukkan fakta BM. English akan auto jika manual tidak ditanda.' : 'Enter English facts. BM akan auto jika manual tidak ditanda.'}</p>
+          </div>
+
           {/* BM Section */}
           <div style={s.langSection}>
             <div style={s.langBadge}>🇲🇾 Bahasa Melayu (BM)</div>
             <div style={s.field}>
-              <label style={s.label}>Tajuk</label>
+              <label style={s.label}>{form.source_language === 'bm' ? 'Tajuk' : 'Title'}</label>
               <input style={s.input} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
-                required maxLength={120} placeholder="Contoh: Gigi anda unik!" />
+                required maxLength={120} placeholder={form.source_language === 'bm' ? 'Contoh: Gigi anda unik!' : 'Example: Your teeth are unique!'} />
             </div>
             <div style={s.field}>
-              <label style={s.label}>Kandungan</label>
+              <label style={s.label}>{form.source_language === 'bm' ? 'Kandungan' : 'Content'}</label>
               <textarea style={{ ...s.input, height: '90px', resize: 'vertical' }} value={form.content}
                 onChange={e => setForm({ ...form, content: e.target.value })}
-                required maxLength={1000} placeholder="Tulis fakta penuh di sini..." />
+                required maxLength={1000} placeholder={form.source_language === 'bm' ? 'Tulis fakta penuh di sini...' : 'Write the full fact here...'} />
             </div>
           </div>
 
           {/* BI Section */}
+          {form.manual_translation && (
           <div style={s.langSection}>
             <div style={{ ...s.langBadge, background: '#eff6ff', color: '#2563eb', borderColor: '#bfdbfe' }}>
               🇬🇧 Bahasa Inggeris (BI) — <span style={{ fontWeight: 400 }}>kosongkan untuk terjemahan automatik</span>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Title (BI)</label>
-              <input style={{ ...s.input, borderColor: '#bfdbfe' }} value={form.title_bi}
-                onChange={e => setForm({ ...form, title_bi: e.target.value })}
-                maxLength={120} placeholder="Auto-translated if left empty" />
+              <label style={s.label}>{form.source_language === 'bm' ? 'Title (English)' : 'Tajuk (BM)'}</label>
+              <input style={{ ...s.input, borderColor: '#bfdbfe' }} value={form.title_translation}
+                onChange={e => setForm({ ...form, title_translation: e.target.value })}
+                maxLength={120} placeholder={form.source_language === 'bm' ? 'Write English title' : 'Tulis tajuk BM'} />
             </div>
             <div style={s.field}>
-              <label style={s.label}>Content (BI)</label>
+              <label style={s.label}>{form.source_language === 'bm' ? 'Content (English)' : 'Kandungan (BM)'}</label>
               <textarea style={{ ...s.input, height: '90px', resize: 'vertical', borderColor: '#bfdbfe' }}
-                value={form.content_bi} onChange={e => setForm({ ...form, content_bi: e.target.value })}
-                maxLength={1000} placeholder="Auto-translated if left empty" />
+                value={form.content_translation} onChange={e => setForm({ ...form, content_translation: e.target.value })}
+                maxLength={1000} placeholder={form.source_language === 'bm' ? 'Write English content' : 'Tulis kandungan BM'} />
             </div>
           </div>
+          )}
 
           {/* Image upload */}
           <div style={s.field}>
@@ -184,6 +219,13 @@ const s = {
   cardTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#1e3a5f', margin: '0 0 1.25rem' },
   langSection: { border: '1px solid #f1f5f9', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', background: '#fffbeb' },
   langBadge: { fontSize: '0.78rem', fontWeight: '700', color: '#92400e', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '6px', padding: '0.25rem 0.6rem', display: 'inline-block', marginBottom: '0.75rem' },
+  translationPanel: { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.9rem', marginBottom: '1rem' },
+  translationHeader: { display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' },
+  segmented: { display: 'inline-flex', border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden', background: '#fff' },
+  segmentBtn: { padding: '0.5rem 0.9rem', border: 'none', background: '#fff', color: '#475569', cursor: 'pointer', fontWeight: '700' },
+  segmentActive: { background: '#2563eb', color: '#fff' },
+  checkLabel: { display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1e3a5f', fontSize: '0.86rem', fontWeight: '700', cursor: 'pointer' },
+  translationHint: { margin: '0.55rem 0 0', color: '#64748b', fontSize: '0.78rem' },
   field: { marginBottom: '0.75rem' },
   label: { display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.4rem' },
   input: { width: '100%', padding: '0.65rem 0.9rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', color: '#1e293b' },

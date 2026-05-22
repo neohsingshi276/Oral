@@ -3,7 +3,7 @@
 // ============================================
 
 const db = require('../db');
-const { translateBmToBi } = require('../services/translate.service');
+const { translateBmToBi, translateBiToBm } = require('../services/translate.service');
 
 const parseOrderNum = (value) => {
   if (value === '' || value === null || value === undefined) return null;
@@ -46,8 +46,31 @@ const getVideoById = async (req, res) => {
   }
 };
 
+const resolveVideoTranslations = async ({ title, description, body }) => {
+  const sourceLanguage = body.source_language === 'bi' ? 'bi' : 'bm';
+  const manualTitle = (body.title_translation || body.title_bi || body.title_bm || '').trim();
+  const manualDescription = (body.description_translation || body.description_bi || body.description_bm || '').trim();
+  const sourceDescription = description?.trim() || '';
+
+  if (sourceLanguage === 'bi') {
+    return {
+      titleBm: manualTitle || await translateBiToBm(title.trim()),
+      descriptionBm: manualDescription || await translateBiToBm(sourceDescription),
+      titleBi: title.trim(),
+      descriptionBi: sourceDescription,
+    };
+  }
+
+  return {
+    titleBm: title.trim(),
+    descriptionBm: sourceDescription,
+    titleBi: manualTitle || await translateBmToBi(title.trim()),
+    descriptionBi: manualDescription || await translateBmToBi(sourceDescription),
+  };
+};
+
 const addVideo = async (req, res) => {
-  const { title, description, youtube_url, order_num, title_bi: manualTitleBi, description_bi: manualDescBi } = req.body;
+  const { title, description, youtube_url, order_num } = req.body;
   if (!title || !youtube_url) {
     return res.status(400).json({ error: 'Title and YouTube URL are required' });
   }
@@ -62,17 +85,13 @@ const addVideo = async (req, res) => {
     return res.status(400).json({ error: 'Order number must be 1 or greater' });
   }
 
-  // Auto-translate to BI
-  const [title_bi, description_bi] = await Promise.all([
-    manualTitleBi !== undefined ? Promise.resolve(manualTitleBi) : translateBmToBi(title.trim()),
-    manualDescBi  !== undefined ? Promise.resolve(manualDescBi)  : translateBmToBi(description?.trim() || ''),
-  ]);
+  const { titleBm, descriptionBm, titleBi, descriptionBi } = await resolveVideoTranslations({ title, description, body: req.body });
 
   try {
     const finalOrder = parsedOrder ?? (await getNextOrderNum());
     const [result] = await db.query(
       'INSERT INTO learning_videos (title, description, youtube_url, order_num, title_bi, description_bi) VALUES (?, ?, ?, ?, ?, ?)',
-      [title.trim(), description?.trim() || '', youtube_url.trim(), finalOrder, title_bi, description_bi]
+      [titleBm, descriptionBm, youtube_url.trim(), finalOrder, titleBi, descriptionBi]
     );
     res.status(201).json({ message: 'Video added', videoId: result.insertId });
   } catch (err) {
@@ -82,7 +101,7 @@ const addVideo = async (req, res) => {
 };
 
 const updateVideo = async (req, res) => {
-  const { title, description, youtube_url, order_num, title_bi: manualTitleBi, description_bi: manualDescBi } = req.body;
+  const { title, description, youtube_url, order_num } = req.body;
   if (!title || !youtube_url) return res.status(400).json({ error: 'Title and YouTube URL are required' });
   if (title.length > 150) return res.status(400).json({ error: 'Title too long (max 150 characters)' });
   if (description && description.length > 500) return res.status(400).json({ error: 'Description too long (max 500 characters)' });
@@ -99,15 +118,12 @@ const updateVideo = async (req, res) => {
     });
   }
 
-  const [title_bi, description_bi] = await Promise.all([
-    manualTitleBi !== undefined ? Promise.resolve(manualTitleBi) : translateBmToBi(title.trim()),
-    manualDescBi  !== undefined ? Promise.resolve(manualDescBi)  : translateBmToBi(description?.trim() || ''),
-  ]);
+  const { titleBm, descriptionBm, titleBi, descriptionBi } = await resolveVideoTranslations({ title, description, body: req.body });
 
   try {
     await db.query(
       'UPDATE learning_videos SET title=?, description=?, youtube_url=?, order_num=?, title_bi=?, description_bi=? WHERE id=?',
-      [title.trim(), description?.trim() || '', youtube_url.trim(), parsedOrder, title_bi, description_bi, req.params.id]
+      [titleBm, descriptionBm, youtube_url.trim(), parsedOrder, titleBi, descriptionBi, req.params.id]
     );
     res.json({ message: 'Video updated' });
   } catch (err) {

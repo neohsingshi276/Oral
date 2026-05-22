@@ -76,10 +76,10 @@ const ManageCrossword = () => {
                 <div style={s.translationHeader}>
                   <div>
                     <label style={s.label}>Bahasa pembayang</label>
-                    <select style={s.compactSelect} value={form.source_language} onChange={e => setForm({ ...form, source_language: e.target.value, clue: '', clue_translation: '' })}>
-                      <option value="bm">Bahasa Melayu</option>
-                      <option value="bi">English</option>
-                    </select>
+                    <div style={s.segmented}>
+                      <button type="button" style={{ ...s.segmentBtn, ...(form.source_language === 'bm' ? s.segmentActive : {}) }} onClick={() => setForm({ ...form, source_language: 'bm', clue: '', clue_translation: '' })}>BM</button>
+                      <button type="button" style={{ ...s.segmentBtn, ...(form.source_language === 'bi' ? s.segmentActive : {}) }} onClick={() => setForm({ ...form, source_language: 'bi', clue: '', clue_translation: '' })}>English</button>
+                    </div>
                   </div>
                   <label style={s.checkLabel}>
                     <input type="checkbox" checked={form.manual_translation} onChange={e => setForm({ ...form, manual_translation: e.target.checked })} />
@@ -212,6 +212,9 @@ const s = {
   translationPanel: { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.85rem', marginBottom: '1rem' },
   translationHeader: { display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' },
   compactSelect: { minWidth: '180px', padding: '0.55rem 0.75rem', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#fff', color: '#1e293b', fontSize: '0.9rem' },
+  segmented: { display: 'inline-flex', border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden', background: '#fff' },
+  segmentBtn: { padding: '0.5rem 0.9rem', border: 'none', background: '#fff', color: '#475569', cursor: 'pointer', fontWeight: '700' },
+  segmentActive: { background: '#2563eb', color: '#fff' },
   checkLabel: { display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1e3a5f', fontSize: '0.86rem', fontWeight: '700', cursor: 'pointer' },
   translationHint: { margin: '0.55rem 0 0', color: '#64748b', fontSize: '0.78rem' },
   manualBox: { marginBottom: '1rem', background: '#eff6ff', borderRadius: '8px', padding: '0.75rem', border: '1px solid #bfdbfe' },
