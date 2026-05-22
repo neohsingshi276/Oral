@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 
+const emptyForm = { word: '', clue: '' };
+
 const ManageCrossword = () => {
   const { t } = useLanguage();
   const [words, setWords] = useState([]);
-  const emptyForm = { word: '', clue: '', clue_translation: '', clue_bi: '', source_language: 'bm', manual_translation: false };
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
   const [msg, setMsg] = useState('');
@@ -17,23 +18,26 @@ const ManageCrossword = () => {
     e.preventDefault();
     if (!form.word.trim() || !form.clue.trim()) return;
     try {
+      const payload = { word: form.word.toUpperCase(), clue: form.clue };
       if (editing) {
-        await api.put(`/crossword/admin/${editing}`, { word: form.word.toUpperCase(), clue: form.clue, source_language: form.source_language, ...(form.manual_translation && form.clue_translation.trim() && { clue_translation: form.clue_translation.trim() }) });
+        await api.put(`/crossword/admin/${editing}`, payload);
         setMsg('✅ Perkataan dikemaskini!');
       } else {
-        await api.post('/crossword/admin', { word: form.word.toUpperCase(), clue: form.clue, source_language: form.source_language, ...(form.manual_translation && form.clue_translation.trim() && { clue_translation: form.clue_translation.trim() }) });
+        await api.post('/crossword/admin', payload);
         setMsg('✅ Perkataan ditambah!');
       }
       setForm(emptyForm);
       setEditing(null);
       fetchWords();
-    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal')); }
+    } catch (err) {
+      setMsg('❌ ' + (err.response?.data?.error || 'Gagal'));
+    }
     setTimeout(() => setMsg(''), 3000);
   };
 
   const handleEdit = (w) => {
     setEditing(w.id);
-    setForm({ ...emptyForm, word: w.word, clue: w.clue, clue_translation: w.clue_bi || '', clue_bi: w.clue_bi || '', manual_translation: Boolean(w.clue_bi) });
+    setForm({ word: w.word, clue: w.clue });
   };
 
   const handleDelete = async (id) => {
@@ -44,7 +48,6 @@ const ManageCrossword = () => {
 
   return (
     <div>
-      {/* Info banner */}
       <div style={s.infoBanner}>
         <span style={{ fontSize: '1.2rem' }}>🧩</span>
         <div>
@@ -54,7 +57,6 @@ const ManageCrossword = () => {
       </div>
 
       <div style={s.twoCol}>
-        {/* Add/Edit Form */}
         <div style={s.card}>
           <h2 style={s.cardTitle}>{editing ? '✏️ Sunting Perkataan' : '➕ Tambah Perkataan'}</h2>
           {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
@@ -72,71 +74,23 @@ const ManageCrossword = () => {
               <p style={s.hint}>Maksimum 15 huruf. Sekarang: {form.word.length} huruf</p>
             </div>
             <div style={s.field}>
-              <div style={s.translationPanel}>
-                <div style={s.translationHeader}>
-                  <div>
-                    <label style={s.label}>Bahasa pembayang</label>
-                    <div style={s.segmented}>
-                      <button type="button" style={{ ...s.segmentBtn, ...(form.source_language === 'bm' ? s.segmentActive : {}) }} onClick={() => setForm({ ...form, source_language: 'bm', clue: '', clue_translation: '' })}>BM</button>
-                      <button type="button" style={{ ...s.segmentBtn, ...(form.source_language === 'bi' ? s.segmentActive : {}) }} onClick={() => setForm({ ...form, source_language: 'bi', clue: '', clue_translation: '' })}>English</button>
-                    </div>
-                  </div>
-                  <label style={s.checkLabel}>
-                    <input type="checkbox" checked={form.manual_translation} onChange={e => setForm({ ...form, manual_translation: e.target.checked })} />
-                    Saya mahu terjemah sendiri
-                  </label>
-                </div>
-                <p style={s.translationHint}>{form.source_language === 'bm' ? 'Masukkan pembayang BM. English akan auto jika manual tidak ditanda.' : 'Enter the English clue. BM akan auto jika manual tidak ditanda.'}</p>
-              </div>
-              <label style={s.label}>{form.source_language === 'bm' ? 'Pembayang (BM)' : 'Clue (English)'}</label>
+              <label style={s.label}>Pembayang</label>
               <textarea
                 style={{ ...s.input, height: '80px', resize: 'vertical' }}
                 value={form.clue}
                 onChange={e => setForm({ ...form, clue: e.target.value })}
                 required
-                placeholder={form.source_language === 'bm' ? t('admin.clueExample') : 'Example: Helps clean teeth'}
+                placeholder={t('admin.clueExample')}
                 maxLength={200}
               />
             </div>
-            {form.manual_translation && (
-              <div style={s.manualBox}>
-                <label style={s.manualLabel}>{form.source_language === 'bm' ? 'English clue' : 'Pembayang BM'}</label>
-                <textarea
-                  style={{ ...s.input, height: '70px', resize: 'vertical', borderColor: '#93c5fd' }}
-                  value={form.clue_translation}
-                  onChange={e => setForm({ ...form, clue_translation: e.target.value })}
-                  maxLength={200}
-                  placeholder={form.source_language === 'bm' ? 'Write English clue here' : 'Tulis pembayang BM di sini'}
-                />
-              </div>
-            )}
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button style={s.btnPrimary} type="submit">{editing ? 'Kemaskini' : 'Tambah'}</button>
-              {false && editing && (
-                <>
-                  <div style={{ background: '#eff6ff', borderRadius: '10px', padding: '0.75rem', border: '1px solid #bfdbfe', marginBottom: '1rem' }}>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#2563eb', marginBottom: '0.4rem' }}>
-                      🇬🇧 Clue (BI) — <span style={{ fontWeight: 400 }}>kosongkan untuk terjemahan automatik</span>
-                    </label>
-                    <textarea
-                      style={{ ...s.input, height: '70px', resize: 'vertical', borderColor: '#bfdbfe' }}
-                      value={form.clue_bi}
-                      onChange={e => setForm({ ...form, clue_bi: e.target.value })}
-                      maxLength={200}
-                      placeholder="Auto-translated if left empty"
-                    />
-                  </div>
-                  <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm(emptyForm); }}>
-                    Batal
-                  </button>
-                </>
-              )}
               {editing && <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm(emptyForm); }}>Batal</button>}
             </div>
           </form>
         </div>
 
-        {/* Stats panel */}
         <div style={s.card}>
           <h2 style={s.cardTitle}>📊 Statistik Bank Perkataan</h2>
           <div style={s.statsGrid}>
@@ -161,7 +115,6 @@ const ManageCrossword = () => {
         </div>
       </div>
 
-      {/* Words table */}
       <div style={s.card}>
         <h2 style={s.cardTitle}>📋 Bank Perkataan ({words.length} perkataan)</h2>
         <table style={s.table}>
@@ -177,12 +130,7 @@ const ManageCrossword = () => {
               <tr key={w.id} style={i % 2 === 0 ? s.trEven : {}}>
                 <td style={s.td}><div style={{ ...s.wordDot, background: COLORS[i % COLORS.length] }}>{i + 1}</div></td>
                 <td style={s.td} data-no-translate="true"><strong style={{ color: COLORS[i % COLORS.length], letterSpacing: '0.05em' }}>{w.word}</strong></td>
-                <td style={s.td} data-no-translate="true">
-                  {w.clue}
-                  {w.clue_bi
-                    ? <span style={{ marginLeft: '0.4rem', fontSize: '0.7rem', background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: '4px', padding: '0.1rem 0.35rem' }}>🇬🇧 ✓</span>
-                    : <span style={{ marginLeft: '0.4rem', fontSize: '0.7rem', background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', borderRadius: '4px', padding: '0.1rem 0.35rem' }}>BI ✗</span>}
-                </td>
+                <td style={s.td} data-no-translate="true">{w.clue}</td>
                 <td style={s.td}><span style={s.letterBadge}>{w.word.length}</span></td>
                 <td style={s.td}>
                   <button style={s.btnEdit} onClick={() => handleEdit(w)}>✏️</button>
@@ -209,16 +157,6 @@ const s = {
   label: { display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#475569', marginBottom: '0.4rem' },
   input: { width: '100%', padding: '0.65rem 0.9rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', color: '#1e293b' },
   hint: { color: '#94a3b8', fontSize: '0.75rem', margin: '0.25rem 0 0' },
-  translationPanel: { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.85rem', marginBottom: '1rem' },
-  translationHeader: { display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' },
-  compactSelect: { minWidth: '180px', padding: '0.55rem 0.75rem', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#fff', color: '#1e293b', fontSize: '0.9rem' },
-  segmented: { display: 'inline-flex', border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden', background: '#fff' },
-  segmentBtn: { padding: '0.5rem 0.9rem', border: 'none', background: '#fff', color: '#475569', cursor: 'pointer', fontWeight: '700' },
-  segmentActive: { background: '#2563eb', color: '#fff' },
-  checkLabel: { display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#1e3a5f', fontSize: '0.86rem', fontWeight: '700', cursor: 'pointer' },
-  translationHint: { margin: '0.55rem 0 0', color: '#64748b', fontSize: '0.78rem' },
-  manualBox: { marginBottom: '1rem', background: '#eff6ff', borderRadius: '8px', padding: '0.75rem', border: '1px solid #bfdbfe' },
-  manualLabel: { display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#2563eb', marginBottom: '0.4rem' },
   btnPrimary: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.65rem 1.5rem', fontWeight: '600', cursor: 'pointer', fontSize: '0.9rem' },
   btnSecondary: { background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', padding: '0.65rem 1.5rem', fontWeight: '600', cursor: 'pointer', fontSize: '0.9rem' },
   success: { background: '#f0fdf4', color: '#16a34a', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem' },

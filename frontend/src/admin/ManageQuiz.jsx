@@ -32,8 +32,28 @@ const emptyForm = {
   timer_seconds: 15
 };
 
+const parseMaybeJsonArray = (value) => {
+  if (Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(value || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const pickQuestionText = (question, language) => (
+  language === 'bi' && question.question_bi ? question.question_bi : question.question
+);
+
+const pickQuestionOptions = (question, language) => {
+  const bmOptions = parseMaybeJsonArray(question.options);
+  const biOptions = parseMaybeJsonArray(question.options_bi);
+  return language === 'bi' && biOptions.length ? biOptions : bmOptions;
+};
+
 const ManageQuiz = () => {
-  const { tx } = useLanguage();
+  const { tx, language } = useLanguage();
   const [questions, setQuestions] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
@@ -400,8 +420,8 @@ const ManageQuiz = () => {
             <h2 style={s.cardTitle}><span>❓ Semua Soalan</span> ({questions.length})</h2>
             <div style={s.qList}>
               {questions.map((q, i) => {
-                const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]');
-                const ca = Array.isArray(q.correct_answer) ? q.correct_answer : JSON.parse(q.correct_answer || '[]');
+                const opts = pickQuestionOptions(q, language);
+                const ca = parseMaybeJsonArray(q.correct_answer);
                 const typeInfo = TYPES.find(t => t.value === q.question_type);
                 return (
                   <div key={q.id} style={s.qItem}>
@@ -411,7 +431,7 @@ const ManageQuiz = () => {
                         <span style={s.qTypeBadge}>{typeInfo?.label}</span>
                       </div>
                       {q.image_url && <img src={q.image_url} alt="" style={s.qImg} />}
-                      <p style={s.qText} data-no-translate="true">{q.question}</p>
+                      <p style={s.qText} data-no-translate="true">{pickQuestionText(q, language)}</p>
                       {q.question_type !== 'match' && (
                         <div style={s.qOpts}>
                           {opts.map((opt, idx) => (
