@@ -5,6 +5,7 @@
 // Main Admin can reply to any admin.
 // ============================================================
 
+const { logActivity } = require('./activity.controller');
 const db = require('../db');
 
 // Ensure the table exists (runs once on first use — idempotent)
@@ -42,7 +43,7 @@ const getConversation = async (req, res) => {
     const other = await getAdminById(otherId);
     if (!me || !other) return res.status(404).json({ error: 'Admin not found' });
     const [rows] = await db.query(`
-      SELECT sm.*, 
+      SELECT sm.*,
              a_sender.name   AS sender_name,
              a_sender.role   AS sender_role,
              a_recv.name     AS receiver_name
@@ -89,6 +90,7 @@ const sendMessage = async (req, res) => {
       'INSERT INTO staff_messages (sender_id, receiver_id, message) VALUES (?, ?, ?)',
       [senderId, parseInt(receiver_id, 10), message.trim()]
     );
+    await logActivity(senderId, 'Sent staff chat message', `To admin ID: ${receiver_id}`);
     res.status(201).json({ message: 'Sent' });
   } catch (err) {
     console.error(err);

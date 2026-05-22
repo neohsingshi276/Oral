@@ -1,3 +1,4 @@
+const { logActivity } = require('./activity.controller');
 const db = require('../db');
 
 // ─── Helper: resolve which session IDs this admin can access ─────────────────
@@ -54,6 +55,7 @@ const adminSendMessage = async (req, res) => {
       'INSERT INTO chat_messages (player_id, session_id, sender_type, message) VALUES (?, ?, ?, ?)',
       [player_id, session_id, 'admin', message.trim()]
     );
+    await logActivity(req.admin.id, 'Sent message to player', `Player ID: ${player_id}, Session ID: ${session_id}`);
     res.status(201).json({ message: 'Message sent' });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 };

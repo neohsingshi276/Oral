@@ -27,6 +27,7 @@ const safeInt = (val, fallback, min = 0, max = 9999) => {
 // main_admin / admin see everything.
 const getSessions = async (req, res) => {
   try {
+    const { search = '', status = 'all', sort = 'newest' } = req.query;
     let query = `
       SELECT
         s.*,
@@ -38,15 +39,43 @@ const getSessions = async (req, res) => {
       JOIN admins a ON s.admin_id = a.id
       LEFT JOIN schools sch ON s.school_id = sch.id
       LEFT JOIN classes c ON s.class_id = c.id
-    `;
-
+      WHERE 1=1
+      `;
     const params = [];
 
     // Teachers see ALL sessions — they use reveal-code (password) to prove ownership.
     // No WHERE filter needed; the password modal is the access control.
     // (Previously filtered by teacher_id which was always the admin's id — so always 0 results.)
 
-    query += ` ORDER BY s.created_at DESC`;
+if (search.trim()) {
+  query += `
+    AND (
+      s.session_name LIKE ?
+      OR sch.school_name LIKE ?
+      OR c.class_name LIKE ?
+    )
+  `;
+  const keyword = `%${search.trim()}%`;
+  params.push(keyword, keyword, keyword);
+}
+
+if (status === 'active') {
+  query += ` AND s.is_active = TRUE`;
+}
+
+if (status === 'inactive') {
+  query += ` AND s.is_active = FALSE`;
+}
+
+if (sort === 'oldest') {
+  query += ` ORDER BY s.created_at ASC`;
+} else if (sort === 'az') {
+  query += ` ORDER BY sch.school_name ASC, c.class_name ASC, s.session_name ASC`;
+} else if (sort === 'za') {
+  query += ` ORDER BY sch.school_name DESC, c.class_name DESC, s.session_name DESC`;
+} else {
+  query += ` ORDER BY s.created_at DESC`;
+}
 
     const [sessions] = await db.query(query, params);
 
@@ -378,6 +407,7 @@ const revealSessionCode = async (req, res) => {
       );
     }
 
+    await logActivity(req.admin.id, 'Revealed session code', `Session ID: ${sessionId}`);
     res.json({ unique_token: session.unique_token });
   } catch (err) {
     console.error('Reveal code error:', err);

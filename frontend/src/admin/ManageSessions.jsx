@@ -7,6 +7,9 @@ const ManageSessions = () => {
   const { admin } = useAuth();
   const { t } = useLanguage();
   const [sessions, setSessions] = useState([]);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortFilter, setSortFilter] = useState('newest');
   const [questions, setQuestions] = useState([]);
   const [words, setWords] = useState([]);
   const [msg, setMsg] = useState('');
@@ -38,20 +41,41 @@ const ManageSessions = () => {
 
   const [fetchError, setFetchError] = useState('');
 
-  const fetchSessions = () => {
+const fetchSessions = async (searchValue = search, statusValue = statusFilter, sortValue = sortFilter) => {
+  try {
     setFetchError('');
-    return api.get('/sessions')
-      .then(res => setSessions(res.data.sessions))
-      .catch(err => setFetchError('❌ ' + (err.response?.data?.error || err.message || 'Failed to load sessions')));
-  };
+
+    const res = await api.get('/sessions', {
+      params: {
+        search: searchValue,
+        status: statusValue,
+        sort: sortValue
+      }
+    });
+
+    setSessions(res.data.sessions);
+
+  } catch (err) {
+    setFetchError(
+      '❌ ' +
+      (err.response?.data?.error ||
+      err.message ||
+      'Failed to load sessions')
+    );
+  }
+};
+
   const fetchQuestions = () => api.get('/quiz/admin/questions').then(res => setQuestions(res.data.questions)).catch(() => {});
   const fetchWords = () => api.get('/crossword/admin').then(res => setWords(res.data.words)).catch(() => {});
 
-  useEffect(() => {
-    fetchSessions();
-    fetchQuestions();
-    fetchWords();
-  }, []);
+useEffect(() => {
+  fetchSessions();
+}, [search, statusFilter, sortFilter]);
+
+useEffect(() => {
+  fetchQuestions();
+  fetchWords();
+}, []);
 
   // Once questions/words are loaded, set the default counts to the DB max
   // (only if not editing and still at initial 0)
@@ -245,7 +269,27 @@ const ManageSessions = () => {
     );
   };
 
-  const groupedSessions = sessions.reduce((acc, session) => {
+const sortedSessions = [...sessions].sort((a, b) => {
+  if (sortFilter === 'oldest') {
+    return new Date(a.created_at) - new Date(b.created_at);
+  }
+
+  if (sortFilter === 'newest') {
+    return new Date(b.created_at) - new Date(a.created_at);
+  }
+
+  if (sortFilter === 'az') {
+    return (a.session_name || '').localeCompare(b.session_name || '');
+  }
+
+  if (sortFilter === 'za') {
+    return (b.session_name || '').localeCompare(a.session_name || '');
+  }
+
+  return 0;
+});
+
+  const groupedSessions = sortedSessions.reduce((acc, session) => {
     const school = session.school_name || 'No School';
     const className = session.class_name || 'No Class';
 
@@ -511,6 +555,44 @@ const ManageSessions = () => {
       {/* ─── ACTIVE SESSIONS LIST ─── */}
       <div style={s.card}>
         <h2 style={s.cardTitle}>🎮 {t('admin.activeSessions')} ({sessions.length})</h2>
+        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+          <input
+            style={{ ...s.input, flex: 1, minWidth: '220px' }}
+            type="text"
+            placeholder="Search school, class, or session name..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              fetchSessions(e.target.value, statusFilter);
+            }}
+          />
+
+          <select
+            style={{ ...s.input, width: '180px' }}
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              fetchSessions(search, e.target.value);
+            }}
+          >
+          <option value="all">All Sessions</option>
+          <option value="active">Active Only</option>
+          <option value="inactive">Inactive Only</option>
+          </select>
+          <select
+            style={{ ...s.input, width: '180px' }}
+            value={sortFilter}
+            onChange={(e) => {
+            setSortFilter(e.target.value);
+            fetchSessions(search, statusFilter, e.target.value);
+            }}
+          >
+          <option value="newest">Newest to Oldest</option>
+          <option value="oldest">Oldest to Newest</option>
+          <option value="az">Ascending</option>
+          <option value="za">Descending</option>
+        </select>
+        </div>
         {fetchError && (
           <div style={{ background: '#fff1f2', color: '#e11d48', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span>{fetchError}</span>
@@ -519,11 +601,23 @@ const ManageSessions = () => {
         )}
         <div style={s.sessionList}>
 
-          {Object.entries(groupedSessions).map(([schoolName, classGroups]) => (
+          {Object.entries(groupedSessions)
+            .sort(([schoolA], [schoolB]) => {
+            if (sortFilter === 'az') return schoolA.localeCompare(schoolB);
+            if (sortFilter === 'za') return schoolB.localeCompare(schoolA);
+            return 0;
+          })
+          .map(([schoolName, classGroups]) => (
             <div key={schoolName}>
               <h2 style={s.schoolTitle}>🏫 {schoolName}</h2>
 
-              {Object.entries(classGroups).map(([className, classSessions]) => (
+              {Object.entries(classGroups)
+                .sort(([classA], [classB]) => {
+                if (sortFilter === 'az') return classA.localeCompare(classB);
+                if (sortFilter === 'za') return classB.localeCompare(classA);
+                return 0;
+              })
+              .map(([className, classSessions]) => (
                 <div key={className} style={s.classGroup}>
                   <h3 style={s.classTitle}>📚 {className}</h3>
 

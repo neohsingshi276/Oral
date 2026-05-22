@@ -108,6 +108,10 @@ const EmailReminders = ({ currentAdmin }) => {
   const [admins, setAdmins] = useState([]);
   const [inbox, setInbox] = useState([]);
   const [sent, setSent] = useState([]);
+  const [sentSearch, setSentSearch] = useState('');
+  const [sentFilter, setSentFilter] = useState('all');
+  const [inboxSearch, setInboxSearch] = useState('');
+  const [inboxFilter, setInboxFilter] = useState('all');
   const defaultToAdminId = currentAdmin?.role === 'main_admin' ? 'all' : '';
   const [form, setForm] = useState({ to_admin_id: defaultToAdminId, to_email: '', to_name: '', subject: '', message: '' });
   const [msg, setMsg] = useState('');
@@ -156,7 +160,32 @@ const EmailReminders = ({ currentAdmin }) => {
       ? [...reminderTemplates, c.templates.tech]
       : [c.templates.tech];
 
-  const roleLabel = (role) => role === 'main_admin' ? c.mainAdmin : role === 'teacher' ? c.teacher : c.admin;
+  const roleLabel = (role) =>
+    role === 'main_admin' ? c.mainAdmin :
+    role === 'teacher' ? c.teacher :
+    c.admin;
+
+  const filterEmails = (items, search, filter, nameField) => {
+    const q = search.toLowerCase();
+
+    return items.filter(item => {
+      const matchesSearch =
+        !q ||
+        item[nameField]?.toLowerCase().includes(q) ||
+        item.subject?.toLowerCase().includes(q) ||
+        item.message?.toLowerCase().includes(q);
+
+      const matchesFilter =
+        filter === 'all' ||
+        (filter === 'read' && item.is_read) ||
+        (filter === 'unread' && !item.is_read);
+
+      return matchesSearch && matchesFilter;
+    });
+  };
+
+  const filteredSent = filterEmails(sent, sentSearch, sentFilter, 'to_name');
+  const filteredInbox = filterEmails(inbox, inboxSearch, inboxFilter, 'from_name');
 
   return (
     <div>
@@ -215,9 +244,28 @@ const EmailReminders = ({ currentAdmin }) => {
 
       {tab === 'sent' && canCompose && (
         <div style={s.card}>
-          <h2 style={s.cardTitle}>{c.sentTitle} ({sent.length})</h2>
+          <h2 style={s.cardTitle}>{c.sentTitle} ({filteredSent.length})</h2>
+
+          <div style={s.filterRow}>
+            <input
+              style={s.input}
+              placeholder="Cari nama, subjek atau mesej..."
+              value={sentSearch}
+              onChange={e => setSentSearch(e.target.value)}
+            />
+
+            <select
+              style={s.filterSelect}
+              value={sentFilter}
+              onChange={e => setSentFilter(e.target.value)}
+            >
+              <option value="all">Semua</option>
+              <option value="read">Dibaca</option>
+              <option value="unread">Belum Dibaca</option>
+            </select>
+          </div>
           <div style={s.emailList}>
-            {sent.map(item => (
+            {filteredSent.map(item => (
               <div key={item.id} style={s.emailItem}>
                 <div style={s.emailTop}>
                   <span style={s.emailTo}>{c.to} {item.to_name}</span>
@@ -230,16 +278,35 @@ const EmailReminders = ({ currentAdmin }) => {
                 </div>
               </div>
             ))}
-            {sent.length === 0 && <p style={s.empty}>{c.emptySent}</p>}
+            {filteredSent.length === 0 && <p style={s.empty}>{c.emptySent}</p>}
           </div>
         </div>
       )}
 
       {tab === 'inbox' && (
         <div style={s.card}>
-          <h2 style={s.cardTitle}>{c.inboxTitle} ({inbox.length})</h2>
+          <h2 style={s.cardTitle}>{c.inboxTitle} ({filteredInbox.length})</h2>
+
+          <div style={s.filterRow}>
+            <input
+              style={s.input}
+              placeholder="Cari nama, subjek atau mesej..."
+              value={inboxSearch}
+              onChange={e => setInboxSearch(e.target.value)}
+            />
+
+            <select
+              style={s.filterSelect}
+              value={inboxFilter}
+              onChange={e => setInboxFilter(e.target.value)}
+            >
+              <option value="all">Semua</option>
+              <option value="read">Dibaca</option>
+              <option value="unread">Belum Dibaca</option>
+            </select>
+          </div>
           <div style={s.emailList}>
-            {inbox.map(item => (
+            {filteredInbox.map(item => (
               <div key={item.id} style={{ ...s.emailItem, ...(item.is_read ? {} : s.emailItemUnread) }}>
                 <div style={s.emailTop}>
                   <span style={s.emailTo}>{c.from} {item.from_name}</span>
@@ -252,7 +319,7 @@ const EmailReminders = ({ currentAdmin }) => {
                 )}
               </div>
             ))}
-            {inbox.length === 0 && <p style={s.empty}>{c.emptyInbox}</p>}
+            {filteredInbox.length === 0 && <p style={s.empty}>{c.emptyInbox}</p>}
           </div>
         </div>
       )}
@@ -290,6 +357,8 @@ const s = {
   readBadgeUnread: { background: '#fff7ed', color: '#ea580c' },
   markReadBtn: { background: '#f0fdf4', color: '#16a34a', border: 'none', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' },
   empty: { color: '#94a3b8', textAlign: 'center', padding: '2rem', fontSize: '0.9rem' },
+  filterRow: { display: 'grid', gridTemplateColumns: '1fr 180px', gap: '0.75rem', marginBottom: '1rem' },
+  filterSelect: { padding: '0.65rem 0.9rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' },
 };
 
 export default EmailReminders;

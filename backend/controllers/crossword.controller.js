@@ -1,3 +1,4 @@
+const { logActivity } = require('./activity.controller');
 const db = require('../db');
 
 // ============================================
@@ -488,6 +489,7 @@ const addWord = async (req, res) => {
       'INSERT INTO crossword_data (word, clue) VALUES (?, ?)',
       [word.trim().toUpperCase(), clue.trim()]
     );
+    await logActivity(req.admin.id, 'Added crossword word', `Word: ${word.trim().toUpperCase()}`);
     res.status(201).json({ message: 'Perkataan ditambah', id: result.insertId });
   } catch (err) {
     console.error('Add crossword word error:', err.code, err.message, err.sqlMessage || '');
@@ -515,6 +517,7 @@ const updateWord = async (req, res) => {
       'UPDATE crossword_data SET word=?, clue=? WHERE id=?',
       [word.trim().toUpperCase(), clue.trim(), req.params.id]
     );
+    await logActivity(req.admin.id, 'Updated crossword word', `Word ID: ${req.params.id}`);
     res.json({ message: 'Perkataan dikemaskini' });
   } catch (err) {
     console.error('Update crossword word error:', err.message);
@@ -526,6 +529,7 @@ const updateWord = async (req, res) => {
 const deleteWord = async (req, res) => {
   try {
     await db.query('DELETE FROM crossword_data WHERE id=?', [req.params.id]);
+    await logActivity(req.admin.id, 'Deleted crossword word', `Word ID: ${req.params.id}`);
     res.json({ message: 'Word deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
