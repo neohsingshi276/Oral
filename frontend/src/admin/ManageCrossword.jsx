@@ -84,21 +84,23 @@ const ManageCrossword = () => {
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button style={s.btnPrimary} type="submit">{editing ? 'Kemaskini' : 'Tambah'}</button>
               {editing && (
-              <div style={{ background: '#eff6ff', borderRadius: '10px', padding: '0.75rem', border: '1px solid #bfdbfe', marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#2563eb', marginBottom: '0.4rem' }}>
-                  🇬🇧 Clue (BI) — <span style={{ fontWeight: 400 }}>kosongkan untuk terjemahan automatik</span>
-                </label>
-                <textarea
-                  style={{ ...s.input, height: '70px', resize: 'vertical', borderColor: '#bfdbfe' }}
-                  value={form.clue_bi}
-                  onChange={e => setForm({ ...form, clue_bi: e.target.value })}
-                  maxLength={200}
-                  placeholder="Auto-translated if left empty"
-                />
-              </div>
-                <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm({ word: '', clue: '', clue_bi: '' }); }}>
-                  Batal
-                </button>
+                <>
+                  <div style={{ background: '#eff6ff', borderRadius: '10px', padding: '0.75rem', border: '1px solid #bfdbfe', marginBottom: '1rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#2563eb', marginBottom: '0.4rem' }}>
+                      🇬🇧 Clue (BI) — <span style={{ fontWeight: 400 }}>kosongkan untuk terjemahan automatik</span>
+                    </label>
+                    <textarea
+                      style={{ ...s.input, height: '70px', resize: 'vertical', borderColor: '#bfdbfe' }}
+                      value={form.clue_bi}
+                      onChange={e => setForm({ ...form, clue_bi: e.target.value })}
+                      maxLength={200}
+                      placeholder="Auto-translated if left empty"
+                    />
+                  </div>
+                  <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm({ word: '', clue: '', clue_bi: '' }); }}>
+                    Batal
+                  </button>
+                </>
               )}
             </div>
           </form>
