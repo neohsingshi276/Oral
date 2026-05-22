@@ -9,7 +9,7 @@ const TYPES = [
   { value: 'match', label: '🔗 Padanan' },
 ];
 
-const emptyForm = { question: '', question_type: 'multiple_choice', options: ['', '', '', ''], correct_answer: [], match_pairs: [{ left: '', right: '' }, { left: '', right: '' }], timer_seconds: 15 };
+const emptyForm = { question: '', question_bi: '', question_type: 'multiple_choice', options: ['', '', '', ''], correct_answer: [], match_pairs: [{ left: '', right: '' }, { left: '', right: '' }], timer_seconds: 15 };
 
 const ManageQuiz = () => {
   const { tx } = useLanguage();
@@ -100,6 +100,7 @@ const ManageQuiz = () => {
     try {
       const fd = new FormData();
       fd.append('question', form.question);
+      if (form.question_bi?.trim()) fd.append('question_bi', form.question_bi.trim());
       fd.append('question_type', form.question_type);
       fd.append('timer_seconds', form.timer_seconds);
       if (form.question_type === 'match') {
@@ -125,8 +126,8 @@ const ManageQuiz = () => {
     setEditing(q.id);
     const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]');
     const ca = Array.isArray(q.correct_answer) ? q.correct_answer : JSON.parse(q.correct_answer || '[]');
-    if (q.question_type === 'match') setForm({ question: q.question, question_type: q.question_type, options: [], correct_answer: [], match_pairs: opts.map(p => ({ left: p.left || p, right: p.right || p })), timer_seconds: q.timer_seconds || 15 });
-    else setForm({ question: q.question, question_type: q.question_type, options: opts, correct_answer: ca, match_pairs: [{ left: '', right: '' }, { left: '', right: '' }], timer_seconds: q.timer_seconds || 15 });
+    if (q.question_type === 'match') setForm({ question: q.question, question_bi: q.question_bi || '', question_type: q.question_type, options: [], correct_answer: [], match_pairs: opts.map(p => ({ left: p.left || p, right: p.right || p })), timer_seconds: q.timer_seconds || 15 });
+    else setForm({ question: q.question, question_bi: q.question_bi || '', question_type: q.question_type, options: opts, correct_answer: ca, match_pairs: [{ left: '', right: '' }, { left: '', right: '' }], timer_seconds: q.timer_seconds || 15 });
     setImagePreview(q.image_url || null);
     setTab('questions');
   };
@@ -172,6 +173,17 @@ const ManageQuiz = () => {
                 <label style={s.label}>Soalan</label>
                 <textarea style={{ ...s.input, height: '80px', resize: 'vertical' }} value={form.question} onChange={e => setForm({ ...form, question: e.target.value })} required placeholder="Tulis soalan di sini..." maxLength={500} />
                 <p style={{ color: form.question.length > 450 ? '#e11d48' : '#94a3b8', fontSize: '0.75rem', margin: '0.2rem 0 0', textAlign: 'right' }}>{form.question.length}/500</p>
+              </div>
+              {/* BI Question */}
+              <div style={{ marginBottom: '1rem', background: '#eff6ff', borderRadius: '10px', padding: '0.75rem', border: '1px solid #bfdbfe' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#2563eb', marginBottom: '0.4rem' }}>
+                  🇬🇧 Question (BI) — <span style={{ fontWeight: 400 }}>kosongkan untuk terjemahan automatik</span>
+                </label>
+                <textarea style={{ ...s.input, height: '70px', resize: 'vertical', borderColor: '#bfdbfe' }} value={form.question_bi}
+                  onChange={e => setForm({ ...form, question_bi: e.target.value })} maxLength={500}
+                  placeholder="Auto-translated if left empty" />
+              </div>
+              <div style={{ display: 'none' }}>
               </div>
 
               {/* Muat naik gambar */}

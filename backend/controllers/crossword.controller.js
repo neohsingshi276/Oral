@@ -1,4 +1,5 @@
 const db = require('../db');
+const { translateBmToBi } = require('../services/translate.service');
 
 // ============================================
 // AUTO-LAYOUT GENERATOR (v2)
@@ -470,7 +471,7 @@ const getAllWords = async (req, res) => {
 // FIX: Added full input validation — presence, type, length, and letter-only
 // check for word — preventing DB errors and bad crossword data.
 const addWord = async (req, res) => {
-  const { word, clue } = req.body;
+  const { word, clue, clue_bi: manualClueBi } = req.body;
 
   if (!word || typeof word !== 'string' || word.trim().length === 0)
     return res.status(400).json({ error: 'Word is required' });
@@ -484,9 +485,10 @@ const addWord = async (req, res) => {
     return res.status(400).json({ error: 'Perkataan hanya boleh mengandungi huruf tanpa ruang atau simbol' });
 
   try {
+    const clue_bi = manualClueBi !== undefined ? manualClueBi : await translateBmToBi(clue.trim());
     const [result] = await db.query(
-      'INSERT INTO crossword_data (word, clue) VALUES (?, ?)',
-      [word.trim().toUpperCase(), clue.trim()]
+      'INSERT INTO crossword_data (word, clue, clue_bi) VALUES (?, ?, ?)',
+      [word.trim().toUpperCase(), clue.trim(), clue_bi]
     );
     res.status(201).json({ message: 'Perkataan ditambah', id: result.insertId });
   } catch (err) {
@@ -497,7 +499,7 @@ const addWord = async (req, res) => {
 
 // ─── updateWord ───────────────────────────────────────────────────────────────
 const updateWord = async (req, res) => {
-  const { word, clue } = req.body;
+  const { word, clue, clue_bi: manualClueBiUpd } = req.body;
 
   if (!word || typeof word !== 'string' || word.trim().length === 0)
     return res.status(400).json({ error: 'Word is required' });
@@ -511,9 +513,10 @@ const updateWord = async (req, res) => {
     return res.status(400).json({ error: 'Perkataan hanya boleh mengandungi huruf tanpa ruang atau simbol' });
 
   try {
+    const clue_bi_upd = manualClueBiUpd !== undefined ? manualClueBiUpd : await translateBmToBi(clue.trim());
     await db.query(
-      'UPDATE crossword_data SET word=?, clue=? WHERE id=?',
-      [word.trim().toUpperCase(), clue.trim(), req.params.id]
+      'UPDATE crossword_data SET word=?, clue=?, clue_bi=? WHERE id=?',
+      [word.trim().toUpperCase(), clue.trim(), clue_bi_upd, req.params.id]
     );
     res.json({ message: 'Perkataan dikemaskini' });
   } catch (err) {

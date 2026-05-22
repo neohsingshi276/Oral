@@ -3,8 +3,11 @@ import Navbar from '../components/Navbar';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 
+const pickLang = (obj, field, lang) =>
+  (lang === 'bi' && obj[`${field}_bi`]) ? obj[`${field}_bi`] : obj[field];
+
 const LearningPage = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [videos, setVideos] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -143,13 +146,13 @@ const LearningPage = () => {
               <iframe
                 style={styles.iframe}
                 src={getEmbedUrl(selected.youtube_url)}
-                title={selected.title}
+                title={pickLang(selected, "title", language)}
                 frameBorder="0"
                 allowFullScreen
               />
               <div style={styles.playerInfo}>
-                <h3 style={styles.playerTitle} data-no-translate="true">{selected.title}</h3>
-                <p style={styles.playerDesc} data-no-translate="true">{selected.description}</p>
+                <h3 style={styles.playerTitle} data-no-translate="true">{pickLang(selected, "title", language)}</h3>
+                <p style={styles.playerDesc} data-no-translate="true">{pickLang(selected, "description", language)}</p>
               </div>
             </div>
           )}
@@ -165,7 +168,7 @@ const LearningPage = () => {
                 <div style={styles.videoThumb}>
                   <img
                     src={`https://img.youtube.com/vi/${getEmbedUrl(video.youtube_url).split('/embed/')[1]}/hqdefault.jpg`}
-                    alt={video.title}
+                    alt={pickLang(video, "title", language)}
                     style={styles.thumbImg}
                     onError={e => { e.target.style.display = 'none'; }}
                   />
@@ -173,8 +176,8 @@ const LearningPage = () => {
                 </div>
                 <div style={styles.videoMeta}>
                   <span style={styles.videoNum}>{t('learning.videoLabel')} {index + 1}</span>
-                  <p style={styles.videoCardTitle} data-no-translate="true">{video.title}</p>
-                  <p style={styles.videoCardDesc} data-no-translate="true">{video.description?.slice(0, 70)}...</p>
+                  <p style={styles.videoCardTitle} data-no-translate="true">{pickLang(video, "title", language)}</p>
+                  <p style={styles.videoCardDesc} data-no-translate="true">{(pickLang(video, "description", language) || "")?.slice(0, 70)}...</p>
                 </div>
               </div>
             ))}

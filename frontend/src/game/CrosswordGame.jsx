@@ -6,8 +6,12 @@ const DEFAULT_TIMER = 300;
 const DEFAULT_MIN_CORRECT = 0;
 const MAX_HINTS = 3;
 
+// Pick BM or BI clue based on language
+const pickLang = (obj, field, lang) =>
+  (lang === 'bi' && obj[`${field}_bi`]) ? obj[`${field}_bi`] : obj[field];
+
 const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [words, setWords] = useState([]);
   const [gridSize, setGridSize] = useState(12);
   const [grid, setGrid] = useState([]);
@@ -580,7 +584,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div>
             {selectedWord
-              ? <><strong>{words.indexOf(selectedWord) + 1}. {selectedWord.direction === 'across' ? '→' : '↓'}</strong> {selectedWord.clue} <span style={{ color: '#93c5fd' }}>({selectedWord.word.length} {t('game.letters', 'huruf')})</span></>
+              ? <><strong>{words.indexOf(selectedWord) + 1}. {selectedWord.direction === 'across' ? '→' : '↓'}</strong> {pickLang(selectedWord, 'clue', language)} <span style={{ color: '#93c5fd' }}>({selectedWord.word.length} {t('game.letters', 'huruf')})</span></>
               : <span style={{ color: '#475569' }}>{t('game.clickBoxToSelect', 'Klik pada kotak untuk memilih perkataan')}</span>
             }
           </div>
@@ -607,7 +611,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                   onClick={() => { if (!isGameOver) { setSelectedWord(w); setSelectedCell({ row: w.start_row, col: w.start_col }); inputRefs.current[`${w.start_row}-${w.start_col}`]?.focus(); } }}
                 >
                   <span style={s.clueNum}>{words.indexOf(w) + 1}.</span>
-                  <span style={{ ...s.clueText, textDecoration: isDone ? 'line-through' : 'none', color: isDone ? '#16a34a' : isFull ? '#f87171' : '#cbd5e1' }}>{w.clue}</span>
+                  <span style={{ ...s.clueText, textDecoration: isDone ? 'line-through' : 'none', color: isDone ? '#16a34a' : isFull ? '#f87171' : '#cbd5e1' }}>{pickLang(w, 'clue', language)}</span>
                   {isDone && <span style={{ color: '#16a34a', flexShrink: 0 }}>✓</span>}
                 </div>
               );
@@ -657,7 +661,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                   onClick={() => { if (!isGameOver) { setSelectedWord(w); setSelectedCell({ row: w.start_row, col: w.start_col }); inputRefs.current[`${w.start_row}-${w.start_col}`]?.focus(); } }}
                 >
                   <span style={s.clueNum}>{words.indexOf(w) + 1}.</span>
-                  <span style={{ ...s.clueText, textDecoration: isDone ? 'line-through' : 'none', color: isDone ? '#16a34a' : isFull ? '#f87171' : '#cbd5e1' }}>{w.clue}</span>
+                  <span style={{ ...s.clueText, textDecoration: isDone ? 'line-through' : 'none', color: isDone ? '#16a34a' : isFull ? '#f87171' : '#cbd5e1' }}>{pickLang(w, 'clue', language)}</span>
                   {isDone && <span style={{ color: '#16a34a', flexShrink: 0 }}>✓</span>}
                 </div>
               );

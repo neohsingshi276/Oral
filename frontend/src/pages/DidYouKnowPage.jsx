@@ -24,8 +24,12 @@ const FACT_IMAGES = [
   'https://images.unsplash.com/photo-1606265752439-1f18756aa5fc?w=400&q=80',
 ];
 
+// Pick BM or BI field based on current language
+const pickLang = (obj, field, lang) =>
+  (lang === 'bi' && obj[`${field}_bi`]) ? obj[`${field}_bi`] : obj[field];
+
 const DidYouKnowPage = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [facts, setFacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -56,8 +60,8 @@ const DidYouKnowPage = () => {
   }, []);
 
   const filtered = facts.filter(f =>
-    f.title.toLowerCase().includes(search.toLowerCase()) ||
-    f.content.toLowerCase().includes(search.toLowerCase())
+    (f.title.toLowerCase().includes(search.toLowerCase()) || (f.title_bi || '').toLowerCase().includes(search.toLowerCase())) ||
+    (f.content.toLowerCase().includes(search.toLowerCase()) || (f.content_bi || '').toLowerCase().includes(search.toLowerCase()))
   );
 
   const toggleFlip = (id) => setFlipped(prev => ({ ...prev, [id]: !prev[id] }));
@@ -207,7 +211,7 @@ const DidYouKnowPage = () => {
                   <div style={styles.cardImgWrap}>
                     <img
                       src={img}
-                      alt={fact.title}
+                      alt={pickLang(fact, "title", language)}
                       style={styles.cardImg}
                       onError={e => { e.target.src = 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=400&q=80'; }}
                     />
@@ -215,7 +219,7 @@ const DidYouKnowPage = () => {
                   </div>
                   <div style={styles.cardBody}>
                     <div style={{ ...styles.cardBadge, background: color.accent }}>💡 {t('did.badge')}</div>
-                    <h3 style={{ ...styles.cardTitle, color: color.accent }} data-no-translate="true">{fact.title}</h3>
+                    <h3 style={{ ...styles.cardTitle, color: color.accent }} data-no-translate="true">{pickLang(fact, "title", language)}</h3>
                     <div style={styles.cardFlipHint}>
                       <span>{t('did.readMore')}</span>
                       <span style={{ marginLeft: '4px' }}>→</span>
@@ -225,8 +229,8 @@ const DidYouKnowPage = () => {
               ) : (
                 <div style={styles.cardBackFace}>
                   <div style={{ ...styles.cardBadgeBack, background: color.accent }}>💡 {t('did.factBadge')}</div>
-                  <h3 style={{ ...styles.cardTitleBack, color: color.accent }} data-no-translate="true">{fact.title}</h3>
-                  <p style={styles.cardContent} data-no-translate="true">{fact.content}</p>
+                  <h3 style={{ ...styles.cardTitleBack, color: color.accent }} data-no-translate="true">{pickLang(fact, "title", language)}</h3>
+                  <p style={styles.cardContent} data-no-translate="true">{pickLang(fact, "content", language)}</p>
                   {fact.author && <p style={styles.cardAuthor} data-no-translate="true">— {fact.author}</p>}
                   <div style={styles.cardFlipHint}>↩ {t('did.flipBack')}</div>
                 </div>

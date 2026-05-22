@@ -1,4 +1,5 @@
 const db = require('../db');
+const { translateBmToBi } = require('../services/translate.service');
 
 const getAllFacts = async (req, res) => {
   try {
@@ -19,7 +20,6 @@ const addFact = async (req, res) => {
   if (title.length > 120) return res.status(400).json({ error: 'Title too long (max 120 characters)' });
   if (content.length > 1000) return res.status(400).json({ error: 'Content too long (max 1000 characters)' });
 
-  // FIX: Validate uploaded file is actually an image before storing
   let image_url = null;
   if (req.file) {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -29,10 +29,16 @@ const addFact = async (req, res) => {
     image_url = `data:${req.file.mimetype};base64,${base64}`;
   }
 
+  // Auto-translate to BI (fails silently — saves BM if API is down)
+  const [title_bi, content_bi] = await Promise.all([
+    translateBmToBi(title.trim()),
+    translateBmToBi(content),
+  ]);
+
   try {
     const [result] = await db.query(
-      'INSERT INTO facts (created_by, title, content, image_url) VALUES (?, ?, ?, ?)',
-      [req.admin.id, title.trim(), content, image_url]
+      'INSERT INTO facts (created_by, title, content, image_url, title_bi, content_bi) VALUES (?, ?, ?, ?, ?, ?)',
+      [req.admin.id, title.trim(), content, image_url, title_bi, content_bi]
     );
     res.status(201).json({ message: 'Fact added', factId: result.insertId });
   } catch (err) {
@@ -42,22 +48,33 @@ const addFact = async (req, res) => {
 };
 
 const updateFact = async (req, res) => {
-  const { title, content } = req.body;
+  const { title, content, title_bi: manualTitleBi, content_bi: manualContentBi } = req.body;
   if (!title || !content) return res.status(400).json({ error: 'Title and content required' });
   if (title.length > 120) return res.status(400).json({ error: 'Title too long (max 120 characters)' });
   if (content.length > 1000) return res.status(400).json({ error: 'Content too long (max 1000 characters)' });
+
+  // Use manually provided BI if given, otherwise re-translate
+  const [title_bi, content_bi] = await Promise.all([
+    manualTitleBi !== undefined ? Promise.resolve(manualTitleBi) : translateBmToBi(title.trim()),
+    manualContentBi !== undefined ? Promise.resolve(manualContentBi) : translateBmToBi(content),
+  ]);
 
   try {
     if (req.file) {
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(req.file.mimetype))
         return res.status(400).json({ error: 'Only JPEG, PNG, GIF, or WebP images are allowed' });
-      // Convert new image to Base64 and overwrite — no old file to delete since it's in DB
       const base64 = req.file.buffer.toString('base64');
       const image_url = `data:${req.file.mimetype};base64,${base64}`;
-      await db.query('UPDATE facts SET title=?, content=?, image_url=? WHERE id=?', [title.trim(), content, image_url, req.params.id]);
+      await db.query(
+        'UPDATE facts SET title=?, content=?, image_url=?, title_bi=?, content_bi=? WHERE id=?',
+        [title.trim(), content, image_url, title_bi, content_bi, req.params.id]
+      );
     } else {
-      await db.query('UPDATE facts SET title=?, content=? WHERE id=?', [title.trim(), content, req.params.id]);
+      await db.query(
+        'UPDATE facts SET title=?, content=?, title_bi=?, content_bi=? WHERE id=?',
+        [title.trim(), content, title_bi, content_bi, req.params.id]
+      );
     }
     res.json({ message: 'Fact updated' });
   } catch (err) {
@@ -68,7 +85,6 @@ const updateFact = async (req, res) => {
 
 const deleteFact = async (req, res) => {
   try {
-    // Image is stored in DB so just delete the row — nothing to clean up on disk
     await db.query('DELETE FROM facts WHERE id = ?', [req.params.id]);
     res.json({ message: 'Fact deleted' });
   } catch (err) {

@@ -1,8 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
 
 
+// Pick BM or BI field based on current language
+const pickLang = (obj, field, lang) =>
+  (lang === 'bi' && obj[`${field}_bi`]) ? obj[`${field}_bi`] : obj[field];
+
 const QuizGame = ({ player, onQuizComplete, onRetry }) => {
+  const { language } = useLanguage();
   const [phase, setPhase] = useState('loading');
   const [questions, setQuestions] = useState([]);
   const [settings, setSettings] = useState({});
@@ -59,6 +65,14 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
       .then(res => {
         // Shuffle options for each question so answers appear in different positions
         const shuffled = res.data.questions.map(q => {
+          // Attach resolved BI options so shuffle logic can use them
+          const resolvedOptionsBi = (() => {
+            try {
+              if (q.options_bi) return typeof q.options_bi === 'string' ? JSON.parse(q.options_bi) : q.options_bi;
+            } catch {}
+            return null;
+          })();
+          q = { ...q, _options_bi_raw: resolvedOptionsBi };
           const opts = parseMaybeJsonArray(q.options);
           const ca = parseMaybeJsonArray(q.correct_answer);
 
@@ -66,6 +80,12 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
             const rightOrder = shuffleArray(opts.map((_, i) => i));
             const rightDisplayMap = {};
             rightOrder.forEach((oldIdx, newIdx) => { rightDisplayMap[oldIdx] = newIdx; });
+            const optsBiMatch = q._options_bi_raw && Array.isArray(q._options_bi_raw)
+              ? opts.map((pair, i) => ({
+                  left: q._options_bi_raw[i]?.left || pair.left || pair,
+                  right: q._options_bi_raw[rightOrder[i]]?.right || opts[rightOrder[i]]?.right || opts[rightOrder[i]],
+                }))
+              : null;
             const newOpts = opts.map((pair, i) => ({
               left: pair.left || pair,
               right: opts[rightOrder[i]]?.right || opts[rightOrder[i]],
@@ -77,14 +97,16 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
               correct_answer: displayCorrect,
               match_left_map: opts.map((_, i) => i),
               match_right_map: rightOrder,
+              _shuffled_options_bi: optsBiMatch,
             };
           } else {
             const shuffledIndexes = shuffleArray(opts.map((_, i) => i));
             const newOpts = shuffledIndexes.map(i => opts[i]);
+            const optsBi = q._options_bi_raw && Array.isArray(q._options_bi_raw) ? shuffledIndexes.map(i => q._options_bi_raw[i]) : null;
             const reverseMap = {};
             shuffledIndexes.forEach((oldIdx, newIdx) => { reverseMap[oldIdx] = newIdx; });
             const newCA = ca.map(oldIdx => reverseMap[oldIdx]);
-            return { ...q, options: newOpts, correct_answer: newCA, answer_index_map: shuffledIndexes };
+            return { ...q, options: newOpts, correct_answer: newCA, answer_index_map: shuffledIndexes, _shuffled_options_bi: optsBi };
           }
         });
         setQuestions(shuffled);
@@ -295,7 +317,10 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
   );
 
   const q = questions[currentQ];
-  const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]');
+  const _rawOpts = Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]');
+  // Use BI options if language is BI and they exist, otherwise BM
+  const _rawOptsBi = Array.isArray(q._shuffled_options_bi) ? q._shuffled_options_bi : _rawOpts;
+  const opts = language === 'bi' ? _rawOptsBi : _rawOpts;
   const ca = Array.isArray(q.correct_answer) ? q.correct_answer : JSON.parse(q.correct_answer || '[]');
   const timerPct = (timeLeft / (settings.timer_seconds || 15)) * 100;
   const timerColor = timeLeft > 10 ? '#16a34a' : timeLeft > 5 ? '#f59e0b' : '#e11d48';
@@ -318,7 +343,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
         {q.image_url && (
           <img src={q.image_url} alt="question" style={s.questionImg} onError={e => e.target.style.display = 'none'} />
         )}
-        <p style={s.questionText}>{q.question}</p>
+        <p style={s.questionText}>{pickLang(q, 'question', language)}</p>
         {q.question_type === 'multi_select' && <p style={s.multiHint}>Pilih SEMUA jawapan yang betul</p>}
         {q.question_type === 'match' && <p style={s.multiHint}>Padankan setiap pasangan yang betul</p>}
       </div>

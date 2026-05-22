@@ -5,7 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 const ManageCrossword = () => {
   const { t } = useLanguage();
   const [words, setWords] = useState([]);
-  const [form, setForm] = useState({ word: '', clue: '' });
+  const [form, setForm] = useState({ word: '', clue: '', clue_bi: '' });
   const [editing, setEditing] = useState(null);
   const [msg, setMsg] = useState('');
 
@@ -17,13 +17,13 @@ const ManageCrossword = () => {
     if (!form.word.trim() || !form.clue.trim()) return;
     try {
       if (editing) {
-        await api.put(`/crossword/admin/${editing}`, { word: form.word.toUpperCase(), clue: form.clue });
+        await api.put(`/crossword/admin/${editing}`, { word: form.word.toUpperCase(), clue: form.clue, ...(form.clue_bi.trim() && { clue_bi: form.clue_bi.trim() }) });
         setMsg('✅ Perkataan dikemaskini!');
       } else {
-        await api.post('/crossword/admin', { word: form.word.toUpperCase(), clue: form.clue });
+        await api.post('/crossword/admin', { word: form.word.toUpperCase(), clue: form.clue, ...(form.clue_bi.trim() && { clue_bi: form.clue_bi.trim() }) });
         setMsg('✅ Perkataan ditambah!');
       }
-      setForm({ word: '', clue: '' });
+      setForm({ word: '', clue: '', clue_bi: '' });
       setEditing(null);
       fetchWords();
     } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal')); }
@@ -32,7 +32,7 @@ const ManageCrossword = () => {
 
   const handleEdit = (w) => {
     setEditing(w.id);
-    setForm({ word: w.word, clue: w.clue });
+    setForm({ word: w.word, clue: w.clue, clue_bi: w.clue_bi || '' });
   };
 
   const handleDelete = async (id) => {
@@ -84,7 +84,19 @@ const ManageCrossword = () => {
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button style={s.btnPrimary} type="submit">{editing ? 'Kemaskini' : 'Tambah'}</button>
               {editing && (
-                <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm({ word: '', clue: '' }); }}>
+              <div style={{ background: '#eff6ff', borderRadius: '10px', padding: '0.75rem', border: '1px solid #bfdbfe', marginBottom: '1rem' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#2563eb', marginBottom: '0.4rem' }}>
+                  🇬🇧 Clue (BI) — <span style={{ fontWeight: 400 }}>kosongkan untuk terjemahan automatik</span>
+                </label>
+                <textarea
+                  style={{ ...s.input, height: '70px', resize: 'vertical', borderColor: '#bfdbfe' }}
+                  value={form.clue_bi}
+                  onChange={e => setForm({ ...form, clue_bi: e.target.value })}
+                  maxLength={200}
+                  placeholder="Auto-translated if left empty"
+                />
+              </div>
+                <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm({ word: '', clue: '', clue_bi: '' }); }}>
                   Batal
                 </button>
               )}
@@ -133,7 +145,12 @@ const ManageCrossword = () => {
               <tr key={w.id} style={i % 2 === 0 ? s.trEven : {}}>
                 <td style={s.td}><div style={{ ...s.wordDot, background: COLORS[i % COLORS.length] }}>{i + 1}</div></td>
                 <td style={s.td} data-no-translate="true"><strong style={{ color: COLORS[i % COLORS.length], letterSpacing: '0.05em' }}>{w.word}</strong></td>
-                <td style={s.td} data-no-translate="true">{w.clue}</td>
+                <td style={s.td} data-no-translate="true">
+                  {w.clue}
+                  {w.clue_bi
+                    ? <span style={{ marginLeft: '0.4rem', fontSize: '0.7rem', background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: '4px', padding: '0.1rem 0.35rem' }}>🇬🇧 ✓</span>
+                    : <span style={{ marginLeft: '0.4rem', fontSize: '0.7rem', background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', borderRadius: '4px', padding: '0.1rem 0.35rem' }}>BI ✗</span>}
+                </td>
                 <td style={s.td}><span style={s.letterBadge}>{w.word.length}</span></td>
                 <td style={s.td}>
                   <button style={s.btnEdit} onClick={() => handleEdit(w)}>✏️</button>

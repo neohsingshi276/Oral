@@ -97,6 +97,22 @@ const ensureSchema = async () => {
 
   // Fix unique_token column width (was VARCHAR(6), codes are always 4 digits)
   await safeAlter("ALTER TABLE game_sessions MODIFY COLUMN unique_token VARCHAR(4) NOT NULL");
+
+  // ── Bilingual (BI) content columns ────────────────────────────────────────
+  // learning_videos
+  await safeAlter("ALTER TABLE learning_videos ADD COLUMN title_bi VARCHAR(255) NULL");
+  await safeAlter("ALTER TABLE learning_videos ADD COLUMN description_bi TEXT NULL");
+
+  // facts (Did You Know?)
+  await safeAlter("ALTER TABLE facts ADD COLUMN title_bi VARCHAR(255) NULL");
+  await safeAlter("ALTER TABLE facts ADD COLUMN content_bi TEXT NULL");
+
+  // quiz_questions
+  await safeAlter("ALTER TABLE quiz_questions ADD COLUMN question_bi TEXT NULL");
+  await safeAlter("ALTER TABLE quiz_questions ADD COLUMN options_bi JSON NULL");
+
+  // crossword clues (words stay in English — only clues need translation)
+  await safeAlter("ALTER TABLE crossword_data ADD COLUMN clue_bi TEXT NULL");
 };
 
 module.exports = { ensureSchema };

@@ -3,8 +3,8 @@
 // ============================================
 
 const db = require('../db');
+const { translateBmToBi } = require('../services/translate.service');
 
-/** Order must be a positive integer (1, 2, 3…). Returns null if invalid. */
 const parseOrderNum = (value) => {
   if (value === '' || value === null || value === undefined) return null;
   const n = parseInt(value, 10);
@@ -20,7 +20,6 @@ const getNextOrderNum = async () => {
   return Number.isInteger(next) && next >= 1 ? next : 1;
 };
 
-// GET /api/videos — get all learning videos
 const getAllVideos = async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -33,7 +32,6 @@ const getAllVideos = async (req, res) => {
   }
 };
 
-// GET /api/videos/:id — get single video
 const getVideoById = async (req, res) => {
   try {
     const [rows] = await db.query(
@@ -48,15 +46,13 @@ const getVideoById = async (req, res) => {
   }
 };
 
-// POST /api/videos — add new video (admin only)
 const addVideo = async (req, res) => {
-  const { title, description, youtube_url, order_num } = req.body;
+  const { title, description, youtube_url, order_num, title_bi: manualTitleBi, description_bi: manualDescBi } = req.body;
   if (!title || !youtube_url) {
     return res.status(400).json({ error: 'Title and YouTube URL are required' });
   }
   if (title.length > 150) return res.status(400).json({ error: 'Title too long (max 150 characters)' });
   if (description && description.length > 500) return res.status(400).json({ error: 'Description too long (max 500 characters)' });
-  // Accept youtube.com/watch?v=, youtu.be/, or youtube.com/embed/ links
   const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w-]{11}/;
   if (!youtubeRegex.test(youtube_url)) {
     return res.status(400).json({ error: 'Invalid YouTube URL. Use a youtube.com or youtu.be link.' });
@@ -66,11 +62,17 @@ const addVideo = async (req, res) => {
     return res.status(400).json({ error: 'Order number must be 1 or greater' });
   }
 
+  // Auto-translate to BI
+  const [title_bi, description_bi] = await Promise.all([
+    manualTitleBi !== undefined ? Promise.resolve(manualTitleBi) : translateBmToBi(title.trim()),
+    manualDescBi  !== undefined ? Promise.resolve(manualDescBi)  : translateBmToBi(description?.trim() || ''),
+  ]);
+
   try {
     const finalOrder = parsedOrder ?? (await getNextOrderNum());
     const [result] = await db.query(
-      'INSERT INTO learning_videos (title, description, youtube_url, order_num) VALUES (?, ?, ?, ?)',
-      [title.trim(), description?.trim() || '', youtube_url.trim(), finalOrder]
+      'INSERT INTO learning_videos (title, description, youtube_url, order_num, title_bi, description_bi) VALUES (?, ?, ?, ?, ?, ?)',
+      [title.trim(), description?.trim() || '', youtube_url.trim(), finalOrder, title_bi, description_bi]
     );
     res.status(201).json({ message: 'Video added', videoId: result.insertId });
   } catch (err) {
@@ -79,9 +81,8 @@ const addVideo = async (req, res) => {
   }
 };
 
-// PUT /api/videos/:id — update video (admin only)
 const updateVideo = async (req, res) => {
-  const { title, description, youtube_url, order_num } = req.body;
+  const { title, description, youtube_url, order_num, title_bi: manualTitleBi, description_bi: manualDescBi } = req.body;
   if (!title || !youtube_url) return res.status(400).json({ error: 'Title and YouTube URL are required' });
   if (title.length > 150) return res.status(400).json({ error: 'Title too long (max 150 characters)' });
   if (description && description.length > 500) return res.status(400).json({ error: 'Description too long (max 500 characters)' });
@@ -98,10 +99,15 @@ const updateVideo = async (req, res) => {
     });
   }
 
+  const [title_bi, description_bi] = await Promise.all([
+    manualTitleBi !== undefined ? Promise.resolve(manualTitleBi) : translateBmToBi(title.trim()),
+    manualDescBi  !== undefined ? Promise.resolve(manualDescBi)  : translateBmToBi(description?.trim() || ''),
+  ]);
+
   try {
     await db.query(
-      'UPDATE learning_videos SET title=?, description=?, youtube_url=?, order_num=? WHERE id=?',
-      [title.trim(), description?.trim() || '', youtube_url.trim(), parsedOrder, req.params.id]
+      'UPDATE learning_videos SET title=?, description=?, youtube_url=?, order_num=?, title_bi=?, description_bi=? WHERE id=?',
+      [title.trim(), description?.trim() || '', youtube_url.trim(), parsedOrder, title_bi, description_bi, req.params.id]
     );
     res.json({ message: 'Video updated' });
   } catch (err) {
@@ -110,7 +116,6 @@ const updateVideo = async (req, res) => {
   }
 };
 
-// DELETE /api/videos/:id — delete video (admin only)
 const deleteVideo = async (req, res) => {
   try {
     await db.query('DELETE FROM learning_videos WHERE id = ?', [req.params.id]);
