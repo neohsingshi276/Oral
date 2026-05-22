@@ -304,8 +304,11 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
               Belum Lulus!
             </h3>
             <p style={{ color: '#64748b', margin: '0 0 1rem', fontSize: '0.95rem' }}>
-              Kamu perlu betulkan sekurang-kurangnya <strong>{settings.minimum_correct || 0} soalan</strong> untuk lulus.
-              Kamu betulkan <strong>{result.correct}/{result.total}</strong>.
+              {language === 'bi' ? (
+                <>You need to get at least <strong>{settings.minimum_correct || 0} questions</strong> correct to pass. You got <strong>{result.correct}/{result.total}</strong>.</>
+              ) : (
+                <>Kamu perlu betulkan sekurang-kurangnya <strong>{settings.minimum_correct || 0} soalan</strong> untuk lulus. Kamu betulkan <strong>{result.correct}/{result.total}</strong>.</>
+              )}
             </p>
             <button style={s.retryBtn} onClick={onRetry}>
               Cuba Semula Kuiz

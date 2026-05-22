@@ -24,9 +24,14 @@ const translateText = (text, from = 'ms', to = 'en') => {
       res.on('end', () => {
         try {
           const parsed = JSON.parse(data);
+          // Use responseStatus to detect API failures instead of comparing string casing.
+          // The old check (translated !== text.toUpperCase()) incorrectly discards valid
+          // all-caps translations like acronyms (e.g. "DNA", "HIV").
+          if (parsed?.responseStatus !== 200) {
+            return resolve(text);
+          }
           const translated = parsed?.responseData?.translatedText;
-          // MyMemory returns the original text in ALLCAPS sometimes when it fails
-          if (translated && translated.trim() && translated !== text.toUpperCase()) {
+          if (translated && translated.trim()) {
             resolve(translated.trim());
           } else {
             resolve(text);

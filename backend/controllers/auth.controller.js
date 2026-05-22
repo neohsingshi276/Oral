@@ -115,7 +115,8 @@ const forgotPassword = async (req, res) => {
 
   try {
     const [rows] = await db.query('SELECT id, name, email FROM admins WHERE email = ?', [email]);
-    if (rows.length === 0) return res.status(404).json({ error: 'No account found with this email' });
+    // Return the same generic 200 whether or not the email exists — prevents email enumeration
+    if (rows.length === 0) return res.json({ message: 'If this email is registered, an OTP has been sent.' });
 
     const admin = rows[0];
     const otp = Math.floor(1000 + Math.random() * 9000).toString();

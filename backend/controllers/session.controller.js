@@ -28,9 +28,11 @@ const safeInt = (val, fallback, min = 0, max = 9999) => {
 const getSessions = async (req, res) => {
   try {
     const { search = '', status = 'all', sort = 'newest' } = req.query;
+    // Explicitly list columns — never include reveal_password_hash or reveal_password_plain
     let query = `
       SELECT
-        s.*,
+        s.id, s.admin_id, s.school_id, s.class_id, s.session_name, s.session_month,
+        s.unique_token, s.is_active, s.created_at,
         a.name AS admin_name,
         sch.school_name,
         c.class_name,
@@ -173,9 +175,9 @@ const createSession = async (req, res) => {
     // Create session
     const [result] = await db.query(
       `INSERT INTO game_sessions
-       (admin_id, school_id, class_id, session_name, unique_token, reveal_password_hash, reveal_password_plain)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [req.admin.id, schoolId, classId, session_name.trim(), unique_token, revealPasswordHash, reveal_password]
+       (admin_id, school_id, class_id, session_name, unique_token, reveal_password_hash)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [req.admin.id, schoolId, classId, session_name.trim(), unique_token, revealPasswordHash]
     );
     const sessionId = result.insertId;
 
@@ -268,44 +270,56 @@ const updateSession = async (req, res) => {
     if (reveal_password && reveal_password.trim().length >= 4) {
       const revealPasswordHash = await bcrypt.hash(reveal_password.trim(), 10);
       await db.query(
-        'UPDATE game_sessions SET reveal_password_hash = ?, reveal_password_plain = ? WHERE id = ?',
-        [revealPasswordHash, reveal_password.trim(), sessionId]
+        'UPDATE game_sessions SET reveal_password_hash = ? WHERE id = ?',
+        [revealPasswordHash, sessionId]
       );
     }
 
     if (quiz_settings) {
       await db.query(
-        'UPDATE quiz_settings SET timer_seconds=?, question_order=?, question_count=?, minimum_correct=?, selected_questions=? WHERE session_id=?',
+        `INSERT INTO quiz_settings (session_id, timer_seconds, question_order, question_count, minimum_correct, selected_questions)
+         VALUES (?,?,?,?,?,?)
+         ON DUPLICATE KEY UPDATE
+           timer_seconds=VALUES(timer_seconds), question_order=VALUES(question_order),
+           question_count=VALUES(question_count), minimum_correct=VALUES(minimum_correct),
+           selected_questions=VALUES(selected_questions)`,
         [
+          sessionId,
           safeInt(quiz_settings.timer_seconds, 15, 5, 120),
           ['shuffle', 'sequential'].includes(quiz_settings.question_order) ? quiz_settings.question_order : 'shuffle',
           safeInt(quiz_settings.question_count, 10, 1, 100),
           safeInt(quiz_settings.minimum_correct, 0, 0, 100),
           JSON.stringify(quiz_settings.selected_questions || []),
-          sessionId
         ]
       );
     }
 
     if (crossword_settings) {
       await db.query(
-        'UPDATE crossword_settings SET word_count=?, selected_words=?, minimum_correct=? WHERE session_id=?',
+        `INSERT INTO crossword_settings (session_id, word_count, selected_words, minimum_correct)
+         VALUES (?,?,?,?)
+         ON DUPLICATE KEY UPDATE
+           word_count=VALUES(word_count), selected_words=VALUES(selected_words),
+           minimum_correct=VALUES(minimum_correct)`,
         [
+          sessionId,
           safeInt(crossword_settings.word_count, 8, 3, 50),
           JSON.stringify(crossword_settings.selected_words || []),
           safeInt(crossword_settings.minimum_correct, 0, 0, 50),
-          sessionId
         ]
       );
     }
 
     if (cp3_settings) {
       await db.query(
-        'UPDATE cp3_settings SET timer_seconds=?, target_score=? WHERE session_id=?',
+        `INSERT INTO cp3_settings (session_id, timer_seconds, target_score)
+         VALUES (?,?,?)
+         ON DUPLICATE KEY UPDATE
+           timer_seconds=VALUES(timer_seconds), target_score=VALUES(target_score)`,
         [
+          sessionId,
           safeInt(cp3_settings.timer_seconds, 60, 10, 600),
           safeInt(cp3_settings.target_score, 0, 0, 9999),
-          sessionId
         ]
       );
     }
@@ -349,7 +363,8 @@ const validateSession = async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      'SELECT * FROM game_sessions WHERE unique_token = ? AND is_active = true',
+      `SELECT id, session_name, school_id, class_id, is_active
+       FROM game_sessions WHERE unique_token = ? AND is_active = true`,
       [token]
     );
     if (rows.length === 0)

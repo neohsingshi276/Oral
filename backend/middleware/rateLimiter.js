@@ -32,4 +32,14 @@ const generalLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-module.exports = { authLimiter, otpLimiter, generalLimiter };
+// Score submission: max 15 per minute per IP
+// Prevents flood attacks while still allowing normal retries
+const scoreLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 15,
+  message: { error: 'Too many score submissions. Please wait a moment.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+module.exports = { authLimiter, otpLimiter, generalLimiter, scoreLimiter };

@@ -157,13 +157,20 @@ const getFinalLeaderboard = async (req, res) => {
       FROM quiz_scores WHERE session_id = ? GROUP BY player_id
     `, [sessionId]);
 
-    // CP2: use words_correct / total_words for partial credit
+    // CP2: use the single best-score crossword submission to derive completion correctly.
+    // Using MAX(words_correct) and MAX(total_words) independently is wrong — they can come
+    // from different rows (e.g. attempt 1: 3/5, attempt 2: 5/8 → MAX gives 5 and 8 → 5<8 → incomplete).
+    // Instead, pick the row with the highest score for each player.
     const [crosswordScores] = await db.query(`
-      SELECT player_id,
-             MAX(words_correct) as words_correct,
-             MAX(total_words)   as total_words
-      FROM crossword_scores WHERE session_id = ? GROUP BY player_id
-    `, [sessionId]);
+      SELECT cs.player_id, cs.words_correct, cs.total_words
+      FROM crossword_scores cs
+      INNER JOIN (
+        SELECT player_id, MAX(score) AS best_score
+        FROM crossword_scores WHERE session_id = ?
+        GROUP BY player_id
+      ) best ON cs.player_id = best.player_id AND cs.score = best.best_score
+      WHERE cs.session_id = ?
+    `, [sessionId, sessionId]);
 
     // CP3: raw game score + admin-set target
     const [cp3Scores] = await db.query(
@@ -174,9 +181,12 @@ const getFinalLeaderboard = async (req, res) => {
     );
 
     const adminTarget = cp3Settings[0]?.target_score || 0;
-    // Default CP3 denominator is 2000 (2000 pts = full mark).
-    // Admin target_score overrides if explicitly set.
-    const cp3Denom    = adminTarget > 0 ? adminTarget : 2000;
+    // CP3 denominator: admin sets target_score in session settings.
+    // If not set, we fall back to 2000 — this is calibrated for a 60-second game
+    // where a perfect run (all good foods, no bad foods, combos) yields ~2000 pts.
+    // IMPORTANT: admins should always configure target_score to match their session
+    // duration so the mark accurately reflects actual performance.
+    const cp3Denom = adminTarget > 0 ? adminTarget : 2000;
 
     const quizMap      = Object.fromEntries(quizScores.map(s     => [s.player_id, s]));
     const crosswordMap = Object.fromEntries(crosswordScores.map(s => [s.player_id, s]));
@@ -217,7 +227,7 @@ const getFinalLeaderboard = async (req, res) => {
         cp1_mark:      cp1Mark,
         cp2_words:     cwCorrect,
         cp2_total:     cwTotal,
-        cp2_completed: cwCorrect > 0 && cwCorrect >= cwTotal,
+        cp2_completed: cwCorrect > 0 && cwTotal > 0 && cwCorrect >= cwTotal,
         cp2_mark:      cp2Mark,
         cp3_raw:       cp3Raw,
         cp3_target:    cp3Denom,

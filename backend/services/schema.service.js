@@ -4,8 +4,12 @@ const safeAlter = async (sql) => {
   try {
     await db.query(sql);
   } catch (err) {
-    // Ignore duplicate column / duplicate key errors; log everything else as a warning
-    if (err?.code !== 'ER_DUP_FIELDNAME' && err?.code !== 'ER_DUP_ENTRY') {
+    // Ignore: duplicate column, duplicate key, or dropping a column that no longer exists
+    if (
+      err?.code !== 'ER_DUP_FIELDNAME' &&
+      err?.code !== 'ER_DUP_ENTRY' &&
+      err?.code !== 'ER_CANT_DROP_FIELD_OR_KEY'
+    ) {
       console.warn('Schema migration skipped:', err.message);
     }
   }
@@ -86,10 +90,12 @@ const ensureSchema = async () => {
   await safeAlter("ALTER TABLE email_reminders ADD COLUMN to_email VARCHAR(120) NULL AFTER to_admin_id");
   await safeAlter("ALTER TABLE email_reminders ADD COLUMN to_name VARCHAR(120) NULL AFTER to_email");
 
-  // Ensure reveal_password columns exist (were added after initial deploy)
+  // Security fix: drop plaintext password columns — only the hashed version should exist.
+  // safeAlter silently ignores ER_CANT_DROP_FIELD_OR_KEY so this is safe on fresh installs.
+  await safeAlter("ALTER TABLE game_sessions DROP COLUMN reveal_password_plain");
+  await safeAlter("ALTER TABLE game_sessions DROP COLUMN reveal_password_text");
+  // Ensure reveal_password_hash column exists (added after initial deploy)
   await safeAlter("ALTER TABLE game_sessions ADD COLUMN reveal_password_hash VARCHAR(255) NULL AFTER unique_token");
-  await safeAlter("ALTER TABLE game_sessions ADD COLUMN reveal_password_plain VARCHAR(255) NULL AFTER reveal_password_hash");
-  await safeAlter("ALTER TABLE game_sessions ADD COLUMN reveal_password_text VARCHAR(100) NULL AFTER reveal_password_plain");
 
   // Ensure school_id / class_id exist (added after initial deploy)
   await safeAlter("ALTER TABLE game_sessions ADD COLUMN school_id INT NULL AFTER admin_id");
