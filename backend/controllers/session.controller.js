@@ -28,11 +28,12 @@ const safeInt = (val, fallback, min = 0, max = 9999) => {
 const getSessions = async (req, res) => {
   try {
     const { search = '', status = 'all', sort = 'newest' } = req.query;
-    // Explicitly list columns — never include reveal_password_hash or reveal_password_plain
+    // Explicitly list columns — include reveal_password_plain for display, never include reveal_password_hash
     let query = `
       SELECT
         s.id, s.admin_id, s.school_id, s.class_id, s.session_name, s.session_month,
         s.unique_token, s.is_active, s.created_at,
+        s.reveal_password_plain,
         a.name AS admin_name,
         sch.school_name,
         c.class_name,
@@ -175,9 +176,9 @@ const createSession = async (req, res) => {
     // Create session
     const [result] = await db.query(
       `INSERT INTO game_sessions
-       (admin_id, school_id, class_id, session_name, unique_token, reveal_password_hash)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [req.admin.id, schoolId, classId, session_name.trim(), unique_token, revealPasswordHash]
+       (admin_id, school_id, class_id, session_name, unique_token, reveal_password_hash, reveal_password_plain)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [req.admin.id, schoolId, classId, session_name.trim(), unique_token, revealPasswordHash, reveal_password]
     );
     const sessionId = result.insertId;
 
@@ -270,8 +271,8 @@ const updateSession = async (req, res) => {
     if (reveal_password && reveal_password.trim().length >= 4) {
       const revealPasswordHash = await bcrypt.hash(reveal_password.trim(), 10);
       await db.query(
-        'UPDATE game_sessions SET reveal_password_hash = ? WHERE id = ?',
-        [revealPasswordHash, sessionId]
+        'UPDATE game_sessions SET reveal_password_hash = ?, reveal_password_plain = ? WHERE id = ?',
+        [revealPasswordHash, reveal_password.trim(), sessionId]
       );
     }
 
