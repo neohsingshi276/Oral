@@ -713,7 +713,10 @@ const GamePage = () => {
         <div style={s.fullQuiz}>
           <div style={s.fullQuizHeader}>
             <span style={s.fullQuizTitle}>{t('game.checkpoint')} 1 - {t('game.quiz')}</span>
-            <span style={s.fullQuizPlayer}>👤 {player.nickname}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <LanguageToggle compact style={{ background: 'rgba(255,255,255,0.1)', color: '#FFD700' }} />
+              <span style={s.fullQuizPlayer}>👤 {player.nickname}</span>
+            </div>
           </div>
           <div style={s.fullQuizBody}>
             <QuizGame
