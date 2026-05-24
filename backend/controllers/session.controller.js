@@ -364,7 +364,7 @@ const validateSession = async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      `SELECT id, session_name, school_id, class_id, is_active
+      `SELECT id, session_name, unique_token, school_id, class_id, is_active
        FROM game_sessions WHERE unique_token = ? AND is_active = true`,
       [token]
     );
