@@ -78,10 +78,10 @@ export const LanguageProvider = ({ children, mode = 'student' }) => {
     });
   }, [storageKey]);
 
-  const t = useCallback((key) => {
+  const t = useCallback((key, defaultValue) => {
     const translated = getNestedValue(translations[language], key);
     const fallback = getNestedValue(translations.bm, key);
-    return translated ?? fallback ?? key;
+    return translated ?? fallback ?? defaultValue ?? key;
   }, [language]);
 
   const tx = useCallback((text) => translateText(text, language), [language]);
