@@ -8,6 +8,9 @@ const ManageAdmins = ({ currentAdmin }) => {
   const [inviteRole, setInviteRole] = useState('admin');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  // Add Here
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
 
   const fetchAdmins = () => api.get('/admin/admins').then(res => {
     setAdmins(res.data.admins);
@@ -64,6 +67,20 @@ const ManageAdmins = ({ currentAdmin }) => {
     finally { setTimeout(() => setMsg(''), 4000); }
   };
 
+  // Add Here
+  const filteredAdmins = admins.filter(admin => {
+    const q = searchQuery.toLowerCase();
+
+    const matchesSearch =
+      admin.name?.toLowerCase().includes(q) ||
+      admin.email?.toLowerCase().includes(q);
+
+    const matchesRole =
+      roleFilter === 'all' || admin.role === roleFilter;
+
+    return matchesSearch && matchesRole;
+  });
+
   return (
     <div>
       <div style={s.card}>
@@ -114,9 +131,32 @@ const ManageAdmins = ({ currentAdmin }) => {
       )}
 
       <div style={s.card}>
-        <h2 style={s.cardTitle}>👨‍💼 Semua Pentadbir ({admins.length})</h2>
+
+        {/*Change here */}
+        <h2 style={s.cardTitle}>👨‍💼 Semua Pentadbir ({filteredAdmins.length} / {admins.length})</h2>
+        <div style={s.filterRow}>
+          <input
+            style={s.searchInput}
+            type="text"
+            placeholder="🔍 Cari nama atau e-mel..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+          <select
+            style={s.filterSelect}
+            value={roleFilter}
+            onChange={e => setRoleFilter(e.target.value)}
+          >
+            <option value="all">Semua Peranan</option>
+            <option value="main_admin">Main Admin</option>
+            <option value="admin">Admin</option>
+            <option value="teacher">Teacher</option>
+          </select>
+        </div>
+        {/*Change until here */}
+
         <div style={s.adminList}>
-          {admins.map(admin => (
+          {filteredAdmins.map(admin => ( // Change only this line
             <div key={admin.id} style={s.adminItem}>
               <div style={s.adminAvatar}>{admin.name?.[0]?.toUpperCase()}</div>
               <div style={s.adminInfo}>
@@ -149,6 +189,10 @@ const ManageAdmins = ({ currentAdmin }) => {
             </div>
           ))}
         </div>
+        {/* Added Here */}
+        {filteredAdmins.length === 0 && (
+          <p style={s.emptyText}>Tiada pentadbir sepadan dengan carian atau filter ini.</p>
+        )}
       </div>
     </div>
   );
@@ -184,6 +228,11 @@ const s = {
   btnDelete: { background: '#fff1f2', color: '#e11d48', border: 'none', borderRadius: '8px', padding: '0.5rem 0.9rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.82rem', flexShrink: 0 },
   roleChangeWrap: { flexShrink: 0 },
   roleSelect: { padding: '0.4rem 0.6rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.82rem', fontWeight: '600', color: '#1e3a5f', cursor: 'pointer', background: '#f8fafc', outline: 'none' },
+  // Added Here
+  filterRow: { display: 'flex', gap: '0.75rem', margin: '1rem 0', flexWrap: 'wrap' },
+  searchInput: { flex: 1, minWidth: '220px', padding: '0.65rem 0.9rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.9rem', outline: 'none' },
+  filterSelect: { minWidth: '180px', padding: '0.65rem 0.9rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.9rem', background: '#fff', cursor: 'pointer' },
+  emptyText: { color: '#94a3b8', fontSize: '0.9rem', marginTop: '1rem' },
 };
 
 export default ManageAdmins;

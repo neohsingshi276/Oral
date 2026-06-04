@@ -8,6 +8,8 @@ const AdminChat = () => {
   const [input, setInput]         = useState('');
   const [loading, setLoading]     = useState(true);
   const [sending, setSending]     = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [readFilter, setReadFilter] = useState('all');
 
   // Track the last-seen message count per player so unread badge clears when opened
   const lastSeenRef    = useRef({});   // { [player_id]: timestamp of last seen message }
@@ -129,7 +131,21 @@ const AdminChat = () => {
 
   const [lastRefreshed, setLastRefreshed] = useState(null);
 
-  const totalUnread = players.reduce((s, p) => s + (p.unread || 0), 0);
+  const filteredPlayers = players.filter(p => {
+    const q = searchQuery.toLowerCase();
+
+    const matchesSearch =
+      !q || p.nickname?.toLowerCase().includes(q);
+
+    const matchesRead =
+      readFilter === 'all' ||
+      (readFilter === 'unread' && (p.unread || 0) > 0) ||
+      (readFilter === 'read' && (p.unread || 0) === 0);
+
+    return matchesSearch && matchesRead;
+  });
+
+  const totalUnread = filteredPlayers.reduce((s, p) => s + (p.unread || 0), 0);
 
   if (loading) return <div style={s.loading}>Memuatkan sembang… 💬</div>;
 
@@ -142,12 +158,30 @@ const AdminChat = () => {
           <span style={s.sidebarTitle}>💬 Sembang Pemain</span>
           {totalUnread > 0 && <span style={s.totalBadge}>{totalUnread}</span>}
         </div>
+        <div style={s.filterBox}>
+          <input
+            style={s.filterInput}
+            placeholder="🔍 Cari nama pemain..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+
+          <select
+            style={s.filterInput}
+            value={readFilter}
+            onChange={e => setReadFilter(e.target.value)}
+          >
+          <option value="all">All Status</option>
+          <option value="unread">Unread</option>
+          <option value="read">Read</option>
+        </select>
+      </div>
 
         <div style={s.contactList}>
-          {players.length === 0 && (
+          {filteredPlayers.length === 0 && (
             <p style={s.emptyContacts}>Belum ada mesej pemain.</p>
           )}
-          {players.map(p => (
+          {filteredPlayers.map(p => (
             <div
               key={p.player_id}
               style={{
@@ -302,6 +336,10 @@ const s = {
   inputRow: { display: 'flex', gap: '0.5rem', padding: '1rem 1.5rem', borderTop: '1px solid #f1f5f9', flexShrink: 0, background: '#fafbff' },
   input: { flex: 1, padding: '0.7rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '0.9rem', outline: 'none' },
   sendBtn: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '10px', padding: '0.7rem 1.4rem', fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap', transition: 'opacity 0.2s' },
+
+  filterBox: { padding: '0.75rem 1rem', borderBottom: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column',
+  gap: '0.5rem', background: '#fafbff' },
+  filterInput: { width: '100%', padding: '0.55rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.78rem', outline: 'none', boxSizing: 'border-box', background: '#fff' },
 };
 
 export default AdminChat;

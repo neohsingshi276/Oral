@@ -16,6 +16,11 @@ const StaffChat = () => {
   const [loadingContacts, setLoadingContacts] = useState(true);
   const [sending, setSending] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState(null);
+  // Added Here
+  const [searchQuery, setSearchQuery] = useState('');
+  const [readFilter, setReadFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
+  // Until Here
   const messagesEndRef = useRef(null);
   const msgPollRef = useRef(null);
   const contactPollRef = useRef(null);
@@ -91,7 +96,25 @@ const StaffChat = () => {
   };
 
   // All roles can see and message all other staff (admins, teachers, main admin)
-  const visibleContacts = contacts;
+  // Change here
+  const visibleContacts = contacts.filter(c => {
+    const q = searchQuery.toLowerCase();
+
+    const matchesSearch =
+      !q ||
+      c.name?.toLowerCase().includes(q);
+
+    const matchesRead =
+      readFilter === 'all' ||
+      (readFilter === 'unread' && (c.unread || 0) > 0) ||
+      (readFilter === 'read' && (c.unread || 0) === 0);
+
+    const matchesRole =
+      roleFilter === 'all' || c.role === roleFilter;
+
+    return matchesSearch && matchesRead && matchesRole;
+  });
+  // Until here
 
   useEffect(() => {
     if (!selected && visibleContacts.length === 1) {
@@ -121,9 +144,41 @@ const StaffChat = () => {
             ? 'Mesej daripada pentadbir anda'
             : 'Hubungi pentadbir dan staf lain'}
         </div>
+        {/* Added Here */}
+        <div style={s.filterBox}>
+          <input
+            style={s.searchInput}
+            type="text"
+            placeholder="🔍 Search by name..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+
+          <select
+            style={s.filterSelect}
+            value={roleFilter}
+            onChange={e => setRoleFilter(e.target.value)}
+          >
+            <option value="all">Semua Peranan</option>
+            <option value="main_admin">Main Admin</option>
+            <option value="admin">Admin</option>
+            <option value="teacher">Teacher</option>
+          </select>
+
+          <select
+            style={s.filterSelect}
+            value={readFilter}
+            onChange={e => setReadFilter(e.target.value)}
+          >
+            <option value="all">All Status</option>
+            <option value="unread">Unread</option>
+            <option value="read">Read</option>
+          </select>
+        </div>
+        {/* Until here */}
         <div style={s.contactList}>
           {visibleContacts.length === 0 && (
-            <p style={s.empty}>Belum ada pentadbir lain.</p>
+            <p style={s.empty}>No staff match this search or filter.</p> // Change this line
           )}
           {visibleContacts.map(c => (
             <div
@@ -307,6 +362,11 @@ const s = {
   inputRow: { display: 'flex', gap: '0.5rem', padding: '1rem 1.5rem', borderTop: '1px solid #f1f5f9', flexShrink: 0, background: '#fafbff' },
   input: { flex: 1, padding: '0.7rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '0.9rem', outline: 'none' },
   sendBtn: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '10px', padding: '0.7rem 1.4rem', fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap', transition: 'opacity 0.2s' },
+  // Add Here
+  filterBox: { padding: '0.75rem 1rem', borderBottom: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '0.5rem', background: '#fafbff' },
+  searchInput: { width: '100%', padding: '0.55rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.78rem', outline: 'none', boxSizing: 'border-box' },
+  filterSelect: { width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.78rem', background: '#fff', cursor: 'pointer', outline: 'none', boxSizing: 'border-box' },
+  // Until Here
 };
 
 export default StaffChat;
