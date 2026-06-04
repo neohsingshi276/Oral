@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const { joinGame, savePosition, getPosition, recordAttempt, completeCheckpoint, getProgress, getCheckpointVideos, playerExists } = require('../controllers/game.controller');
+const verifyPlayerChatToken = require('../middleware/verifyPlayerChatToken');
 
 router.post('/join/:token', joinGame);
-router.post('/position', savePosition);
-router.get('/position/:player_id', getPosition);
-router.post('/attempt', recordAttempt);
-router.post('/complete', completeCheckpoint);
-router.get('/progress/:player_id', getProgress);
+router.post('/position', verifyPlayerChatToken, savePosition);
+router.get('/position/:player_id', verifyPlayerChatToken, getPosition);
+router.post('/attempt', verifyPlayerChatToken, recordAttempt);
+router.post('/complete', verifyPlayerChatToken, completeCheckpoint);
+router.get('/progress/:player_id', verifyPlayerChatToken, getProgress);
 router.get('/videos', getCheckpointVideos);
 router.get('/player-exists/:player_id', playerExists);
 
