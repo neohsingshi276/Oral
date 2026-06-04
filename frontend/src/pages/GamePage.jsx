@@ -211,10 +211,14 @@ const GamePage = () => {
   };
 
   const handleCloseCPModal = () => {
+    // Only show the next checkpoint hint if the player actually completed
+    // this checkpoint (cpStep === 'done'). Cancelling during the video
+    // should NOT trigger the "Welcome to CP2/CP3" card.
+    const didComplete = cpStep === 'done';
     const nextHint = activeCP === 1 ? 2 : activeCP === 2 ? 3 : null;
     setActiveCP(null);
     setCpStep('video');
-    if (nextHint) setCheckpointHint(nextHint);
+    if (didComplete && nextHint) setCheckpointHint(nextHint);
   };
 
   const sendChat = async () => {
