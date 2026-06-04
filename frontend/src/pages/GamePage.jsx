@@ -117,9 +117,10 @@ const GamePage = () => {
   // FIX: fetchProgress must be defined before the useEffect that calls it,
   // because const declarations are NOT hoisted — calling a const before its
   // definition throws ReferenceError at runtime.
-  const fetchProgress = async (playerId) => {
+  const fetchProgress = async (playerId, customToken) => {
     try {
-      const chatConfig = getPlayerChatConfig();
+      const tokenToUse = customToken || player?.chat_token;
+      const chatConfig = tokenToUse ? { headers: { Authorization: `Bearer ${tokenToUse}` } } : null;
       const res = await api.get(`/game/progress/${playerId}`, chatConfig);
       setProgress(res.data.progress);
       const allCompleted = res.data.progress.every(p => p.completed);
@@ -162,7 +163,7 @@ const GamePage = () => {
     }
 
     setPlayer(p);
-    fetchProgress(p.id);
+    fetchProgress(p.id, p.chat_token);
   }, [token, navigate]);
 
   // FIX: Await the attempt API call so failures are caught and logged.
