@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import GameCanvas from '../game/GameCanvas';
 import { CHECKPOINT_VIDEO_IDS } from '../game/gameConfig';
@@ -31,7 +31,7 @@ const playSuccessChime = () => {
       osc.start(start);
       osc.stop(start + 0.55);
     });
-  } catch (e) {
+  } catch {
     // AudioContext blocked (e.g. no user gesture yet) — fail silently
   }
 };
@@ -41,7 +41,7 @@ const CONFETTI_COLORS = ['#FFD700', '#2563eb', '#16a34a', '#e11d48', '#f59e0b', 
 const SHAPES = ['square', 'circle', 'strip'];
 
 const ConfettiBlast = ({ onDone }) => {
-  const particles = Array.from({ length: 80 }, (_, i) => ({
+  const particles = useMemo(() => Array.from({ length: 80 }, (_, i) => ({
     id: i,
     color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
     shape: SHAPES[i % SHAPES.length],
@@ -52,7 +52,7 @@ const ConfettiBlast = ({ onDone }) => {
     rotate: `${Math.random() * 720 - 360}deg`,
     drift: `${(Math.random() - 0.5) * 200}px`,
     fallDist: `${80 + Math.random() * 60}vh`,
-  }));
+  })), []);
 
   useEffect(() => {
     const t = setTimeout(onDone, 3200);
@@ -86,6 +86,44 @@ const ConfettiBlast = ({ onDone }) => {
   );
 };
 
+const escapeXml = (value = '') => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;');
+
+const downloadTextFile = (filename, content, type) => {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
+const TouchButton = ({ children, label, onChange, style }) => {
+  const endPress = () => onChange(false);
+  return (
+    <button
+      type="button"
+      style={{ ...s.touchBtn, ...style }}
+      aria-label={label}
+      onPointerDown={(e) => {
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+        onChange(true);
+      }}
+      onPointerUp={endPress}
+      onPointerCancel={endPress}
+      onPointerLeave={endPress}
+    >
+      {children}
+    </button>
+  );
+};
+
 const GamePage = () => {
   const { t } = useLanguage();
   const { token } = useParams();
@@ -104,6 +142,12 @@ const GamePage = () => {
   const [checkpointHint, setCheckpointHint] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [crosswordKey, setCrosswordKey] = useState(0);
+  const [virtualInput, setVirtualInput] = useState({});
+  const [enterSignal, setEnterSignal] = useState(0);
+  const [reduceMotion, setReduceMotion] = useState(() =>
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || localStorage.getItem('dq_reduce_motion') === '1'
+  );
+  const [certificateBusy, setCertificateBusy] = useState(false);
 
   // Ref to the Phaser game instance — used to pause keyboard input while typing in chat
   const gameInstanceRef = useRef(null);
@@ -126,10 +170,11 @@ const GamePage = () => {
       const allCompleted = res.data.progress.every(p => p.completed);
       if (allCompleted && res.data.progress.length === 3) {
         setAllDone(true);
-        // Grand finale — extra confetti burst for completing everything
-        playSuccessChime();
-        setTimeout(() => { playSuccessChime(); }, 600);
-        setShowConfetti(true);
+        if (!reduceMotion) {
+          playSuccessChime();
+          setTimeout(() => { playSuccessChime(); }, 600);
+          setShowConfetti(true);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -191,15 +236,60 @@ const GamePage = () => {
       // Still advance the UI so the student isn't stuck
     }
 
-    // 🎉 Celebrate every checkpoint completion with confetti + sound
-    playSuccessChime();
-    setShowConfetti(true);
+    if (!reduceMotion) {
+      playSuccessChime();
+      setShowConfetti(true);
+    }
 
     if (activeCP === 3) {
       setActiveCP(null);
       setCpStep('video');
     } else {
       setCpStep('done');
+    }
+  };
+
+  const handleReduceMotionChange = () => {
+    setReduceMotion(value => {
+      const next = !value;
+      localStorage.setItem('dq_reduce_motion', next ? '1' : '0');
+      return next;
+    });
+  };
+
+  const downloadCertificate = async () => {
+    if (!player) return;
+    setCertificateBusy(true);
+    try {
+      const res = await api.get(`/game/certificate/${player.id}`, getPlayerChatConfig());
+      const cert = res.data.certificate;
+      const date = new Date(cert.completed_at).toLocaleDateString();
+      const safeName = (cert.nickname || 'student').replace(/[^a-z0-9_-]+/gi, '_');
+      const schoolClass = `${cert.school_name || '-'}${cert.class_name ? ` / ${cert.class_name}` : ''}`;
+      const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="990" viewBox="0 0 1400 990">
+  <rect width="1400" height="990" fill="#fffaf0"/>
+  <rect x="70" y="70" width="1260" height="850" rx="28" fill="#ffffff" stroke="#1e3a5f" stroke-width="10"/>
+  <rect x="100" y="100" width="1200" height="790" rx="18" fill="none" stroke="#D4A843" stroke-width="4"/>
+  <text x="700" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="52" font-weight="800" fill="#1e3a5f">Dental Quest Certificate</text>
+  <text x="700" y="260" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" fill="#64748b">Presented to</text>
+  <text x="700" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="78" font-weight="800" fill="#2563eb">${escapeXml(cert.nickname)}</text>
+  <text x="700" y="440" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" fill="#1e293b">for completing all Dental Quest checkpoints</text>
+  <text x="700" y="505" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#475569">Session: ${escapeXml(cert.session_name || '-')}</text>
+  <text x="700" y="555" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#475569">School/Class: ${escapeXml(schoolClass)}</text>
+  <g transform="translate(500 620)">
+    <rect width="400" height="110" rx="20" fill="#eff6ff" stroke="#2563eb" stroke-width="3"/>
+    <text x="200" y="48" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#1e3a5f">Completion Score</text>
+    <text x="200" y="90" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="900" fill="#16a34a">${cert.score}/100</text>
+  </g>
+  <text x="700" y="800" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#64748b">Completed on ${escapeXml(date)}</text>
+  <text x="700" y="850" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#94a3b8">Keep smiling, keep learning.</text>
+</svg>`;
+      downloadTextFile(`dental-quest-certificate-${safeName}.svg`, svg, 'image/svg+xml;charset=utf-8');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Unable to download certificate. Please try again.');
+    } finally {
+      setCertificateBusy(false);
     }
   };
 
@@ -346,6 +436,14 @@ const GamePage = () => {
           <span style={s.playerBadge}>👤 {player.nickname}</span>
         </div>
         <div style={s.headerRight}>
+          <label style={s.motionToggle}>
+            <input
+              type="checkbox"
+              checked={reduceMotion}
+              onChange={handleReduceMotionChange}
+            />
+            Reduce motion
+          </label>
           <LanguageToggle compact style={{ background: 'rgba(255,255,255,0.1)', color: '#FFD700' }} />
           {[1, 2, 3].map(cp => {
             const done = progress.find(p => p.checkpoint_number === cp)?.completed;
@@ -366,7 +464,32 @@ const GamePage = () => {
 
       {/* Game Canvas */}
       <div style={s.canvasWrap}>
-        <GameCanvas player={player} progress={progress} onCheckpointReached={handleCheckpointReached} paused={isWorldPaused} externalGameRef={gameInstanceRef} />
+        <GameCanvas
+          player={player}
+          progress={progress}
+          onCheckpointReached={handleCheckpointReached}
+          paused={isWorldPaused}
+          externalGameRef={gameInstanceRef}
+          virtualInput={virtualInput}
+          enterSignal={enterSignal}
+        />
+      </div>
+
+      <div style={s.touchControls} aria-label="Touch game controls">
+        <div style={s.dpad}>
+          <TouchButton label="Up" style={{ gridColumn: 2 }} onChange={down => setVirtualInput(v => ({ ...v, up: down }))}>↑</TouchButton>
+          <TouchButton label="Left" style={{ gridColumn: 1 }} onChange={down => setVirtualInput(v => ({ ...v, left: down }))}>←</TouchButton>
+          <TouchButton label="Down" style={{ gridColumn: 2 }} onChange={down => setVirtualInput(v => ({ ...v, down: down }))}>↓</TouchButton>
+          <TouchButton label="Right" style={{ gridColumn: 3 }} onChange={down => setVirtualInput(v => ({ ...v, right: down }))}>→</TouchButton>
+        </div>
+        <button
+          type="button"
+          style={s.enterTouchBtn}
+          onClick={() => setEnterSignal(value => value + 1)}
+          aria-label="Enter checkpoint"
+        >
+          Enter
+        </button>
       </div>
 
       {/* Tutorial Overlay — 3-page walkthrough */}
@@ -709,6 +832,13 @@ const GamePage = () => {
             </div>
             <button
               style={{ ...s.continueBtn, background: '#16a34a', marginTop: '0.5rem' }}
+              onClick={downloadCertificate}
+              disabled={certificateBusy}
+            >
+              {certificateBusy ? 'Preparing certificate...' : 'Download Certificate'}
+            </button>
+            <button
+              style={{ ...s.continueBtn, background: '#2563eb', marginTop: '0.75rem' }}
               onClick={() => { localStorage.removeItem('player'); navigate('/'); }}
             >
               Kembali ke Utama
@@ -904,9 +1034,14 @@ const s = {
   logo: { color: '#FFD700', fontWeight: '800', fontSize: '1.1rem' },
   playerBadge: { background: 'rgba(255,255,255,0.15)', color: '#fff', padding: '0.3rem 0.75rem', borderRadius: '20px', fontSize: '0.85rem' },
   headerRight: { display: 'flex', alignItems: 'center', gap: '0.5rem' },
+  motionToggle: { color: '#e2e8f0', fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(255,255,255,0.08)', borderRadius: '999px', padding: '0.25rem 0.55rem', whiteSpace: 'nowrap' },
   cpBadge: { width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '800', fontSize: '0.82rem' },
   controls: { color: '#94a3b8', fontSize: '0.78rem', padding: '0.35rem 1rem', background: 'rgba(255,255,255,0.05)', width: '100%', textAlign: 'center', flexShrink: 0 },
   canvasWrap: { flex: 1, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'stretch', padding: '0.25rem', boxSizing: 'border-box', overflow: 'hidden' },
+  touchControls: { position: 'fixed', left: '1rem', bottom: '1rem', zIndex: 90, display: 'flex', alignItems: 'flex-end', gap: '1rem', pointerEvents: 'auto' },
+  dpad: { display: 'grid', gridTemplateColumns: '48px 48px 48px', gridTemplateRows: '48px 48px 48px', gap: '0.35rem', touchAction: 'none' },
+  touchBtn: { width: 48, height: 48, borderRadius: 10, border: '2px solid rgba(255,255,255,0.45)', background: 'rgba(30,58,95,0.9)', color: '#fff', fontWeight: 900, fontSize: '1.2rem', cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.3)', touchAction: 'none' },
+  enterTouchBtn: { minWidth: 86, height: 54, borderRadius: 12, border: '2px solid rgba(255,255,255,0.45)', background: '#D4A843', color: '#1e3a5f', fontWeight: 900, fontSize: '0.95rem', cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' },
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' },
   modal: { background: '#fff', borderRadius: '20px', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflow: 'auto', animation: 'fadeIn 0.3s ease' },
   modalHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0' },

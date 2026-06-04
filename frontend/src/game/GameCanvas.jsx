@@ -5,7 +5,7 @@ import { START_POS, resolveSpawnPosition, writeCachedPosition } from './gameConf
 
 const SAVE_INTERVAL = 5000;
 
-const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) => {
+const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, virtualInput, enterSignal }) => {
   const containerRef = useRef(null);
   const gameRef = useRef(null);
   const sceneRef = useRef(null);
@@ -20,6 +20,14 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
   // without needing Phaser to restart when React re-renders.
   const progressRef = useRef(progress);
   useEffect(() => { progressRef.current = progress; }, [progress]);
+
+  useEffect(() => {
+    sceneRef.current?.setVirtualInput?.(virtualInput || {});
+  }, [virtualInput]);
+
+  useEffect(() => {
+    if (enterSignal) sceneRef.current?.triggerVirtualEnter?.();
+  }, [enterSignal]);
 
   const getProgress = useCallback(() => progressRef.current, []);
   const getIsCheckpointUnlocked = useCallback((cpId) => {
@@ -51,10 +59,10 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
 
   // ── Boot Phaser ────────────────────────────────────────────────────────────
   useEffect(() => {
-    console.log('🚀 BOOT PHASER useEffect triggered');
+    console.log('Booting Phaser');
 
     if (hasBooted.current) {
-      console.log('⚠️ Already booted, skipping...');
+      console.log('Phaser already booted, skipping...');
       return;
     }
     hasBooted.current = true;
@@ -89,7 +97,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
 
     function bootPhaser(initialPos) {
       if (gameRef.current) {
-        console.log('⚠️ Phaser already exists, skipping...');
+        console.log('Phaser already exists, skipping...');
         return;
       }
       import('phaser').then(({ default: Phaser }) => {
@@ -105,7 +113,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
           getProgress,
           getIsCheckpointUnlocked,
           playerNickname: player.nickname,
-          initialPos,                       // ← player spawns here, not (0,0)
+          initialPos,
           onNearCheckpoint: () => { },
           onLoadProgress: (pct) => setLoadPct(Math.round(pct * 100)),
           onLoadComplete: () => setReady(true),
@@ -164,15 +172,15 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
     }
 
     return () => {
-      console.log('⚠️ Cleanup skipped (prevent destroy)');
+      console.log('Cleanup skipped to preserve Phaser state');
     };
   }, []);
 
   useEffect(() => {
-    console.log('✅ GameCanvas MOUNTED');
+    console.log('GameCanvas mounted');
 
     return () => {
-      console.log('❌ GameCanvas UNMOUNTED');
+      console.log('GameCanvas unmounted');
     };
   }, []);
 
@@ -191,10 +199,9 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
           gap: 16,
           minHeight: 300,
         }}>
-          {/* Tooth emoji spinner */}
-          <div style={{ fontSize: 48, animation: 'spin 1.2s linear infinite' }}>🦷</div>
+          <div style={{ fontSize: 36, animation: 'spin 1.2s linear infinite', fontWeight: 900, color: '#FFD700' }}>DQ</div>
           <div style={{ color: '#FFD700', fontWeight: 'bold', fontSize: 18 }}>
-            Loading Dental Quest…
+            Loading Dental Quest...
           </div>
           {/* Progress bar */}
           <div style={{

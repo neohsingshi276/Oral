@@ -515,6 +515,8 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.nearCheckpointId = null;
     this.walkFrame = 0;
     this.isPaused = false;
+    this.virtualInput = { up: false, down: false, left: false, right: false };
+    this.virtualEnterQueued = false;
 
     // Store map reference for position saving
     this.mapWidthPx = mapWidthPx;
@@ -553,6 +555,13 @@ export default class PhaserGameScene extends Phaser.Scene {
         if (this.cursors.right.isDown || this.wasd.d.isDown) vx = PLAYER_SPEED;
         if (this.cursors.up.isDown || this.wasd.w.isDown) vy = -PLAYER_SPEED;
         if (this.cursors.down.isDown || this.wasd.s.isDown) vy = PLAYER_SPEED;
+      }
+
+      if (this.virtualInput) {
+        if (this.virtualInput.left) vx = -PLAYER_SPEED;
+        if (this.virtualInput.right) vx = PLAYER_SPEED;
+        if (this.virtualInput.up) vy = -PLAYER_SPEED;
+        if (this.virtualInput.down) vy = PLAYER_SPEED;
       }
 
       if (vx !== 0 && vy !== 0) {
@@ -634,7 +643,10 @@ export default class PhaserGameScene extends Phaser.Scene {
         this.onNearCheckpoint(near);
       }
 
-      if (Phaser.Input.Keyboard.JustDown(this.keyE) && near) {
+      const shouldEnter = (Phaser.Input.Keyboard.JustDown(this.keyE) || this.virtualEnterQueued) && near;
+      this.virtualEnterQueued = false;
+
+      if (shouldEnter) {
         const isUnlocked = this.getIsCheckpointUnlocked
           ? this.getIsCheckpointUnlocked(near)
           : true;
@@ -676,6 +688,19 @@ export default class PhaserGameScene extends Phaser.Scene {
 
   resumeGame() {
     this.isPaused = false;
+  }
+
+  setVirtualInput(input = {}) {
+    this.virtualInput = {
+      up: !!input.up,
+      down: !!input.down,
+      left: !!input.left,
+      right: !!input.right,
+    };
+  }
+
+  triggerVirtualEnter() {
+    this.virtualEnterQueued = true;
   }
 
 updatePlayerOpacity() {

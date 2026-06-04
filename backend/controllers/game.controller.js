@@ -252,6 +252,57 @@ const getProgress = async (req, res) => {
   }
 };
 
+const getCertificate = async (req, res) => {
+  const player_id = safeId(req.params.player_id);
+  if (!player_id) return res.status(400).json({ error: 'Invalid player ID' });
+
+  if (!ownsPlayer(req, player_id))
+    return res.status(403).json({ error: 'Access denied' });
+
+  try {
+    const [players] = await db.query(`
+      SELECT p.id, p.nickname, p.joined_at, s.session_name,
+        COALESCE(sch.school_name, '') as school_name,
+        COALESCE(c.class_name, '') as class_name
+      FROM players p
+      JOIN game_sessions s ON p.session_id = s.id
+      LEFT JOIN schools sch ON s.school_id = sch.id
+      LEFT JOIN classes c ON s.class_id = c.id
+      WHERE p.id = ? AND p.session_id = ?
+    `, [player_id, req.playerChat.session_id]);
+
+    if (players.length === 0)
+      return res.status(404).json({ error: 'Player not found' });
+
+    const [progress] = await db.query(
+      'SELECT checkpoint_number, completed, attempts, completed_at FROM checkpoint_attempts WHERE player_id=? AND session_id=? ORDER BY checkpoint_number',
+      [player_id, req.playerChat.session_id]
+    );
+
+    const completedCount = progress.filter(p => p.completed).length;
+    const score = Math.round((completedCount / 3) * 100);
+    const completedAtValues = progress
+      .filter(p => p.completed_at)
+      .map(p => new Date(p.completed_at).getTime());
+    const completedAt = completedAtValues.length
+      ? new Date(Math.max(...completedAtValues))
+      : new Date();
+
+    res.json({
+      certificate: {
+        ...players[0],
+        score,
+        completed_checkpoints: completedCount,
+        total_checkpoints: 3,
+        completed_at: completedAt,
+      },
+    });
+  } catch (err) {
+    console.error('Certificate error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 // ─── getCheckpointVideos ──────────────────────────────────────────────────────
 const getCheckpointVideos = async (req, res) => {
   try {
@@ -278,5 +329,5 @@ const playerExists = async (req, res) => {
 module.exports = {
   joinGame, savePosition, getPosition,
   recordAttempt, completeCheckpoint,
-  getProgress, getCheckpointVideos, playerExists
+  getProgress, getCertificate, getCheckpointVideos, playerExists
 };

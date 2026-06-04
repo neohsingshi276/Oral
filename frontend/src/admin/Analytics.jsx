@@ -10,6 +10,13 @@ const COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#e11d48', '#9333ea', '#0d9488'
 
 const CP_WEIGHT = 100 / 3;
 
+const escapeHtml = (value = '') => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#039;');
+
 const computeMarks = (players) => {
   const maxCP3 = Math.max(1, ...players.map(p => p.cp3_score || 0));
   return players.map(p => {
@@ -77,6 +84,92 @@ const Analytics = ({ setActive }) => {
     } catch {
       alert('Gagal memuat turun CSV. Sila cuba lagi.');
     }
+  };
+
+  const buildReportRows = () => displayPlayers.map((p, index) => ({
+    rank: index + 1,
+    school: p.school_name || '-',
+    className: p.class_name || '-',
+    session: p.session_name || '-',
+    nickname: p.display_nickname || p.nickname,
+    cp1: Math.round((p.cp1_mark || 0) / 33 * 100),
+    cp1Attempts: p.cp1_attempts || 0,
+    cp2: Math.round((p.cp2_mark || 0) / 33 * 100),
+    cp2Attempts: p.cp2_attempts || 0,
+    cp3: Math.round((p.cp3_mark || 0) / 33 * 100),
+    cp3Attempts: p.cp3_attempts || 0,
+    total: p.total_mark || 0,
+    completed: p.cp3_completed ? 'Completed' : 'In Progress',
+  }));
+
+  const downloadExcel = () => {
+    const rows = buildReportRows();
+    const tableRows = rows.map(row => `
+      <tr>
+        <td>${row.rank}</td><td>${escapeHtml(row.school)}</td><td>${escapeHtml(row.className)}</td><td>${escapeHtml(row.session)}</td>
+        <td>${escapeHtml(row.nickname)}</td><td>${row.cp1}</td><td>${row.cp1Attempts}</td>
+        <td>${row.cp2}</td><td>${row.cp2Attempts}</td><td>${row.cp3}</td><td>${row.cp3Attempts}</td>
+        <td>${row.total}</td><td>${row.completed}</td>
+      </tr>`).join('');
+    const html = `
+      <html><head><meta charset="UTF-8" /></head><body>
+      <table border="1">
+        <thead><tr>
+          <th>Rank</th><th>School</th><th>Class</th><th>Session</th><th>Nickname</th>
+          <th>CP1 Mark /100</th><th>CP1 Attempts</th><th>CP2 Mark /100</th><th>CP2 Attempts</th>
+          <th>CP3 Mark /100</th><th>CP3 Attempts</th><th>Total /100</th><th>Status</th>
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table></body></html>`;
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'dentalquest_report.xls';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const printPdfReport = () => {
+    const rows = buildReportRows();
+    const grouped = rows.reduce((acc, row) => {
+      const key = `${row.school} / ${row.className} / ${row.session}`;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(row);
+      return acc;
+    }, {});
+    const sections = Object.entries(grouped).map(([group, groupRows]) => {
+      const completion = groupRows.length ? Math.round((groupRows.filter(r => r.completed === 'Completed').length / groupRows.length) * 100) : 0;
+      const avg = groupRows.length ? Math.round(groupRows.reduce((sum, r) => sum + r.total, 0) / groupRows.length) : 0;
+      const tableRows = groupRows.map(row => `
+        <tr><td>${row.rank}</td><td>${escapeHtml(row.nickname)}</td><td>${row.cp1}</td><td>${row.cp2}</td><td>${row.cp3}</td><td>${row.total}</td><td>${row.completed}</td></tr>
+      `).join('');
+      return `
+        <section>
+          <h2>${escapeHtml(group)}</h2>
+          <p>${groupRows.length} player(s), ${completion}% completion rate, average total mark ${avg}/100.</p>
+          <table><thead><tr><th>Rank</th><th>Nickname</th><th>CP1</th><th>CP2</th><th>CP3</th><th>Total</th><th>Status</th></tr></thead><tbody>${tableRows}</tbody></table>
+        </section>`;
+    }).join('');
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <html><head><title>DentalQuest Report</title>
+      <style>
+        body{font-family:Arial,sans-serif;color:#1e293b;margin:32px}
+        h1{color:#1e3a5f;margin-bottom:4px} h2{color:#2563eb;margin-top:28px}
+        table{width:100%;border-collapse:collapse;margin-top:12px;page-break-inside:auto}
+        th,td{border:1px solid #cbd5e1;padding:8px;font-size:12px;text-align:left}
+        th{background:#eff6ff} section{break-inside:avoid}
+        @media print{button{display:none} body{margin:18mm}}
+      </style></head><body>
+      <button onclick="window.print()">Print or Save as PDF</button>
+      <h1>DentalQuest Performance Report</h1>
+      <p>Generated ${new Date().toLocaleString()}</p>
+      ${sections || '<p>No player data is available for this report.</p>'}
+      </body></html>`);
+    win.document.close();
   };
 
   if (loading) return <div style={{ color: '#94a3b8', padding: '2rem', textAlign: 'center' }}>Memuatkan analitik... 📊</div>;
@@ -203,6 +296,12 @@ const Analytics = ({ setActive }) => {
             🔀 Perbandingan
           </button>
         )}
+      </div>
+
+      <div style={s.exportBar}>
+        <button style={s.downloadBtn} onClick={downloadCSV}>Download CSV</button>
+        <button style={{ ...s.downloadBtn, background: '#16a34a' }} onClick={downloadExcel}>Download Excel</button>
+        <button style={{ ...s.downloadBtn, background: '#1e3a5f' }} onClick={printPdfReport}>Printable PDF Report</button>
       </div>
 
       {/* Kad Ringkasan */}
@@ -557,6 +656,7 @@ const Analytics = ({ setActive }) => {
 
 const s = {
   filterBar: { display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem', background: '#fff', borderRadius: '12px', padding: '0.85rem 1.25rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', flexWrap: 'wrap' },
+  exportBar: { display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', marginBottom: '1.25rem', flexWrap: 'wrap' },
   filterLabel: { fontSize: '0.88rem', fontWeight: '600', color: '#475569', whiteSpace: 'nowrap' },
   filterSelect: { flex: 1, minWidth: '200px', padding: '0.5rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', color: '#1e293b', background: '#f8fafc', cursor: 'pointer' },
   clearBtn: { background: '#fff1f2', color: '#e11d48', border: 'none', borderRadius: '8px', padding: '0.4rem 0.85rem', fontWeight: '600', fontSize: '0.82rem', cursor: 'pointer' },
