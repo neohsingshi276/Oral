@@ -64,12 +64,34 @@ const ManageQuiz = () => {
   const [sessions, setSessions] = useState([]);
   const [selSession, setSelSession] = useState('');
   const [qSettings, setQSettings] = useState({ timer_seconds: 15, question_order: 'shuffle', question_count: 10 });
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [orderFilter, setOrderFilter] = useState('desc');
   const fileRef = useRef();
 
-  const fetchQuestions = () => api.get('/quiz/admin/questions').then(res => setQuestions(res.data.questions));
+  const fetchQuestions = () => {
+    console.log('QUIZ FILTER:', { search, typeFilter, orderFilter });
+    api.get('/quiz/admin/questions', {
+      params: {
+        search,
+        type: typeFilter,
+        order: orderFilter
+      }
+    }).then(res => setQuestions(res.data.questions));
+  };
   const fetchSessions = () => api.get('/sessions').then(res => setSessions(res.data.sessions));
 
-  useEffect(() => { fetchQuestions(); fetchSessions(); }, []);
+  useEffect(() => {
+    fetchSessions();
+  }, []);
+
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      fetchQuestions();
+    }, 300);
+
+    return () => clearTimeout(delay);
+  }, [search, typeFilter, orderFilter]);
 
   useEffect(() => {
     if (selSession) {
@@ -368,8 +390,18 @@ const ManageQuiz = () => {
                 <div style={s.field}>
                   <label style={s.label}>
                     Pilihan Jawapan
-                    <span style={s.labelHint}>{form.question_type === 'multi_select' ? '(klik beberapa untuk tetapkan jawapan betul)' : '(klik untuk tetapkan jawapan betul)'}</span>
+                    <span style={s.labelHint}>
+                      {form.question_type === 'multi_select'
+                        ? '(klik satu atau lebih jawapan betul)'
+                        : '(klik bulatan A/B/C/D untuk pilih jawapan betul)'}
+                    </span>
                   </label>
+
+                  {form.correct_answer.length === 0 && (
+                    <div style={s.correctWarning}>
+                      ⚠️ Sila pilih jawapan yang betul sebelum tekan Tambah Soalan.
+                    </div>
+                  )}
                   <div style={s.optionsList}>
                     {form.options.map((opt, idx) => (
                       <div key={idx} style={s.optionRow}>
@@ -418,6 +450,35 @@ const ManageQuiz = () => {
           {/* Senarai soalan */}
           <div style={s.card}>
             <h2 style={s.cardTitle}><span>❓ Semua Soalan</span> ({questions.length})</h2>
+            <div style={s.filterBar}>
+            <input
+              style={s.input}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search question..."
+            />
+
+            <select
+              style={s.input}
+              value={typeFilter}
+              onChange={e => setTypeFilter(e.target.value)}
+            >
+              <option value="all">All Question Types</option>
+              <option value="multiple_choice">Multiple Choice</option>
+              <option value="true_false">True / False</option>
+              <option value="multi_select">Multi Select</option>
+              <option value="match">Matching</option>
+            </select>
+
+            <select
+              style={s.input}
+              value={orderFilter}
+              onChange={e => setOrderFilter(e.target.value)}
+            >
+              <option value="desc">Latest Added</option>
+              <option value="asc">Oldest Added</option>
+            </select>
+          </div>
             <div style={s.qList}>
               {questions.map((q, i) => {
                 const opts = pickQuestionOptions(q, language);
@@ -431,15 +492,40 @@ const ManageQuiz = () => {
                         <span style={s.qTypeBadge}>{typeInfo?.label}</span>
                       </div>
                       {q.image_url && <img src={q.image_url} alt="" style={s.qImg} />}
-                      <p style={s.qText} data-no-translate="true">{pickQuestionText(q, language)}</p>
+                      <p style={s.qText} data-no-translate="true">
+                        <strong>BM:</strong> {q.question}
+                      </p>
+
+                      {q.question_bi && (
+                        <p style={s.qTextBi} data-no-translate="true">
+                          <strong>BI:</strong> {q.question_bi}
+                        </p>
+                      )}
                       {q.question_type !== 'match' && (
                         <div style={s.qOpts}>
-                          {opts.map((opt, idx) => (
-                            <span key={idx} style={{ ...s.qOpt, ...(ca.includes(idx) ? s.qOptCorrect : {}) }} data-no-translate="true">
-                              {String.fromCharCode(65 + idx)}: {opt}
-                              {ca.includes(idx) && ' ✓'}
-                            </span>
-                          ))}
+                          {parseMaybeJsonArray(q.options).map((opt, idx) => {
+                            const biOpts = parseMaybeJsonArray(q.options_bi);
+                            const biOpt = biOpts[idx];
+
+                            return (
+                              <span
+                                key={idx}
+                                style={{ ...s.qOpt, ...(ca.includes(idx) ? s.qOptCorrect : {}) }}
+                                data-no-translate="true"
+                              >
+                                {String.fromCharCode(65 + idx)}:
+                                <br />
+                                <strong>BM:</strong> {opt}
+                                {biOpt && (
+                                  <>
+                                    <br />
+                                    <strong>BI:</strong> {biOpt}
+                                  </>
+                                )}
+                                {ca.includes(idx) && ' ✓'}
+                              </span>
+                            );
+                          })}
                         </div>
                       )}
                       {q.question_type === 'match' && (
@@ -551,6 +637,9 @@ const s = {
   btnEdit: { background: '#eff6ff', color: '#2563eb', border: 'none', borderRadius: '6px', padding: '0.35rem 0.6rem', cursor: 'pointer', fontSize: '0.82rem' },
   btnDelete: { background: '#fff1f2', color: '#e11d48', border: 'none', borderRadius: '6px', padding: '0.35rem 0.6rem', cursor: 'pointer', fontSize: '0.82rem' },
   muted: { color: '#94a3b8', textAlign: 'center', padding: '2rem', fontSize: '0.9rem' },
+  filterBar: { display: 'grid', gridTemplateColumns: '1fr 220px 180px', gap: '0.75rem', marginBottom: '1rem' },
+  qTextBi: { fontWeight: '500', color: '#64748b', margin: '0 0 0.4rem', fontSize: '0.86rem' },
+  correctWarning: { background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa', borderRadius: '8px', padding: '0.5rem 0.75rem', fontSize: '0.82rem', fontWeight: '600', marginBottom: '0.6rem' },
 };
 
 export default ManageQuiz;

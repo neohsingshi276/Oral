@@ -15,6 +15,9 @@ const emptyForm = {
 const ManageFacts = () => {
   const [facts, setFacts] = useState([]);
   const [form, setForm] = useState(emptyForm);
+  // I added this 2 line
+  const [search, setSearch] = useState('');
+  const [orderFilter, setOrderFilter] = useState('desc');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [editing, setEditing] = useState(null);
@@ -22,8 +25,23 @@ const ManageFacts = () => {
   const [translating, setTranslating] = useState(false);
   const fileRef = useRef();
 
-  const fetchFacts = () => api.get('/facts').then(res => setFacts(res.data.facts));
-  useEffect(() => { fetchFacts(); }, []);
+  // I replace this part...
+  const fetchFacts = () => {
+    api.get('/facts', {
+      params: {
+        search,
+        order: orderFilter
+      }
+    }).then(res => setFacts(res.data.facts));
+  };
+
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      fetchFacts();
+    }, 300);
+
+    return () => clearTimeout(delay);
+  }, [search, orderFilter]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -186,6 +204,25 @@ const ManageFacts = () => {
 
       <div style={s.card}>
         <h2 style={s.cardTitle}>💡 Semua Fakta ({facts.length})</h2>
+
+        {/* I added this part */}
+        <div style={s.filterBar}>
+          <input
+            style={s.input}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search title or content..."
+          />
+          <select
+            style={s.input}
+            value={orderFilter}
+            onChange={e => setOrderFilter(e.target.value)}
+          >
+            <option value="desc">Newest First</option>
+            <option value="asc">Oldest First</option>
+          </select>
+        </div>
+
         <div style={s.factsList}>
           {facts.map((fact) => (
             <div key={fact.id} style={s.factItem}>
@@ -254,6 +291,7 @@ const s = {
   btnEdit: { background: '#eff6ff', color: '#2563eb', border: 'none', borderRadius: '6px', padding: '0.35rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '600' },
   btnDelete: { background: '#fff1f2', color: '#e11d48', border: 'none', borderRadius: '6px', padding: '0.35rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '600' },
   muted: { color: '#94a3b8', fontSize: '0.9rem', textAlign: 'center', padding: '2rem' },
+  filterBar: { display: 'grid', gridTemplateColumns: '1fr 220px', gap: '0.75rem', marginBottom: '1rem' },
 };
 
 export default ManageFacts;

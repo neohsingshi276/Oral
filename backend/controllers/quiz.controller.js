@@ -1,3 +1,4 @@
+const { logActivity } = require('./activity.controller');
 const db = require('../db');
 const { translateBmToBi, translateBiToBm, translateOptions } = require('../services/translate.service');
 
@@ -157,14 +158,41 @@ const getLeaderboard = async (req, res) => {
 
 const getAllQuestions = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM quiz_questions ORDER BY id');
+    const search = (req.query.search || '').trim();
+    const type = req.query.type || 'all';
+    const order = req.query.order === 'asc' ? 'ASC' : 'DESC';
+
+    let sql = `
+      SELECT * FROM quiz_questions
+      WHERE (
+        question LIKE ?
+        OR COALESCE(question_bi, '') LIKE ?
+      )
+    `;
+
+    const params = [`%${search}%`, `%${search}%`];
+
+    if (type !== 'all') {
+      sql += ` AND question_type = ?`;
+      params.push(type);
+    }
+
+    sql += ` ORDER BY id ${order}`;
+
+    const [rows] = await db.query(sql, params);
+
     const questions = rows.map(q => ({
       ...q,
       options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+      options_bi: typeof q.options_bi === 'string' ? JSON.parse(q.options_bi) : q.options_bi,
       correct_answer: typeof q.correct_answer === 'string' ? JSON.parse(q.correct_answer) : q.correct_answer,
     }));
+
     res.json({ questions });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    console.error('Get quiz questions error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
 const parseJsonField = (value, fieldName) => {
@@ -233,6 +261,7 @@ const addQuestion = async (req, res) => {
       'INSERT INTO quiz_questions (question, question_bi, question_type, image_url, options, options_bi, correct_answer, timer_seconds) VALUES (?,?,?,?,?,?,?,?)',
       [questionBm, questionBi, question_type, image_url, optionsBm, optionsBi, JSON.stringify(correct_answer), timer_seconds || 15]
     );
+    await logActivity(req.admin.id, 'Added quiz question', `Question ID: ${result.insertId}`);
     res.status(201).json({ message: 'Question added', id: result.insertId });
   } catch (err) { res.status(err.status || 500).json({ error: err.status ? err.message : 'Server error' }); }
 };
@@ -272,6 +301,7 @@ const updateQuestion = async (req, res) => {
         [questionBm, questionBi, question_type, optionsBm, optionsBi, JSON.stringify(correct_answer), timer_seconds || 15, req.params.id]
       );
     }
+    await logActivity(req.admin.id, 'Updated quiz question', `Question ID: ${req.params.id}`);
     res.json({ message: 'Question updated' });
   } catch (err) { res.status(err.status || 500).json({ error: err.status ? err.message : 'Server error' }); }
 };
@@ -280,6 +310,7 @@ const deleteQuestion = async (req, res) => {
   try {
     // Image stored in DB so just delete the row — nothing to clean up on disk
     await db.query('DELETE FROM quiz_questions WHERE id=?', [req.params.id]);
+    await logActivity(req.admin.id, 'Deleted quiz question', `Question ID: ${req.params.id}`);
     res.json({ message: 'Question deleted' });
   } catch (err) { res.status(500).json({ error: 'Server error' }); }
 };
@@ -295,9 +326,9 @@ const saveQuizSettings = async (req, res) => {
   const { session_id, timer_seconds, question_order, question_count, minimum_correct, selected_questions } = req.body;
   try {
     await db.query(
-      `INSERT INTO quiz_settings (session_id, timer_seconds, question_order, question_count, minimum_correct, selected_questions)
-       VALUES (?,?,?,?,?,?)
-       ON DUPLICATE KEY UPDATE
+`INSERT INTO quiz_settings (session_id, timer_seconds, question_order, question_count, minimum_correct, selected_questions)
+VALUES (?,?,?,?,?,?)
+ON DUPLICATE KEY UPDATE
          timer_seconds=?, question_order=?, question_count=?, minimum_correct=?, selected_questions=?`,
       [
         session_id, timer_seconds, question_order, question_count,

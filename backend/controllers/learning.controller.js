@@ -1,3 +1,4 @@
+const { logActivity } = require('./activity.controller');
 // ============================================
 // controllers/learning.controller.js
 // ============================================
@@ -20,11 +21,25 @@ const getNextOrderNum = async () => {
   return Number.isInteger(next) && next >= 1 ? next : 1;
 };
 
+// I replace this part...
 const getAllVideos = async (req, res) => {
   try {
-    const [rows] = await db.query(
-      'SELECT * FROM learning_videos ORDER BY order_num ASC, id ASC'
-    );
+    const search = (req.query.search || '').trim();
+    const order = req.query.order === 'desc' ? 'DESC' : 'ASC';
+
+    let sql = `
+      SELECT * FROM learning_videos
+      WHERE (
+        title LIKE ?
+        OR COALESCE(description, '') LIKE ?
+      )
+      ORDER BY CAST(order_num AS UNSIGNED) ${order}, id ${order}
+    `;
+
+    const searchTerm = `%${search}%`;
+
+    const [rows] = await db.query(sql, [searchTerm, searchTerm]);
+
     res.json({ videos: rows });
   } catch (err) {
     console.error('Get videos error:', err.message);
@@ -93,6 +108,7 @@ const addVideo = async (req, res) => {
       'INSERT INTO learning_videos (title, description, youtube_url, order_num, title_bi, description_bi) VALUES (?, ?, ?, ?, ?, ?)',
       [titleBm, descriptionBm, youtube_url.trim(), finalOrder, titleBi, descriptionBi]
     );
+    await logActivity(req.admin.id, 'Added learning video', `Video: ${title.trim()}`);
     res.status(201).json({ message: 'Video added', videoId: result.insertId });
   } catch (err) {
     console.error('Add video error:', err.message);
@@ -125,6 +141,7 @@ const updateVideo = async (req, res) => {
       'UPDATE learning_videos SET title=?, description=?, youtube_url=?, order_num=?, title_bi=?, description_bi=? WHERE id=?',
       [titleBm, descriptionBm, youtube_url.trim(), parsedOrder, titleBi, descriptionBi, req.params.id]
     );
+    await logActivity(req.admin.id, 'Updated learning video', `Video ID: ${req.params.id}`);
     res.json({ message: 'Video updated' });
   } catch (err) {
     console.error('Update video error:', err.message);
@@ -135,6 +152,7 @@ const updateVideo = async (req, res) => {
 const deleteVideo = async (req, res) => {
   try {
     await db.query('DELETE FROM learning_videos WHERE id = ?', [req.params.id]);
+    await logActivity(req.admin.id, 'Deleted learning video', `Video ID: ${req.params.id}`);
     res.json({ message: 'Video deleted' });
   } catch (err) {
     console.error('Delete video error:', err.message);

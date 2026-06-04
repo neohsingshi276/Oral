@@ -1,5 +1,6 @@
 const { logActivity } = require('./activity.controller');
 const db = require('../db');
+const { translateBmToBi, translateBiToBm } = require('../services/translate.service');
 
 // ============================================
 // AUTO-LAYOUT GENERATOR (v2)
@@ -460,9 +461,39 @@ const getLeaderboard = async (req, res) => {
 // ─── getAllWords ───────────────────────────────────────────────────────────────
 const getAllWords = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM crossword_data ORDER BY id');
+    const search = (req.query.search || '').trim();
+    const sort = req.query.sort || 'latest';
+    const order = req.query.order === 'asc' ? 'ASC' : 'DESC';
+
+    let orderBy = 'id DESC';
+
+    if (sort === 'word') {
+      orderBy = `word ${order}`;
+    } else if (sort === 'letters') {
+      orderBy = `CHAR_LENGTH(word) ${order}, word ASC`;
+    } else if (sort === 'latest') {
+      orderBy = `id ${order}`;
+    }
+
+    const searchTerm = `%${search}%`;
+
+    const [rows] = await db.query(
+      `
+      SELECT *
+      FROM crossword_data
+      WHERE (
+        word LIKE ?
+        OR COALESCE(clue, '') LIKE ?
+        OR COALESCE(clue_bi, '') LIKE ?
+      )
+      ORDER BY ${orderBy}
+      `,
+      [searchTerm, searchTerm, searchTerm]
+    );
+
     res.json({ words: rows });
   } catch (err) {
+    console.error('Get crossword words error:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -471,7 +502,7 @@ const getAllWords = async (req, res) => {
 // FIX: Added full input validation — presence, type, length, and letter-only
 // check for word — preventing DB errors and bad crossword data.
 const addWord = async (req, res) => {
-  const { word, clue } = req.body;
+  const { word, clue, clue_bi, source_language = 'bm' } = req.body;
 
   if (!word || typeof word !== 'string' || word.trim().length === 0)
     return res.status(400).json({ error: 'Word is required' });
@@ -485,10 +516,23 @@ const addWord = async (req, res) => {
     return res.status(400).json({ error: 'Word must contain letters only — no spaces or symbols' });
 
   try {
+    const finalClue = clue.trim();
+
+    const finalClueBm = source_language === 'bi'
+      ? await translateBiToBm(finalClue)
+      : finalClue;
+
+    const finalClueBi = clue_bi?.trim()
+      ? clue_bi.trim()
+      : source_language === 'bi'
+        ? finalClue
+        : await translateBmToBi(finalClue);
+
     const [result] = await db.query(
-      'INSERT INTO crossword_data (word, clue) VALUES (?, ?)',
-      [word.trim().toUpperCase(), clue.trim()]
+      'INSERT INTO crossword_data (word, clue, clue_bi) VALUES (?, ?, ?)',
+      [word.trim().toUpperCase(), finalClueBm, finalClueBi]
     );
+
     await logActivity(req.admin.id, 'Added crossword word', `Word: ${word.trim().toUpperCase()}`);
     res.status(201).json({ message: 'Word added', id: result.insertId });
   } catch (err) {
@@ -499,7 +543,7 @@ const addWord = async (req, res) => {
 
 // ─── updateWord ───────────────────────────────────────────────────────────────
 const updateWord = async (req, res) => {
-  const { word, clue } = req.body;
+  const { word, clue, clue_bi, source_language = 'bm' } = req.body;
 
   if (!word || typeof word !== 'string' || word.trim().length === 0)
     return res.status(400).json({ error: 'Word is required' });
@@ -513,9 +557,21 @@ const updateWord = async (req, res) => {
     return res.status(400).json({ error: 'Word must contain letters only — no spaces or symbols' });
 
   try {
+    const finalClue = clue.trim();
+
+    const finalClueBm = source_language === 'bi'
+      ? await translateBiToBm(finalClue)
+      : finalClue;
+
+    const finalClueBi = clue_bi?.trim()
+      ? clue_bi.trim()
+      : source_language === 'bi'
+        ? finalClue
+        : await translateBmToBi(finalClue);
+
     await db.query(
-      'UPDATE crossword_data SET word=?, clue=? WHERE id=?',
-      [word.trim().toUpperCase(), clue.trim(), req.params.id]
+      'UPDATE crossword_data SET word=?, clue=?, clue_bi=? WHERE id=?',
+      [word.trim().toUpperCase(), finalClueBm, finalClueBi, req.params.id]
     );
     await logActivity(req.admin.id, 'Updated crossword word', `Word ID: ${req.params.id}`);
     res.json({ message: 'Word updated' });

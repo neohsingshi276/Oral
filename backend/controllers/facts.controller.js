@@ -1,11 +1,29 @@
+const { logActivity } = require('./activity.controller');
 const db = require('../db');
 const { translateBmToBi, translateBiToBm } = require('../services/translate.service');
 
+// I replace this
 const getAllFacts = async (req, res) => {
   try {
+    const search = (req.query.search || '').trim();
+    const order = req.query.order === 'asc' ? 'ASC' : 'DESC';
+
+    const searchTerm = `%${search}%`;
+
     const [rows] = await db.query(
-      'SELECT f.*, a.name as author FROM facts f JOIN admins a ON f.created_by = a.id ORDER BY f.created_at DESC'
+      `
+      SELECT f.*, a.name as author
+      FROM facts f
+      JOIN admins a ON f.created_by = a.id
+      WHERE (
+        f.title LIKE ?
+        OR COALESCE(f.content, '') LIKE ?
+      )
+      ORDER BY f.created_at ${order}, f.id ${order}
+      `,
+      [searchTerm, searchTerm]
     );
+
     res.json({ facts: rows });
   } catch (err) {
     console.error('Get facts error:', err.message);
@@ -59,6 +77,7 @@ const addFact = async (req, res) => {
       'INSERT INTO facts (created_by, title, content, image_url, title_bi, content_bi) VALUES (?, ?, ?, ?, ?, ?)',
       [req.admin.id, titleBm, contentBm, image_url, titleBi, contentBi]
     );
+    await logActivity(req.admin.id, 'Added fact', `Fact: ${title.trim()}`);
     res.status(201).json({ message: 'Fact added', factId: result.insertId });
   } catch (err) {
     console.error('Add fact error:', err.message);
@@ -92,6 +111,7 @@ const updateFact = async (req, res) => {
         [titleBm, contentBm, titleBi, contentBi, req.params.id]
       );
     }
+    await logActivity(req.admin.id, 'Updated fact', `Fact ID: ${req.params.id}`);
     res.json({ message: 'Fact updated' });
   } catch (err) {
     console.error('Update fact error:', err.message);
@@ -102,6 +122,7 @@ const updateFact = async (req, res) => {
 const deleteFact = async (req, res) => {
   try {
     await db.query('DELETE FROM facts WHERE id = ?', [req.params.id]);
+    await logActivity(req.admin.id, 'Deleted fact', `Fact ID: ${req.params.id}`);
     res.json({ message: 'Fact deleted' });
   } catch (err) {
     console.error('Delete fact error:', err.message);

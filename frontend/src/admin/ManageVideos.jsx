@@ -18,12 +18,33 @@ const ManageVideos = () => {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
+  // I Add Here
+  const [search, setSearch] = useState('');
+  const [orderFilter, setOrderFilter] = useState('asc');
   const [editing, setEditing] = useState(null);
   const [msg, setMsg] = useState('');
   const [translating, setTranslating] = useState(false);
 
-  const fetchVideos = () => { api.get('/videos').then(res => setVideos(res.data.videos)).finally(() => setLoading(false)); };
-  useEffect(() => { fetchVideos(); }, []);
+  // I replace this part...
+  const fetchVideos = () => {
+    if (videos.length === 0) setLoading(true);
+    api.get('/videos', {
+      params: {
+        search,
+        order: orderFilter
+      }
+    })
+      .then(res => setVideos(res.data.videos))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      fetchVideos();
+    }, 300);
+
+    return () => clearTimeout(delay);
+  }, [search, orderFilter]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -164,11 +185,29 @@ const ManageVideos = () => {
       </div>
 
       <div style={s.card}>
-        <h2 style={s.cardTitle}>📹 Senarai Video ({videos.length})</h2>
-        {loading ? <p style={s.muted}>Memuatkan...</p> : (
+        <h2 style={s.cardTitle}>📹 List of Videos ({videos.length})</h2>
+        {/* I added here */}
+        <div style={s.filterBar}>
+          <input
+            style={s.input}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search title or description..."
+          />
+          <select
+            style={s.input}
+            value={orderFilter}
+            onChange={e => setOrderFilter(e.target.value)}
+          >
+            <option value="asc">Order: Ascending</option>
+            <option value="desc">Order: Descending</option>
+          </select>
+        </div>
+
+        {loading ? <p style={s.muted}>Loading...</p> : (
           <table style={s.table}>
             <thead><tr style={s.thead}>
-              <th style={s.th}>#</th><th style={s.th}>Tajuk</th><th style={s.th}>BI</th><th style={s.th}>Tindakan</th>
+              <th style={s.th}>#</th><th style={s.th}>Title</th><th style={s.th}>BI</th><th style={s.th}>Actions</th>
             </tr></thead>
             <tbody>
               {videos.map((v, i) => (
@@ -177,8 +216,8 @@ const ManageVideos = () => {
                   <td style={s.td} data-no-translate="true"><strong>{v.title}</strong><br /><span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{v.description?.slice(0, 50)}...</span></td>
                   <td style={s.td}>{v.title_bi ? <span style={s.biBadgeOk}>✓</span> : <span style={s.biBadgeMissing}>✗</span>}</td>
                   <td style={s.td}>
-                    <button style={s.btnEdit} onClick={() => handleEdit(v)}>✏️ Ubahsuai</button>
-                    <button style={s.btnDelete} onClick={() => handleDelete(v.id)}>🗑️</button>
+                    <button style={s.btnEdit} onClick={() => handleEdit(v)}>✏️ Edit</button>
+                    <button style={s.btnDelete} onClick={() => handleDelete(v.id)}>🗑️ Delete</button>
                   </td>
                 </tr>
               ))}
@@ -222,6 +261,8 @@ const s = {
   biBadgeOk: { background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: '4px', padding: '0.15rem 0.5rem', fontSize: '0.78rem', fontWeight: '700' },
   biBadgeMissing: { background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', borderRadius: '4px', padding: '0.15rem 0.5rem', fontSize: '0.78rem', fontWeight: '700' },
   muted: { color: '#94a3b8', fontSize: '0.9rem' },
+  // I add here
+  filterBar: { display: 'grid', gridTemplateColumns: '1fr 220px', gap: '0.75rem', marginBottom: '1rem' },
 };
 
 export default ManageVideos;
