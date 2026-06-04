@@ -7,6 +7,10 @@ const { sendInviteEmail, sendReminderEmail } = require('../services/email.servic
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ─── getPlayers ───────────────────────────────────────────────────────────────
+// FIX: A display_nickname field is appended to each player row. When two or more
+// players in the same session share the same nickname, a "#1", "#2" suffix is
+// added based on join order — so "Ali" becomes "Ali #1" and "Ali #2" in the
+// admin dashboard. The stored nickname is never changed.
 const getPlayers = async (req, res) => {
   try {
 
@@ -34,9 +38,43 @@ const getPlayers = async (req, res) => {
   GROUP BY p.id
   ORDER BY p.joined_at DESC
 `, [req.admin.role, req.admin.id]);
+
+    // FIX: Disambiguate duplicate nicknames within the same session.
+    // Group players by session_id + lowercase nickname, then number duplicates
+    // by join order so the admin can tell them apart without editing stored data.
+    disambiguateNicknames(rows);
+
     res.json({ players: rows });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// ─── disambiguateNicknames ────────────────────────────────────────────────────
+// Mutates each row to add a display_nickname. Unique nicknames within a session
+// get display_nickname === nickname. Duplicates get " #1", " #2" suffixes
+// ordered by joined_at (ascending — first to join = #1).
+const disambiguateNicknames = (rows) => {
+  // Sort a working copy by joined_at asc so #1 = earliest joiner
+  const byJoin = [...rows].sort((a, b) => new Date(a.joined_at) - new Date(b.joined_at));
+
+  // Count occurrences per (session_id, lowercased nickname)
+  const counts = {};
+  for (const r of byJoin) {
+    const key = `${r.session_id}::${r.nickname.toLowerCase()}`;
+    counts[key] = (counts[key] || 0) + 1;
+  }
+
+  // Assign suffix indices in join order
+  const seen = {};
+  for (const r of byJoin) {
+    const key = `${r.session_id}::${r.nickname.toLowerCase()}`;
+    if (counts[key] === 1) {
+      r.display_nickname = r.nickname;
+    } else {
+      seen[key] = (seen[key] || 0) + 1;
+      r.display_nickname = `${r.nickname} #${seen[key]}`;
+    }
   }
 };
 
@@ -59,6 +97,7 @@ const downloadCSV = async (req, res) => {
         MAX(CASE WHEN ca.checkpoint_number = 3 THEN ca.attempts  END) as cp3_attempts,
         MAX(qs.score)            as quiz_score,
         MAX(qs.correct_answers)  as quiz_correct,
+        MAX(qs.total_questions)  as quiz_total,
         MAX(cp3.score)           as cp3_score
       FROM players p
       JOIN game_sessions s ON p.session_id = s.id
@@ -74,6 +113,10 @@ const downloadCSV = async (req, res) => {
     const allCp3Scores = rows.map(r => r.cp3_score || 0);
     const maxCP3 = Math.max(1, ...allCp3Scores);
 
+    // FIX: Disambiguate duplicate nicknames in the CSV so "Ali" becomes
+    // "Ali #1" / "Ali #2" based on join order — same logic as getPlayers().
+    disambiguateNicknames(rows);
+
     rows.forEach(r => {
       const allQuizScores = rows.map(x => x.quiz_score || 0);
       const maxQuiz = Math.max(1, ...allQuizScores);
@@ -83,9 +126,9 @@ const downloadCSV = async (req, res) => {
       const cp2Exact = r.cp2_completed ? CP_WEIGHT : 0;
       const cp3Exact = r.cp3_score ? Math.min(CP_WEIGHT, (r.cp3_score / maxCP3) * CP_WEIGHT) : 0;
       const totalExact = cp1Exact + cp2Exact + cp3Exact;
-      r._cp1_mark   = Math.round(cp1Exact);
-      r._cp2_mark   = Math.round(cp2Exact);
-      r._cp3_mark   = Math.round(cp3Exact);
+      r._cp1_mark = Math.round(cp1Exact);
+      r._cp2_mark = Math.round(cp2Exact);
+      r._cp3_mark = Math.round(cp3Exact);
       r._total_mark = totalExact >= 99.5 ? 100 : Math.floor(totalExact);
     });
 
@@ -109,7 +152,7 @@ const downloadCSV = async (req, res) => {
     const csvRows = [headers.map(csvEscape).join(',')];
     rows.forEach(r => {
       csvRows.push([
-        r.nickname, r.session_name,
+        r.display_nickname, r.session_name,
         new Date(r.joined_at).toLocaleDateString(),
         r.cp1_completed ? 'Yes' : 'No', r.cp1_attempts || 0,
         r.cp2_completed ? 'Yes' : 'No', r.cp2_attempts || 0,

@@ -119,7 +119,8 @@ const GamePage = () => {
   // definition throws ReferenceError at runtime.
   const fetchProgress = async (playerId) => {
     try {
-      const res = await api.get(`/game/progress/${playerId}`);
+      const chatConfig = getPlayerChatConfig();
+      const res = await api.get(`/game/progress/${playerId}`, chatConfig);
       setProgress(res.data.progress);
       const allCompleted = res.data.progress.every(p => p.completed);
       if (allCompleted && res.data.progress.length === 3) {
@@ -167,8 +168,9 @@ const GamePage = () => {
   // FIX: Await the attempt API call so failures are caught and logged.
   // Previously fire-and-forget meant failed attempts were silently swallowed.
   const handleCheckpointReached = async (cpId) => {
+    const chatConfig = getPlayerChatConfig();
     try {
-      await api.post('/game/attempt', { player_id: player.id, checkpoint_number: cpId });
+      await api.post('/game/attempt', { player_id: player.id, checkpoint_number: cpId }, chatConfig);
     } catch (err) {
       console.error('Failed to record checkpoint attempt:', err);
     }
@@ -179,8 +181,9 @@ const GamePage = () => {
   const handleVideoWatched = () => setCpStep('activity');
 
   const handleActivityDone = async () => {
+    const chatConfig = getPlayerChatConfig();
     try {
-      await api.post('/game/complete', { player_id: player.id, checkpoint_number: activeCP });
+      await api.post('/game/complete', { player_id: player.id, checkpoint_number: activeCP }, chatConfig);
       await fetchProgress(player.id);
     } catch (err) {
       console.error('Failed to save checkpoint completion:', err);
@@ -201,7 +204,8 @@ const GamePage = () => {
 
   const handleQuizRetry = () => {
     // Force student to re-watch the video before retrying the activity
-    api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }).catch(console.error);
+    const chatConfig = getPlayerChatConfig();
+    api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }, chatConfig).catch(console.error);
     setQuizKey(prev => prev + 1);
     setCpStep('video');
   };
@@ -769,7 +773,7 @@ const GamePage = () => {
                 onComplete={handleActivityDone}
                 onRetry={() => {
                   // Force student to re-watch the video before retrying crossword
-                  api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }).catch(console.error);
+                  api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }, getPlayerChatConfig()).catch(console.error);
                   setCrosswordKey(prev => prev + 1);
                   setCpStep('video');
                 }}
@@ -791,7 +795,7 @@ const GamePage = () => {
                   <button
                     style={{ ...s.continueBtn, background: '#64748b', flex: '0 0 auto', width: 'auto', padding: '0.85rem 1.25rem', fontSize: '0.9rem' }}
                     onClick={() => {
-                      api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }).catch(console.error);
+                      api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }, getPlayerChatConfig()).catch(console.error);
                       if (activeCP === 1) setQuizKey(prev => prev + 1);
                       if (activeCP === 2) setCrosswordKey(prev => prev + 1);
                       setCpStep('video');
@@ -857,7 +861,7 @@ const GamePage = () => {
           </div>
           {!player?.chat_token && (
             <div style={{ padding: '0 0.75rem 0.75rem', color: '#e11d48', fontSize: '0.78rem' }}>
-                  {t('game.chatToken')}
+              {t('game.chatToken')}
             </div>
           )}
         </div>

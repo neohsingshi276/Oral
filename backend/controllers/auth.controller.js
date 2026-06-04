@@ -55,6 +55,9 @@ const register = async (req, res) => {
 // ─── login ────────────────────────────────────────────────────────────────────
 // FIX: Return a single generic error for both "no email" and "wrong password"
 // to prevent email enumeration attacks.
+// FIX: Include token_version in the JWT payload. Incrementing token_version
+// (on logout or password reset) instantly invalidates all existing tokens
+// for that admin without needing a token blacklist.
 const login = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
@@ -75,7 +78,7 @@ const login = async (req, res) => {
     await logActivity(admin.id, 'Logged in', `Signed in as ${admin.email}`);
 
     const token = jwt.sign(
-      { id: admin.id, email: admin.email, role: admin.role },
+      { id: admin.id, email: admin.email, role: admin.role, tv: admin.token_version || 0 },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -83,6 +86,25 @@ const login = async (req, res) => {
       token,
       admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role, created_at: admin.created_at }
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// ─── logout ───────────────────────────────────────────────────────────────────
+// FIX: Increments token_version on the admins row. Since the JWT payload
+// contains the version at time of issue (tv), verifyToken rejects any token
+// whose tv is lower than the current DB value — effectively revoking all
+// previously issued tokens for this admin instantly.
+const logout = async (req, res) => {
+  try {
+    await db.query(
+      'UPDATE admins SET token_version = token_version + 1 WHERE id = ?',
+      [req.admin.id]
+    );
+    await logActivity(req.admin.id, 'Logged out', `Signed out as ${req.admin.email}`);
+    res.json({ message: 'Logged out successfully' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -186,6 +208,9 @@ const verifyOTP = async (req, res) => {
 };
 
 // ─── resetPassword ────────────────────────────────────────────────────────────
+// FIX: Increments token_version after a password reset so all previously
+// issued tokens are immediately invalidated — no old session can persist
+// after a password change.
 const resetPassword = async (req, res) => {
   const { resetToken, newPassword } = req.body;
   if (!resetToken || !newPassword)
@@ -198,7 +223,13 @@ const resetPassword = async (req, res) => {
   try {
     const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
     const hash = await bcrypt.hash(newPassword, 10);
-    await db.query('UPDATE admins SET password_hash = ? WHERE id = ?', [hash, decoded.adminId]);
+    // FIX: Bump token_version at the same time as password change so all
+    // existing sessions (including the one that might be compromised) are
+    // invalidated immediately.
+    await db.query(
+      'UPDATE admins SET password_hash = ?, token_version = token_version + 1 WHERE id = ?',
+      [hash, decoded.adminId]
+    );
     await logActivity(decoded.adminId, 'Reset password', `Password reset completed for ${decoded.email}`);
     res.json({ message: 'Password reset successfully!' });
   } catch (err) {
@@ -206,4 +237,4 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe, forgotPassword, verifyOTP, resetPassword };
+module.exports = { register, login, logout, getMe, forgotPassword, verifyOTP, resetPassword };

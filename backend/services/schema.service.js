@@ -119,6 +119,13 @@ const ensureSchema = async () => {
 
   // crossword clues (words stay in English — only clues need translation)
   await safeAlter("ALTER TABLE crossword_data ADD COLUMN clue_bi TEXT NULL");
+
+  // ── Token revocation ───────────────────────────────────────────────────────
+  // FIX: Add token_version to admins table. login() includes the current value
+  // in the JWT payload (tv). verifyToken() rejects any token whose tv is lower
+  // than the DB value — so logout and password reset instantly invalidate all
+  // previously issued tokens for that admin.
+  await safeAlter("ALTER TABLE admins ADD COLUMN token_version INT NOT NULL DEFAULT 0");
 };
 
 module.exports = { ensureSchema };

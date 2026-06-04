@@ -27,6 +27,12 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
     return progressRef.current.find(p => p.checkpoint_number === cpId - 1)?.completed ?? false;
   }, []);
 
+  // FIX: Helper to build auth config for player-protected game routes.
+  // All endpoints that read/write per-player data now require the chat JWT.
+  const playerAuthConfig = useCallback(() => ({
+    headers: { Authorization: `Bearer ${player.chat_token}` },
+  }), [player.chat_token]);
+
   // ── Position save ──────────────────────────────────────────────────────────
   const savePosition = useCallback(() => {
     const scene = sceneRef.current;
@@ -40,8 +46,8 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
       pos_x: x,
       pos_y: y,
       last_checkpoint: lastCP,
-    }).catch(() => { });
-  }, [player.id]);
+    }, playerAuthConfig()).catch(() => { });
+  }, [player.id, playerAuthConfig]);
 
   // ── Boot Phaser ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -60,7 +66,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef }) 
     // Fetch saved position FIRST — only boot Phaser once we have it.
     // This guarantees init(data) receives the correct position before
     // create() runs, so the player always spawns in the right place.
-    api.get(`/game/position/${player.id}`)
+    api.get(`/game/position/${player.id}`, playerAuthConfig())
       .then(res => {
         if (cancelled) return;
         let initialPos = START_POS;

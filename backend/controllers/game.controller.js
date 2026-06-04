@@ -114,7 +114,16 @@ const joinGame = async (req, res) => {
   }
 };
 
+// ─── ownsPlayer ───────────────────────────────────────────────────────────────
+// FIX: Central ownership check — verifies that the player_id in the request
+// matches the player_id encoded in the chat JWT (req.playerChat).
+// This prevents any player from reading or writing another player's data.
+const ownsPlayer = (req, player_id) =>
+  req.playerChat && parseInt(req.playerChat.player_id, 10) === player_id;
+
 // ─── savePosition ─────────────────────────────────────────────────────────────
+// FIX: Added ownership check via chat token so a player can only save their
+// own position, not overwrite another player's position.
 const savePosition = async (req, res) => {
   const player_id = safeId(req.body.player_id);
   const pos_x = Number(req.body.pos_x);
@@ -123,6 +132,10 @@ const savePosition = async (req, res) => {
 
   if (!player_id || !Number.isFinite(pos_x) || !Number.isFinite(pos_y) || isNaN(last_checkpoint))
     return res.status(400).json({ error: 'Invalid position data' });
+
+  // FIX: Reject requests where the token player_id does not match the body player_id
+  if (!ownsPlayer(req, player_id))
+    return res.status(403).json({ error: 'Access denied' });
 
   // Clamp coordinates to the actual playable map bounds.
   const clampedX = Math.max(MAP_MIN_X, Math.min(MAP_MAX_X, Math.round(pos_x)));
@@ -144,9 +157,13 @@ const savePosition = async (req, res) => {
 };
 
 // ─── getPosition ──────────────────────────────────────────────────────────────
+// FIX: Added ownership check — a player can only fetch their own position.
 const getPosition = async (req, res) => {
   const player_id = safeId(req.params.player_id);
   if (!player_id) return res.status(400).json({ error: 'Invalid player ID' });
+
+  if (!ownsPlayer(req, player_id))
+    return res.status(403).json({ error: 'Access denied' });
 
   try {
     const [rows] = await db.query(
@@ -160,12 +177,16 @@ const getPosition = async (req, res) => {
 };
 
 // ─── recordAttempt ────────────────────────────────────────────────────────────
+// FIX: Added ownership check — a player can only record attempts for themselves.
 const recordAttempt = async (req, res) => {
   const player_id = safeId(req.body.player_id);
   const checkpoint_number = parseInt(req.body.checkpoint_number, 10);
 
   if (!player_id || isNaN(checkpoint_number) || checkpoint_number < 1 || checkpoint_number > 3)
     return res.status(400).json({ error: 'Invalid data' });
+
+  if (!ownsPlayer(req, player_id))
+    return res.status(403).json({ error: 'Access denied' });
 
   try {
     const [result] = await db.query(
@@ -182,12 +203,16 @@ const recordAttempt = async (req, res) => {
 };
 
 // ─── completeCheckpoint ───────────────────────────────────────────────────────
+// FIX: Added ownership check — a player can only complete checkpoints for themselves.
 const completeCheckpoint = async (req, res) => {
   const player_id = safeId(req.body.player_id);
   const checkpoint_number = parseInt(req.body.checkpoint_number, 10);
 
   if (!player_id || isNaN(checkpoint_number) || checkpoint_number < 1 || checkpoint_number > 3)
     return res.status(400).json({ error: 'Invalid data' });
+
+  if (!ownsPlayer(req, player_id))
+    return res.status(403).json({ error: 'Access denied' });
 
   try {
     const [result] = await db.query(
@@ -204,14 +229,22 @@ const completeCheckpoint = async (req, res) => {
 };
 
 // ─── getProgress ──────────────────────────────────────────────────────────────
+// FIX: Added ownership check + scoped query to session_id so data from other
+// sessions can never leak even if player_id records are duplicated.
 const getProgress = async (req, res) => {
   const player_id = safeId(req.params.player_id);
   if (!player_id) return res.status(400).json({ error: 'Invalid player ID' });
 
+  if (!ownsPlayer(req, player_id))
+    return res.status(403).json({ error: 'Access denied' });
+
+  // FIX: Scope by session_id (from the token) to prevent cross-session data leak
+  const session_id = parseInt(req.playerChat.session_id, 10);
+
   try {
     const [rows] = await db.query(
-      'SELECT * FROM checkpoint_attempts WHERE player_id=? ORDER BY checkpoint_number',
-      [player_id]
+      'SELECT * FROM checkpoint_attempts WHERE player_id=? AND session_id=? ORDER BY checkpoint_number',
+      [player_id, session_id]
     );
     res.json({ progress: rows });
   } catch (err) {
