@@ -1,3 +1,4 @@
+const { logActivity } = require('./activity.controller');
 const db = require('../db');
 
 const getAdmin = (req) => req.admin || req.user;
@@ -39,7 +40,7 @@ exports.askFAQ = async (req, res) => {
             return res.status(403).json({ error: 'Main Admin cannot submit questions' });
         }
 
-        const { question } = req.body;
+        const { question, category } = req.body;
         const adminId = admin.id;
 
         if (!question || !question.trim()) {
@@ -47,10 +48,12 @@ exports.askFAQ = async (req, res) => {
         }
 
         await db.query(
-            `INSERT INTO faq_questions (question, asked_by_admin_id, status)
-       VALUES (?, ?, 'pending')`,
-            [question.trim(), adminId]
+          `INSERT INTO faq_questions (question, category, asked_by_admin_id, status)
+          VALUES (?, ?, ?, 'pending')`,
+          [question.trim(), category || 'Lain-lain', adminId]
         );
+        const { logActivity } = require('./activity.controller');
+        await logActivity(admin.id, 'Submitted FAQ question', question.trim());
 
         res.json({ success: true, message: 'Question submitted' });
     } catch (err) {
@@ -84,6 +87,7 @@ exports.answerFAQ = async (req, res) => {
        WHERE id = ?`,
             [answer.trim(), admin.id, id]
         );
+        await logActivity(admin.id, 'Answered FAQ question', `FAQ ID: ${id}`);
 
         res.json({ success: true, message: 'FAQ answered' });
     } catch (err) {
@@ -121,6 +125,7 @@ exports.updateInstruction = async (req, res) => {
        WHERE id = ?`,
             [title, content, admin.id, id]
         );
+        await logActivity(admin.id, 'Edited FAQ instruction', `Instruction ID: ${id}`);
 
         res.json({
             success: true,
@@ -147,6 +152,7 @@ exports.deleteFAQ = async (req, res) => {
         }
 
         const { id } = req.params;
+        await logActivity(admin.id, 'Deleted FAQ answer', `FAQ ID: ${id}`);
         const [result] = await db.query('DELETE FROM faq_questions WHERE id = ?', [id]);
 
         if (result.affectedRows === 0) {
@@ -182,6 +188,7 @@ exports.updateFAQAnswer = async (req, res) => {
       WHERE id = ?`,
             [answer, admin.id, id]
         );
+        await logActivity(admin.id, 'Edited FAQ answer', `FAQ ID: ${id}`);
 
         res.json({
             success: true,
