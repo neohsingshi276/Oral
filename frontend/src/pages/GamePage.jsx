@@ -144,6 +144,13 @@ const GamePage = () => {
   const [crosswordKey, setCrosswordKey] = useState(0);
   const [virtualInput, setVirtualInput] = useState({});
   const [enterSignal, setEnterSignal] = useState(0);
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(pointer: coarse)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(pointer: coarse)');
+    const handler = (e) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
   const [reduceMotion, setReduceMotion] = useState(() =>
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || localStorage.getItem('dq_reduce_motion') === '1'
   );
@@ -475,22 +482,25 @@ const GamePage = () => {
         />
       </div>
 
-      <div style={s.touchControls} aria-label="Touch game controls">
-        <div style={s.dpad}>
-          <TouchButton label="Up" style={{ gridColumn: 2 }} onChange={down => setVirtualInput(v => ({ ...v, up: down }))}>↑</TouchButton>
-          <TouchButton label="Left" style={{ gridColumn: 1 }} onChange={down => setVirtualInput(v => ({ ...v, left: down }))}>←</TouchButton>
-          <TouchButton label="Down" style={{ gridColumn: 2 }} onChange={down => setVirtualInput(v => ({ ...v, down: down }))}>↓</TouchButton>
-          <TouchButton label="Right" style={{ gridColumn: 3 }} onChange={down => setVirtualInput(v => ({ ...v, right: down }))}>→</TouchButton>
+      {isMobile && (
+        <div style={s.touchControls} aria-label="Touch game controls">
+          <div style={s.dpad}>
+            <TouchButton label="Up" style={{ gridColumn: 2 }} onChange={down => setVirtualInput(v => ({ ...v, up: down }))}>↑</TouchButton>
+            <TouchButton label="Left" style={{ gridColumn: 1 }} onChange={down => setVirtualInput(v => ({ ...v, left: down }))}>←</TouchButton>
+            <TouchButton label="Down" style={{ gridColumn: 2 }} onChange={down => setVirtualInput(v => ({ ...v, down: down }))}>↓</TouchButton>
+            <TouchButton label="Right" style={{ gridColumn: 3 }} onChange={down => setVirtualInput(v => ({ ...v, right: down }))}>→</TouchButton>
+          </div>
+          <button
+            type="button"
+            style={s.enterTouchBtn}
+            onClick={() => setEnterSignal(value => value + 1)}
+            aria-label="Enter checkpoint"
+          >
+            {t('game.tabEnter')}
+          </button>
         </div>
-        <button
-          type="button"
-          style={s.enterTouchBtn}
-          onClick={() => setEnterSignal(value => value + 1)}
-          aria-label="Enter checkpoint"
-        >
-          {t('game.tabEnter')}
-        </button>
-      </div>
+      )}
+
 
       {/* Tutorial Overlay — 3-page walkthrough */}
       {showTutorial && (() => {
