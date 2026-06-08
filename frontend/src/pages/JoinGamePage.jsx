@@ -23,7 +23,8 @@ const JoinGamePage = () => {
       icon: '🎮',
       title: t('game.moveCharacter'),
       subtitle: '1 / 4',
-      rows: [{ icon: '🕹️', title: 'Move Around', desc: 'Press W A S D or the Arrow Keys to move your player around the map.', bg: '#eff6ff' }],
+      tabLabel: t('game.tabMove'),
+      rows: [{ icon: '🕹️', title: t('game.moveAroundTitle'), desc: t('game.moveAroundDesc'), bg: '#eff6ff' }],
       keys: ['W', 'A', 'S', 'D', '↑', '↓', '←', '→'],
     },
     {
@@ -31,7 +32,8 @@ const JoinGamePage = () => {
       icon: '🚩',
       title: t('game.enterCheckpoint'),
       subtitle: '2 / 4',
-      rows: [{ icon: '⌨️', title: 'Enter Checkpoint', desc: 'Stand close to a checkpoint circle, then press E to enter.', bg: '#f0fdf4' }],
+      tabLabel: t('game.tabEnter'),
+      rows: [{ icon: '⌨️', title: t('game.enterCheckpoint'), desc: t('game.standCloseEnter'), bg: '#f0fdf4' }],
       keys: ['E'],
     },
     {
@@ -39,14 +41,16 @@ const JoinGamePage = () => {
       icon: '💬',
       title: t('game.chatButton'),
       subtitle: '3 / 4',
-      rows: [{ icon: '💬', title: 'Chat With Teacher', desc: 'Use the chat button at the bottom-right corner when you need help.', bg: '#fff7ed' }],
+      tabLabel: t('game.tabChat'),
+      rows: [{ icon: '💬', title: t('game.chatWithTeacher'), desc: t('game.chatButtonDesc'), bg: '#fff7ed' }],
     },
     {
       key: 'save',
       icon: '💾',
       title: t('game.autosave'),
       subtitle: '4 / 4',
-      rows: [{ icon: '💾', title: 'Progress Save', desc: 'Your map position, checkpoint progress, and score are saved automatically.', bg: '#fdf4ff' }],
+      tabLabel: t('game.tabSave'),
+      rows: [{ icon: '💾', title: t('game.progressSave'), desc: t('game.progressSaveDesc'), bg: '#fdf4ff' }],
     },
   ];
 
@@ -267,7 +271,7 @@ const JoinGamePage = () => {
           <>
             <div style={s.sessionFound}>
               <div style={s.sessionFoundIcon}>✅</div>
-              <p style={s.sessionFoundText}>{joinedPlayer.nickname}, read this before playing</p>
+              <p style={s.sessionFoundText}>{joinedPlayer.nickname}, {t('join.readBeforePlaying')}</p>
             </div>
 
             <div style={s.guideHeader}>
@@ -288,7 +292,7 @@ const JoinGamePage = () => {
                   onClick={() => setGuidePage(idx)}
                 >
                   <span style={s.tabIcon}>{page.icon}</span>
-                  <span>{page.key === 'move' ? 'Move' : page.key === 'enter' ? 'Enter' : page.key === 'chat' ? 'Chat' : 'Save'}</span>
+                  <span>{page.tabLabel}</span>
                 </button>
               ))}
             </div>
@@ -338,7 +342,7 @@ const JoinGamePage = () => {
                     onClick={() => setGuidePage(page => Math.max(page - 1, 0))}
                     disabled={guidePage === 0}
                   >
-                    ← Back
+                    ← {t('game.back')}
                   </button>
                   <button
                     className="join-btn"
@@ -346,15 +350,15 @@ const JoinGamePage = () => {
                     type="button"
                     onClick={() => setGuidePage(page => Math.min(page + 1, guidePages.length - 1))}
                   >
-                    Next →
+                    {t('game.next')} →
                   </button>
                 </div>
-                <div style={s.autoText}>Auto next in 3 seconds</div>
+                <div style={s.autoText}>{t('join.autoNext3')}</div>
               </>
             ) : (
               <div className="guide-actions" style={s.finalActions}>
-                <button style={s.homeBtn} type="button" onClick={handleBackHome}>Back Home</button>
-                <button className="join-btn" style={s.playBtn} type="button" onClick={handlePlayGame}>Play the Game</button>
+                <button style={s.homeBtn} type="button" onClick={handleBackHome}>{t('game.backHome')}</button>
+                <button className="join-btn" style={s.playBtn} type="button" onClick={handlePlayGame}>{t('join.playTheGame')}</button>
               </div>
             )}
           </>

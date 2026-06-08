@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
+import LanguageToggle from '../components/LanguageToggle';
 
 const DEFAULT_TIMER = 300;
 const DEFAULT_MIN_CORRECT = 0;
@@ -555,6 +556,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
           </div>
           {/* Progress */}
           <div style={s.progressPill}>{completed.length}/{words.length} ✓</div>
+          <LanguageToggle compact style={{ background: 'rgba(255,255,255,0.1)', color: '#FFD700' }} />
           {/* Hint count */}
           <div style={{ ...s.progressPill, background: hintsLeft > 0 ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)', color: hintsLeft > 0 ? '#fbbf24' : '#fca5a5' }}>
             💡 {hintsLeft}/{MAX_HINTS}

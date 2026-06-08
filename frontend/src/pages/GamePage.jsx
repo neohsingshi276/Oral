@@ -382,31 +382,31 @@ const GamePage = () => {
 
   const checkpointHints = {
     1: {
-      title: 'Welcome to Checkpoint 1',
+      title: t('game.cpHint1Title'),
       badge: 'CP1',
       accent: '#7B2FBE',
       bg: '#ede9fe',
-      heading: 'A quick question trail waits nearby.',
-      clue: 'Look for the first bright marker where the adventure path begins. Watch closely first; the answers like to hide inside the video.',
-      activity: 'Quiz',
+      heading: t('game.cpHint1Heading'),
+      clue: t('game.cpHint1Clue'),
+      activity: t('game.quiz'),
     },
     2: {
-      title: 'Welcome to Checkpoint 2',
+      title: t('game.cpHint2Title'),
       badge: 'CP2',
       accent: '#CC3380',
       bg: '#fce7f3',
-      heading: 'Words are the next gate.',
-      clue: 'The next stop is not too eager to reveal itself. Follow the route onward and keep an eye out for a place that feels like a puzzle waiting to be filled.',
-      activity: 'Crossword',
+      heading: t('game.cpHint2Heading'),
+      clue: t('game.cpHint2Clue'),
+      activity: t('game.crossword'),
     },
     3: {
-      title: 'Welcome to Checkpoint 3',
+      title: t('game.cpHint3Title'),
       badge: 'CP3',
       accent: '#E85D04',
       bg: '#fff7ed',
-      heading: 'The final challenge is about choices.',
-      clue: 'For the last stop, think about what keeps teeth strong. The path will lead you toward something that asks you to choose carefully, not just quickly.',
-      activity: 'Food Game',
+      heading: t('game.cpHint3Heading'),
+      clue: t('game.cpHint3Clue'),
+      activity: t('game.foodGame'),
     },
   };
 
@@ -418,7 +418,7 @@ const GamePage = () => {
     return () => clearTimeout(timer);
   }, [showTutorial, tutorialPage, mapTutorialPages.length]);
 
-  if (!player) return <div style={s.loading}>Permainan sedang dimuatkan...</div>;
+  if (!player) return <div style={s.loading}>{t('game.loading')}</div>;
 
   const showFullQuiz = activeCP === 1 && cpStep === 'activity';
   const showFullCP3 = activeCP === 3 && cpStep === 'activity';
@@ -442,7 +442,7 @@ const GamePage = () => {
               checked={reduceMotion}
               onChange={handleReduceMotionChange}
             />
-            Reduce motion
+            {t('game.reduceMotion')}
           </label>
           <LanguageToggle compact style={{ background: 'rgba(255,255,255,0.1)', color: '#FFD700' }} />
           {[1, 2, 3].map(cp => {
@@ -488,7 +488,7 @@ const GamePage = () => {
           onClick={() => setEnterSignal(value => value + 1)}
           aria-label="Enter checkpoint"
         >
-          Enter
+          {t('game.tabEnter')}
         </button>
       </div>
 
@@ -584,13 +584,13 @@ const GamePage = () => {
                         onClick={() => setTutorialPage(p => Math.min(p + 1, mapTutorialPages.length - 1))}
                       >{t('game.next')} →</button>
                     </div>
-                    <div style={{ marginTop: '0.75rem', color: '#94a3b8', fontSize: '0.95rem', fontWeight: 700, textAlign: 'center' }}>⏱ Auto next in 4 seconds</div>
+                    <div style={{ marginTop: '0.75rem', color: '#94a3b8', fontSize: '0.95rem', fontWeight: 700, textAlign: 'center' }}>⏱ {t('game.autoNext4')}</div>
                   </>
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: '0.75rem' }}>
-                    <button style={{ padding: '1rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1rem', fontWeight: 800, cursor: 'pointer' }} onClick={() => { localStorage.removeItem('player'); navigate('/'); }}>🏠 Home</button>
-                    <button style={{ padding: '1rem', background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1rem', fontWeight: 800, cursor: 'pointer' }} onClick={() => setTutorialPage(0)}>↺ Restart</button>
-                    <button style={{ padding: '1rem', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.1rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 6px 20px rgba(22,163,74,0.4)' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); setCheckpointHint(1); }}>🚀 Play Game</button>
+                    <button style={{ padding: '1rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1rem', fontWeight: 800, cursor: 'pointer' }} onClick={() => { localStorage.removeItem('player'); navigate('/'); }}>🏠 {t('nav.home')}</button>
+                    <button style={{ padding: '1rem', background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1rem', fontWeight: 800, cursor: 'pointer' }} onClick={() => setTutorialPage(0)}>↺ {t('game.restart')}</button>
+                    <button style={{ padding: '1rem', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.1rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 6px 20px rgba(22,163,74,0.4)' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); setCheckpointHint(1); }}>🚀 {t('game.playGame')}</button>
                   </div>
                 )}
               </div>
@@ -622,7 +622,7 @@ const GamePage = () => {
 
                 {/* Activity pill */}
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: hint.accent, color: '#fff', padding: '0.45rem 1.2rem', borderRadius: '999px', fontSize: '1.1rem', fontWeight: 800 }}>
-                  <span>Next:</span>
+                  <span>{t('game.nextActivity')}:</span>
                   <span>{hint.activity}</span>
                 </div>
               </div>
@@ -647,7 +647,7 @@ const GamePage = () => {
                   style={{ width: '100%', padding: '1.1rem', background: `linear-gradient(135deg, ${hint.accent}, ${hint.accent}cc)`, color: '#fff', border: 'none', borderRadius: '16px', fontSize: '1.25rem', fontWeight: 900, cursor: 'pointer', boxShadow: `0 8px 24px ${hint.accent}44`, letterSpacing: '0.01em' }}
                   onClick={() => setCheckpointHint(null)}
                 >
-                  Let&apos;s Go! 🚀
+                  {t('game.letsGo')} 🚀
                 </button>
               </div>
             </div>
@@ -816,9 +816,9 @@ const GamePage = () => {
         <div style={s.overlay}>
           <div style={s.doneCard}>
             <div style={{ fontSize: '5rem', animation: 'popIn 0.5s ease' }}>🏆</div>
-            <h2 style={s.doneTitle}>Tahniah!</h2>
-            <p style={s.doneText}>Anda telah lengkapkan semua 3 pusat pemeriksaan!</p>
-            <p style={s.doneText}>Anda ialah Juara Dental Quest!</p>
+            <h2 style={s.doneTitle}>{t('game.congrats')}</h2>
+            <p style={s.doneText}>{t('game.completedAll')}</p>
+            <p style={s.doneText}>{t('game.champion')}</p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', margin: '1.5rem 0', background: '#f8fafc', borderRadius: '16px', padding: '1.25rem' }}>
               {[{ label: t('game.quiz'), cp: 1 }, { label: t('game.crossword'), cp: 2 }, { label: t('game.foodGame'), cp: 3 }].map(({ label, cp }) => {
                 const done = progress.find(p => p.checkpoint_number === cp)?.completed;
@@ -835,13 +835,13 @@ const GamePage = () => {
               onClick={downloadCertificate}
               disabled={certificateBusy}
             >
-              {certificateBusy ? 'Preparing certificate...' : 'Download Certificate'}
+              {certificateBusy ? t('game.preparingCertificate') : t('game.downloadCertificate')}
             </button>
             <button
               style={{ ...s.continueBtn, background: '#2563eb', marginTop: '0.75rem' }}
               onClick={() => { localStorage.removeItem('player'); navigate('/'); }}
             >
-              Kembali ke Utama
+              {t('game.backHome')}
             </button>
           </div>
         </div>
@@ -936,10 +936,10 @@ const GamePage = () => {
                       setCpStep('video');
                     }}
                   >
-                    🔄 Cuba Semula
+                    🔄 {t('game.retry', 'Cuba Semula')}
                   </button>
                   <button style={{ ...s.continueBtn, background: '#16a34a', flex: 1 }} onClick={handleCloseCPModal}>
-                    Teruskan Pengembaraan! →
+                    {t('game.continueAdventure')} →
                   </button>
                 </div>
               </div>
@@ -957,11 +957,11 @@ const GamePage = () => {
           </div>
           <div style={s.chatMessages}>
             {chatMessages.length === 0 && (
-              <p style={s.chatEmpty}>Belum ada mesej. Tanya guru jika perlukan bantuan!</p>
+              <p style={s.chatEmpty}>{t('game.chatEmpty')}</p>
             )}
             {chatMessages.map((m, i) => (
               <div key={i} style={{ ...s.chatMsg, ...(m.sender_type === 'player' ? s.chatMsgPlayer : s.chatMsgAdmin) }}>
-                <span style={s.chatSender}>{m.sender_type === 'player' ? player.nickname : 'Guru'}</span>
+                <span style={s.chatSender}>{m.sender_type === 'player' ? player.nickname : t('game.teacher')}</span>
                 <p style={{ ...s.chatText, color: m.sender_type === 'admin' ? '#1e293b' : '#2563eb' }}>{m.message}</p>
               </div>
             ))}
@@ -971,7 +971,7 @@ const GamePage = () => {
               style={s.chatInputField}
               value={chatInput}
               onChange={e => setChatInput(e.target.value)}
-              placeholder="Tanya soalan..."
+              placeholder={t('game.chatPlaceholder')}
               maxLength={200}
               disabled={!player?.chat_token}
               onKeyDown={e => {
@@ -992,7 +992,7 @@ const GamePage = () => {
                 }
               }}
             />
-            <button style={{ ...s.chatSendBtn, opacity: player?.chat_token ? 1 : 0.5 }} onClick={sendChat} disabled={!player?.chat_token}>Hantar</button>
+            <button style={{ ...s.chatSendBtn, opacity: player?.chat_token ? 1 : 0.5 }} onClick={sendChat} disabled={!player?.chat_token}>{t('game.send')}</button>
           </div>
           {!player?.chat_token && (
             <div style={{ padding: '0 0.75rem 0.75rem', color: '#e11d48', fontSize: '0.78rem' }}>

@@ -8,7 +8,7 @@ const pickLang = (obj, field, lang) =>
   (lang === 'bi' && obj[`${field}_bi`]) ? obj[`${field}_bi`] : obj[field];
 
 const QuizGame = ({ player, onQuizComplete, onRetry }) => {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const [phase, setPhase] = useState('loading');
   const [questions, setQuestions] = useState([]);
   const [settings, setSettings] = useState({});
@@ -250,14 +250,14 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
   if (phase === 'loading') return (
     <div style={s.center}>
       <div style={s.spinner} />
-      <p style={{ color: '#64748b', marginTop: '1rem', fontSize: '0.95rem' }}>Kuiz sedang dimuatkan...</p>
+      <p style={{ color: '#64748b', marginTop: '1rem', fontSize: '0.95rem' }}>{t('game.quizLoading', 'Kuiz sedang dimuatkan...')}</p>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 
   if (phase === 'error') return (
     <div style={s.center}>
-      <p style={{ color: '#e11d48', fontSize: '1rem' }}>Gagal memuatkan kuiz. Sila cuba lagi.</p>
+      <p style={{ color: '#e11d48', fontSize: '1rem' }}>{t('game.quizLoadError', 'Gagal memuatkan kuiz. Sila cuba lagi.')}</p>
     </div>
   );
 
@@ -266,42 +266,42 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
       <style>{`@keyframes pop{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={s.scoreCard}>
         <div style={s.scoreTrophy}>{result.correct === result.total ? '🏆' : result.correct >= result.total / 2 ? '⭐' : '💪'}</div>
-        <h2 style={s.scoreTitle}>Tahniah! Kuiz Selesai!</h2>
+        <h2 style={s.scoreTitle}>{t('game.quizDoneTitle', 'Tahniah! Kuiz Selesai!')}</h2>
         <div style={s.scoreBig}>{result.score}</div>
-        <p style={s.scorePoints}>mata</p>
+        <p style={s.scorePoints}>{t('game.points', 'mata')}</p>
         <div style={s.scoreStats}>
-          <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#16a34a' }}>{result.correct}</div><div style={s.scoreStatLabel}>Betul</div></div>
+          <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#16a34a' }}>{result.correct}</div><div style={s.scoreStatLabel}>{t('game.correct', 'Betul')}</div></div>
           <div style={s.scoreDivider} />
-          <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#e11d48' }}>{result.total - result.correct}</div><div style={s.scoreStatLabel}>Salah</div></div>
+          <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#e11d48' }}>{result.total - result.correct}</div><div style={s.scoreStatLabel}>{t('game.wrong', 'Salah')}</div></div>
           <div style={s.scoreDivider} />
-          <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#f59e0b' }}>{result.total}</div><div style={s.scoreStatLabel}>Jumlah</div></div>
+          <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#f59e0b' }}>{result.total}</div><div style={s.scoreStatLabel}>{t('game.total', 'Jumlah')}</div></div>
         </div>
       </div>
 
       <div style={s.lbCard}>
-        <h3 style={s.lbTitle}>🏆 Papan Markah Sesi</h3>
+        <h3 style={s.lbTitle}>🏆 {t('game.sessionScoreboard', 'Papan Markah Sesi')}</h3>
         <div style={s.lbList}>
           {leaderboard.map((entry, i) => (
             <div key={entry.id} style={{ ...s.lbRow, ...(entry.player_id === player.id ? s.lbRowMe : {}), background: i === 0 ? '#fef9ee' : i === 1 ? '#f8fafc' : i === 2 ? '#fff7ed' : '#fff' }}>
               <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
-              <div style={s.lbName}>{entry.nickname}{entry.player_id === player.id && <span style={s.youBadge}>Anda</span>}</div>
-              <div style={s.lbScore}>{entry.score} mata</div>
+              <div style={s.lbName}>{entry.nickname}{entry.player_id === player.id && <span style={s.youBadge}>{t('game.you', 'Anda')}</span>}</div>
+              <div style={s.lbScore}>{entry.score} {t('game.points', 'mata')}</div>
               <div style={s.lbCorrect}>{entry.correct_answers}/{entry.total_questions} ✓</div>
             </div>
           ))}
-          {leaderboard.length === 0 && <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem' }}>Tiada markah lagi</p>}
+          {leaderboard.length === 0 && <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem' }}>{t('game.noScoresYet', 'Tiada markah lagi')}</p>}
         </div>
       </div>
       {result.correct >= (settings.minimum_correct || 0) ? (
         <button style={s.doneBtn} onClick={onQuizComplete}>
-          Teruskan Pengembaraan! 🗺️
+          {t('game.continueAdventureMap', 'Teruskan Pengembaraan! 🗺️')}
         </button>
       ) : (
         <div>
           <div style={s.failBox}>
             <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>😢</div>
             <h3 style={{ color: '#e11d48', fontWeight: '800', margin: '0 0 0.5rem' }}>
-              Belum Lulus!
+              {t('game.notPassed', 'Belum Lulus!')}
             </h3>
             <p style={{ color: '#64748b', margin: '0 0 1rem', fontSize: '0.95rem' }}>
               {language === 'bi' ? (
@@ -311,7 +311,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
               )}
             </p>
             <button style={s.retryBtn} onClick={onRetry}>
-              Cuba Semula Kuiz
+              {t('game.retryQuiz', 'Cuba Semula Kuiz')}
             </button>
           </div>
         </div>
@@ -347,8 +347,8 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
           <img src={q.image_url} alt="question" style={s.questionImg} onError={e => e.target.style.display = 'none'} />
         )}
         <p style={s.questionText}>{pickLang(q, 'question', language)}</p>
-        {q.question_type === 'multi_select' && <p style={s.multiHint}>Pilih SEMUA jawapan yang betul</p>}
-        {q.question_type === 'match' && <p style={s.multiHint}>Padankan setiap pasangan yang betul</p>}
+        {q.question_type === 'multi_select' && <p style={s.multiHint}>{t('game.selectAllCorrect', 'Pilih SEMUA jawapan yang betul')}</p>}
+        {q.question_type === 'match' && <p style={s.multiHint}>{t('game.matchPairs', 'Padankan setiap pasangan yang betul')}</p>}
       </div>
 
       {/* Multiple choice / True False */}
@@ -397,7 +397,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
           </div>
           {!answered && (
             <button style={{ ...s.submitBtn, opacity: selected.length === 0 ? 0.5 : 1 }} onClick={handleMultiSubmit} disabled={selected.length === 0}>
-              Hantar Jawapan ({selected.length} dipilih)
+              {t('game.submitAnswer', 'Hantar Jawapan')} ({selected.length} {t('game.selected', 'dipilih')})
             </button>
           )}
         </>
@@ -408,7 +408,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
         <>
           <div style={s.matchWrap}>
             <div style={s.matchCol}>
-              <p style={s.matchColTitle}>Soalan</p>
+              <p style={s.matchColTitle}>{t('game.questions', 'Soalan')}</p>
               {opts.map((pair, idx) => (
                 <button key={idx} style={{ ...s.matchBtn, ...s.matchLeft, background: leftSelected === idx ? '#1e3a5f' : matchLines.find(l => l[0] === idx) ? '#2563eb' : '#e2e8f0', color: leftSelected === idx || matchLines.find(l => l[0] === idx) ? '#fff' : '#1e293b' }} onClick={() => handleMatchLeft(idx)} disabled={answered}>
                   {pair.left || pair}
@@ -418,7 +418,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
             </div>
             <div style={s.matchArrow}>↔</div>
             <div style={s.matchCol}>
-              <p style={s.matchColTitle}>Jawapan</p>
+              <p style={s.matchColTitle}>{t('game.answers', 'Jawapan')}</p>
               {opts.map((pair, idx) => {
                 const isLinked = matchLines.find(l => l[1] === idx);
                 let bg = '#e2e8f0';
@@ -438,12 +438,12 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
           </div>
           {!answered && (
             <button style={{ ...s.submitBtn, opacity: matchLines.length === 0 ? 0.5 : 1 }} onClick={handleMatchSubmit} disabled={matchLines.length === 0}>
-              Hantar Padanan ({matchLines.length}/{opts.length} dipasangkan)
+              {t('game.submitMatches', 'Hantar Padanan')} ({matchLines.length}/{opts.length} {t('game.matched', 'dipasangkan')})
             </button>
           )}
           {answered && (
             <div style={s.matchResult}>
-              <p style={{ fontWeight: '700', color: '#1e3a5f', margin: 0 }}>Padanan Betul:</p>
+              <p style={{ fontWeight: '700', color: '#1e3a5f', margin: 0 }}>{t('game.correctMatches', 'Padanan Betul:')}</p>
               {ca.map((pair, i) => (
                 <p key={i} style={{ color: '#16a34a', margin: '0.25rem 0', fontSize: '0.88rem' }}>
                   {opts[pair[0]]?.left || opts[pair[0]]} ↔ {opts[pair[1]]?.right || opts[pair[1]]}
@@ -457,12 +457,12 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
       {answered && q.question_type !== 'match' && (
         <div style={{ ...s.answerFeedback, background: isCorrect(q, selected[0]) && q.question_type !== 'multi_select' ? '#f0fdf4' : '#fff1f2' }}>
           {q.question_type === 'multi_select'
-            ? `Jawapan betul: ${ca.map(i => opts[i] ?? '').join(', ')}`
+            ? `${t('game.correctAnswer', 'Jawapan betul')}: ${ca.map(i => opts[i] ?? '').join(', ')}`
             : selected.length === 0
-              ? `⏱️ Masa tamat! Jawapan betul: ${opts[ca[0]] ?? ''}`
+              ? `⏱️ ${t('game.timesUp', 'Masa tamat!')} ${t('game.correctAnswer', 'Jawapan betul')}: ${opts[ca[0]] ?? ''}`
               : isCorrect(q, selected[0])
-                ? '✅ Betul!'
-                : `❌ Jawapan betul: ${opts[ca[0]] ?? ''}`
+                ? `✅ ${t('game.correct', 'Betul')}!`
+                : `❌ ${t('game.correctAnswer', 'Jawapan betul')}: ${opts[ca[0]] ?? ''}`
           }
         </div>
       )}
