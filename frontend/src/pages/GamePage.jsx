@@ -680,7 +680,7 @@ const GamePage = () => {
 
                 {/* Photo — only shows when hint.photo is set, no empty space otherwise */}
                 {hint.photo && (
-                  <div style={{ width: '100%', height: '165px', borderRadius: '16px', overflow: 'hidden', marginBottom: '1.5rem' }}>
+                  <div style={{ width: '100%', height: '145px', borderRadius: '16px', overflow: 'hidden', marginBottom: '1.5rem' }}>
                     <img src={hint.photo} alt={hint.badge} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 )}
