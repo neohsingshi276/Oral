@@ -30,9 +30,9 @@ const computeMarks = (players) => {
 
     return {
       ...p,
-      cp1_mark:   Math.round(cp1Exact),
-      cp2_mark:   Math.round(cp2Exact),
-      cp3_mark:   Math.round(cp3Exact),
+      cp1_mark: Math.round(cp1Exact),
+      cp2_mark: Math.round(cp2Exact),
+      cp3_mark: Math.round(cp3Exact),
       total_mark: totalExact >= 99.5 ? 100 : Math.floor(totalExact),
     };
   });
@@ -40,12 +40,16 @@ const computeMarks = (players) => {
 
 const Analytics = ({ setActive }) => {
   const { t } = useLanguage();
-  const [data, setData]                   = useState(null);
-  const [loading, setLoading]             = useState(true);
-  const [activeTab, setActiveTab]         = useState('overview');
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
   const [selectedSession, setSelectedSession] = useState('all');
   const [finalLeaderboard, setFinalLeaderboard] = useState([]);
-  const [lbLoading, setLbLoading]         = useState(false);
+  const [lbLoading, setLbLoading] = useState(false);
+  const [lbSearch, setLbSearch] = useState('');
+  const [lbStatus, setLbStatus] = useState('all');
+  const [lbScore, setLbScore] = useState('all');
+  const [lbProgress, setLbProgress] = useState('all');
 
   useEffect(() => {
     api.get('/admin/analytics')
@@ -251,15 +255,56 @@ const Analytics = ({ setActive }) => {
     { name: 'Sedang Berjalan', value: Math.max(0, displayPlayers.length - filteredCP3) },
   ];
 
-  const allSessionsLeaderboard = [...displayPlayers]
-    .sort((a, b) => b.total_mark - a.total_mark || a.nickname.localeCompare(b.nickname));
+  const filterLeaderboard = (players) => {
+    return players.filter(p => {
+      const name = (p.display_nickname || p.nickname || '').toLowerCase();
+      const searchMatch = name.includes(lbSearch.toLowerCase());
+
+      const cp1Done = !!p.cp1_completed || (p.cp1_mark > 0);
+      const cp2Done = !!p.cp2_completed || (p.cp2_mark > 0);
+      const cp3Done = !!p.cp3_completed || (p.cp3_mark > 0);
+      const allDone = cp1Done && cp2Done && cp3Done;
+
+      const statusMatch =
+        lbStatus === 'all' ||
+        (lbStatus === 'completed' && allDone) ||
+        (lbStatus === 'incomplete' && !allDone);
+
+      const total = p.total_mark || 0;
+      const scoreMatch =
+        lbScore === 'all' ||
+        (lbScore === 'high' && total >= 70) ||
+        (lbScore === 'medium' && total >= 40 && total < 70) ||
+        (lbScore === 'low' && total < 40);
+
+      const progressMatch =
+        lbProgress === 'all' ||
+        (lbProgress === 'cp1' && cp1Done) ||
+        (lbProgress === 'cp2' && cp2Done) ||
+        (lbProgress === 'cp3' && cp3Done);
+
+      return searchMatch && statusMatch && scoreMatch && progressMatch;
+    });
+  };
+
+  const allSessionsRanked = [...displayPlayers]
+    .sort((a, b) => b.total_mark - a.total_mark || a.nickname.localeCompare(b.nickname))
+    .map((p, index) => ({ ...p, originalRank: index + 1 }));
+
+  const allSessionsLeaderboard = filterLeaderboard(allSessionsRanked);
+
+  const finalRankedLeaderboard = [...finalLeaderboard]
+    .map((p, index) => ({ ...p, originalRank: index + 1 }));
+
+  const filteredFinalLeaderboard = filterLeaderboard(finalRankedLeaderboard);
+
 
   const TABS = [
-    { key: 'overview',    label: `📊 ${t('admin.tabSummary')}` },
-    { key: 'completion',  label: `📈 ${t('admin.tabCompletion')}` },
-    { key: 'attempts',    label: `🔁 ${t('admin.tabAttempts')}` },
-    { key: 'sessions',    label: `🔀 ${t('admin.tabSessions')}` },
-    { key: 'timeline',    label: `📅 ${t('admin.tabTimeline')}` },
+    { key: 'overview', label: `📊 ${t('admin.tabSummary')}` },
+    { key: 'completion', label: `📈 ${t('admin.tabCompletion')}` },
+    { key: 'attempts', label: `🔁 ${t('admin.tabAttempts')}` },
+    { key: 'sessions', label: `🔀 ${t('admin.tabSessions')}` },
+    { key: 'timeline', label: `📅 ${t('admin.tabTimeline')}` },
     { key: 'leaderboard', label: `🏆 ${t('admin.tabLeaderboard')}` },
   ];
 
@@ -307,12 +352,12 @@ const Analytics = ({ setActive }) => {
       {/* Kad Ringkasan */}
       <div style={s.statsGrid}>
         {[
-          { label: 'Jumlah Pemain',  value: displayPlayers.length,                                                      icon: '👥', color: '#eff6ff', accent: '#2563eb' },
-          { label: 'Jumlah Sesi',    value: selectedSession === 'all' ? (data?.total_sessions || 0) : 1,                icon: '🎮', color: '#f0fdf4', accent: '#16a34a' },
+          { label: 'Jumlah Pemain', value: displayPlayers.length, icon: '👥', color: '#eff6ff', accent: '#2563eb' },
+          { label: 'Jumlah Sesi', value: selectedSession === 'all' ? (data?.total_sessions || 0) : 1, icon: '🎮', color: '#f0fdf4', accent: '#16a34a' },
           { label: 'Purata Markah CP1', value: displayPlayers.length ? `${Math.round(avgCP1Mark / 33 * 100)}/100` : '—', icon: '❓', color: '#fdf4ff', accent: '#9333ea' },
           { label: 'Purata Markah CP2', value: displayPlayers.length ? `${Math.round(avgCP2Mark / 33 * 100)}/100` : '—', icon: '🧩', color: '#fff7ed', accent: '#ea580c' },
           { label: 'Purata Markah CP3', value: displayPlayers.length ? `${Math.round(avgCP3Mark / 33 * 100)}/100` : '—', icon: '🎮', color: '#f0fdfa', accent: '#0d9488' },
-          { label: 'Purata Jumlah', value: displayPlayers.length ? `${avgTotal}/100` : '—',                             icon: '🏆', color: '#fefce8', accent: '#ca8a04' },
+          { label: 'Purata Jumlah', value: displayPlayers.length ? `${avgTotal}/100` : '—', icon: '🏆', color: '#fefce8', accent: '#ca8a04' },
         ].map((stat, i) => (
           <div key={i} style={{ ...s.statCard, background: stat.color }}>
             <div style={s.statIcon}>{stat.icon}</div>
@@ -414,8 +459,8 @@ const Analytics = ({ setActive }) => {
               <YAxis yAxisId="right" orientation="right" domain={[0, 100]} />
               <Tooltip />
               <Legend />
-              <Bar yAxisId="left"  dataKey="completed" name="Pemain Selesai" fill="#2563eb" radius={[6, 6, 0, 0]} />
-              <Bar yAxisId="right" dataKey="rate"      name="Kadar %"        fill="#16a34a" radius={[6, 6, 0, 0]} />
+              <Bar yAxisId="left" dataKey="completed" name="Pemain Selesai" fill="#2563eb" radius={[6, 6, 0, 0]} />
+              <Bar yAxisId="right" dataKey="rate" name="Kadar %" fill="#16a34a" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
           <div style={s.completionCards}>
@@ -471,11 +516,11 @@ const Analytics = ({ setActive }) => {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="players"  name="Jumlah Pemain"    fill="#94a3b8" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="cp1"      name="CP1 Selesai"      fill="#2563eb" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="cp2"      name="CP2 Selesai"      fill="#9333ea" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="cp3"      name="CP3 Selesai"      fill="#16a34a" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="avgMark"  name="Purata Markah /100" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="players" name="Jumlah Pemain" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="cp1" name="CP1 Selesai" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="cp2" name="CP2 Selesai" fill="#9333ea" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="cp3" name="CP3 Selesai" fill="#16a34a" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="avgMark" name="Purata Markah /100" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
               <table style={{ ...s.table, marginTop: '1.5rem' }}>
@@ -535,6 +580,36 @@ const Analytics = ({ setActive }) => {
             <button style={s.downloadBtn} onClick={downloadCSV}>📥 Muat Turun Laporan Penuh (CSV)</button>
           </div>
 
+          <div style={s.lbFilterBar}>
+            <input
+              style={s.lbSearch}
+              type="text"
+              placeholder="🔍 Search nickname..."
+              value={lbSearch}
+              onChange={e => setLbSearch(e.target.value)}
+            />
+
+            <select style={s.lbSelect} value={lbStatus} onChange={e => setLbStatus(e.target.value)}>
+              <option value="all">All Players</option>
+              <option value="completed">Completed All CP</option>
+              <option value="incomplete">Incomplete</option>
+            </select>
+
+            <select style={s.lbSelect} value={lbScore} onChange={e => setLbScore(e.target.value)}>
+              <option value="all">All Scores</option>
+              <option value="high">High 70 - 100</option>
+              <option value="medium">Medium 40 - 69</option>
+              <option value="low">Low 0 - 39</option>
+            </select>
+
+            <select style={s.lbSelect} value={lbProgress} onChange={e => setLbProgress(e.target.value)}>
+              <option value="all">All Progress</option>
+              <option value="cp1">CP1 Completed</option>
+              <option value="cp2">CP2 Completed</option>
+              <option value="cp3">CP3 Completed</option>
+            </select>
+          </div>
+
           {selectedSession === 'all' ? (
             <>
               <p style={s.hint}>
@@ -553,7 +628,7 @@ const Analytics = ({ setActive }) => {
                 <tbody>
                   {allSessionsLeaderboard.map((p, i) => (
                     <tr key={p.id} style={i % 2 === 0 ? s.trEven : {}}>
-                      <td style={s.td}><span style={s.rank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span></td>
+                      <td style={s.td}><span style={s.rank}>{p.originalRank === 1 ? '🥇' : p.originalRank === 2 ? '🥈' : p.originalRank === 3 ? '🥉' : `#${p.originalRank}`}</span></td>
                       <td style={s.td}><strong>{p.nickname}</strong></td>
                       <td style={s.td}><span style={s.sessionTag}>{p.session_name}</span></td>
                       <td style={s.td}>
@@ -607,7 +682,7 @@ const Analytics = ({ setActive }) => {
                   <th style={s.th}>Jumlah / 100</th>
                 </tr></thead>
                 <tbody>
-                  {finalLeaderboard.map((p, i) => (
+                  {filteredFinalLeaderboard.map((p, i) => (
                     <tr key={p.player_id} style={i % 2 === 0 ? s.trEven : {}}>
                       <td style={s.td}><span style={s.rank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span></td>
                       <td style={s.td}><strong>{p.nickname}</strong></td>
@@ -640,7 +715,7 @@ const Analytics = ({ setActive }) => {
                       </td>
                     </tr>
                   ))}
-                  {finalLeaderboard.length === 0 && (
+                  {filteredFinalLeaderboard.length === 0 && (
                     <tr><td colSpan="6" style={{ ...s.td, textAlign: 'center', color: '#94a3b8' }}>Tiada pemain dalam sesi ini lagi</td></tr>
                   )}
                 </tbody>
@@ -696,13 +771,16 @@ const s = {
   trEven: { background: '#fafafa' },
   rank: { fontSize: '1.1rem' },
   sessionTag: { background: '#eff6ff', color: '#2563eb', padding: '0.15rem 0.5rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: '600' },
-  badgeGreen:  { background: '#f0fdf4', color: '#16a34a', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.82rem', fontWeight: '600' },
+  badgeGreen: { background: '#f0fdf4', color: '#16a34a', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.82rem', fontWeight: '600' },
   badgeYellow: { background: '#fffbeb', color: '#b45309', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.82rem', fontWeight: '600' },
-  badgeGray:   { background: '#f1f5f9', color: '#94a3b8', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.82rem' },
+  badgeGray: { background: '#f1f5f9', color: '#94a3b8', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.82rem' },
   totalBadge: { padding: '0.25rem 0.75rem', borderRadius: '8px', fontSize: '0.9rem', fontWeight: '800' },
   downloadBar: { display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' },
   downloadBtn: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.65rem 1.5rem', fontWeight: '600', cursor: 'pointer', fontSize: '0.9rem' },
   muted: { color: '#94a3b8', fontSize: '0.9rem', textAlign: 'center', padding: '2rem' },
+  lbFilterBar: { display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' },
+  lbSearch: { flex: 1, minWidth: '220px', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.88rem' },
+  lbSelect: { padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '0.88rem', cursor: 'pointer' },
 };
 
 export default Analytics;
