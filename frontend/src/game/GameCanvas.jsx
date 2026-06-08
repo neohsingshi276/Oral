@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import PhaserGameScene from './PhaserGameScene';
 import api from '../services/api';
 import { START_POS, resolveSpawnPosition, writeCachedPosition } from './gameConfig';
+import dentalImage from '../assets/dental.png';
 
 const SAVE_INTERVAL = 5000;
 
@@ -199,7 +200,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
           gap: 16,
           minHeight: 300,
         }}>
-          <div style={{ fontSize: 36, animation: 'spin 1.2s linear infinite', fontWeight: 900, color: '#FFD700' }}>DQ</div>
+         <img src={dentalImage} style={{ width: 80, animation: 'spin 1.2s linear infinite' }} />
           <div style={{ color: '#FFD700', fontWeight: 'bold', fontSize: 18 }}>
             Loading Dental Quest...
           </div>
