@@ -193,6 +193,7 @@ const GamePage = () => {
   // A missing, malformed, or tampered value used to throw an unhandled error
   // and crash the entire page. Now we redirect cleanly instead.
   useEffect(() => {
+    const init = async () => {
     const saved = localStorage.getItem('player');
     if (!saved) {
       navigate(`/join/${token}`);
@@ -245,6 +246,8 @@ const GamePage = () => {
     } catch (err) {
       console.error('Failed to restore progress on rejoin:', err);
     }
+    };
+    init();
   }, [token, navigate]);
 
   // FIX: Await the attempt API call so failures are caught and logged.
