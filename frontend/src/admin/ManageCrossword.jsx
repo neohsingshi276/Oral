@@ -20,6 +20,33 @@ const ManageCrossword = () => {
   const [sortFilter, setSortFilter] = useState('latest');
   const [orderFilter, setOrderFilter] = useState('desc');
 
+  const clueLang = {
+    bm: {
+      languageLabel: 'Bahasa pembayang',
+      manualCheck: 'Saya mahu terjemah manual',
+      hintBm: 'Masukkan pembayang BM. BI akan dijana automatik jika manual tidak ditanda.',
+      hintBi: 'Masukkan pembayang BI. BM akan dijana automatik jika manual tidak ditanda.',
+      manualBadge: '🇬🇧 / 🇲🇾 Terjemahan Manual',
+      translationLabelBm: 'Terjemahan Pembayang (BI)',
+      translationLabelBi: 'Terjemahan Pembayang (BM)',
+      placeholderBm: 'Tulis terjemahan pembayang BI',
+      placeholderBi: 'Tulis terjemahan BM',
+    },
+    bi: {
+      languageLabel: 'Clue input language',
+      manualCheck: 'I want to translate manually',
+      hintBm: 'Enter BM clue. English will auto-generate if manual is not checked.',
+      hintBi: 'Enter English clue. BM will auto-generate if manual is not checked.',
+      manualBadge: '🇬🇧 / 🇲🇾 Manual Translation',
+      translationLabelBm: 'Clue Translation (English)',
+      translationLabelBi: 'Clue Translation (BM)',
+      placeholderBm: 'Write English clue translation',
+      placeholderBi: 'Write BM translation',
+    }
+  };
+
+  const localText = clueLang[form.source_language];
+
   const fetchWords = () => {
     api.get('/crossword/admin', {
       params: {
@@ -47,7 +74,7 @@ const ManageCrossword = () => {
         clue: form.clue,
         source_language: form.source_language,
         ...(form.manual_translation && form.clue_bi.trim() && {
-        clue_bi: form.clue_bi.trim()
+          clue_bi: form.clue_bi.trim()
         })
       };
       if (editing) {
@@ -78,7 +105,7 @@ const ManageCrossword = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Padam perkataan ini?')) return;
+    if (!confirm(t('admin.deleteWord'))) return;
     await api.delete(`/crossword/admin/${id}`);
     fetchWords();
   };
@@ -101,7 +128,9 @@ const ManageCrossword = () => {
             <div style={s.translationPanel}>
               <div style={s.translationHeader}>
                 <div>
-                  <label style={s.label}>Bahasa clue input</label>
+                  <label style={s.label} data-no-translate="true">
+                    {localText.languageLabel}
+                  </label>
                   <div style={s.segmented}>
                     <button
                       type="button"
@@ -137,7 +166,7 @@ const ManageCrossword = () => {
                   </div>
                 </div>
 
-                <label style={s.checkLabel}>
+                <label style={s.checkLabel} data-no-translate="true">
                   <input
                     type="checkbox"
                     checked={form.manual_translation}
@@ -146,14 +175,14 @@ const ManageCrossword = () => {
                       manual_translation: e.target.checked
                     })}
                   />
-                  Saya mahu terjemah sendiri
+                  {localText.manualCheck}
                 </label>
               </div>
 
-              <p style={s.translationHint}>
+              <p style={s.translationHint} data-no-translate="true">
                 {form.source_language === 'bm'
-                  ? 'Masukkan clue BM. English akan auto jika manual tidak ditanda.'
-                  : 'Enter English clue. BM akan auto jika manual tidak ditanda.'}
+                  ? localText.hintBm
+                  : localText.hintBi}
               </p>
             </div>
             <div style={s.field}>
@@ -170,7 +199,7 @@ const ManageCrossword = () => {
             </div>
             <div style={s.field}>
               <label style={s.label}>
-                {form.source_language === 'bm' ? 'Pembayang (BM)' : 'Clue (English)'}
+                {t('admin.clueInputLabel')}
               </label>
               <textarea
                 style={{ ...s.input, height: '80px', resize: 'vertical' }}
@@ -183,18 +212,19 @@ const ManageCrossword = () => {
             </div>
             {form.manual_translation && (
               <div style={s.langSectionBi}>
-                <div style={s.langBadgeBi}>
-                  🇬🇧 / 🇲🇾 Manual Translation
+                <div style={s.langBadgeBi} data-no-translate="true">
+                  {localText.manualBadge}
                 </div>
 
                 <div style={s.field}>
-                  <label style={s.label}>
+                  <label style={s.label} data-no-translate="true">
                     {form.source_language === 'bm'
-                      ? 'Clue Translation (English)'
-                      : 'Terjemahan Pembayang (BM)'}
+                      ? localText.translationLabelBm
+                      : localText.translationLabelBi}
                   </label>
 
                   <textarea
+                    data-no-translate="true"
                     style={{
                       ...s.input,
                       height: '80px',
@@ -206,8 +236,8 @@ const ManageCrossword = () => {
                     maxLength={200}
                     placeholder={
                       form.source_language === 'bm'
-                        ? 'Write English clue translation'
-                        : 'Tulis terjemahan BM'
+                        ? localText.placeholderBm
+                        : localText.placeholderBi
                     }
                   />
                 </div>
@@ -251,7 +281,7 @@ const ManageCrossword = () => {
             style={s.input}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search word or clue..."
+            placeholder="Cari perkataan atau pembayang..."
           />
 
           <select
@@ -259,9 +289,9 @@ const ManageCrossword = () => {
             value={sortFilter}
             onChange={e => setSortFilter(e.target.value)}
           >
-            <option value="latest">Latest Added</option>
-            <option value="word">Word</option>
-            <option value="letters">Number of Letters</option>
+            <option value="latest">Terbaharu Ditambah</option>
+            <option value="word">Perkataan</option>
+            <option value="letters">Bilangan Huruf</option>
           </select>
 
           <select
@@ -269,8 +299,8 @@ const ManageCrossword = () => {
             value={orderFilter}
             onChange={e => setOrderFilter(e.target.value)}
           >
-            <option value="desc">Descending</option>
-            <option value="asc">Ascending</option>
+            <option value="desc">Menurun</option>
+            <option value="asc">Menaik</option>
           </select>
         </div>
 
@@ -278,7 +308,7 @@ const ManageCrossword = () => {
           <thead><tr style={s.thead}>
             <th style={s.th}>#</th>
             <th style={s.th}>Perkataan</th>
-            <th style={s.th}>Pembayang BM / BI</th>
+            <th style={s.th}>{t('admin.clueBmBi')}</th>
             <th style={s.th}>Huruf</th>
             <th style={s.th}>Tindakan</th>
           </tr></thead>
@@ -289,7 +319,7 @@ const ManageCrossword = () => {
                 <td style={s.td} data-no-translate="true"><strong style={{ color: COLORS[i % COLORS.length], letterSpacing: '0.05em' }}>{w.word}</strong></td>
                 <td style={s.td} data-no-translate="true">
                   <div><strong>BM:</strong> {w.clue} </div>
-                  <div style={s.clueBi}><strong>BI:</strong> {w.clue_bi || 'Belum ada'} </div>
+                  <div style={s.clueBi}><strong>BI:</strong> {w.clue_bi || 'Belum ada terjemahan'} </div>
                 </td>
                 <td style={s.td}><span style={s.letterBadge}>{w.word.length}</span></td>
                 <td style={s.td}>

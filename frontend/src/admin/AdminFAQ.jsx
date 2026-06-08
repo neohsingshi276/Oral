@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
 
+
 const AdminFAQ = () => {
+    const { language } = useLanguage();
     const [faqs, setFaqs] = useState([]);
     const [instructions, setInstructions] = useState([]);
     const [question, setQuestion] = useState('');
@@ -92,7 +95,11 @@ const AdminFAQ = () => {
     };
 
     const deleteFAQ = async (id) => {
-        if (!window.confirm('Padam soalan/jawapan FAQ ini? Tindakan ini tidak boleh dibatalkan.')) return;
+        if (!window.confirm(
+            language === 'bi'
+                ? 'Delete this FAQ question/answer? This action cannot be undone.'
+                : 'Padam soalan/jawapan FAQ ini? Tindakan ini tidak boleh dibatalkan.'
+        )) return;
 
         try {
             await api.delete(`/faq/${id}`);
@@ -166,7 +173,7 @@ const AdminFAQ = () => {
 
                     {admin?.role === 'main_admin' && instructions[0] && (
                         <button style={styles.secondaryButton} onClick={() => setEditingInstruction(instructions[0])}>
-                            Edit Panduan
+                            Sunting Panduan
                         </button>
                     )}
                 </div>
@@ -270,43 +277,52 @@ const AdminFAQ = () => {
                             : item.answer;
 
                         return (
-                        <div key={item.id} style={styles.faqCard}>
-                            {item.category && item.category !== 'Lain-lain' && (
-                                <span style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: '700', background: '#EFF6FF', color: '#1d4ed8', padding: '0.15rem 0.6rem', borderRadius: '999px', marginBottom: '0.5rem' }}>
-                                    {item.category}
-                                </span>
-                            )}
-                            <h4 style={styles.question}>{item.question}</h4>
-                            <p style={styles.answer}>{displayAnswer}</p>
-                            {isLong && (
-                                <button onClick={() => toggleAnswer(item.id)} style={styles.linkButton}>
-                                    {isExpanded ? 'Tunjuk Kurang ↑' : 'Tunjuk Lagi ↓'}
-                                </button>
-                            )}
-
-                            <p style={styles.meta}>
-                                Ditanya oleh: {item.asked_by_name || 'Admin'} <br />
-                                Dijawab oleh: {item.answered_by_name || 'Main Admin'}
-                            </p>
-
-                            {canDelete && (
-                                <div style={styles.actionRow}>
-                                    <button style={styles.secondaryButton} onClick={() => setEditingFAQ(item)}>
-                                        Edit Jawapan
+                            <div key={item.id} style={styles.faqCard}>
+                                {item.category && item.category !== 'Lain-lain' && (
+                                    <span style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: '700', background: '#EFF6FF', color: '#1d4ed8', padding: '0.15rem 0.6rem', borderRadius: '999px', marginBottom: '0.5rem' }}>
+                                        {item.category}
+                                    </span>
+                                )}
+                                <h4 style={styles.question}>{item.question}</h4>
+                                <p style={styles.answer}>{displayAnswer}</p>
+                                {isLong && (
+                                    <button onClick={() => toggleAnswer(item.id)} style={styles.linkButton}>
+                                        {isExpanded
+                                            ? (language === 'bi' ? 'Show Less ↑' : 'Tunjuk Kurang ↑')
+                                            : (language === 'bi' ? 'Show More ↓' : 'Tunjuk Lagi ↓')
+                                        }
                                     </button>
-                                    <button onClick={() => deleteFAQ(item.id)} style={styles.dangerButton}>
-                                        Padam
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                                )}
+
+                                <p style={styles.meta}>
+                                    {language === 'bi' ? 'Asked by:' : 'Ditanya oleh:'} {item.asked_by_name || 'Admin'} <br />
+                                    {language === 'bi' ? 'Answered by:' : 'Dijawab oleh:'} {item.answered_by_name || 'Main Admin'}
+                                </p>
+
+                                {canDelete && (
+                                    <div style={styles.actionRow}>
+                                        <button style={styles.secondaryButton} onClick={() => setEditingFAQ(item)}>
+                                            Edit Answer
+                                        </button>
+                                        <button onClick={() => deleteFAQ(item.id)} style={styles.dangerButton}>
+                                            Padam
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         );
                     })}
                 </div>
 
                 {filteredFAQ.length > 3 && (
                     <button onClick={() => setShowAllFAQ(!showAllFAQ)} style={styles.showButton}>
-                        {showAllFAQ ? 'Tunjuk Kurang ↑' : `Tunjuk Lagi ${filteredFAQ.length - 3} FAQ ↓`}
+                        {showAllFAQ
+                            ? (language === 'bi' ? 'Show Less ↑' : 'Tunjuk Kurang ↑')
+                            : (language === 'bi'
+                                ? `Show More ${filteredFAQ.length - 3} FAQ ↓`
+                                : `Tunjuk Lagi ${filteredFAQ.length - 3} FAQ ↓`
+                            )
+                        }
                     </button>
                 )}
             </div>

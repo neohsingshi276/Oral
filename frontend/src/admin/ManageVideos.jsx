@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 const emptyForm = {
   title: '',
@@ -15,6 +16,7 @@ const emptyForm = {
 };
 
 const ManageVideos = () => {
+  const { tx } = useLanguage();
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
@@ -24,6 +26,50 @@ const ManageVideos = () => {
   const [editing, setEditing] = useState(null);
   const [msg, setMsg] = useState('');
   const [translating, setTranslating] = useState(false);
+  const videoLang = {
+    bm: {
+      inputLabel: 'Bahasa input',
+      manualCheck: 'Saya mahu terjemah sendiri',
+      hint: 'Masukkan kandungan BM. BI akan auto jika manual tidak ditanda.',
+      mainBadge: '🇲🇾 Bahasa Melayu (BM)',
+      titleLabel: 'Tajuk',
+      titlePlaceholder: 'Tajuk Video',
+      descLabel: 'Deskripsi',
+      descPlaceholder: 'Deskripsi Pendek...',
+      orderLabel: 'Nombor Susunan',
+      orderPlaceholderEdit: '1, 2, 3…',
+      orderPlaceholderAdd: 'Kosongkan untuk auto',
+      orderHintEdit: 'Nombor 1 = pertama.',
+      orderHintAdd: 'Kosong = hujung senarai.',
+      manualBadge: '🇬🇧 Bahasa Inggeris (BI) — kosongkan untuk terjemahan automatik',
+      translationTitleLabel: 'Title (English)',
+      translationTitlePlaceholder: 'Write English title',
+      translationDescLabel: 'Description (English)',
+      translationDescPlaceholder: 'Write English description',
+    },
+    bi: {
+      inputLabel: 'Input language',
+      manualCheck: 'I want to translate manually',
+      hint: 'Enter English content. BM will auto-generate if manual is not checked.',
+      mainBadge: '🇬🇧 English (BI)',
+      titleLabel: 'Title',
+      titlePlaceholder: 'Video Title',
+      descLabel: 'Description',
+      descPlaceholder: 'Short description...',
+      orderLabel: 'Order Number',
+      orderPlaceholderEdit: '1, 2, 3…',
+      orderPlaceholderAdd: 'Leave blank for auto',
+      orderHintEdit: 'Number 1 = first.',
+      orderHintAdd: 'Blank = end of list.',
+      manualBadge: '🇲🇾 BM Translation — leave empty for automatic translation',
+      translationTitleLabel: 'Tajuk (BM)',
+      translationTitlePlaceholder: 'Tulis tajuk BM',
+      translationDescLabel: 'Deskripsi (BM)',
+      translationDescPlaceholder: 'Tulis deskripsi BM',
+    }
+  };
+
+  const localText = videoLang[form.source_language];
 
   // I replace this part...
   const fetchVideos = () => {
@@ -100,21 +146,25 @@ const ManageVideos = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this video?')) return;
+    if (!confirm(tx('Padam video ini?'))) return;
     await api.delete(`/videos/${id}`); fetchVideos();
   };
 
   return (
     <div>
       <div style={s.card}>
-        <h2 style={s.cardTitle}>{editing ? '✏️ Kemaskini Video' : '➕ Tambah Video'}</h2>
+        <h2 style={s.cardTitle}>
+          {editing
+            ? `✏️ ${tx('Kemaskini Video')}`
+            : `➕ ${tx('Tambah Video')}`}
+        </h2>
         {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
         <form onSubmit={handleSubmit}>
 
           <div style={s.translationPanel}>
             <div style={s.translationHeader}>
               <div>
-                <label style={s.label}>Bahasa input</label>
+                <label style={s.label} data-no-translate="true">{localText.inputLabel}</label>
                 <div style={s.segmented}>
                   <button type="button" style={{ ...s.segmentBtn, ...(form.source_language === 'bm' ? s.segmentActive : {}) }} onClick={() => setForm({ ...form, source_language: 'bm', title: '', description: '', title_translation: '', description_translation: '' })}>BM</button>
                   <button type="button" style={{ ...s.segmentBtn, ...(form.source_language === 'bi' ? s.segmentActive : {}) }} onClick={() => setForm({ ...form, source_language: 'bi', title: '', description: '', title_translation: '', description_translation: '' })}>English</button>
@@ -122,26 +172,34 @@ const ManageVideos = () => {
               </div>
               <label style={s.checkLabel}>
                 <input type="checkbox" checked={form.manual_translation} onChange={e => setForm({ ...form, manual_translation: e.target.checked })} />
-                Saya mahu terjemah sendiri
+                <span data-no-translate="true">{localText.manualCheck}</span>
               </label>
             </div>
-            <p style={s.translationHint}>{form.source_language === 'bm' ? 'Masukkan kandungan BM. English akan auto jika manual tidak ditanda.' : 'Enter English content. BM akan auto jika manual tidak ditanda.'}</p>
+            <p style={s.translationHint} data-no-translate="true">{localText.hint}</p>
           </div>
 
           {/* BM Section */}
           <div style={s.langSection}>
-            <div style={s.langBadge}>🇲🇾 Bahasa Melayu (BM)</div>
+            <div style={s.langBadge} data-no-translate="true">{localText.mainBadge}</div>
             <div style={s.formGrid}>
               <div style={s.field}>
-                <label style={s.label}>{form.source_language === 'bm' ? 'Tajuk' : 'Title'}</label>
-                <input style={s.input} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required placeholder={form.source_language === 'bm' ? 'Tajuk Video' : 'Video Title'} maxLength={150} />
+                <label style={s.label} data-no-translate="true">{localText.titleLabel}</label>
+                <input data-no-translate="true" style={s.input} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required placeholder={localText.titlePlaceholder} maxLength={150} />
               </div>
               <div style={s.field}>
-                <label style={s.label}>Nombor Susunan</label>
-                <input style={s.input} type="number" min={1} step={1} value={form.order_num}
+                <label style={s.label} data-no-translate="true">
+                  {localText.orderLabel}
+                </label>
+                <input data-no-translate="true" style={s.input} type="number" min={1} step={1} value={form.order_num}
                   onChange={e => setForm({ ...form, order_num: e.target.value })}
-                  placeholder={editing ? '1, 2, 3…' : 'Kosongkan untuk auto'} />
-                <p style={s.hint}>{editing ? 'Nombor 1 = pertama.' : 'Kosong = hujung senarai.'}</p>
+                  placeholder={
+                    editing
+                      ? localText.orderPlaceholderEdit
+                      : localText.orderPlaceholderAdd
+                  } />
+                <p style={s.hint} data-no-translate="true">
+                  {editing ? localText.orderHintEdit : localText.orderHintAdd}
+                </p>
               </div>
             </div>
             <div style={s.field}>
@@ -149,62 +207,77 @@ const ManageVideos = () => {
               <input style={s.input} value={form.youtube_url} onChange={e => setForm({ ...form, youtube_url: e.target.value })} required placeholder="https://youtu.be/..." maxLength={200} />
             </div>
             <div style={s.field}>
-              <label style={s.label}>{form.source_language === 'bm' ? 'Deskripsi' : 'Description'}</label>
-              <textarea style={{ ...s.input, height: '70px', resize: 'vertical' }} value={form.description}
-                onChange={e => setForm({ ...form, description: e.target.value })} placeholder={form.source_language === 'bm' ? 'Deskripsi Pendek...' : 'Short description...'} maxLength={500} />
+              <label style={s.label} data-no-translate="true">{localText.descLabel}</label>
+              <textarea data-no-translate="true" style={{ ...s.input, height: '70px', resize: 'vertical' }} value={form.description}
+                onChange={e => setForm({ ...form, description: e.target.value })} placeholder={localText.descPlaceholder} maxLength={500} />
             </div>
           </div>
 
           {/* BI Section */}
           {form.manual_translation && (
-          <div style={s.langSectionBi}>
-            <div style={{ ...s.langBadge, background: '#eff6ff', color: '#2563eb', borderColor: '#bfdbfe' }}>
-              🇬🇧 Bahasa Inggeris (BI) — <span style={{ fontWeight: 400 }}>kosongkan untuk terjemahan automatik</span>
+            <div style={s.langSectionBi}>
+              <div style={{ ...s.langBadge, background: '#eff6ff', color: '#2563eb', borderColor: '#bfdbfe' }}>
+                <span data-no-translate="true">{localText.manualBadge}</span>
+              </div>
+              <div style={s.field}>
+                <label style={s.label} data-no-translate="true">{localText.translationTitleLabel}</label>
+                <input data-no-translate="true" style={{ ...s.input, borderColor: '#bfdbfe' }} value={form.title_translation}
+                  onChange={e => setForm({ ...form, title_translation: e.target.value })} maxLength={150} placeholder={localText.translationTitlePlaceholder} />
+              </div>
+              <div style={s.field}>
+                <label style={s.label} data-no-translate="true">{localText.translationDescLabel}</label>
+                <textarea data-no-translate="true" style={{ ...s.input, height: '70px', resize: 'vertical', borderColor: '#bfdbfe' }}
+                  value={form.description_translation} onChange={e => setForm({ ...form, description_translation: e.target.value })}
+                  maxLength={500} placeholder={localText.translationDescPlaceholder} />
+              </div>
             </div>
-            <div style={s.field}>
-              <label style={s.label}>{form.source_language === 'bm' ? 'Title (English)' : 'Tajuk (BM)'}</label>
-              <input style={{ ...s.input, borderColor: '#bfdbfe' }} value={form.title_translation}
-                onChange={e => setForm({ ...form, title_translation: e.target.value })} maxLength={150} placeholder={form.source_language === 'bm' ? 'Write English title' : 'Tulis tajuk BM'} />
-            </div>
-            <div style={s.field}>
-              <label style={s.label}>{form.source_language === 'bm' ? 'Description (English)' : 'Deskripsi (BM)'}</label>
-              <textarea style={{ ...s.input, height: '70px', resize: 'vertical', borderColor: '#bfdbfe' }}
-                value={form.description_translation} onChange={e => setForm({ ...form, description_translation: e.target.value })}
-                maxLength={500} placeholder={form.source_language === 'bm' ? 'Write English description' : 'Tulis deskripsi BM'} />
-            </div>
-          </div>
           )}
 
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <button style={{ ...s.btnPrimary, opacity: translating ? 0.7 : 1 }} type="submit" disabled={translating}>
-              {translating ? '⏳ Menerjemah...' : editing ? 'Update Video' : 'Tambah Video'}
+              {translating
+                ? `⏳ ${tx('Menerjemah...')}`
+                : editing
+                  ? tx('Kemaskini Video')
+                  : tx('Tambah Video')}
             </button>
-            {editing && <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm(emptyForm); }}>Cancel</button>}
+            {editing && (
+              <button
+                style={s.btnSecondary}
+                type="button"
+                onClick={() => {
+                  setEditing(null);
+                  setForm(emptyForm);
+                }}
+              >
+                {tx('Batal')}
+              </button>
+            )}
           </div>
         </form>
       </div>
 
       <div style={s.card}>
-        <h2 style={s.cardTitle}>📹 List of Videos ({videos.length})</h2>
+        <h2 style={s.cardTitle}>📹 {tx('Senarai Video')} ({videos.length})</h2>
         {/* I added here */}
         <div style={s.filterBar}>
           <input
             style={s.input}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search title or description..."
+            placeholder={tx('Cari tajuk atau deskripsi...')}
           />
           <select
             style={s.input}
             value={orderFilter}
             onChange={e => setOrderFilter(e.target.value)}
           >
-            <option value="asc">Order: Ascending</option>
-            <option value="desc">Order: Descending</option>
+            <option value="asc">{tx('Susunan: Menaik')}</option>
+            <option value="desc">{tx('Susunan: Menurun')}</option>
           </select>
         </div>
 
-        {loading ? <p style={s.muted}>Loading...</p> : (
+        {loading ? <p style={s.muted}>{tx('Memuatkan...')}</p> : (
           <table style={s.table}>
             <thead><tr style={s.thead}>
               <th style={s.th}>#</th><th style={s.th}>Title</th><th style={s.th}>BI</th><th style={s.th}>Actions</th>
@@ -216,8 +289,8 @@ const ManageVideos = () => {
                   <td style={s.td} data-no-translate="true"><strong>{v.title}</strong><br /><span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{v.description?.slice(0, 50)}...</span></td>
                   <td style={s.td}>{v.title_bi ? <span style={s.biBadgeOk}>✓</span> : <span style={s.biBadgeMissing}>✗</span>}</td>
                   <td style={s.td}>
-                    <button style={s.btnEdit} onClick={() => handleEdit(v)}>✏️ Edit</button>
-                    <button style={s.btnDelete} onClick={() => handleDelete(v.id)}>🗑️ Delete</button>
+                    <button style={s.btnEdit} onClick={() => handleEdit(v)}>✏️ {tx('Ubahsuai')}</button>
+                    <button style={s.btnDelete} onClick={() => handleDelete(v.id)}>🗑️ {tx('Padam')}</button>
                   </td>
                 </tr>
               ))}

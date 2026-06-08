@@ -5,7 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 
 const ManageStudents = () => {
   const { admin } = useAuth();
-  const { t } = useLanguage();
+  const { t, tx } = useLanguage();
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -26,7 +26,7 @@ const ManageStudents = () => {
 
   const handleDelete = async (player) => {
     if (!window.confirm(
-      `Padamkan Pemain "${player.nickname}"?\n\nTindakan ini akan memadamkan kemajuan, markah dan sejarah sembang mereka secara kekal. Tindakan ini tidak boleh dibatalkan.`
+      `${tx('Padamkan Pemain')} "${player.nickname}"?\n\n${tx('Tindakan ini akan memadamkan kemajuan, markah dan sejarah sembang mereka secara kekal. Tindakan ini tidak boleh dibatalkan.')}`
     )) return;
 
     setDeleting(player.id);
@@ -278,7 +278,7 @@ const ManageStudents = () => {
                                         onClick={() => handleDelete(p)}
                                         disabled={deleting === p.id}
                                       >
-                                        {deleting === p.id ? '…' : '🗑️ Padam'}
+                                        {deleting === p.id ? '…' : `🗑️ ${tx('Padam')}`}
                                       </button>
                                     </td>
                                   )}

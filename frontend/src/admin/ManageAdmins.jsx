@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
+
 
 const ManageAdmins = ({ currentAdmin }) => {
+  const { language } = useLanguage();
   const [admins, setAdmins] = useState([]);
   const [pendingInvites, setPendingInvites] = useState([]);
   const [email, setEmail] = useState('');
@@ -24,26 +27,54 @@ const ManageAdmins = ({ currentAdmin }) => {
     setLoading(true);
     try {
       const res = await api.post('/admin/invite', { email, role: inviteRole });
-      setMsg('✅ ' + res.data.message);
+      setMsg(
+        language === 'bi'
+          ? `✅ Invitation sent to ${email}`
+          : `✅ Jemputan dihantar kepada ${email}`
+      );
       setEmail('');
       setInviteRole('admin');
       fetchAdmins();
-    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal menghantar jemputan')); }
+    } catch (err) {
+      setMsg(
+        '❌ ' +
+        (err.response?.data?.error ||
+          (language === 'bi'
+            ? 'Failed to send invitation'
+            : 'Gagal menghantar jemputan'))
+      );
+    }
     finally { setLoading(false); setTimeout(() => setMsg(''), 4000); }
   };
 
   const handleResend = async (id) => {
     try {
       const res = await api.post(`/admin/invitations/${id}/resend`);
-      setMsg('✅ ' + res.data.message);
+      setMsg(
+        language === 'bi'
+          ? '✅ Invitation resent!'
+          : '✅ Jemputan dihantar semula!'
+      );
       fetchAdmins();
-    } catch (err) { setMsg('❌ ' + (err.response?.data?.error || 'Gagal menghantar semula')); }
+    } catch (err) {
+      setMsg(
+        '❌ ' +
+        (err.response?.data?.error ||
+          (language === 'bi'
+            ? 'Failed to resend invitation'
+            : 'Gagal menghantar semula'))
+      );
+    }
     finally { setTimeout(() => setMsg(''), 4000); }
   };
 
   const handleCancel = async (id) => {
     if (!['main_admin', 'admin'].includes(currentAdmin?.role)) return;
-    if (!confirm('Batalkan jemputan ini?')) return;
+    if (!confirm(
+      language === 'bi'
+        ? 'Cancel this invitation?'
+        : 'Batalkan jemputan ini?'
+    )) return;
     try {
       await api.delete(`/admin/invitations/${id}`);
       fetchAdmins();

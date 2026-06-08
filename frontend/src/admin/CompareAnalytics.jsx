@@ -309,7 +309,7 @@ const CompareAnalytics = () => {
       api.post('/activity/log', {
         action: 'Viewed comparison analytics',
         details: 'Opened the comparison analytics page'
-      }).catch(() => {});
+      }).catch(() => { });
     }
     api.get('/admin/analytics')
       .then(res => setAllPlayers(res.data.players || []))
@@ -425,12 +425,12 @@ const CompareAnalytics = () => {
       <table>
         <tr><th>Metric</th><th class="a">A Value</th><th class="a">A Bar</th><th class="b">B Value</th><th class="b">B Bar</th></tr>
         ${[
-          ['Average Score', statsA?.avgScore ?? 0, statsB?.avgScore ?? 0],
-          ['CP1 Completed', statsA?.cp1Pct ?? 0, statsB?.cp1Pct ?? 0],
-          ['CP2 Completed', statsA?.cp2Pct ?? 0, statsB?.cp2Pct ?? 0],
-          ['CP3 Completed', statsA?.cp3Pct ?? 0, statsB?.cp3Pct ?? 0],
-          ['All CP Completed', statsA?.allPct ?? 0, statsB?.allPct ?? 0],
-        ].map(([metric, a, b]) => `<tr><td>${escapeCell(metric)}</td><td>${escapeCell(a)}</td><td>${bar(a, COLOR_A)}</td><td>${escapeCell(b)}</td><td>${bar(b, COLOR_B)}</td></tr>`).join('')}
+        ['Average Score', statsA?.avgScore ?? 0, statsB?.avgScore ?? 0],
+        ['CP1 Completed', statsA?.cp1Pct ?? 0, statsB?.cp1Pct ?? 0],
+        ['CP2 Completed', statsA?.cp2Pct ?? 0, statsB?.cp2Pct ?? 0],
+        ['CP3 Completed', statsA?.cp3Pct ?? 0, statsB?.cp3Pct ?? 0],
+        ['All CP Completed', statsA?.allPct ?? 0, statsB?.allPct ?? 0],
+      ].map(([metric, a, b]) => `<tr><td>${escapeCell(metric)}</td><td>${escapeCell(a)}</td><td>${bar(a, COLOR_A)}</td><td>${escapeCell(b)}</td><td>${bar(b, COLOR_B)}</td></tr>`).join('')}
       </table>
       <h2>Players Side by Side</h2>
       <table>
@@ -440,13 +440,13 @@ const CompareAnalytics = () => {
           <th class="b">Rank</th><th class="b">Nickname</th><th class="b">Session</th><th class="b">School</th><th class="b">Class</th><th class="b">CP1</th><th class="b">CP2</th><th class="b">CP3</th><th class="b">Total</th>
         </tr>
         ${Array.from({ length: maxRows }, (_, index) => {
-          const a = markedA[index] || {};
-          const b = markedB[index] || {};
-          return `<tr>
+        const a = markedA[index] || {};
+        const b = markedB[index] || {};
+        return `<tr>
             <td>${a.id ? index + 1 : ''}</td><td>${escapeCell(a.nickname)}</td><td>${escapeCell(a.session_name)}</td><td>${escapeCell(a.school_name)}</td><td>${escapeCell(a.class_name)}</td><td>${escapeCell(a.cp1_mark)}</td><td>${escapeCell(a.cp2_mark)}</td><td>${escapeCell(a.cp3_mark)}</td><td>${escapeCell(a.total_mark)}</td>
             <td>${b.id ? index + 1 : ''}</td><td>${escapeCell(b.nickname)}</td><td>${escapeCell(b.session_name)}</td><td>${escapeCell(b.school_name)}</td><td>${escapeCell(b.class_name)}</td><td>${escapeCell(b.cp1_mark)}</td><td>${escapeCell(b.cp2_mark)}</td><td>${escapeCell(b.cp3_mark)}</td><td>${escapeCell(b.total_mark)}</td>
           </tr>`;
-        }).join('')}
+      }).join('')}
       </table>
       </body></html>
     `;
@@ -454,7 +454,7 @@ const CompareAnalytics = () => {
     api.post('/activity/log', {
       action: 'Downloaded comparison data',
       details: `Downloaded comparison Excel for A: ${labelA || 'none'} and B: ${labelB || 'none'}`
-    }).catch(() => {});
+    }).catch(() => { });
   };
 
   if (loading) return <div style={s.loading}>Memuatkan data perbandingan… 📊</div>;
@@ -515,10 +515,10 @@ const CompareAnalytics = () => {
         {(filterReady(filterA) || filterReady(filterB)) && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
             <div style={{ fontSize: '0.78rem', color: COLOR_A, fontWeight: '600' }}>
-              A: {labelA || '—'} {filterReady(filterA) && <span style={{ color: '#64748b', fontWeight: 400 }}>({playersA.length} pemain)</span>}
+              A: {labelA || '—'} {filterReady(filterA) && <span style={{ color: '#64748b', fontWeight: 400 }}>({playersA.length} {t('admin.players')})</span>}
             </div>
             <div style={{ fontSize: '0.78rem', color: COLOR_B, fontWeight: '600' }}>
-              B: {labelB || '—'} {filterReady(filterB) && <span style={{ color: '#64748b', fontWeight: 400 }}>({playersB.length} pemain)</span>}
+              B: {labelB || '—'} {filterReady(filterB) && <span style={{ color: '#64748b', fontWeight: 400 }}>({playersB.length} {t('admin.players')})</span>}
             </div>
           </div>
         )}
@@ -573,9 +573,7 @@ const CompareAnalytics = () => {
                 </tbody>
               </table>
             </div>
-            <p style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.5rem' }}>
-              🟢 Hijau = lebih baik &nbsp;·&nbsp; ▲ = menang dalam kategori ini &nbsp;·&nbsp; Percubaan: kurang = lebih baik
-            </p>
+            {t('compare.legend')}
           </div>
 
           {/* ── Bar Chart ── */}

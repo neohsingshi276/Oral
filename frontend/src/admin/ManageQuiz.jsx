@@ -69,6 +69,25 @@ const ManageQuiz = () => {
   const [orderFilter, setOrderFilter] = useState('desc');
   const fileRef = useRef();
 
+  const quizLang = {
+    bm: {
+      inputLabel: 'Bahasa input',
+      manualCheck: 'Saya mahu terjemah sendiri',
+      hint: 'Masukkan BM. Sistem akan isi BI secara automatik jika manual tidak ditanda.',
+      translationLabel: 'Terjemahan Bahasa Inggeris',
+      translationPlaceholder: 'Tulis terjemahan BI di sini',
+    },
+    bi: {
+      inputLabel: 'Input language',
+      manualCheck: 'I want to translate manually',
+      hint: 'Enter English. The system will fill in BM automatically if manual is not checked.',
+      translationLabel: 'BM Translation',
+      translationPlaceholder: 'Write BM translation here',
+    }
+  };
+
+  const localText = quizLang[form.source_language];
+
   const fetchQuestions = () => {
     console.log('QUIZ FILTER:', { search, typeFilter, orderFilter });
     api.get('/quiz/admin/questions', {
@@ -296,7 +315,7 @@ const ManageQuiz = () => {
     setTab('questions');
   };
 
-  const handleDelete = async (id) => { if (!confirm('Padam soalan ini?')) return; await api.delete(`/quiz/admin/questions/${id}`); fetchQuestions(); };
+  const handleDelete = async (id) => { if (!confirm(tx('Padam soalan ini?'))) return; await api.delete(`/quiz/admin/questions/${id}`); fetchQuestions(); };
 
   const saveSettings = async () => {
     if (!selSession) { setMsg('❌ Sila pilih sesi!'); setTimeout(() => setMsg(''), 3000); return; }
@@ -335,7 +354,9 @@ const ManageQuiz = () => {
               <div style={s.translationPanel}>
                 <div style={s.translationHeader}>
                   <div>
-                    <label style={s.label}>Bahasa input</label>
+                    <label style={s.label} data-no-translate="true">
+                      {localText.inputLabel}
+                    </label>
                     <select style={s.compactSelect} value={form.source_language} onChange={e => handleSourceLanguageChange(e.target.value)}>
                       <option value="bm">Bahasa Melayu</option>
                       <option value="bi">English</option>
@@ -343,36 +364,39 @@ const ManageQuiz = () => {
                   </div>
                   <label style={s.checkLabel}>
                     <input type="checkbox" checked={form.manual_translation} onChange={e => setForm({ ...form, manual_translation: e.target.checked })} />
-                    Saya mahu terjemah sendiri
+                    <span data-no-translate="true">{localText.manualCheck}</span>
                   </label>
                 </div>
-                <p style={s.translationHint}>
-                  {form.source_language === 'bm'
-                    ? 'Masukkan BM. Sistem akan isi English secara automatik jika manual tidak ditanda.'
-                    : 'Enter English. Sistem akan isi BM secara automatik jika manual tidak ditanda.'}
+                <p style={s.translationHint} data-no-translate="true">
+                  {localText.hint}
                 </p>
               </div>
 
               {/* Teks soalan */}
               <div style={s.field}>
-                <label style={s.label}>{form.source_language === 'bm' ? 'Soalan (BM)' : 'Question (English)'}</label>
+                <label style={s.label}>{tx('Soalan (BM)')}</label>
                 <textarea style={{ ...s.input, height: '80px', resize: 'vertical' }} value={form.question} onChange={e => setForm({ ...form, question: e.target.value })} required placeholder={form.source_language === 'bm' ? 'Tulis soalan di sini...' : 'Write the question here...'} maxLength={500} />
                 <p style={{ color: form.question.length > 450 ? '#e11d48' : '#94a3b8', fontSize: '0.75rem', margin: '0.2rem 0 0', textAlign: 'right' }}>{form.question.length}/500</p>
               </div>
               {form.manual_translation && (
-              <>
-              {/* Translation Question */}
-              <div style={{ marginBottom: '1rem', background: '#eff6ff', borderRadius: '10px', padding: '0.75rem', border: '1px solid #bfdbfe' }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#2563eb', marginBottom: '0.4rem' }}>
-                  {form.source_language === 'bm' ? 'English translation' : 'Terjemahan Bahasa Melayu'}
-                </label>
-                <textarea style={{ ...s.input, height: '70px', resize: 'vertical', borderColor: '#bfdbfe' }} value={form.question_translation}
-                  onChange={e => setForm({ ...form, question_translation: e.target.value })} maxLength={500}
-                  placeholder={form.source_language === 'bm' ? 'Write English translation here' : 'Tulis terjemahan BM di sini'} />
-              </div>
-              <div style={{ display: 'none' }}>
-              </div>
-              </>
+                <>
+                  {/* Translation Question */}
+                  <div style={{ marginBottom: '1rem', background: '#eff6ff', borderRadius: '10px', padding: '0.75rem', border: '1px solid #bfdbfe' }}>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#2563eb', marginBottom: '0.4rem' }}>
+                      <span data-no-translate="true">{localText.translationLabel}</span>
+                    </label>
+                    <textarea
+                      style={{ ...s.input, height: '70px', resize: 'vertical', borderColor: '#bfdbfe' }}
+                      value={form.question_translation}
+                      onChange={e => setForm({ ...form, question_translation: e.target.value })}
+                      maxLength={500}
+                      data-no-translate="true"
+                      placeholder={localText.translationPlaceholder}
+                    />
+                  </div>
+                  <div style={{ display: 'none' }}>
+                  </div>
+                </>
               )}
 
               {/* Muat naik gambar */}
@@ -392,14 +416,14 @@ const ManageQuiz = () => {
                     Pilihan Jawapan
                     <span style={s.labelHint}>
                       {form.question_type === 'multi_select'
-                        ? '(klik satu atau lebih jawapan betul)'
-                        : '(klik bulatan A/B/C/D untuk pilih jawapan betul)'}
+                        ? tx('(klik satu atau lebih jawapan betul)')
+                        : tx('(klik bulatan A/B/C/D untuk pilih jawapan betul)')}
                     </span>
                   </label>
 
                   {form.correct_answer.length === 0 && (
                     <div style={s.correctWarning}>
-                      ⚠️ Sila pilih jawapan yang betul sebelum tekan Tambah Soalan.
+                      {tx('⚠️ Sila pilih jawapan yang betul sebelum tekan Tambah Soalan.')}
                     </div>
                   )}
                   <div style={s.optionsList}>
@@ -451,34 +475,34 @@ const ManageQuiz = () => {
           <div style={s.card}>
             <h2 style={s.cardTitle}><span>❓ Semua Soalan</span> ({questions.length})</h2>
             <div style={s.filterBar}>
-            <input
-              style={s.input}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search question..."
-            />
+              <input
+                style={s.input}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder={tx('Cari soalan...')}
+              />
 
-            <select
-              style={s.input}
-              value={typeFilter}
-              onChange={e => setTypeFilter(e.target.value)}
-            >
-              <option value="all">All Question Types</option>
-              <option value="multiple_choice">Multiple Choice</option>
-              <option value="true_false">True / False</option>
-              <option value="multi_select">Multi Select</option>
-              <option value="match">Matching</option>
-            </select>
+              <select
+                style={s.input}
+                value={typeFilter}
+                onChange={e => setTypeFilter(e.target.value)}
+              >
+                <option value="all">{tx('Semua Jenis Soalan')}</option>
+                <option value="multiple_choice">{tx('Pilihan Berganda')}</option>
+                <option value="true_false">{tx('Betul / Salah')}</option>
+                <option value="multi_select">{tx('Pelbagai Pilihan')}</option>
+                <option value="match">{tx('Padanan')}</option>
+              </select>
 
-            <select
-              style={s.input}
-              value={orderFilter}
-              onChange={e => setOrderFilter(e.target.value)}
-            >
-              <option value="desc">Latest Added</option>
-              <option value="asc">Oldest Added</option>
-            </select>
-          </div>
+              <select
+                style={s.input}
+                value={orderFilter}
+                onChange={e => setOrderFilter(e.target.value)}
+              >
+                <option value="desc">{tx('Terbaharu Ditambah')}</option>
+                <option value="asc">{tx('Terlama Ditambah')}</option>
+              </select>
+            </div>
             <div style={s.qList}>
               {questions.map((q, i) => {
                 const opts = pickQuestionOptions(q, language);

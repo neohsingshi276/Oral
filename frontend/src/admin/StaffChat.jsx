@@ -6,8 +6,10 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const StaffChat = () => {
+  const { tx } = useLanguage();
   const { admin: me } = useAuth();
   const [contacts, setContacts] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -129,27 +131,28 @@ const StaffChat = () => {
   // ── total unread badge for nav ───────────────────────────
   const totalUnread = contacts.reduce((sum, c) => sum + (c.unread || 0), 0);
 
-  if (loadingContacts) return <div style={s.loading}>Memuatkan sembang staf… 💬</div>;
+  if (loadingContacts) return <div style={s.loading}>{tx('Memuatkan sembang staf')}… 💬</div>;
 
   return (
     <div style={s.wrap}>
       {/* ── Sidebar ── */}
       <div style={s.sidebar}>
         <div style={s.sidebarHeader}>
-          <span style={s.sidebarTitle}>🏢 Sembang Staf</span>
+          <span style={s.sidebarTitle}>🏢 {tx('Sembang Staf')}</span>
           {totalUnread > 0 && <span style={s.totalUnread}>{totalUnread}</span>}
         </div>
         <div style={s.sidebarSub}>
           {me?.role === 'main_admin'
-            ? 'Mesej daripada pentadbir anda'
-            : 'Hubungi pentadbir dan staf lain'}
+            ? tx('Mesej daripada pentadbir anda')
+            : tx('Hubungi pentadbir dan staf')}
+
         </div>
         {/* Added Here */}
         <div style={s.filterBox}>
           <input
             style={s.searchInput}
             type="text"
-            placeholder="🔍 Search by name..."
+            placeholder={tx('🔍 Cari mengikut nama...')}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
           />
@@ -159,10 +162,10 @@ const StaffChat = () => {
             value={roleFilter}
             onChange={e => setRoleFilter(e.target.value)}
           >
-            <option value="all">Semua Peranan</option>
-            <option value="main_admin">Main Admin</option>
-            <option value="admin">Admin</option>
-            <option value="teacher">Teacher</option>
+            <option value="all">{tx('Semua Peranan')}</option>
+            <option value="main_admin">{tx('Pentadbir Utama')}</option>
+            <option value="admin">{tx('Pentadbir')}</option>
+            <option value="teacher">{tx('Guru')}</option>
           </select>
 
           <select
@@ -170,15 +173,15 @@ const StaffChat = () => {
             value={readFilter}
             onChange={e => setReadFilter(e.target.value)}
           >
-            <option value="all">All Status</option>
-            <option value="unread">Unread</option>
-            <option value="read">Read</option>
+            <option value="all">{tx('Semua Status')}</option>
+            <option value="unread">{tx('Belum Dibaca')}</option>
+            <option value="read">{tx('Sudah Dibaca')}</option>
           </select>
         </div>
         {/* Until here */}
         <div style={s.contactList}>
           {visibleContacts.length === 0 && (
-            <p style={s.empty}>No staff match this search or filter.</p> // Change this line
+            <p style={s.empty}>{tx('Tiada staf sepadan dengan carian atau penapis ini.')}</p> // Change this line
           )}
           {visibleContacts.map(c => (
             <div
@@ -196,7 +199,11 @@ const StaffChat = () => {
                 <div style={s.contactName}>
                   {c.name}
                   <span style={{ ...s.rolePill, background: c.role === 'main_admin' ? '#7c3aed' : '#2563eb' }}>
-                    {c.role === 'main_admin' ? '⭐' : c.role === 'teacher' ? 'Guru' : 'Pentadbir'}
+                    {c.role === 'main_admin'
+                      ? '⭐'
+                      : c.role === 'teacher'
+                        ? tx('Guru')
+                        : tx('Pentadbir')}
                   </span>
                 </div>
                 {c.lastMessage && (
@@ -223,11 +230,11 @@ const StaffChat = () => {
         {!selected ? (
           <div style={s.noChat}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏢</div>
-            <p style={{ color: '#475569', fontWeight: '700', marginBottom: '0.25rem' }}>Sembang Staf</p>
+            <p style={{ color: '#475569', fontWeight: '700', marginBottom: '0.25rem' }}>{tx('Sembang Staf')}</p>
             <p style={{ color: '#94a3b8', fontSize: '0.85rem', textAlign: 'center', maxWidth: '260px' }}>
               {me?.role === 'main_admin'
-                ? 'Pilih pentadbir dari senarai untuk melihat mesej mereka.'
-                : 'Pilih pentadbir untuk menghantar laporan atau soalan.'}
+                ? tx('Pilih pentadbir dari senarai untuk melihat mesej mereka.')
+                : tx('Pilih pentadbir untuk menghantar laporan atau soalan.')}
             </p>
           </div>
         ) : (
@@ -240,7 +247,11 @@ const StaffChat = () => {
               <div style={{ flex: 1 }}>
                 <div style={s.chatName}>{selected.name}</div>
                 <div style={s.chatSub}>
-                  {selected.role === 'main_admin' ? '⭐ Pentadbir Utama' : selected.role === 'teacher' ? '👩‍🏫 Guru' : 'Pentadbir'}
+                  {selected.role === 'main_admin'
+                    ? `⭐ ${tx('Pentadbir Utama')}`
+                    : selected.role === 'teacher'
+                      ? `👩‍🏫 ${tx('Guru')}`
+                      : tx('Pentadbir')}
                 </div>
               </div>
               {me?.role !== 'main_admin' && (
@@ -248,7 +259,7 @@ const StaffChat = () => {
               )}
               {lastRefreshed && (
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8', textAlign: 'right', marginLeft: '0.5rem' }}>
-                  🔄 Dikemas kini<br />{lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  🔄 {tx('Dikemas kini')}<br />{lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </div>
               )}
             </div>
@@ -257,9 +268,11 @@ const StaffChat = () => {
             <div style={s.messages}>
               {messages.length === 0 && (
                 <div style={s.emptyMsg}>
-                  <p>No messages yet.</p>
+                  <p>{tx('Tiada mesej lagi.')}</p>
                   <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                    {me?.role !== 'main_admin' ? 'Hantar mesej untuk melaporkan isu.' : 'Belum ada mesej daripada pentadbir ini.'}
+                    {me?.role !== 'main_admin'
+                      ? tx('Hantar mesej untuk melaporkan isu.')
+                      : tx('Belum ada mesej daripada pentadbir ini.')}
                   </p>
                 </div>
               )}
@@ -274,7 +287,7 @@ const StaffChat = () => {
                     )}
                     <div style={{ ...s.bubble, ...(isMine ? s.bubbleMine : s.bubbleTheirs) }}>
                       <span style={{ ...s.bubbleSender, color: isMine ? 'rgba(255,255,255,0.65)' : '#94a3b8' }}>
-                        {isMine ? 'Anda' : m.sender_name}
+                        {isMine ? tx('Anda') : m.sender_name}
                       </span>
                       <p style={{ ...s.bubbleText, color: isMine ? '#fff' : '#1e293b' }} data-no-translate="true">{m.message}</p>
                       <span style={{ ...s.bubbleTime, color: isMine ? 'rgba(255,255,255,0.55)' : '#94a3b8' }}>
@@ -296,7 +309,7 @@ const StaffChat = () => {
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={handleKey}
-                  placeholder={`Mesej kepada ${selected.name}…`}
+                  placeholder={tx('Mesej kepada') + ' ' + selected.name + '…'}
                   maxLength={500}
                   disabled={sending}
                 />
@@ -309,7 +322,7 @@ const StaffChat = () => {
                 onClick={handleSend}
                 disabled={!input.trim() || sending}
               >
-                {sending ? '…' : 'Hantar ➤'}
+                {sending ? '…' : `${tx('Hantar')} ➤`}
               </button>
             </div>
           </>

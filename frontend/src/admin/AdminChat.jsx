@@ -1,21 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 const AdminChat = () => {
-  const [players, setPlayers]     = useState([]);
-  const [selected, setSelected]   = useState(null);
-  const [messages, setMessages]   = useState([]);
-  const [input, setInput]         = useState('');
-  const [loading, setLoading]     = useState(true);
-  const [sending, setSending]     = useState(false);
+  const { tx } = useLanguage();
+  const [players, setPlayers] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [readFilter, setReadFilter] = useState('all');
 
   // Track the last-seen message count per player so unread badge clears when opened
-  const lastSeenRef    = useRef({});   // { [player_id]: timestamp of last seen message }
+  const lastSeenRef = useRef({});   // { [player_id]: timestamp of last seen message }
   const messagesEndRef = useRef(null);
   const contactPollRef = useRef(null);
-  const msgPollRef     = useRef(null);
+  const msgPollRef = useRef(null);
 
   // ── Build player contact list from getAllChats ─────────────────────────────
   // getAllChats returns ALL messages ASC. We group by player, the last message
@@ -25,19 +27,19 @@ const AdminChat = () => {
     allMessages.forEach(m => {
       if (!map[m.player_id]) {
         map[m.player_id] = {
-          player_id:   m.player_id,
-          nickname:    m.nickname,
-          session_id:  m.session_id,
+          player_id: m.player_id,
+          nickname: m.nickname,
+          session_id: m.session_id,
           lastMessage: null,
-          lastTime:    null,
-          unread:      0,
+          lastTime: null,
+          unread: 0,
         };
       }
       const p = map[m.player_id];
       // Messages are ASC — every iteration overwrites with the newer message,
       // so after the loop p.lastMessage is the most recent one.
       p.lastMessage = m.message;
-      p.lastTime    = m.sent_at;
+      p.lastTime = m.sent_at;
 
       // Count unread: player messages sent after last time admin viewed this thread
       if (m.sender_type === 'player') {
@@ -102,9 +104,9 @@ const AdminChat = () => {
     setSending(true);
     try {
       await api.post('/chat/admin/reply', {
-        player_id:  selected.player_id,
+        player_id: selected.player_id,
         session_id: selected.session_id,
-        message:    input.trim(),
+        message: input.trim(),
       });
       setInput('');
       await fetchMessages(selected.player_id);
@@ -147,7 +149,7 @@ const AdminChat = () => {
 
   const totalUnread = filteredPlayers.reduce((s, p) => s + (p.unread || 0), 0);
 
-  if (loading) return <div style={s.loading}>Memuatkan sembang… 💬</div>;
+  if (loading) return <div style={s.loading}>{tx('Memuatkan sembang')}… 💬</div>;
 
   return (
     <div style={s.wrap}>
@@ -155,13 +157,13 @@ const AdminChat = () => {
       {/* ── Sidebar ── */}
       <div style={s.sidebar}>
         <div style={s.sidebarHeader}>
-          <span style={s.sidebarTitle}>💬 Sembang Pemain</span>
+          <span style={s.sidebarTitle}>💬 {tx('Sembang Pemain')}</span>
           {totalUnread > 0 && <span style={s.totalBadge}>{totalUnread}</span>}
         </div>
         <div style={s.filterBox}>
           <input
             style={s.filterInput}
-            placeholder="🔍 Cari nama pemain..."
+            placeholder={tx('🔍 Cari nama pemain...')}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
           />
@@ -171,15 +173,15 @@ const AdminChat = () => {
             value={readFilter}
             onChange={e => setReadFilter(e.target.value)}
           >
-          <option value="all">All Status</option>
-          <option value="unread">Unread</option>
-          <option value="read">Read</option>
-        </select>
-      </div>
+            <option value="all">{tx('Semua Status')}</option>
+            <option value="unread">{tx('Belum Dibaca')}</option>
+            <option value="read">{tx('Sudah Dibaca')}</option>
+          </select>
+        </div>
 
         <div style={s.contactList}>
           {filteredPlayers.length === 0 && (
-            <p style={s.emptyContacts}>Belum ada mesej pemain.</p>
+            <p style={s.emptyContacts}>{tx('Belum ada mesej pemain.')}</p>
           )}
           {filteredPlayers.map(p => (
             <div
@@ -193,10 +195,10 @@ const AdminChat = () => {
               <div style={s.avatar}>{p.nickname?.[0]?.toUpperCase()}</div>
               <div style={s.contactInfo}>
                 <div style={s.contactName}>{p.nickname}</div>
-                <div style={s.contactLast} data-no-translate="true">
+                <div style={s.contactLast}>
                   {p.lastMessage
                     ? (p.lastMessage.length > 34 ? p.lastMessage.slice(0, 34) + '…' : p.lastMessage)
-                    : 'Belum ada mesej'}
+                    : tx('Belum ada mesej')}
                 </div>
               </div>
               <div style={s.contactMeta}>
@@ -219,9 +221,9 @@ const AdminChat = () => {
         {!selected ? (
           <div style={s.noChat}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💬</div>
-            <p style={{ color: '#475569', fontWeight: '700' }}>Pilih pemain untuk mula bersembang</p>
+            <p style={{ color: '#475569', fontWeight: '700' }}>{tx('Pilih pemain untuk mula bersembang')}</p>
             <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-              Anda boleh membalas mana-mana mesej pemain di sini
+              {tx('Anda boleh membalas mana-mana mesej pemain di sini')}
             </p>
           </div>
         ) : (
@@ -231,11 +233,11 @@ const AdminChat = () => {
               <div style={s.avatar}>{selected.nickname?.[0]?.toUpperCase()}</div>
               <div style={{ flex: 1 }}>
                 <div style={s.chatName}>{selected.nickname}</div>
-                <div style={s.chatSub}>ID Pemain: {selected.player_id} · Sesi: {selected.session_id}</div>
+                <div style={s.chatSub}>{tx('ID Pemain:')} {selected.player_id} · {tx('Sesi')}: {selected.session_id}</div>
               </div>
               {lastRefreshed && (
                 <div style={{ fontSize: '0.7rem', color: '#94a3b8', textAlign: 'right' }}>
-                  🔄 Dikemas kini<br />{lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  🔄 {tx('Dikemas kini')}<br />{lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </div>
               )}
             </div>
@@ -243,7 +245,7 @@ const AdminChat = () => {
             {/* Messages */}
             <div style={s.messages}>
               {messages.length === 0 && (
-                <p style={s.emptyMessages}>Belum ada mesej. Menunggu pemain menulis dahulu.</p>
+                <p style={s.emptyMessages}>{tx('Belum ada mesej. Menunggu pemain menulis dahulu.')}</p>
               )}
               {messages.map((m, i) => {
                 const isAdmin = m.sender_type === 'admin';
@@ -252,7 +254,7 @@ const AdminChat = () => {
                     {!isAdmin && <div style={s.msgAvatar}>{selected.nickname?.[0]?.toUpperCase()}</div>}
                     <div style={{ ...s.bubble, ...(isAdmin ? s.bubbleAdmin : s.bubblePlayer) }}>
                       <span style={{ ...s.bubbleSender, color: isAdmin ? 'rgba(255,255,255,0.65)' : '#94a3b8' }}>
-                        {isAdmin ? '👤 Anda (Pentadbir)' : `🎮 ${selected.nickname}`}
+                        {isAdmin ? `👤 ${tx('Anda (Pentadbir)')}` : `🎮 ${selected.nickname}`}
                       </span>
                       <p style={{ ...s.bubbleText, color: isAdmin ? '#fff' : '#1e293b' }} data-no-translate="true">{m.message}</p>
                       <span style={{ ...s.bubbleTime, color: isAdmin ? 'rgba(255,255,255,0.55)' : '#94a3b8' }}>
@@ -273,7 +275,7 @@ const AdminChat = () => {
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={`Balas kepada ${selected.nickname}…`}
+                  placeholder={`${tx('Balas kepada')} ${selected.nickname}…`}
                   maxLength={200}
                   disabled={sending}
                 />
@@ -286,7 +288,7 @@ const AdminChat = () => {
                 onClick={handleSend}
                 disabled={!input.trim() || sending}
               >
-                {sending ? '…' : 'Hantar ➤'}
+                {sending ? '…' : tx('Hantar ➤')}
               </button>
             </div>
           </>
@@ -337,8 +339,10 @@ const s = {
   input: { flex: 1, padding: '0.7rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '0.9rem', outline: 'none' },
   sendBtn: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '10px', padding: '0.7rem 1.4rem', fontWeight: '700', cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap', transition: 'opacity 0.2s' },
 
-  filterBox: { padding: '0.75rem 1rem', borderBottom: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column',
-  gap: '0.5rem', background: '#fafbff' },
+  filterBox: {
+    padding: '0.75rem 1rem', borderBottom: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column',
+    gap: '0.5rem', background: '#fafbff'
+  },
   filterInput: { width: '100%', padding: '0.55rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.78rem', outline: 'none', boxSizing: 'border-box', background: '#fff' },
 };
 

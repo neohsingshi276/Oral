@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 const emptyForm = {
   title: '',
@@ -13,6 +14,7 @@ const emptyForm = {
 };
 
 const ManageFacts = () => {
+  const { tx } = useLanguage();
   const [facts, setFacts] = useState([]);
   const [form, setForm] = useState(emptyForm);
   // I added this 2 line
@@ -24,6 +26,31 @@ const ManageFacts = () => {
   const [msg, setMsg] = useState('');
   const [translating, setTranslating] = useState(false);
   const fileRef = useRef();
+
+  const factLang = {
+    bm: {
+      inputLabel: 'Bahasa input',
+      manualCheck: 'Saya mahu terjemah sendiri',
+      hint: 'Masukkan fakta BM. BI akan auto jika manual tidak ditanda.',
+      manualBadge: '🇬🇧 Bahasa Inggeris (BI) — kosongkan untuk terjemahan automatik',
+      titleLabel: 'Title (English)',
+      titlePlaceholder: 'Write English title',
+      contentLabel: 'Content (English)',
+      contentPlaceholder: 'Write English content',
+    },
+    bi: {
+      inputLabel: 'Input language',
+      manualCheck: 'I want to translate manually',
+      hint: 'Enter English facts. BM will auto-generate if manual is not checked.',
+      manualBadge: '🇲🇾 BM Translation — leave empty for automatic translation',
+      titleLabel: 'Tajuk (BM)',
+      titlePlaceholder: 'Tulis tajuk BM',
+      contentLabel: 'Kandungan (BM)',
+      contentPlaceholder: 'Tulis kandungan BM',
+    }
+  };
+
+  const localText = factLang[form.source_language];
 
   // I replace this part...
   const fetchFacts = () => {
@@ -102,7 +129,7 @@ const ManageFacts = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Padam fakta ini?')) return;
+    if (!confirm(tx('Padam fakta ini?'))) return;
     await api.delete(`/facts/${id}`);
     fetchFacts();
   };
@@ -117,7 +144,9 @@ const ManageFacts = () => {
           <div style={s.translationPanel}>
             <div style={s.translationHeader}>
               <div>
-                <label style={s.label}>Bahasa input</label>
+                <label style={s.label} data-no-translate="true">
+                  {localText.inputLabel}
+                </label>
                 <div style={s.segmented}>
                   <button type="button" style={{ ...s.segmentBtn, ...(form.source_language === 'bm' ? s.segmentActive : {}) }} onClick={() => setForm({ ...form, source_language: 'bm', title: '', content: '', title_translation: '', content_translation: '' })}>BM</button>
                   <button type="button" style={{ ...s.segmentBtn, ...(form.source_language === 'bi' ? s.segmentActive : {}) }} onClick={() => setForm({ ...form, source_language: 'bi', title: '', content: '', title_translation: '', content_translation: '' })}>English</button>
@@ -125,23 +154,35 @@ const ManageFacts = () => {
               </div>
               <label style={s.checkLabel}>
                 <input type="checkbox" checked={form.manual_translation} onChange={e => setForm({ ...form, manual_translation: e.target.checked })} />
-                Saya mahu terjemah sendiri
+                <span data-no-translate="true">{localText.manualCheck}</span>
               </label>
             </div>
-            <p style={s.translationHint}>{form.source_language === 'bm' ? 'Masukkan fakta BM. English akan auto jika manual tidak ditanda.' : 'Enter English facts. BM akan auto jika manual tidak ditanda.'}</p>
+            <p style={s.translationHint} data-no-translate="true">
+              {localText.hint}
+            </p>
           </div>
 
           {/* BM Section */}
           <div style={s.langSection}>
-            <div style={s.langBadge}>🇲🇾 Bahasa Melayu (BM)</div>
-            <div style={s.field}>
-              <label style={s.label}>{form.source_language === 'bm' ? 'Tajuk' : 'Title'}</label>
-              <input style={s.input} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
-                required maxLength={120} placeholder={form.source_language === 'bm' ? 'Contoh: Gigi anda unik!' : 'Example: Your teeth are unique!'} />
+            <div style={s.langBadge} data-no-translate="true">
+              {form.source_language === 'bm'
+                ? '🇲🇾 Bahasa Melayu (BM)'
+                : '🇬🇧 English (BI)'}
             </div>
             <div style={s.field}>
-              <label style={s.label}>{form.source_language === 'bm' ? 'Kandungan' : 'Content'}</label>
-              <textarea style={{ ...s.input, height: '90px', resize: 'vertical' }} value={form.content}
+              <label style={s.label} data-no-translate="true">
+                {form.source_language === 'bm' ? 'Tajuk' : 'Title'}
+              </label>
+              <input data-no-translate="true" style={s.input} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
+                required maxLength={120} placeholder={form.source_language === 'bm' ? 'Contoh: Gigi anda unik!' : 'Example: Your teeth are unique!'}
+                data-no-translate="true" />
+            </div>
+            <div style={s.field}>
+              <label style={s.label} data-no-translate="true">
+                {form.source_language === 'bm' ? 'Kandungan' : 'Content'}
+              </label>
+              <textarea data-no-translate="true"
+                style={{ ...s.input, height: '90px', resize: 'vertical' }} value={form.content}
                 onChange={e => setForm({ ...form, content: e.target.value })}
                 required maxLength={1000} placeholder={form.source_language === 'bm' ? 'Tulis fakta penuh di sini...' : 'Write the full fact here...'} />
             </div>
@@ -149,23 +190,33 @@ const ManageFacts = () => {
 
           {/* BI Section */}
           {form.manual_translation && (
-          <div style={s.langSection}>
-            <div style={{ ...s.langBadge, background: '#eff6ff', color: '#2563eb', borderColor: '#bfdbfe' }}>
-              🇬🇧 Bahasa Inggeris (BI) — <span style={{ fontWeight: 400 }}>kosongkan untuk terjemahan automatik</span>
+            <div style={s.langSection}>
+              <div style={{ ...s.langBadge, background: '#eff6ff', color: '#2563eb', borderColor: '#bfdbfe' }}>
+                <span data-no-translate="true">{localText.manualBadge}</span>
+              </div>
+              <div style={s.field}>
+                <label style={s.label} data-no-translate="true">{localText.titleLabel}</label>
+                <input
+                  data-no-translate="true"
+                  style={{ ...s.input, borderColor: '#bfdbfe' }}
+                  value={form.title_translation}
+                  onChange={e => setForm({ ...form, title_translation: e.target.value })}
+                  maxLength={120}
+                  placeholder={localText.titlePlaceholder}
+                />
+              </div>
+              <div style={s.field}>
+                <label style={s.label} data-no-translate="true">{localText.contentLabel}</label>
+                <textarea
+                  data-no-translate="true"
+                  style={{ ...s.input, height: '90px', resize: 'vertical', borderColor: '#bfdbfe' }}
+                  value={form.content_translation}
+                  onChange={e => setForm({ ...form, content_translation: e.target.value })}
+                  maxLength={1000}
+                  placeholder={localText.contentPlaceholder}
+                />
+              </div>
             </div>
-            <div style={s.field}>
-              <label style={s.label}>{form.source_language === 'bm' ? 'Title (English)' : 'Tajuk (BM)'}</label>
-              <input style={{ ...s.input, borderColor: '#bfdbfe' }} value={form.title_translation}
-                onChange={e => setForm({ ...form, title_translation: e.target.value })}
-                maxLength={120} placeholder={form.source_language === 'bm' ? 'Write English title' : 'Tulis tajuk BM'} />
-            </div>
-            <div style={s.field}>
-              <label style={s.label}>{form.source_language === 'bm' ? 'Content (English)' : 'Kandungan (BM)'}</label>
-              <textarea style={{ ...s.input, height: '90px', resize: 'vertical', borderColor: '#bfdbfe' }}
-                value={form.content_translation} onChange={e => setForm({ ...form, content_translation: e.target.value })}
-                maxLength={1000} placeholder={form.source_language === 'bm' ? 'Write English content' : 'Tulis kandungan BM'} />
-            </div>
-          </div>
           )}
 
           {/* Image upload */}
@@ -211,15 +262,15 @@ const ManageFacts = () => {
             style={s.input}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search title or content..."
+            placeholder={tx('Cari tajuk atau kandungan...')}
           />
           <select
             style={s.input}
             value={orderFilter}
             onChange={e => setOrderFilter(e.target.value)}
           >
-            <option value="desc">Newest First</option>
-            <option value="asc">Oldest First</option>
+            <option value="desc">{tx('Terbaharu Ditambah')}</option>
+            <option value="asc">{tx('Terlama Ditambah')}</option>
           </select>
         </div>
 
@@ -235,11 +286,11 @@ const ManageFacts = () => {
                 <div style={s.biStatus}>
                   {fact.title_bi
                     ? <span style={s.biBadgeOk}>🇬🇧 BI ✓</span>
-                    : <span style={s.biBadgeMissing}>🇬🇧 BI belum ada</span>}
+                    : <span style={s.biBadgeMissing}>{tx('🇬🇧 BI belum ada')}</span>}
                 </div>
               </div>
               <div style={s.factActions}>
-                <button style={s.btnEdit} onClick={() => handleEdit(fact)}>✏️ Edit</button>
+                <button style={s.btnEdit} onClick={() => handleEdit(fact)}>✏️ {tx('Ubahsuai')}</button>
                 <button style={s.btnDelete} onClick={() => handleDelete(fact.id)}>🗑️</button>
               </div>
             </div>

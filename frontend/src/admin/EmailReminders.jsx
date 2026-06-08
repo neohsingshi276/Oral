@@ -114,6 +114,7 @@ const EmailReminders = ({ currentAdmin }) => {
   const [inboxFilter, setInboxFilter] = useState('all');
   const defaultToAdminId = currentAdmin?.role === 'main_admin' ? 'all' : '';
   const [form, setForm] = useState({ to_admin_id: defaultToAdminId, to_email: '', to_name: '', subject: '', message: '' });
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [msg, setMsg] = useState('');
   const isMainAdmin = currentAdmin?.role === 'main_admin';
   const canCompose = ['main_admin', 'admin', 'teacher'].includes(currentAdmin?.role);
@@ -132,8 +133,8 @@ const EmailReminders = ({ currentAdmin }) => {
   const handleSend = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.post('/email/send', form);
-      setMsg('✅ ' + res.data.message);
+      await api.post('/email/send', form);
+      setMsg(language === 'bi' ? '✅ Reminder sent' : '✅ Peringatan dihantar');
       setForm({ to_admin_id: defaultToAdminId, to_email: '', to_name: '', subject: '', message: '' });
       fetchSent();
     } catch (err) {
@@ -160,10 +161,25 @@ const EmailReminders = ({ currentAdmin }) => {
       ? [...reminderTemplates, c.templates.tech]
       : [c.templates.tech];
 
+  useEffect(() => {
+    if (selectedTemplate === null) return;
+
+    const matched = templates[selectedTemplate];
+
+    if (matched) {
+      setForm(prev => ({
+        ...prev,
+        subject: matched.subject,
+        message: matched.message,
+      }));
+    }
+  }, [language, selectedTemplate]);
+
+
   const roleLabel = (role) =>
     role === 'main_admin' ? c.mainAdmin :
-    role === 'teacher' ? c.teacher :
-    c.admin;
+      role === 'teacher' ? c.teacher :
+        c.admin;
 
   const filterEmails = (items, search, filter, nameField) => {
     const q = search.toLowerCase();
@@ -203,7 +219,15 @@ const EmailReminders = ({ currentAdmin }) => {
           <div style={s.templateRow}>
             <span style={s.templateLabel}>{c.quickTemplates}</span>
             {templates.map((template, i) => (
-              <button key={i} style={s.templateBtn} onClick={() => setForm({ ...form, subject: template.subject, message: template.message })}>{template.label}</button>
+              <button key={i} style={s.templateBtn}
+                onClick={() => {
+                  setSelectedTemplate(i);
+                  setForm(prev => ({
+                    ...prev,
+                    subject: template.subject,
+                    message: template.message
+                  }));
+                }}>{template.label}</button>
             ))}
           </div>
 
@@ -249,7 +273,11 @@ const EmailReminders = ({ currentAdmin }) => {
           <div style={s.filterRow}>
             <input
               style={s.input}
-              placeholder="Cari nama, subjek atau mesej..."
+              placeholder={
+                language === 'bi'
+                  ? 'Search name, subject or message...'
+                  : 'Cari nama, subjek atau mesej...'
+              }
               value={sentSearch}
               onChange={e => setSentSearch(e.target.value)}
             />
@@ -259,9 +287,15 @@ const EmailReminders = ({ currentAdmin }) => {
               value={sentFilter}
               onChange={e => setSentFilter(e.target.value)}
             >
-              <option value="all">Semua</option>
-              <option value="read">Dibaca</option>
-              <option value="unread">Belum Dibaca</option>
+              <option value="all">
+                {language === 'bi' ? 'All' : 'Semua'}
+              </option>
+              <option value="read">
+                {language === 'bi' ? 'Read' : 'Dibaca'}
+              </option>
+              <option value="unread">
+                {language === 'bi' ? 'Unread' : 'Belum Dibaca'}
+              </option>
             </select>
           </div>
           <div style={s.emailList}>
@@ -290,7 +324,11 @@ const EmailReminders = ({ currentAdmin }) => {
           <div style={s.filterRow}>
             <input
               style={s.input}
-              placeholder="Cari nama, subjek atau mesej..."
+              placeholder={
+                language === 'bi'
+                  ? 'Search name, subject or message...'
+                  : 'Cari nama, subjek atau mesej...'
+              }
               value={inboxSearch}
               onChange={e => setInboxSearch(e.target.value)}
             />
@@ -300,9 +338,15 @@ const EmailReminders = ({ currentAdmin }) => {
               value={inboxFilter}
               onChange={e => setInboxFilter(e.target.value)}
             >
-              <option value="all">Semua</option>
-              <option value="read">Dibaca</option>
-              <option value="unread">Belum Dibaca</option>
+              <option value="all">
+                {language === 'bi' ? 'All' : 'Semua'}
+              </option>
+              <option value="read">
+                {language === 'bi' ? 'Read' : 'Dibaca'}
+              </option>
+              <option value="unread">
+                {language === 'bi' ? 'Unread' : 'Belum Dibaca'}
+              </option>
             </select>
           </div>
           <div style={s.emailList}>
