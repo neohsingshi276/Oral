@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import cp1Photo from '../assets/cp1-quiz.png';
+import cp2Photo from '../assets/cp2-crossword.png';
+import cp3Photo from '../assets/cp3-food.png';
 import { useParams, useNavigate } from 'react-router-dom';
 import GameCanvas from '../game/GameCanvas';
 import { CHECKPOINT_VIDEO_IDS } from '../game/gameConfig';
@@ -423,6 +426,7 @@ const GamePage = () => {
     1: {
       title: t('game.cpHint1Title'),
       badge: 'CP1',
+      photo: cp1Photo,
       accent: '#7B2FBE',
       bg: '#ede9fe',
       heading: t('game.cpHint1Heading'),
@@ -432,6 +436,7 @@ const GamePage = () => {
     2: {
       title: t('game.cpHint2Title'),
       badge: 'CP2',
+      photo: cp2Photo,
       accent: '#CC3380',
       bg: '#fce7f3',
       heading: t('game.cpHint2Heading'),
@@ -441,6 +446,7 @@ const GamePage = () => {
     3: {
       title: t('game.cpHint3Title'),
       badge: 'CP3',
+      photo: cp3Photo,
       accent: '#E85D04',
       bg: '#fff7ed',
       heading: t('game.cpHint3Heading'),
