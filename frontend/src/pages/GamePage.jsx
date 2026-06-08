@@ -568,7 +568,7 @@ const GamePage = () => {
 
                 {/* Big icon / badge */}
                 {page.badge ? (
-                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '90px', height: '90px', borderRadius: '24px', background: page.accent, color: '#fff', fontWeight: 900, fontSize: '2rem', marginBottom: '0.9rem', boxShadow: `0 8px 24px ${page.accent}55` }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '60px', height: '60px', borderRadius: '16px', background: page.accent, color: '#fff', fontWeight: 900, fontSize: '1.4rem', marginBottom: '0.5rem', boxShadow: `0 8px 24px ${page.accent}55` }}>
                     {page.badge}
                   </div>
                 ) : (
@@ -580,7 +580,7 @@ const GamePage = () => {
               </div>
 
               {/* ── Card body ── */}
-              <div style={{ padding: '1.8rem 2.2rem 2rem' }}>
+              <div style={{ padding: '1rem 1.5rem 1.2rem' }}>
 
                 {/* Photo slot — only renders when a photo URL is set */}
                 {currentPhoto && (
@@ -654,7 +654,7 @@ const GamePage = () => {
             <div style={{ ...s.doneCard, maxWidth: '580px', padding: 0, overflow: 'hidden', position: 'relative' }}>
 
               {/* ── Colored top banner ── */}
-              <div style={{ background: hint.bg, padding: '2rem 2.2rem 1.8rem', textAlign: 'center', borderBottom: `3px solid ${hint.accent}66`, position: 'relative' }}>
+              <div style={{ background: hint.bg, padding: '1.2rem 1.5rem 1rem', textAlign: 'center', borderBottom: `3px solid ${hint.accent}66`, position: 'relative' }}>
 
                 {/* Decorative large faded badge behind */}
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '9rem', fontWeight: 900, color: hint.accent, opacity: 0.06, pointerEvents: 'none', lineHeight: 1, userSelect: 'none' }}>
@@ -676,17 +676,17 @@ const GamePage = () => {
               </div>
 
               {/* ── Card body ── */}
-              <div style={{ padding: '1.8rem 2.2rem 2rem' }}>
+              <div style={{ padding: '1rem 1.5rem 1.2rem' }}>
 
                 {/* Photo — only shows when hint.photo is set, no empty space otherwise */}
                 {hint.photo && (
-                  <div style={{ width: '100%', height: '145px', borderRadius: '16px', overflow: 'hidden', marginBottom: '1.5rem' }}>
+                  <div style={{ width: '100%', height: '120px', borderRadius: '12px', overflow: 'hidden', marginBottom: '0.8rem' }}>
                     <img src={hint.photo} alt={hint.badge} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 )}
 
                 {/* Clue box */}
-                <div style={{ background: hint.bg, borderRadius: '18px', padding: '1.5rem 1.6rem', textAlign: 'left', marginBottom: '1.6rem', border: `1.5px solid ${hint.accent}33` }}>
+                <div style={{ background: hint.bg, borderRadius: '12px', padding: '0.9rem 1rem', textAlign: 'left', marginBottom: '0.8rem', border: `1.5px solid ${hint.accent}33` }}>
                   <h3 style={{ color: '#1e3a5f', margin: '0 0 0.65rem', fontSize: '1.45rem', fontWeight: 900, lineHeight: 1.3 }}>{hint.heading}</h3>
                   <p style={{ color: '#334155', margin: 0, fontSize: '1.18rem', lineHeight: 1.7, fontWeight: 600 }}>{hint.clue}</p>
                 </div>
