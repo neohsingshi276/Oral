@@ -200,7 +200,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
           gap: 16,
           minHeight: 300,
         }}>
-         <img src={dentalImage} style={{ width: 80, animation: 'spin 1.2s linear infinite' }} />
+         <img src={dentalImage} style={{ width:120, animation: 'spin 1.2s linear infinite' }} />
           <div style={{ color: '#FFD700', fontWeight: 'bold', fontSize: 18 }}>
             Loading Dental Quest...
           </div>
