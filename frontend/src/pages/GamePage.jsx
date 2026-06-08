@@ -137,6 +137,7 @@ const GamePage = () => {
   const [chatInput, setChatInput] = useState('');
   const [allDone, setAllDone] = useState(false);
   const [quizKey, setQuizKey] = useState(0);
+  // Hide tutorial if already seen OR if the player has completed any checkpoint (rejoining mid-game)
   const [showTutorial, setShowTutorial] = useState(() => !localStorage.getItem('tutorial_seen'));
   const [tutorialPage, setTutorialPage] = useState(0); // 0=movement, 1=checkpoints, 2=cp details
   const [checkpointHint, setCheckpointHint] = useState(null);
@@ -215,7 +216,35 @@ const GamePage = () => {
     }
 
     setPlayer(p);
-    fetchProgress(p.id, p.chat_token);
+
+    // Restore progress and derive the correct checkpoint hint on rejoin
+    try {
+      const tokenToUse = p.chat_token;
+      const chatConfig = tokenToUse ? { headers: { Authorization: `Bearer ${tokenToUse}` } } : null;
+      const res = await api.get(`/game/progress/${p.id}`, chatConfig);
+      const prog = res.data.progress || [];
+      setProgress(prog);
+
+      const allCompleted = prog.every(cp => cp.completed);
+      if (allCompleted && prog.length === 3) {
+        setAllDone(true);
+        setShowTutorial(false);
+      } else {
+        const completedNums = prog.filter(cp => cp.completed).map(cp => cp.checkpoint_number);
+        if (completedNums.length > 0) {
+          // Player has completed at least one CP — skip tutorial and show next hint
+          setShowTutorial(false);
+          localStorage.setItem('tutorial_seen', '1');
+          const maxDone = Math.max(...completedNums);
+          const nextHint = maxDone < 3 ? maxDone + 1 : null;
+          if (nextHint) setCheckpointHint(nextHint);
+        } else if (localStorage.getItem('tutorial_seen')) {
+          setCheckpointHint(1);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to restore progress on rejoin:', err);
+    }
   }, [token, navigate]);
 
   // FIX: Await the attempt API call so failures are caught and logged.
