@@ -119,7 +119,7 @@ const Analytics = ({ setActive }) => {
       <html><head><meta charset="UTF-8" /></head><body>
       <table border="1">
         <thead><tr>
-          <th>Rank</th><th>School</th><th>Class</th><th>Session</th><th>Nickname</th>
+          <th>Rank</th><th>School</th><th>Class</th><th>Session</th><th>Full Name</th>
           <th>CP1 Mark /100</th><th>CP1 Attempts</th><th>CP2 Mark /100</th><th>CP2 Attempts</th>
           <th>CP3 Mark /100</th><th>CP3 Attempts</th><th>Total /100</th><th>Status</th>
         </tr></thead>
