@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 const DEFAULT_DURATION = 60;
 const TROLLEY_SPEED = 1.5;
@@ -40,6 +41,7 @@ const BAD_FOODS = [
 ];
 
 const CP3Game = ({ player, onComplete }) => {
+  const { t } = useLanguage();
   const [gameState, setGameState] = useState('start');
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(DEFAULT_DURATION);
@@ -242,23 +244,23 @@ const CP3Game = ({ player, onComplete }) => {
     <div style={s.fullPage}>
       <style>{animStyles}</style>
       <div style={s.startCard}>
-        <h1 style={s.title}>🛒 Penangkap Makanan</h1>
-        <div style={s.badge}>Titik Semak 3</div>
+        <h1 style={s.title}>🛒 {t('game.foodCatcher')}</h1>
+        <div style={s.badge}>{t('game.checkpoint3')}</div>
         <div style={s.instrGrid}>
-          <div style={s.instrCard}>⌨️<br /><strong>Arrow Keys</strong><br />to move</div>
-          <div style={s.instrCard}>⏱️<br /><strong>{gameDuration} seconds</strong><br />of fun!</div>
+          <div style={s.instrCard}>⌨️<br /><strong>{t('game.arrowKeys')}</strong><br />{t('game.toMove')}</div>
+          <div style={s.instrCard}>⏱️<br /><strong>{gameDuration} {t('game.seconds')}</strong><br />{t('game.ofFun')}</div>
         </div>
         <div style={s.foodCols}>
           <div style={s.goodCol}>
-            <div style={s.colTitle}>✅ Menangkap Ini! (+100)</div>
+            <div style={s.colTitle}>✅ {t('game.catchThese')} (+100)</div>
             <div style={s.foodRow}>{GOOD_FOODS.map((f, i) => <div key={i} style={s.foodChip}>{f.emoji}</div>)}</div>
           </div>
           <div style={s.badCol}>
-            <div style={s.colTitle}>❌ Elakkan Ini! (-70)</div>
+            <div style={s.colTitle}>❌ {t('game.avoidThese')} (-70)</div>
             <div style={s.foodRow}>{BAD_FOODS.map((f, i) => <div key={i} style={s.foodChip}>{f.emoji}</div>)}</div>
           </div>
         </div>
-        <button style={s.startBtn} onClick={startGame}>🎮 START GAME!</button>
+        <button style={s.startBtn} onClick={startGame}>🎮 {t('game.startGame')}</button>
       </div>
     </div>
   );
@@ -269,17 +271,17 @@ const CP3Game = ({ player, onComplete }) => {
       <style>{animStyles}</style>
       <div style={s.lbCard}>
         <div style={{ fontSize: '4rem', textAlign: 'center' }}>🏆</div>
-        <h2 style={s.lbTitle}>Papan Markah Akhir!</h2>
-        <p style={{ textAlign: 'center', color: '#64748b', marginBottom: '0.5rem', fontSize: '0.88rem' }}>CP1 Quiz + CP2 Crossword + CP3 Food Game (masing-masing 33.33%)</p>
+        <h2 style={s.lbTitle}>{t('game.finalLeaderboard')}</h2>
+        <p style={{ textAlign: 'center', color: '#64748b', marginBottom: '0.5rem', fontSize: '0.88rem' }}>{t('game.finalScoreFormulaTitle')}</p>
         <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.78rem', color: '#475569', textAlign: 'center' }}>
-          Formula: (Skor CP / Skor Max) × 33.33 = Markah (Jumlah /100)
+          {t('game.finalScoreFormula')}
         </div>
         <div style={s.lbList}>
           {finalLeaderboard.map((entry, i) => (
             <div key={entry.player_id} style={{ ...s.lbRow, ...(entry.player_id === player?.id ? s.lbRowMe : {}), background: i === 0 ? '#fef9ee' : i === 1 ? '#f8fafc' : i === 2 ? '#fff7ed' : '#fff' }}>
               <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: '700', color: '#1e3a5f', marginBottom: '0.25rem' }}>{entry.nickname}{entry.player_id === player?.id && <span style={s.youBadge}>Anda</span>}</div>
+                <div style={{ fontWeight: '700', color: '#1e3a5f', marginBottom: '0.25rem' }}>{entry.nickname}{entry.player_id === player?.id && <span style={s.youBadge}>{t('game.you')}</span>}</div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', gap: '0.75rem' }}>
                   <span>CP1: {Math.round(entry.cp1_mark / 33 * 100)}/100</span>
                   <span>CP2: {Math.round(entry.cp2_mark / 33 * 100)}/100</span>
@@ -296,21 +298,21 @@ const CP3Game = ({ player, onComplete }) => {
               style={{ ...s.doneBtn, background: 'linear-gradient(135deg,#64748b,#475569)', flex: '0 0 auto', width: 'auto', padding: '0.85rem 1.25rem', fontSize: '0.9rem' }}
               onClick={() => { setGameState('start'); setShowFinalLeaderboard(false); setShowLeaderboard(false); }}
             >
-              🔄 Cuba Semula
+              🔄 {t('game.retry')}
             </button>
-            <button style={{ ...s.doneBtn, flex: 1 }} onClick={onComplete}>🎉 Tamat DentalQuest!</button>
+            <button style={{ ...s.doneBtn, flex: 1 }} onClick={onComplete}>🎉 {t('game.finishDentalQuest')}</button>
           </div>
         ) : (
           <div style={{ textAlign: 'center' }}>
             <div style={{ background: '#fff1f2', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', border: '1px solid #fecdd3' }}>
               <div style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>😢</div>
-              <p style={{ color: '#e11d48', fontWeight: '700', margin: '0 0 0.25rem' }}>Belum Lulus!</p>
+              <p style={{ color: '#e11d48', fontWeight: '700', margin: '0 0 0.25rem' }}>{t('game.notPassed')}</p>
               <p style={{ color: '#64748b', fontSize: '0.88rem', margin: 0 }}>
-                Skor kamu <strong>{finalScore}</strong> — perlu sekurang-kurangnya <strong>{targetScore}</strong> mata.
+                {t('game.yourScoreLower')} <strong>{finalScore}</strong> — {t('game.needAtLeast')} <strong>{targetScore}</strong> {t('game.points')}.
               </p>
             </div>
             <button style={{ ...s.doneBtn, background: 'linear-gradient(135deg,#e11d48,#be123c)' }} onClick={() => { setGameState('start'); setShowFinalLeaderboard(false); setShowLeaderboard(false); }}>
-              🔄 Cuba Semula
+              🔄 {t('game.retry')}
             </button>
           </div>
         )}
@@ -324,22 +326,22 @@ const CP3Game = ({ player, onComplete }) => {
       <style>{animStyles}</style>
       <div style={s.lbCard}>
         <div style={{ fontSize: '4rem', textAlign: 'center' }}>🎯</div>
-        <h2 style={s.lbTitle}>Penangkap Makanan!</h2>
+        <h2 style={s.lbTitle}>{t('game.foodCatcher')}</h2>
         <div style={s.yourScore}>
-          <div style={{ color: '#fff', fontSize: '0.9rem', marginBottom: '0.25rem' }}>Skor Kamu</div>
+          <div style={{ color: '#fff', fontSize: '0.9rem', marginBottom: '0.25rem' }}>{t('game.yourScore')}</div>
           <div style={{ color: '#FFD700', fontSize: '3.5rem', fontWeight: '900' }}>{finalScore}</div>
         </div>
         <div style={s.lbList}>
           {leaderboard.map((entry, i) => (
             <div key={entry.player_id} style={{ ...s.lbRow, ...(entry.player_id === player?.id ? s.lbRowMe : {}) }}>
               <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
-              <div style={{ flex: 1, fontWeight: '600', color: '#1e3a5f' }}>{entry.nickname}{entry.player_id === player?.id && <span style={s.youBadge}>Anda</span>}</div>
-              <div style={s.lbScore}>{entry.score} pts</div>
+              <div style={{ flex: 1, fontWeight: '600', color: '#1e3a5f' }}>{entry.nickname}{entry.player_id === player?.id && <span style={s.youBadge}>{t('game.you')}</span>}</div>
+              <div style={s.lbScore}>{entry.score} {t('game.points')}</div>
             </div>
           ))}
-          {leaderboard.length === 0 && <p style={{ textAlign: 'center', color: '#94a3b8', padding: '1rem' }}>Tiada markah lagi</p>}
+          {leaderboard.length === 0 && <p style={{ textAlign: 'center', color: '#94a3b8', padding: '1rem' }}>{t('game.noScoresYet')}</p>}
         </div>
-        <button style={s.nextBtn} onClick={handleShowFinal}>Lihat Papan Markah Akhir 🏆</button>
+        <button style={s.nextBtn} onClick={handleShowFinal}>{t('game.viewFinalLeaderboard')}</button>
       </div>
     </div>
   );
@@ -352,7 +354,7 @@ const CP3Game = ({ player, onComplete }) => {
         <div style={s.gameHeader}>
           <div style={s.scorePanel}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '0.72rem', color: '#888', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Score</span>
+              <span style={{ fontSize: '0.72rem', color: '#888', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('game.score')}</span>
               <span style={s.scoreVal}>{score}</span>
             </div>
             {combo > 1 && <span style={s.combo}>🔥 {combo}x!</span>}
@@ -365,7 +367,7 @@ const CP3Game = ({ player, onComplete }) => {
           </div>
           <div style={s.timerPanel}>
             <span style={{ ...s.timerVal, color: timeLeft <= 10 ? '#e11d48' : '#4ECDC4' }}>{timeLeft}</span>
-            <span style={{ fontSize: '0.75rem', color: '#666' }}>saat</span>
+            <span style={{ fontSize: '0.75rem', color: '#666' }}>{t('game.seconds')}</span>
           </div>
         </div>
 
@@ -390,7 +392,7 @@ const CP3Game = ({ player, onComplete }) => {
         <div style={s.controlsHint}>
           <span style={s.keyBtn}>←</span>
           <span style={s.keyBtn}>→</span>
-          <span style={{ fontSize: '0.88rem', fontWeight: '600', color: '#475569' }}>Gerakkan troli!</span>
+          <span style={{ fontSize: '0.88rem', fontWeight: '600', color: '#475569' }}>{t('game.moveTrolley')}</span>
         </div>
       </div>
     </div>
