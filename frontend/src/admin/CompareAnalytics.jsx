@@ -436,8 +436,8 @@ const CompareAnalytics = () => {
       <table>
         <tr><th colspan="9" class="a">A: ${escapeCell(labelA)}</th><th colspan="9" class="b">B: ${escapeCell(labelB)}</th></tr>
         <tr>
-          <th class="a">Rank</th><th class="a">Nickname</th><th class="a">Session</th><th class="a">School</th><th class="a">Class</th><th class="a">CP1</th><th class="a">CP2</th><th class="a">CP3</th><th class="a">Total</th>
-          <th class="b">Rank</th><th class="b">Nickname</th><th class="b">Session</th><th class="b">School</th><th class="b">Class</th><th class="b">CP1</th><th class="b">CP2</th><th class="b">CP3</th><th class="b">Total</th>
+          <th class="a">Rank</th><th class="a">Full Name</th><th class="a">Session</th><th class="a">School</th><th class="a">Class</th><th class="a">CP1</th><th class="a">CP2</th><th class="a">CP3</th><th class="a">Total</th>
+          <th class="b">Rank</th><th class="b">Full Name</th><th class="b">Session</th><th class="b">School</th><th class="b">Class</th><th class="b">CP1</th><th class="b">CP2</th><th class="b">CP3</th><th class="b">Total</th>
         </tr>
         ${Array.from({ length: maxRows }, (_, index) => {
         const a = markedA[index] || {};

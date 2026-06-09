@@ -202,7 +202,7 @@ const ManageStudents = () => {
                           <table style={s.table}>
                             <thead>
                               <tr style={s.thead}>
-                                <th style={s.th}>Nama Samaran</th>
+                                <th style={s.th}>Nama Penuh</th>
                                 <th style={s.th}>Sesi</th>
                                 <th style={s.th}>CP1 Kuiz</th>
                                 <th style={s.th}>CP2 Teka Silang Kata</th>
