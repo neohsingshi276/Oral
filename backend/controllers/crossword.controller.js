@@ -197,11 +197,12 @@ function generateCrosswordLayout(wordsData) {
     const item = sorted[i];
     const word = item.word.toUpperCase().trim();
     const clue = item.clue;
+    const clue_bi = item.clue_bi || null;
     const id   = item.id;
 
     if (i === 0) {
       // Place the longest word horizontally near the centre of our virtual grid.
-      placedWords.push({ id, word, clue, direction: 'across', start_row: OFFSET, start_col: OFFSET });
+      placedWords.push({ id, word, clue, clue_bi, direction: 'across', start_row: OFFSET, start_col: OFFSET });
       continue;
     }
 
@@ -254,7 +255,7 @@ function generateCrosswordLayout(wordsData) {
     if (candidates.length > 0) {
       candidates.sort((a, b) => b.sc - a.sc);
       const best = candidates[0];
-      placedWords.push({ id, word, clue, direction: best.newDir, start_row: best.newRow, start_col: best.newCol });
+      placedWords.push({ id, word, clue, clue_bi, direction: best.newDir, start_row: best.newRow, start_col: best.newCol });
     } else {
       // No intersecting placement — tuck word just outside the cluster bounding
       // box with a 2-cell gap, choosing the position closest to the centroid so
@@ -301,10 +302,10 @@ function generateCrosswordLayout(wordsData) {
       if (fallbackCandidates.length > 0) {
         fallbackCandidates.sort((a, b) => a.dist - b.dist);
         const best = fallbackCandidates[0];
-        placedWords.push({ id, word, clue, direction: best.dir, start_row: best.r, start_col: best.c });
+        placedWords.push({ id, word, clue, clue_bi, direction: best.dir, start_row: best.r, start_col: best.c });
       } else {
         // Absolute last resort
-        placedWords.push({ id, word, clue, direction: 'across', start_row: maxR + GAP + 1, start_col: minC });
+        placedWords.push({ id, word, clue, clue_bi, direction: 'across', start_row: maxR + GAP + 1, start_col: minC });
       }
     }
   }
