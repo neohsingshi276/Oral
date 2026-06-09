@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
-
+import fact1 from '../assets/fact1.png';
+import fact2 from '../assets/fact2.png';
+import fact3 from '../assets/fact3.png';
+import fact4 from '../assets/fact4.png';
+import fact5 from '../assets/fact5.png';
 
 const CARD_COLORS = [
   { bg: '#fff7ed', border: '#fed7aa', accent: '#ea580c' },
@@ -14,14 +18,11 @@ const CARD_COLORS = [
 ];
 
 const FACT_IMAGES = [
-  'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=400&q=80',
-  'https://images.unsplash.com/photo-1588776814546-daab30f310ce?w=400&q=80',
-  'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&q=80',
-  'https://images.unsplash.com/photo-1571772996211-2f02c9727629?w=400&q=80',
-  'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&q=80',
-  'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=400&q=80',
-  'https://images.unsplash.com/photo-1598256989800-fe5f95da9787?w=400&q=80',
-  'https://images.unsplash.com/photo-1606265752439-1f18756aa5fc?w=400&q=80',
+  fact1, // girl brushing teeth
+  fact2, // dental team
+  fact3, // female dentist
+  fact4, // dental procedure
+  fact5, // dentist with child
 ];
 
 // Pick BM or BI field based on current language
@@ -213,7 +214,7 @@ const DidYouKnowPage = () => {
                       src={img}
                       alt={pickLang(fact, "title", language)}
                       style={styles.cardImg}
-                      onError={e => { e.target.src = 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=400&q=80'; }}
+                      onError={e => { e.target.src = fact1; }}
                     />
                     <div style={{ ...styles.cardImgOverlay, background: `${color.accent}22` }}></div>
                   </div>
@@ -253,10 +254,10 @@ const DidYouKnowPage = () => {
         <h2 style={styles.bannerTitle}>{t('did.bannerTitle')} 🌺</h2>
         <div style={styles.photoGrid}>
           {[
-            { src: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&q=80', label: t('did.photos')[0] },
-            { src: 'https://images.unsplash.com/photo-1571772996211-2f02c9727629?w=400&q=80', label: t('did.photos')[1] },
-            { src: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&q=80', label: t('did.photos')[2] },
-            { src: 'https://images.unsplash.com/photo-1588776814546-daab30f310ce?w=400&q=80', label: t('did.photos')[3] },
+            { src: fact3, label: t('did.photos')[0] },
+            { src: fact1, label: t('did.photos')[1] },
+            { src: fact5, label: t('did.photos')[2] },
+            { src: fact4, label: t('did.photos')[3] },
           ].map((item, i) => (
             <div key={i} style={styles.photoCard}>
               <img
