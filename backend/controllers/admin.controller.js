@@ -133,7 +133,7 @@ const downloadCSV = async (req, res) => {
     });
 
     const headers = [
-      'Nickname', 'Session', 'Joined At',
+      'Full Name', 'Session', 'Joined At',
       'CP1 Completed', 'CP1 Attempts',
       'CP2 Completed', 'CP2 Attempts',
       'CP3 Completed', 'CP3 Attempts',
