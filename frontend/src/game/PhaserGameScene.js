@@ -351,18 +351,21 @@ export default class PhaserGameScene extends Phaser.Scene {
     head.setStrokeStyle(1.5, 0xD97706);
 
     // Name label background
-    const nameText = this.add.text(0, -30, this.playerNickname, {
+    const playerLabel = this.playerNickname.length > 24
+      ? `${this.playerNickname.slice(0, 23)}...`
+      : this.playerNickname;
+    const nameText = this.add.text(0, -30, playerLabel, {
       fontSize: '10px',
       fontFamily: 'sans-serif',
       fontStyle: 'bold',
       color: '#ffffff',
       align: 'center',
+      stroke: '#1e3a5f',
+      strokeThickness: 3,
     });
     nameText.setOrigin(0.5, 1);
-    const nameBg = this.add.rectangle(0, -25, nameText.width + 8, 14, 0x000000, 0.6);
-    nameBg.setOrigin(0.5, 1);
 
-    this.playerGraphic.add([ nameBg, nameText, this.bodyPart, this.headPart, this.eyeL, this.eyeR, this.legL, this.legR ]);
+    this.playerGraphic.add([ nameText, this.bodyPart, this.headPart, this.eyeL, this.eyeR, this.legL, this.legR ]);
     this.playerGraphic.setDepth(1000);
 
     // Physics body for player (invisible rectangle — avoids null-texture bug

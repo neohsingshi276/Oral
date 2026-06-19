@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 
 const JoinGamePage = () => {
   const { t } = useLanguage();
+  const NICKNAME_MAX_LENGTH = 50;
   const navigate = useNavigate();
   const { code: urlCode } = useParams();
   const [code, setCode] = useState(['', '', '', '']);
@@ -248,14 +249,14 @@ const JoinGamePage = () => {
                 placeholder={`${t('join.nicknamePlaceholder')} 🦷`}
                 value={nickname}
                 onChange={e => setNickname(e.target.value)}
-                maxLength={20}
+                maxLength={NICKNAME_MAX_LENGTH}
                 autoFocus
               />
               <div style={s.charCount}>
                 <div style={s.charBar}>
-                  <div style={{ ...s.charFill, width: `${(nickname.length / 20) * 100}%` }} />
+                  <div style={{ ...s.charFill, width: `${(nickname.length / NICKNAME_MAX_LENGTH) * 100}%` }} />
                 </div>
-                <span style={s.charText}>{nickname.length}/20</span>
+                <span style={s.charText}>{nickname.length}/{NICKNAME_MAX_LENGTH}</span>
               </div>
               <button className="join-btn" style={s.btn} type="submit" disabled={loading}>
                 {loading ? `🚀 ${t('join.joining')}` : `🚀 ${t('join.startAdventure')}`}

@@ -256,6 +256,9 @@ const GamePage = () => {
   // FIX: Await the attempt API call so failures are caught and logged.
   // Previously fire-and-forget meant failed attempts were silently swallowed.
   const handleCheckpointReached = async (cpId) => {
+    const isUnlocked = cpId === 1 || progress.find(p => p.checkpoint_number === cpId - 1)?.completed;
+    if (!isUnlocked) return;
+
     const chatConfig = getPlayerChatConfig();
     try {
       await api.post('/game/attempt', { player_id: player.id, checkpoint_number: cpId }, chatConfig);
@@ -275,7 +278,8 @@ const GamePage = () => {
       await fetchProgress(player.id);
     } catch (err) {
       console.error('Failed to save checkpoint completion:', err);
-      // Still advance the UI so the student isn't stuck
+      alert(err.response?.data?.error || 'Unable to save checkpoint progress. Please try again.');
+      return;
     }
 
     if (!reduceMotion) {
@@ -289,14 +293,6 @@ const GamePage = () => {
     } else {
       setCpStep('done');
     }
-  };
-
-  const handleReduceMotionChange = () => {
-    setReduceMotion(value => {
-      const next = !value;
-      localStorage.setItem('dq_reduce_motion', next ? '1' : '0');
-      return next;
-    });
   };
 
   const downloadCertificate = async () => {
@@ -463,6 +459,24 @@ const GamePage = () => {
     return () => clearTimeout(timer);
   }, [showTutorial, tutorialPage, mapTutorialPages.length]);
 
+  useEffect(() => {
+    const preventBrowserZoom = (event) => {
+      if (!event.ctrlKey && !event.metaKey) return;
+      const zoomKeys = ['+', '-', '=', '_', '0'];
+      if (zoomKeys.includes(event.key)) event.preventDefault();
+    };
+    const preventWheelZoom = (event) => {
+      if (event.ctrlKey || event.metaKey) event.preventDefault();
+    };
+
+    window.addEventListener('keydown', preventBrowserZoom, { capture: true });
+    window.addEventListener('wheel', preventWheelZoom, { passive: false });
+    return () => {
+      window.removeEventListener('keydown', preventBrowserZoom, { capture: true });
+      window.removeEventListener('wheel', preventWheelZoom);
+    };
+  }, []);
+
   if (!player) return <div style={s.loading}>{t('game.loading')}</div>;
 
   const showFullQuiz = activeCP === 1 && cpStep === 'activity';
@@ -478,17 +492,9 @@ const GamePage = () => {
       <div style={s.header}>
         <div style={s.headerLeft}>
           <span style={s.logo}>🦷 Dental Quest</span>
-          <span style={s.playerBadge}>👤 {player.nickname}</span>
+          <span style={s.playerBadge} title={player.nickname}>👤 {player.nickname}</span>
         </div>
         <div style={s.headerRight}>
-          <label style={s.motionToggle}>
-            <input
-              type="checkbox"
-              checked={reduceMotion}
-              onChange={handleReduceMotionChange}
-            />
-            {t('game.reduceMotion')}
-          </label>
           <LanguageToggle compact style={{ background: 'rgba(255,255,255,0.1)', color: '#FFD700' }} />
           {[1, 2, 3].map(cp => {
             const done = progress.find(p => p.checkpoint_number === cp)?.completed;
@@ -1080,9 +1086,8 @@ const s = {
   header: { width: '100%', background: '#1e3a5f', padding: '0.5rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', flexShrink: 0 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '1rem' },
   logo: { color: '#FFD700', fontWeight: '800', fontSize: '1.1rem' },
-  playerBadge: { background: 'rgba(255,255,255,0.15)', color: '#fff', padding: '0.3rem 0.75rem', borderRadius: '20px', fontSize: '0.85rem' },
+  playerBadge: { color: '#fff', padding: '0.3rem 0', fontSize: '0.85rem', maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   headerRight: { display: 'flex', alignItems: 'center', gap: '0.5rem' },
-  motionToggle: { color: '#e2e8f0', fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(255,255,255,0.08)', borderRadius: '999px', padding: '0.25rem 0.55rem', whiteSpace: 'nowrap' },
   cpBadge: { width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '800', fontSize: '0.82rem' },
   controls: { color: '#94a3b8', fontSize: '0.78rem', padding: '0.35rem 1rem', background: 'rgba(255,255,255,0.05)', width: '100%', textAlign: 'center', flexShrink: 0 },
   canvasWrap: { flex: 1, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'stretch', padding: '0.25rem', boxSizing: 'border-box', overflow: 'hidden' },

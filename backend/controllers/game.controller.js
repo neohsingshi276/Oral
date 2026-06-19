@@ -39,7 +39,7 @@ const joinGame = async (req, res) => {
   if (!nickname || typeof nickname !== 'string')
     return res.status(400).json({ error: 'Nickname required' });
 
-  const cleanNick = nickname.trim().slice(0, 20);
+  const cleanNick = nickname.trim().slice(0, 50);
   if (cleanNick.length < 1)
     return res.status(400).json({ error: 'Nickname cannot be empty' });
 
@@ -215,9 +215,19 @@ const completeCheckpoint = async (req, res) => {
     return res.status(403).json({ error: 'Access denied' });
 
   try {
+    if (checkpoint_number > 1) {
+      const [previous] = await db.query(
+        'SELECT completed FROM checkpoint_attempts WHERE player_id=? AND session_id=? AND checkpoint_number=?',
+        [player_id, req.playerChat.session_id, checkpoint_number - 1]
+      );
+      if (!previous[0]?.completed) {
+        return res.status(409).json({ error: 'Complete the previous checkpoint first' });
+      }
+    }
+
     const [result] = await db.query(
-      'UPDATE checkpoint_attempts SET completed=true, completed_at=NOW() WHERE player_id=? AND checkpoint_number=?',
-      [player_id, checkpoint_number]
+      'UPDATE checkpoint_attempts SET completed=true, completed_at=NOW() WHERE player_id=? AND session_id=? AND checkpoint_number=?',
+      [player_id, req.playerChat.session_id, checkpoint_number]
     );
     if (result.affectedRows === 0)
       return res.status(404).json({ error: 'Checkpoint record not found for this player' });
