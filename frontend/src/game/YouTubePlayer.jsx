@@ -61,16 +61,8 @@ const YouTubePlayer = ({ videoId, onVideoEnd }) => {
                   const current = playerRef.current.getCurrentTime();
                   if (duration > 0) {
                     const percent = Math.round((current / duration) * 100);
-
-                    // Anti-skip: if jumped more than 3 seconds ahead, force back
-                    const prevTime = playerRef.current._lastTime || 0;
-                    if (current - prevTime > 3 && prevTime > 0) {
-                      playerRef.current.seekTo(prevTime, true);
-                      playerRef.current.playVideo();
-                    } else {
-                      playerRef.current._lastTime = current;
-                      setWatchedPercent(percent);
-                    }
+                    // TESTING MODE: anti-skip disabled — seeking freely allowed
+                    setWatchedPercent(percent);
                   }
                 }
               }, 1000);
