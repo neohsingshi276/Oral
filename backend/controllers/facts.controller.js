@@ -18,10 +18,12 @@ const getAllFacts = async (req, res) => {
       WHERE (
         f.title LIKE ?
         OR COALESCE(f.content, '') LIKE ?
+        OR COALESCE(f.title_bi, '') LIKE ?
+        OR COALESCE(f.content_bi, '') LIKE ?
       )
       ORDER BY f.created_at ${order}, f.id ${order}
       `,
-      [searchTerm, searchTerm]
+      [searchTerm, searchTerm, searchTerm, searchTerm]
     );
 
     res.json({ facts: rows });
@@ -104,6 +106,11 @@ const updateFact = async (req, res) => {
       await db.query(
         'UPDATE facts SET title=?, content=?, image_url=?, title_bi=?, content_bi=? WHERE id=?',
         [titleBm, contentBm, image_url, titleBi, contentBi, req.params.id]
+      );
+    } else if (req.body.remove_image === 'true' || req.body.remove_image === true) {
+      await db.query(
+        'UPDATE facts SET title=?, content=?, image_url=NULL, title_bi=?, content_bi=? WHERE id=?',
+        [titleBm, contentBm, titleBi, contentBi, req.params.id]
       );
     } else {
       await db.query(

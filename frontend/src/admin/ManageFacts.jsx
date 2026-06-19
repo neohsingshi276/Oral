@@ -89,7 +89,11 @@ const ManageFacts = () => {
       // Send BI overrides — backend uses these if provided, auto-translates if empty
       if (form.manual_translation && form.title_translation.trim()) formData.append('title_translation', form.title_translation.trim());
       if (form.manual_translation && form.content_translation.trim()) formData.append('content_translation', form.content_translation.trim());
-      if (imageFile) formData.append('image', imageFile);
+      if (imageFile) {
+        formData.append('image', imageFile);
+      } else if (editing && !imagePreview) {
+        formData.append('remove_image', 'true');
+      }
 
       if (editing) {
         await api.put(`/facts/${editing}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
@@ -176,8 +180,7 @@ const ManageFacts = () => {
                 {form.source_language === 'bm' ? 'Tajuk' : 'Title'}
               </label>
               <input data-no-translate="true" style={s.input} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
-                required maxLength={120} placeholder={form.source_language === 'bm' ? 'Contoh: Gigi anda unik!' : 'Example: Your teeth are unique!'}
-                data-no-translate="true" />
+                required maxLength={120} placeholder={form.source_language === 'bm' ? 'Contoh: Gigi anda unik!' : 'Example: Your teeth are unique!'} />
             </div>
             <div style={s.field}>
               <label style={s.label} data-no-translate="true">

@@ -61,9 +61,9 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
   const getIsCheckpointUnlocked = useCallback((cpId) => {
     if (cpId === 1) return true;
     const prev = progressRef.current.find(p => p.checkpoint_number === cpId - 1);
-    const unlocked = prev?.completed === true;
-    // DEBUG: log every time Phaser checks — remove after bug is confirmed fixed
-    console.log(`[UNLOCK] CP${cpId} => prev CP${cpId-1} completed=${prev?.completed} => unlocked=${unlocked}`, JSON.stringify(progressRef.current));
+    // FIX: MySQL BOOLEAN returns 0/1 (numbers), not true/false.
+    // `1 === true` is false in JS, so use !! to coerce correctly.
+    const unlocked = !!prev?.completed;
     return unlocked;
   }, []); // empty deps intentional — reads the ref directly
 
