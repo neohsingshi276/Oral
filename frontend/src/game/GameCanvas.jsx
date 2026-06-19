@@ -31,10 +31,14 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
   }, [enterSignal]);
 
   const getProgress = useCallback(() => progressRef.current, []);
+  // FIX: getIsCheckpointUnlocked reads from progressRef.current (a ref, not state),
+  // so it always has the latest progress even without re-creating the callback.
+  // CP1 is always unlocked; CPn requires CP(n-1) to be completed.
   const getIsCheckpointUnlocked = useCallback((cpId) => {
     if (cpId === 1) return true;
-    return progressRef.current.find(p => p.checkpoint_number === cpId - 1)?.completed ?? false;
-  }, []);
+    const prev = progressRef.current.find(p => p.checkpoint_number === cpId - 1);
+    return prev?.completed === true;
+  }, []); // empty deps is intentional — we read the ref directly, not the state
 
   // FIX: Helper to build auth config for player-protected game routes.
   // All endpoints that read/write per-player data now require the chat JWT.

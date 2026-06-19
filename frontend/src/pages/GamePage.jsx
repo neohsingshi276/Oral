@@ -253,10 +253,17 @@ const GamePage = () => {
     init();
   }, [token, navigate]);
 
+  // FIX: Use a ref to always read the latest progress without stale closure issues.
+  const progressStateRef = useRef(progress);
+  useEffect(() => { progressStateRef.current = progress; }, [progress]);
+
   // FIX: Await the attempt API call so failures are caught and logged.
   // Previously fire-and-forget meant failed attempts were silently swallowed.
   const handleCheckpointReached = async (cpId) => {
-    const isUnlocked = cpId === 1 || progress.find(p => p.checkpoint_number === cpId - 1)?.completed;
+    // Use the ref (not the state variable) to avoid stale closure — progress
+    // may have been updated since the last render, e.g. right after CP1 done.
+    const currentProgress = progressStateRef.current;
+    const isUnlocked = cpId === 1 || currentProgress.find(p => p.checkpoint_number === cpId - 1)?.completed;
     if (!isUnlocked) return;
 
     const chatConfig = getPlayerChatConfig();
@@ -273,8 +280,12 @@ const GamePage = () => {
 
   const handleActivityDone = async () => {
     const chatConfig = getPlayerChatConfig();
+    const completedCP = activeCP; // capture before any state changes
     try {
-      await api.post('/game/complete', { player_id: player.id, checkpoint_number: activeCP }, chatConfig);
+      await api.post('/game/complete', { player_id: player.id, checkpoint_number: completedCP }, chatConfig);
+      // FIX: Always re-fetch progress immediately after completing a checkpoint.
+      // This ensures progressRef in GameCanvas is updated BEFORE the player
+      // walks to the next checkpoint, so getIsCheckpointUnlocked returns true.
       await fetchProgress(player.id);
     } catch (err) {
       console.error('Failed to save checkpoint completion:', err);
@@ -287,7 +298,7 @@ const GamePage = () => {
       setShowConfetti(true);
     }
 
-    if (activeCP === 3) {
+    if (completedCP === 3) {
       setActiveCP(null);
       setCpStep('video');
     } else {
