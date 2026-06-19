@@ -61,7 +61,10 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
   const getIsCheckpointUnlocked = useCallback((cpId) => {
     if (cpId === 1) return true;
     const prev = progressRef.current.find(p => p.checkpoint_number === cpId - 1);
-    return prev?.completed === true;
+    const unlocked = prev?.completed === true;
+    // DEBUG: log every time Phaser checks — remove after bug is confirmed fixed
+    console.log(`[UNLOCK] CP${cpId} => prev CP${cpId-1} completed=${prev?.completed} => unlocked=${unlocked}`, JSON.stringify(progressRef.current));
+    return unlocked;
   }, []); // empty deps intentional — reads the ref directly
 
   // Wrapped onCheckpointReached: after a CP is entered (and completed upstream),

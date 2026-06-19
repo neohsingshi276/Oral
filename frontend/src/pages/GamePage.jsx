@@ -257,15 +257,11 @@ const GamePage = () => {
   const progressStateRef = useRef(progress);
   useEffect(() => { progressStateRef.current = progress; }, [progress]);
 
-  // FIX: Await the attempt API call so failures are caught and logged.
-  // Previously fire-and-forget meant failed attempts were silently swallowed.
   const handleCheckpointReached = async (cpId) => {
-    // Use the ref (not the state variable) to avoid stale closure — progress
-    // may have been updated since the last render, e.g. right after CP1 done.
-    const currentProgress = progressStateRef.current;
-    const isUnlocked = cpId === 1 || currentProgress.find(p => p.checkpoint_number === cpId - 1)?.completed;
-    if (!isUnlocked) return;
-
+    // The Phaser scene already checks isUnlocked before calling this.
+    // Removing the duplicate check here — it caused false rejections due
+    // to stale progress state, keeping CP2/CP3 locked even after completion.
+    console.log(`[CP] handleCheckpointReached CP${cpId}`, JSON.stringify(progressStateRef.current));
     const chatConfig = getPlayerChatConfig();
     try {
       await api.post('/game/attempt', { player_id: player.id, checkpoint_number: cpId }, chatConfig);
