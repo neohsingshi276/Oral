@@ -13,9 +13,11 @@ const AdminChat = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [readFilter, setReadFilter] = useState('all');
 
-  // Track the last-seen message count per player so unread badge clears when opened
-  const lastSeenRef = useRef({});   // { [player_id]: timestamp of last seen message }
+  const lastSeenStorageKey = 'admin_player_chat_last_seen';
+  // Track the last-seen message timestamp per player so unread badges stay cleared after refresh.
+  const lastSeenRef = useRef(JSON.parse(localStorage.getItem(lastSeenStorageKey) || '{}'));
   const messagesEndRef = useRef(null);
+  const messagesBoxRef = useRef(null);
   const contactPollRef = useRef(null);
   const msgPollRef = useRef(null);
 
@@ -65,16 +67,29 @@ const AdminChat = () => {
     }
   };
 
-  const fetchMessages = async (playerId) => {
+  const saveLastSeen = (playerId, timestamp) => {
+    lastSeenRef.current[playerId] = timestamp;
+    localStorage.setItem(lastSeenStorageKey, JSON.stringify(lastSeenRef.current));
+  };
+
+  const isNearBottom = () => {
+    const el = messagesBoxRef.current;
+    if (!el) return true;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  };
+
+  const fetchMessages = async (playerId, { markRead = false, scroll = false } = {}) => {
     try {
+      const shouldScroll = scroll || isNearBottom();
       const res = await api.get(`/chat/admin/messages/${playerId}`);
       const msgs = res.data.messages || [];
       setMessages(msgs);
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80);
-      // Mark as read: store the timestamp of the latest message we just saw
-      if (msgs.length > 0) {
+      if (shouldScroll) {
+        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+      }
+      if (markRead && msgs.length > 0) {
         const latest = Math.max(...msgs.map(m => new Date(m.sent_at).getTime()));
-        lastSeenRef.current[playerId] = latest;
+        saveLastSeen(playerId, latest);
       }
       setLastRefreshed(new Date());
     } catch (err) {
@@ -92,7 +107,7 @@ const AdminChat = () => {
   useEffect(() => {
     clearInterval(msgPollRef.current);
     if (selected) {
-      fetchMessages(selected.player_id);
+      fetchMessages(selected.player_id, { markRead: true, scroll: true });
       msgPollRef.current = setInterval(() => fetchMessages(selected.player_id), 3000);
     }
     return () => clearInterval(msgPollRef.current);
@@ -125,7 +140,7 @@ const AdminChat = () => {
   const handleSelectPlayer = (p) => {
     setSelected(p);
     // Optimistically zero out unread before fetch completes
-    lastSeenRef.current[p.player_id] = Date.now();
+    saveLastSeen(p.player_id, Date.now());
     setPlayers(prev =>
       prev.map(x => x.player_id === p.player_id ? { ...x, unread: 0 } : x)
     );
@@ -243,7 +258,7 @@ const AdminChat = () => {
             </div>
 
             {/* Messages */}
-            <div style={s.messages}>
+            <div ref={messagesBoxRef} style={s.messages}>
               {messages.length === 0 && (
                 <p style={s.emptyMessages}>{tx('Belum ada mesej. Menunggu pemain menulis dahulu.')}</p>
               )}

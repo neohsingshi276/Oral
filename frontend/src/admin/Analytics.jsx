@@ -90,7 +90,9 @@ const Analytics = ({ setActive }) => {
     }
   };
 
-  const buildReportRows = () => displayPlayers.map((p, index) => ({
+  const buildReportRows = () => [...displayPlayers]
+    .sort((a, b) => (b.total_mark || 0) - (a.total_mark || 0) || (a.display_nickname || a.nickname || '').localeCompare(b.display_nickname || b.nickname || ''))
+    .map((p, index) => ({
     rank: index + 1,
     school: p.school_name || '-',
     className: p.class_name || '-',
@@ -103,7 +105,7 @@ const Analytics = ({ setActive }) => {
     cp3: Math.round((p.cp3_mark || 0) / 33 * 100),
     cp3Attempts: p.cp3_attempts || 0,
     total: p.total_mark || 0,
-    completed: p.cp3_completed ? t('admin.completed') : t('admin.inProgress'),
+    completed: p.cp3_completed ? 'Completed' : 'In Progress',
   }));
 
   const downloadExcel = () => {
@@ -145,7 +147,7 @@ const Analytics = ({ setActive }) => {
       return acc;
     }, {});
     const sections = Object.entries(grouped).map(([group, groupRows]) => {
-      const completion = groupRows.length ? Math.round((groupRows.filter(r => r.completed === t('admin.completed')).length / groupRows.length) * 100) : 0;
+      const completion = groupRows.length ? Math.round((groupRows.filter(r => r.completed === 'Completed').length / groupRows.length) * 100) : 0;
       const avg = groupRows.length ? Math.round(groupRows.reduce((sum, r) => sum + r.total, 0) / groupRows.length) : 0;
       const tableRows = groupRows.map(row => `
         <tr><td>${row.rank}</td><td>${escapeHtml(row.nickname)}</td><td>${row.cp1}</td><td>${row.cp2}</td><td>${row.cp3}</td><td>${row.total}</td><td>${row.completed}</td></tr>
@@ -154,7 +156,7 @@ const Analytics = ({ setActive }) => {
         <section>
           <h2>${escapeHtml(group)}</h2>
           <p>${groupRows.length} ${t('admin.playersLower')}, ${completion}% ${t('admin.completionRateLower')}, ${t('admin.averageTotalMark')} ${avg}/100.</p>
-          <table><thead><tr><th>${t('admin.rank')}</th><th>${t('admin.nickname')}</th><th>CP1</th><th>CP2</th><th>CP3</th><th>${t('admin.total')}</th><th>${t('admin.status')}</th></tr></thead><tbody>${tableRows}</tbody></table>
+          <table><thead><tr><th>${t('admin.rank')}</th><th>${t('admin.fullName')}</th><th>CP1</th><th>CP2</th><th>CP3</th><th>${t('admin.total')}</th><th>${t('admin.status')}</th></tr></thead><tbody>${tableRows}</tbody></table>
         </section>`;
     }).join('');
     const win = window.open('', '_blank');
@@ -618,7 +620,7 @@ const Analytics = ({ setActive }) => {
               <table style={s.table}>
                 <thead><tr style={s.thead}>
                   <th style={s.th}>Kedudukan</th>
-                  <th style={s.th}>Nama Panggilan</th>
+                  <th style={s.th}>{t('admin.fullName')}</th>
                   <th style={s.th}>Sesi</th>
                   <th style={s.th}>CP1 Kuiz</th>
                   <th style={s.th}>CP2 Kata Silang</th>
@@ -675,7 +677,7 @@ const Analytics = ({ setActive }) => {
               <table style={s.table}>
                 <thead><tr style={s.thead}>
                   <th style={s.th}>Kedudukan</th>
-                  <th style={s.th}>Nama Panggilan</th>
+                  <th style={s.th}>{t('admin.fullName')}</th>
                   <th style={s.th}>CP1 Kuiz</th>
                   <th style={s.th}>CP2 Kata Silang</th>
                   <th style={s.th}>CP3 Permainan Makanan</th>

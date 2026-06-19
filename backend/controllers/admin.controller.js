@@ -132,8 +132,13 @@ const downloadCSV = async (req, res) => {
       r._total_mark = totalExact >= 99.5 ? 100 : Math.floor(totalExact);
     });
 
+    rows.sort((a, b) =>
+      b._total_mark - a._total_mark ||
+      String(a.display_nickname || a.nickname || '').localeCompare(String(b.display_nickname || b.nickname || ''))
+    );
+
     const headers = [
-      'Full Name', 'Session', 'Joined At',
+      'Rank', 'Full Name', 'Session', 'Joined At',
       'CP1 Completed', 'CP1 Attempts',
       'CP2 Completed', 'CP2 Attempts',
       'CP3 Completed', 'CP3 Attempts',
@@ -150,9 +155,9 @@ const downloadCSV = async (req, res) => {
     };
 
     const csvRows = [headers.map(csvEscape).join(',')];
-    rows.forEach(r => {
+    rows.forEach((r, index) => {
       csvRows.push([
-        r.display_nickname, r.session_name,
+        index + 1, r.display_nickname, r.session_name,
         new Date(r.joined_at).toLocaleDateString(),
         r.cp1_completed ? 'Yes' : 'No', r.cp1_attempts || 0,
         r.cp2_completed ? 'Yes' : 'No', r.cp2_attempts || 0,
