@@ -59,7 +59,13 @@ const AdminChat = () => {
   const fetchContacts = async () => {
     try {
       const res = await api.get('/chat');
-      setPlayers(buildPlayerMap(res.data.messages || []));
+      const next = buildPlayerMap(res.data.messages || []);
+      // Only update state when data actually changed — prevents React re-render
+      // that resets sidebar scroll position while user is searching/scrolling.
+      setPlayers(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(next)) return prev;
+        return next;
+      });
       if (loading) setLoading(false);
     } catch (err) {
       console.error('fetchContacts error:', err);
@@ -89,7 +95,12 @@ const AdminChat = () => {
       }
       if (markRead && msgs.length > 0) {
         const latest = Math.max(...msgs.map(m => new Date(m.sent_at).getTime()));
-        saveLastSeen(playerId, latest);
+        // Never go backwards — handleSelectPlayer may have already saved Date.now()
+        // which is newer than the latest message timestamp.
+        const existing = lastSeenRef.current[playerId] || 0;
+        if (latest > existing) {
+          saveLastSeen(playerId, latest);
+        }
       }
       setLastRefreshed(new Date());
     } catch (err) {
@@ -356,7 +367,7 @@ const s = {
 
   filterBox: {
     padding: '0.75rem 1rem', borderBottom: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column',
-    gap: '0.5rem', background: '#fafbff'
+    gap: '0.5rem', background: '#fafbff', flexShrink: 0
   },
   filterInput: { width: '100%', padding: '0.55rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.78rem', outline: 'none', boxSizing: 'border-box', background: '#fff' },
 };
