@@ -20,7 +20,30 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
   // Keep latest progress in a ref so the scene can read it every frame
   // without needing Phaser to restart when React re-renders.
   const progressRef = useRef(progress);
-  useEffect(() => { progressRef.current = progress; }, [progress]);
+
+  // FIX: When the parent passes updated progress (after CP completion),
+  // immediately update the ref AND do a direct API re-fetch to guarantee
+  // the Phaser scene has the latest data before the player reaches the next CP.
+  useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
+
+  // Direct API refresh — called after a checkpoint is completed so the Phaser
+  // scene's progressRef is up-to-date without waiting for a React render cycle.
+  const refreshProgressFromAPI = useCallback(async () => {
+    if (!player?.id || !player?.chat_token) return;
+    try {
+      const res = await api.get(`/game/progress/${player.id}`, {
+        headers: { Authorization: `Bearer ${player.chat_token}` },
+      });
+      if (res.data?.progress) {
+        progressRef.current = res.data.progress;
+      }
+    } catch (err) {
+      // Silently ignore — the parent's fetchProgress will also run
+      console.warn('GameCanvas: background progress refresh failed', err);
+    }
+  }, [player?.id, player?.chat_token]);
 
   useEffect(() => {
     sceneRef.current?.setVirtualInput?.(virtualInput || {});
@@ -31,17 +54,25 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
   }, [enterSignal]);
 
   const getProgress = useCallback(() => progressRef.current, []);
-  // FIX: getIsCheckpointUnlocked reads from progressRef.current (a ref, not state),
-  // so it always has the latest progress even without re-creating the callback.
-  // CP1 is always unlocked; CPn requires CP(n-1) to be completed.
+
+  // getIsCheckpointUnlocked reads from progressRef.current directly (a ref, not state),
+  // so it always has the latest progress every Phaser frame without re-creating the callback.
+  // CP1 is always unlocked. CP2 requires CP1 completed. CP3 requires CP2 completed.
   const getIsCheckpointUnlocked = useCallback((cpId) => {
     if (cpId === 1) return true;
     const prev = progressRef.current.find(p => p.checkpoint_number === cpId - 1);
     return prev?.completed === true;
-  }, []); // empty deps is intentional — we read the ref directly, not the state
+  }, []); // empty deps intentional — reads the ref directly
+
+  // Wrapped onCheckpointReached: after a CP is entered (and completed upstream),
+  // trigger a background progress refresh so the next CP unlocks immediately.
+  const handleCheckpointReached = useCallback(async (cpId) => {
+    await onCheckpointReached(cpId);
+    // Refresh after a short delay to allow the backend to finish writing
+    setTimeout(() => refreshProgressFromAPI(), 1500);
+  }, [onCheckpointReached, refreshProgressFromAPI]);
 
   // FIX: Helper to build auth config for player-protected game routes.
-  // All endpoints that read/write per-player data now require the chat JWT.
   const playerAuthConfig = useCallback(() => ({
     headers: { Authorization: `Bearer ${player.chat_token}` },
   }), [player.chat_token]);
@@ -76,18 +107,12 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
 
     let cancelled = false;
 
-    // Fetch saved position FIRST — only boot Phaser once we have it.
-    // This guarantees init(data) receives the correct position before
-    // create() runs, so the player always spawns in the right place.
     api.get(`/game/position/${player.id}`, playerAuthConfig())
       .then(res => {
         if (cancelled) return;
         let initialPos = START_POS;
         if (res.data?.position) {
           const { pos_x, pos_y } = res.data.position;
-          // Reject positions that are clearly in the sea / outside the land area.
-          // The old backend default was (390, 1000) which is ocean — anything
-          // below x=500 or y=500 is off-map and should fall back to START.
           const looksValid = pos_x > 500 && pos_y > 500 && pos_x < 9000 && pos_y < 9000;
           if (looksValid) {
             initialPos = { x: pos_x, y: pos_y };
@@ -111,10 +136,8 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
         const viewW = window.innerWidth - 32;
         const viewH = window.innerHeight - 130;
 
-        // The scene data object is passed to init(data) before create() runs.
-        // This is the ONLY reliable way to get data into a scene at startup.
         const sceneData = {
-          onCheckpointReached,
+          onCheckpointReached: handleCheckpointReached,
           getProgress,
           getIsCheckpointUnlocked,
           playerNickname: player.nickname,
@@ -137,8 +160,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
             default: 'matter',
             matter: { gravity: { y: 0 }, debug: false },
           },
-          // Don't put the scene in the config array — start it manually below
-          // so we can pass sceneData into init(data) before create() runs.
           scene: [],
         });
 
@@ -146,25 +167,17 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
         if (externalGameRef) externalGameRef.current = game;
 
         game.events.on('ready', () => {
-          // Add and start the scene with data in one atomic call.
-          // Phaser calls init(sceneData) → preload() → create() in that order,
-          // so initialPos is available when create() places the player.
           game.scene.add('PhaserGameScene', PhaserGameScene, true, sceneData);
-
-          // Grab the live scene reference for savePosition / pause / resume
-          // (scene exists immediately after add(..., true, ...))
           const scene = game.scene.getScene('PhaserGameScene');
           if (scene) sceneRef.current = scene;
         });
 
-        // Handle window resize
         const onResize = () => {
           game.scale.resize(window.innerWidth - 32, window.innerHeight - 130);
         };
         window.addEventListener('resize', onResize);
         window.addEventListener('beforeunload', savePosition);
 
-        // Periodic position autosave
         const saveInterval = setInterval(() => {
           if (Date.now() - lastSave.current > SAVE_INTERVAL) {
             lastSave.current = Date.now();
@@ -183,7 +196,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
 
   useEffect(() => {
     console.log('GameCanvas mounted');
-
     return () => {
       console.log('GameCanvas unmounted');
     };
@@ -191,7 +203,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {/* Loading overlay — shown until Phaser fires onLoadComplete */}
       {!ready && (
         <div style={{
           position: 'absolute', inset: 0,
@@ -208,7 +219,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
           <div style={{ color: '#FFD700', fontWeight: 'bold', fontSize: 18 }}>
             Loading Dental Quest...
           </div>
-          {/* Progress bar */}
           <div style={{
             width: 220, height: 10,
             background: '#0f1a2e',
