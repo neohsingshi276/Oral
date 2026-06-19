@@ -299,7 +299,7 @@ const s = {
   filters: { display: 'grid', gridTemplateColumns: 'minmax(220px, 1fr) repeat(3, minmax(140px, 180px))', gap: '0.65rem', marginBottom: '1rem' },
   search: { padding: '0.6rem 0.85rem', border: '1px solid #dbe3ee', borderRadius: '8px', fontSize: '0.88rem', outline: 'none', minWidth: 0 },
   select: { padding: '0.6rem 0.75rem', border: '1px solid #dbe3ee', borderRadius: '8px', fontSize: '0.86rem', background: '#fff', color: '#334155', outline: 'none' },
-  logList: { display: 'flex', flexDirection: 'column', gap: '0.55rem', maxHeight: '560px', overflowY: 'auto' },
+  logList: { display: 'flex', flexDirection: 'column', gap: '0.55rem', overflowY: 'auto' },
   logItem: { display: 'flex', gap: '0.75rem', background: '#fbfdff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.85rem' },
   logContent: { flex: 1, minWidth: 0 },
   logTop: { display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap', color: '#1e3a5f', fontSize: '0.85rem', marginBottom: '0.3rem' },

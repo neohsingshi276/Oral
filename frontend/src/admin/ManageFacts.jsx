@@ -26,6 +26,7 @@ const ManageFacts = () => {
   const [msg, setMsg] = useState('');
   const [translating, setTranslating] = useState(false);
   const fileRef = useRef();
+  const formRef = useRef();
 
   const factLang = {
     bm: {
@@ -115,8 +116,8 @@ const ManageFacts = () => {
   const handleEdit = (fact) => {
     setEditing(fact.id);
     setForm({
-      title: fact.title,
-      content: fact.content,
+      title: fact.title || '',
+      content: fact.content || '',
       source_language: 'bm',
       manual_translation: Boolean(fact.title_bi || fact.content_bi),
       title_translation: fact.title_bi || '',
@@ -126,6 +127,7 @@ const ManageFacts = () => {
     });
     setImagePreview(fact.image_url || null);
     setImageFile(null);
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
   const handleDelete = async (id) => {
@@ -136,7 +138,7 @@ const ManageFacts = () => {
 
   return (
     <div>
-      <div style={s.card}>
+      <div ref={formRef} style={s.card}>
         <h2 style={s.cardTitle}>{editing ? '✏️ Edit Fakta' : '➕ Tambah Fakta Baru'}</h2>
         {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
         <form onSubmit={handleSubmit}>
@@ -231,7 +233,7 @@ const ManageFacts = () => {
                 <div style={s.uploadPlaceholder}>
                   <div style={s.uploadIcon}>🖼️</div>
                   <p style={s.uploadText}>Klik untuk muat naik imej</p>
-                  <p style={s.uploadHint}>JPG, PNG, GIF, WEBP — maks 5MB</p>
+                  <p style={s.uploadHint}>{form.source_language === 'bi' ? 'JPG, PNG, GIF, WEBP — max 5MB' : 'JPG, PNG, GIF, WEBP — maks 5MB'}</p>
                 </div>
               )}
             </div>
@@ -246,7 +248,11 @@ const ManageFacts = () => {
 
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <button style={{ ...s.btnPrimary, opacity: translating ? 0.7 : 1 }} type="submit" disabled={translating}>
-              {translating ? '⏳ Menerjemah & menyimpan...' : editing ? 'Kemas Kini Fakta' : 'Tambah Fakta'}
+              {translating
+                ? (form.source_language === 'bi' ? '⏳ Translating & saving...' : '⏳ Menerjemah & menyimpan...')
+                : editing
+                  ? (form.source_language === 'bi' ? 'Update Fact' : 'Kemas Kini Fakta')
+                  : (form.source_language === 'bi' ? 'Add Fact' : 'Tambah Fakta')}
             </button>
             {editing && <button style={s.btnSecondary} type="button" onClick={resetForm}>Batal</button>}
           </div>

@@ -1,7 +1,7 @@
 const bm = {
   // Punam Added Here Also
   compare: {
-    legend: '🟢 Hijau = lebih baik    · ▲ = menang dalam kategori ini    · Percubaan: kurang = lebih baik',
+    legend: '🟢 Warna hijau menunjukkan prestasi lebih baik · ▲ = menang dalam kategori ini · Percubaan: semakin sedikit semakin baik',
   },
   // Punam Added Until Here
   nav: {
@@ -342,7 +342,7 @@ const bm = {
     orderPlaceholderAdd: 'Kosongkan untuk auto',
     orderHintEdit: 'Nombor 1 = pertama.',
     orderHintAdd: 'Kosong = hujung senarai.',
-    searchNickname: '🔍 Cari nama panggilan...',
+    searchNickname: '🔍 Cari nama penuh...',
     completedAllCp: 'Semua CP Selesai',
     incomplete: 'Belum Selesai',
     allScores: 'Semua Markah',
@@ -498,6 +498,7 @@ const bm = {
     allCompleted: 'Semua Selesai',
     avgScore: 'Purata Markah',
     allCp: 'Semua CP',
+    avgAttempts: 'purata percubaan',
   },
 };
 
@@ -1001,6 +1002,7 @@ const bi = {
     allCompleted: 'All Completed',
     avgScore: 'Avg Score',
     allCp: 'All CP',
+    avgAttempts: 'average attempts',
   },
 };
 

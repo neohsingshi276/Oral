@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -18,6 +18,7 @@ const ManageCrossword = () => {
   const [msg, setMsg] = useState('');
   const [search, setSearch] = useState('');
   const [sortFilter, setSortFilter] = useState('latest');
+  const formRef = useRef();
   const [orderFilter, setOrderFilter] = useState('desc');
 
   const clueLang = {
@@ -102,6 +103,7 @@ const ManageCrossword = () => {
       source_language: 'bm',
       manual_translation: Boolean(w.clue_bi)
     });
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
   const handleDelete = async (id) => {
@@ -121,7 +123,7 @@ const ManageCrossword = () => {
       </div>
 
       <div style={s.twoCol}>
-        <div style={s.card}>
+        <div ref={formRef} style={s.card}>
           <h2 style={s.cardTitle}>{editing ? '✏️ Sunting Perkataan' : '➕ Tambah Perkataan'}</h2>
           {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
           <form onSubmit={handleSubmit}>

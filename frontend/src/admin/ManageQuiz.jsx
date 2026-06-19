@@ -68,6 +68,7 @@ const ManageQuiz = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [orderFilter, setOrderFilter] = useState('desc');
   const fileRef = useRef();
+  const formRef = useRef();
 
   const quizLang = {
     bm: {
@@ -313,6 +314,7 @@ const ManageQuiz = () => {
     });
     setImagePreview(q.image_url || null);
     setTab('questions');
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
   const handleDelete = async (id) => { if (!confirm(tx('Padam soalan ini?'))) return; await api.delete(`/quiz/admin/questions/${id}`); fetchQuestions(); };
@@ -338,7 +340,7 @@ const ManageQuiz = () => {
       {tab === 'questions' && (
         <>
           {/* Borang */}
-          <div style={s.card}>
+          <div ref={formRef} style={s.card}>
             <h2 style={s.cardTitle}>{editing ? '✏️ Kemaskini Soalan' : '➕ Tambah Soalan Baharu'}</h2>
             <form onSubmit={handleSubmit}>
               {/* Pemilih jenis soalan */}

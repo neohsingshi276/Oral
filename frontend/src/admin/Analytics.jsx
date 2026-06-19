@@ -251,8 +251,8 @@ const Analytics = ({ setActive }) => {
     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
   const pieData = [
-    { name: 'Selesai Semua', value: filteredCP3 },
-    { name: 'Sedang Berjalan', value: Math.max(0, displayPlayers.length - filteredCP3) },
+    { name: t('admin.allCompleted'), value: filteredCP3 },
+    { name: t('admin.inProgress'), value: Math.max(0, displayPlayers.length - filteredCP3) },
   ];
 
   const filterLeaderboard = (players) => {
@@ -487,7 +487,7 @@ const Analytics = ({ setActive }) => {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="name" fontSize={11} />
               <YAxis />
-              <Tooltip formatter={(val) => [`${val} purata percubaan`]} />
+              <Tooltip formatter={(val) => [`${val} ${t('admin.avgAttempts')}`]} />
               <Bar dataKey="avgAttempts" name="Purata Percubaan" radius={[6, 6, 0, 0]}>
                 {attemptData.map((entry, i) => (
                   <Cell key={i} fill={parseFloat(entry.avgAttempts) > 2 ? '#e11d48' : parseFloat(entry.avgAttempts) > 1 ? '#f59e0b' : '#16a34a'} />

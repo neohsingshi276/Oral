@@ -36,13 +36,16 @@ const ManageAdmins = ({ currentAdmin }) => {
       setInviteRole('admin');
       fetchAdmins();
     } catch (err) {
-      setMsg(
-        '❌ ' +
-        (err.response?.data?.error ||
-          (language === 'bi'
-            ? 'Failed to send invitation'
-            : 'Gagal menghantar jemputan'))
-      );
+      const errMsg = err.response?.data?.error || '';
+      let displayMsg;
+      if (errMsg === 'This email is already registered as an admin') {
+        displayMsg = language === 'bi'
+          ? 'This email is already registered as an admin'
+          : 'E-mel ini sudah berdaftar sebagai pentadbir';
+      } else {
+        displayMsg = errMsg || (language === 'bi' ? 'Failed to send invitation' : 'Gagal menghantar jemputan');
+      }
+      setMsg('❌ ' + displayMsg);
     }
     finally { setLoading(false); setTimeout(() => setMsg(''), 4000); }
   };
@@ -82,7 +85,11 @@ const ManageAdmins = ({ currentAdmin }) => {
   };
 
   const handleDelete = async (id, name) => {
-    if (!confirm(`Keluarkan pentadbir "${name}"? Tindakan ini tidak boleh dibatalkan!`)) return;
+    if (!confirm(
+      language === 'bi'
+        ? `Remove admin "${name}"? This action cannot be undone!`
+        : `Keluarkan pentadbir "${name}"? Tindakan ini tidak boleh dibatalkan!`
+    )) return;
     try {
       await api.delete(`/admin/admins/${id}`);
       fetchAdmins();
@@ -131,7 +138,7 @@ const ManageAdmins = ({ currentAdmin }) => {
             </select>
           </div>
           <button style={s.btnPrimary} onClick={handleInvite} disabled={loading}>
-            {loading ? 'Menghantar...' : '📧 Hantar Jemputan'}
+            {loading ? (language === 'bi' ? 'Sending...' : 'Menghantar...') : '📧 Hantar Jemputan'}
           </button>
         </div>
       </div>
@@ -153,7 +160,7 @@ const ManageAdmins = ({ currentAdmin }) => {
                 <span style={s.pendingBadge}>⏳ Tertangguh</span>
                 <button style={s.btnResend} onClick={() => handleResend(invite.id)}>📧 Hantar Semula</button>
                 {['main_admin', 'admin'].includes(currentAdmin?.role) && (
-                  <button style={s.btnCancel} onClick={() => handleCancel(invite.id)}>✕ Batal</button>
+                  <button style={s.btnCancel} onClick={() => handleCancel(invite.id)}>{language === 'bi' ? 'Cancel' : 'Batal'}</button>
                 )}
               </div>
             ))}
