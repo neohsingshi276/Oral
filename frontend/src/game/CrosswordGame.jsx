@@ -325,10 +325,17 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     setRevealAll(true);
     const ng = grid.map(r => r.map(c => c || ''));
     setUserGrid(ng);
-    checkWords(ng);
     // Close overlay and let user see the answers on the grid
     setReviewingAnswers(true);
     setReviewPhase('viewing');
+  };
+
+  const openCrosswordLeaderboard = async () => {
+    try {
+      const res = await api.get(`/cp3/crossword-leaderboard/${sessionId}`);
+      setLbData(res.data.leaderboard || []);
+    } catch (err) { console.error(err); }
+    setShowLB(true);
   };
 
   const handleGiveUp = () => {
@@ -446,13 +453,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
               <button style={{ ...s.doneBtn, background: '#f59e0b' }} onClick={() => {
                 setReviewingAnswers(true);
               }}>👁️ {t('game.viewAnswers', 'Lihat Jawapan di Papan')}</button>
-              <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={async () => {
-                try {
-                  const res = await api.get(`/cp3/crossword-leaderboard/${sessionId}`);
-                  setLbData(res.data.leaderboard || []);
-                } catch (err) { console.error(err); }
-                setShowLB(true);
-              }}>{t('game.toScoreboard', 'Teruskan ke Papan Markah 🏆')}</button>
+              <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={openCrosswordLeaderboard}>{t('game.toScoreboard', 'Teruskan ke Papan Markah 🏆')}</button>
             </div>
           </div>
         </div>
@@ -479,13 +480,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                 👁️ {t('game.showAllAnswers', 'Tunjuk Semua Jawapan')}
               </button>
               {passed ? (
-                <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={async () => {
-                  try {
-                    const res = await api.get(`/cp3/crossword-leaderboard/${sessionId}`);
-                    setLbData(res.data.leaderboard || []);
-                  } catch (err) { console.error(err); }
-                  setShowLB(true);
-                }}>{t('game.seeScoreboard', 'Lihat Papan Markah 🏆 & Teruskan')}</button>
+                <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={openCrosswordLeaderboard}>{t('game.seeScoreboard', 'Lihat Papan Markah 🏆 & Teruskan')}</button>
               ) : (
                 <button style={{ ...s.doneBtn, background: '#e11d48' }} onClick={onRetry}>
                   🔄 {t('game.retry', 'Cuba Semula')}
@@ -513,7 +508,9 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                 <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem', fontSize: '0.85rem' }}>{t('game.noScoreboardData', 'Tiada data papan markah lagi.')}</p>
               )}
             </div>
-            <button style={s.doneBtn} onClick={onComplete}>{t('game.continueAdventureMap', 'Teruskan Pengembaraan! 🗺️')}</button>
+            <button style={s.doneBtn} onClick={passed ? onComplete : onRetry}>
+              {passed ? t('game.continueAdventureMap', 'Teruskan Pengembaraan! 🗺️') : `🔄 ${t('game.retry', 'Cuba Semula')}`}
+            </button>
           </div>
         </div>
       )}
@@ -524,16 +521,10 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
           <div style={s.reviewBarInner}>
             <span style={{ color: '#16a34a', fontWeight: '700', fontSize: '0.95rem' }}>👁️ {t('game.checkYourAnswers', 'Semua jawapan ditunjukkan — Semak jawapan anda!')}</span>
             <button
-              style={{ ...s.doneBtn, width: 'auto', padding: '0.7rem 2rem', background: '#7c3aed', fontSize: '0.95rem', borderRadius: '12px', boxShadow: '0 4px 15px rgba(124,58,237,0.4)' }}
-              onClick={async () => {
-                try {
-                  const res = await api.get(`/cp3/crossword-leaderboard/${sessionId}`);
-                  setLbData(res.data.leaderboard || []);
-                } catch (err) { console.error(err); }
-                setShowLB(true);
-              }}
+              style={{ ...s.doneBtn, width: 'auto', padding: '0.7rem 2rem', background: passed ? '#7c3aed' : '#e11d48', fontSize: '0.95rem', borderRadius: '12px', boxShadow: passed ? '0 4px 15px rgba(124,58,237,0.4)' : '0 4px 15px rgba(225,29,72,0.35)' }}
+              onClick={passed ? openCrosswordLeaderboard : onRetry}
             >
-              {t('game.continueToScoreboard', 'Teruskan → Lihat Papan Markah 🏆')}
+              {passed ? t('game.continueToScoreboard', 'Teruskan → Lihat Papan Markah 🏆') : `🔄 ${t('game.retry', 'Cuba Semula')}`}
             </button>
           </div>
         </div>
