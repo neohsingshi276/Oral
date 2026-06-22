@@ -103,7 +103,7 @@ const Analytics = ({ setActive }) => {
     cp3: Math.round((p.cp3_mark || 0) / 33 * 100),
     cp3Attempts: p.cp3_attempts || 0,
     total: p.total_mark || 0,
-    completed: p.cp3_completed ? 'Completed' : 'In Progress',
+    completed: p.cp3_completed ? t('admin.completed') : t('admin.inProgress'),
   }));
 
   const downloadExcel = () => {
