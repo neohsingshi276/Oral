@@ -948,7 +948,7 @@ const bi = {
     seconds: 'Seconds',
     points: 'Points',
     back: 'Back',
-    searchNickname: '🔍 Search nickname...',
+    searchNickname: '🔍 Search full name...',
     completedAllCp: 'Completed All CP',
     incomplete: 'Incomplete',
     allScores: 'All Scores',
