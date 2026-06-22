@@ -1173,7 +1173,7 @@ export const exactTextTranslations = {
   // Find this and make it comment
   // 'Nama Samaran': 'Full Name',
   // 'Nama Panggilan': 'Full Name',
-  'Reveal password must be at least 4 characters': 'Kata laluan dedah kod mesti sekurang-kurangnya 4 aksara',
+  'Kata laluan dedah kod mesti sekurang-kurangnya 4 aksara': 'Reveal password must be at least 4 characters',
   '(BI/BM auto-diterjemah jika kosong)': '(BI/BM) auto-translated if empty)',
   'Menerjemah & menyimpan...': 'Translating & saving...',
   'Sahkan Kata Laluan Baru': 'Confirm New Password',
