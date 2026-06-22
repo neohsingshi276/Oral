@@ -26,7 +26,7 @@ const ManageFacts = () => {
   const [msg, setMsg] = useState('');
   const [translating, setTranslating] = useState(false);
   const fileRef = useRef();
-  const formRef = useRef();
+  const formRef = useRef(null);
 
   const factLang = {
     bm: {
@@ -89,11 +89,7 @@ const ManageFacts = () => {
       // Send BI overrides — backend uses these if provided, auto-translates if empty
       if (form.manual_translation && form.title_translation.trim()) formData.append('title_translation', form.title_translation.trim());
       if (form.manual_translation && form.content_translation.trim()) formData.append('content_translation', form.content_translation.trim());
-      if (imageFile) {
-        formData.append('image', imageFile);
-      } else if (editing && !imagePreview) {
-        formData.append('remove_image', 'true');
-      }
+      if (imageFile) formData.append('image', imageFile);
 
       if (editing) {
         await api.put(`/facts/${editing}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
@@ -120,8 +116,8 @@ const ManageFacts = () => {
   const handleEdit = (fact) => {
     setEditing(fact.id);
     setForm({
-      title: fact.title || '',
-      content: fact.content || '',
+      title: fact.title,
+      content: fact.content,
       source_language: 'bm',
       manual_translation: Boolean(fact.title_bi || fact.content_bi),
       title_translation: fact.title_bi || '',
@@ -131,12 +127,23 @@ const ManageFacts = () => {
     });
     setImagePreview(fact.image_url || null);
     setImageFile(null);
-    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 100);
   };
 
   const handleDelete = async (id) => {
     if (!confirm(tx('Padam fakta ini?'))) return;
+
     await api.delete(`/facts/${id}`);
+
+    if (editing === id) {
+      resetForm();
+    }
+
     fetchFacts();
   };
 
@@ -236,7 +243,7 @@ const ManageFacts = () => {
                 <div style={s.uploadPlaceholder}>
                   <div style={s.uploadIcon}>🖼️</div>
                   <p style={s.uploadText}>Klik untuk muat naik imej</p>
-                  <p style={s.uploadHint}>{form.source_language === 'bi' ? 'JPG, PNG, GIF, WEBP — max 5MB' : 'JPG, PNG, GIF, WEBP — maks 5MB'}</p>
+                  <p style={s.uploadHint}>JPG, PNG, GIF, WEBP — max 5MB</p>
                 </div>
               )}
             </div>
@@ -252,10 +259,10 @@ const ManageFacts = () => {
           <div style={{ display: 'flex', gap: '0.75rem' }}>
             <button style={{ ...s.btnPrimary, opacity: translating ? 0.7 : 1 }} type="submit" disabled={translating}>
               {translating
-                ? (form.source_language === 'bi' ? '⏳ Translating & saving...' : '⏳ Menerjemah & menyimpan...')
+                ? `⏳ ${tx('Menerjemah & menyimpan...')}`
                 : editing
-                  ? (form.source_language === 'bi' ? 'Update Fact' : 'Kemas Kini Fakta')
-                  : (form.source_language === 'bi' ? 'Add Fact' : 'Tambah Fakta')}
+                  ? tx('Kemas Kini Fakta')
+                  : tx('Tambah Fakta')}
             </button>
             {editing && <button style={s.btnSecondary} type="button" onClick={resetForm}>Batal</button>}
           </div>

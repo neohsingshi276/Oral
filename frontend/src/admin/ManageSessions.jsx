@@ -3,6 +3,51 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
+// FIXED Reusable Dropdown Component with RED ERROR MESSAGES
+const SelectOrCustom = ({ options = [], value, onChange, label, min, max, t }) => {
+  const isCustom = value === '' || !options.some(o => o.value === value);
+
+  // Calculate Error
+  let errorMsg = '';
+  if (value !== '') {
+    if (min !== undefined && value < min) errorMsg = `⚠️ Minima ialah ${min}`;
+    if (max !== undefined && value > max) errorMsg = `⚠️ Maxima ialah ${max} (based on database)`;
+  }
+
+  return (
+    <div style={s.field}>
+      <label style={s.label}>{label}</label>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <select
+          style={{ ...s.input, width: isCustom ? '40%' : '100%', borderColor: errorMsg ? '#e11d48' : '#cbd5e1' }}
+          value={isCustom ? 'custom' : value}
+          onChange={(e) => {
+            if (e.target.value === 'custom') onChange('');
+            else onChange(Number(e.target.value));
+          }}
+        >
+          {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          <option value="custom">✍️ {t('admin.custom')}</option>
+        </select>
+        {isCustom && (
+          <input
+            type="number" style={{ ...s.input, width: '60%', borderColor: errorMsg ? '#e11d48' : '#cbd5e1' }}
+            value={value}
+            onChange={e => onChange(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+            onKeyDown={e => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
+            placeholder={max ? `Max: ${max}` : `Min: ${min}`}
+            step="1"
+            min={min}
+            max={max}
+            autoFocus required
+          />
+        )}
+      </div>
+      {errorMsg && <div style={{ color: '#e11d48', fontSize: '0.8rem', marginTop: '4px', fontWeight: '600' }}>{errorMsg}</div>}
+    </div>
+  );
+};
+
 const ManageSessions = () => {
   const { admin } = useAuth();
   const { t } = useLanguage();
@@ -41,41 +86,41 @@ const ManageSessions = () => {
 
   const [fetchError, setFetchError] = useState('');
 
-const fetchSessions = async (searchValue = search, statusValue = statusFilter, sortValue = sortFilter) => {
-  try {
-    setFetchError('');
+  const fetchSessions = async (searchValue = search, statusValue = statusFilter, sortValue = sortFilter) => {
+    try {
+      setFetchError('');
 
-    const res = await api.get('/sessions', {
-      params: {
-        search: searchValue,
-        status: statusValue,
-        sort: sortValue
-      }
-    });
+      const res = await api.get('/sessions', {
+        params: {
+          search: searchValue,
+          status: statusValue,
+          sort: sortValue
+        }
+      });
 
-    setSessions(res.data.sessions);
+      setSessions(res.data.sessions);
 
-  } catch (err) {
-    setFetchError(
-      '❌ ' +
-      (err.response?.data?.error ||
-      err.message ||
-      'Failed to load sessions')
-    );
-  }
-};
+    } catch (err) {
+      setFetchError(
+        '❌ ' +
+        (err.response?.data?.error ||
+          err.message ||
+          'Failed to load sessions')
+      );
+    }
+  };
 
-  const fetchQuestions = () => api.get('/quiz/admin/questions').then(res => setQuestions(res.data.questions)).catch(() => {});
-  const fetchWords = () => api.get('/crossword/admin').then(res => setWords(res.data.words)).catch(() => {});
+  const fetchQuestions = () => api.get('/quiz/admin/questions').then(res => setQuestions(res.data.questions)).catch(() => { });
+  const fetchWords = () => api.get('/crossword/admin').then(res => setWords(res.data.words)).catch(() => { });
 
-useEffect(() => {
-  fetchSessions();
-}, [search, statusFilter, sortFilter]);
+  useEffect(() => {
+    fetchSessions();
+  }, [search, statusFilter, sortFilter]);
 
-useEffect(() => {
-  fetchQuestions();
-  fetchWords();
-}, []);
+  useEffect(() => {
+    fetchQuestions();
+    fetchWords();
+  }, []);
 
   // Once questions/words are loaded, set the default counts to the DB max
   // (only if not editing and still at initial 0)
@@ -209,7 +254,7 @@ useEffect(() => {
   };
 
   const handleToggle = async (id, is_active) => { await api.put(`/sessions/${id}`, { is_active: !is_active }); fetchSessions(); };
-  const handleDelete = async (id) => { if (!confirm('Delete this session?')) return; await api.delete(`/sessions/${id}`); fetchSessions(); };
+  const handleDelete = async (id) => { if (!confirm(t('admin.deleteSessionConfirm'))) return; await api.delete(`/sessions/${id}`); fetchSessions(); };
   const copyCode = (code) => { navigator.clipboard.writeText(code); setCopied(code); setTimeout(() => setCopied(''), 2000); };
 
   const toggleQ = (id) => {
@@ -224,70 +269,26 @@ useEffect(() => {
   // DYNAMIC OPTIONS FACTORY - only returns options that are <= the database max size
   const getDynamicOptions = (arr, maxLimit) => arr.filter(o => o.value <= maxLimit);
 
-  // FIXED Reusable Dropdown Component with RED ERROR MESSAGES
-  const SelectOrCustom = ({ options = [], value, onChange, label, min, max }) => {
-    const isCustom = value === '' || !options.some(o => o.value === value);
 
-    // Calculate Error
-    let errorMsg = '';
-    if (value !== '') {
-      if (min !== undefined && value < min) errorMsg = `⚠️ Minima ialah ${min}`;
-      if (max !== undefined && value > max) errorMsg = `⚠️ Maxima ialah ${max} (based on database)`;
+  const sortedSessions = [...sessions].sort((a, b) => {
+    if (sortFilter === 'oldest') {
+      return new Date(a.created_at) - new Date(b.created_at);
     }
 
-    return (
-      <div style={s.field}>
-        <label style={s.label}>{label}</label>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <select
-            style={{ ...s.input, width: isCustom ? '40%' : '100%', borderColor: errorMsg ? '#e11d48' : '#cbd5e1' }}
-            value={isCustom ? 'custom' : value}
-            onChange={(e) => {
-              if (e.target.value === 'custom') onChange('');
-              else onChange(Number(e.target.value));
-            }}
-          >
-            {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            <option value="custom">✍️ {t('admin.custom')}</option>
-          </select>
-          {isCustom && (
-            <input
-              type="number" style={{ ...s.input, width: '60%', borderColor: errorMsg ? '#e11d48' : '#cbd5e1' }}
-              value={value}
-              onChange={e => onChange(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-              onKeyDown={e => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
-              placeholder={max ? `Max: ${max}` : `Min: ${min}`}
-              step="1"
-              min={min}
-              max={max}
-              autoFocus required
-            />
-          )}
-        </div>
-        {errorMsg && <div style={{ color: '#e11d48', fontSize: '0.8rem', marginTop: '4px', fontWeight: '600' }}>{errorMsg}</div>}
-      </div>
-    );
-  };
+    if (sortFilter === 'newest') {
+      return new Date(b.created_at) - new Date(a.created_at);
+    }
 
-const sortedSessions = [...sessions].sort((a, b) => {
-  if (sortFilter === 'oldest') {
-    return new Date(a.created_at) - new Date(b.created_at);
-  }
+    if (sortFilter === 'az') {
+      return (a.session_name || '').localeCompare(b.session_name || '');
+    }
 
-  if (sortFilter === 'newest') {
-    return new Date(b.created_at) - new Date(a.created_at);
-  }
+    if (sortFilter === 'za') {
+      return (b.session_name || '').localeCompare(a.session_name || '');
+    }
 
-  if (sortFilter === 'az') {
-    return (a.session_name || '').localeCompare(b.session_name || '');
-  }
-
-  if (sortFilter === 'za') {
-    return (b.session_name || '').localeCompare(a.session_name || '');
-  }
-
-  return 0;
-});
+    return 0;
+  });
 
   const groupedSessions = sortedSessions.reduce((acc, session) => {
     const school = session.school_name || 'No School';
@@ -343,7 +344,7 @@ const sortedSessions = [...sessions].sort((a, b) => {
                       })
                     }
                     required
-                    placeholder="e.g. SK Taman Mutiara"
+                    placeholder={t('admin.schoolPlaceholder')}
                   />
                 </div>
 
@@ -359,7 +360,7 @@ const sortedSessions = [...sessions].sort((a, b) => {
                       })
                     }
                     required
-                    placeholder="e.g. Class 5A"
+                    placeholder={t('admin.classPlaceholder')}
                   />
                 </div>
 
@@ -376,7 +377,7 @@ const sortedSessions = [...sessions].sort((a, b) => {
                       })
                     }
                     required
-                    placeholder="e.g. January 2026 Session"
+                    placeholder={t('admin.sessionPlaceholder')}
                     maxLength={80}
                   />
                 </div>
@@ -401,15 +402,15 @@ const sortedSessions = [...sessions].sort((a, b) => {
                 </div>
 
                 <div style={s.gridRow}>
-                  <SelectOrCustom label={t('admin.timePerQuestion')} value={form.q_timer} onChange={v => setForm({ ...form, q_timer: v })} min={5} max={120}
+                  <SelectOrCustom t={t} label={t('admin.timePerQuestion')} value={form.q_timer} onChange={v => setForm({ ...form, q_timer: v })} min={5} max={120}
                     options={[{ value: 10, label: '10 Saat' }, { value: 15, label: '15 Saat' }, { value: 30, label: '30 Saat' }]} />
 
                   {form.q_mode === 'random' && (
-                    <SelectOrCustom label={t('admin.questionsToPick')} value={form.q_count} onChange={v => setForm({ ...form, q_count: v })} min={1} max={questions.length}
+                    <SelectOrCustom t={t} label={t('admin.questionsToPick')} value={form.q_count} onChange={v => setForm({ ...form, q_count: v })} min={1} max={questions.length}
                       options={getDynamicOptions([5, 10, 15].map(value => ({ value, label: `${value} ${t('admin.questions')}` })), questions.length)} />
                   )}
 
-                  <SelectOrCustom label={t('admin.minimumToPass')} value={form.q_min} onChange={v => setForm({ ...form, q_min: v })} min={0} max={form.q_mode === 'random' ? form.q_count : form.q_selected.length || questions.length}
+                  <SelectOrCustom t={t} label={t('admin.minimumToPass')} value={form.q_min} onChange={v => setForm({ ...form, q_min: v })} min={0} max={form.q_mode === 'random' ? form.q_count : form.q_selected.length || questions.length}
                     options={[{ value: 0, label: `0 (${t('admin.noMinimum')})` }, { value: 5, label: `5 ${t('admin.correct')}` }, { value: 8, label: `8 ${t('admin.correct')}` }]} />
                 </div>
 
@@ -446,13 +447,13 @@ const sortedSessions = [...sessions].sort((a, b) => {
 
                 {form.cw_mode === 'random' && (
                   <div style={{ maxWidth: '600px' }}>
-                    <SelectOrCustom label={t('admin.wordsToPick')} value={form.cw_count} onChange={v => setForm({ ...form, cw_count: v })} min={3} max={words.length}
+                    <SelectOrCustom t={t} label={t('admin.wordsToPick')} value={form.cw_count} onChange={v => setForm({ ...form, cw_count: v })} min={3} max={words.length}
                       options={getDynamicOptions([5, 8, 10].map(value => ({ value, label: `${value} ${t('admin.words')}` })), words.length)} />
                   </div>
                 )}
 
                 <div style={{ maxWidth: '600px' }}>
-                  <SelectOrCustom label={t('admin.minimumToPass')} value={form.cw_min} onChange={v => setForm({ ...form, cw_min: v })} min={0} max={form.cw_mode === 'random' ? form.cw_count : form.cw_selected.length || words.length}
+                  <SelectOrCustom t={t} label={t('admin.minimumToPass')} value={form.cw_min} onChange={v => setForm({ ...form, cw_min: v })} min={0} max={form.cw_mode === 'random' ? form.cw_count : form.cw_selected.length || words.length}
                     options={[{ value: 0, label: `0 (${t('admin.noMinimum')})` }, { value: 3, label: `3 ${t('admin.words')}` }, { value: 5, label: `5 ${t('admin.words')}` }]} />
                 </div>
 
@@ -477,6 +478,7 @@ const sortedSessions = [...sessions].sort((a, b) => {
 
                 <div style={s.gridRow}>
                   <SelectOrCustom
+                    t={t}
                     label={t('admin.gameTime')}
                     value={form.cp3_timer}
                     onChange={v => setForm({ ...form, cp3_timer: v })}
@@ -486,13 +488,14 @@ const sortedSessions = [...sessions].sort((a, b) => {
                   />
 
                   <SelectOrCustom
+                    t={t}
                     label={t('admin.targetScore')}
                     value={form.cp3_min}
                     onChange={v => setForm({ ...form, cp3_min: v })}
                     options={[
                       { value: 0, label: `0 (${t('admin.noMinimum')})` },
                       { value: 1000, label: `1000 ${t('admin.points')}` },
-                      { value: 2000, label: `2000 ${t('admin.points')} (${t('admin.fullMark') || 'Full Mark'})` },
+                      { value: 2000, label: `2000 ${t('admin.points')}` },
                       { value: 3000, label: `3000 ${t('admin.points')}` }
                     ]}
                     min={0}
@@ -504,6 +507,8 @@ const sortedSessions = [...sessions].sort((a, b) => {
                   <label style={s.label}>{t('admin.passwordToRevealCode')}</label>
                   <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                     <input
+                      name="session_reveal_password"
+                      autoComplete="new-password"
                       type={showRevealPass ? 'text' : 'password'}
                       style={{ ...s.input, paddingRight: '2.5rem' }}
                       value={form.reveal_password}
@@ -514,7 +519,7 @@ const sortedSessions = [...sessions].sort((a, b) => {
                         })
                       }
                       required={!editId}
-                      placeholder={editId ? "Leave blank to keep existing password" : "Set password for this session code"}
+                      placeholder={editId ? t('admin.keepExistingPassword') : t('admin.setSessionPassword')}
                     />
                     <button
                       type="button"
@@ -559,12 +564,11 @@ const sortedSessions = [...sessions].sort((a, b) => {
           <input
             style={{ ...s.input, flex: 1, minWidth: '220px' }}
             type="text"
-            placeholder="Search school, class, or session name..."
+            placeholder={t('admin.searchSchoolClassSession')}
+            name="session_search"
+            autoComplete="off"
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              fetchSessions(e.target.value, statusFilter);
-            }}
+            onChange={(e) => setSearch(e.target.value)}
           />
 
           <select
@@ -575,165 +579,165 @@ const sortedSessions = [...sessions].sort((a, b) => {
               fetchSessions(search, e.target.value);
             }}
           >
-          <option value="all">All Sessions</option>
-          <option value="active">Active Only</option>
-          <option value="inactive">Inactive Only</option>
+            <option value="all">{t('admin.allSessions')}</option>
+            <option value="active">{t('admin.activeOnly')}</option>
+            <option value="inactive">{t('admin.inactiveOnly')}</option>
           </select>
           <select
             style={{ ...s.input, width: '180px' }}
             value={sortFilter}
             onChange={(e) => {
-            setSortFilter(e.target.value);
-            fetchSessions(search, statusFilter, e.target.value);
+              setSortFilter(e.target.value);
+              fetchSessions(search, statusFilter, e.target.value);
             }}
           >
-          <option value="newest">Newest to Oldest</option>
-          <option value="oldest">Oldest to Newest</option>
-          <option value="az">Ascending</option>
-          <option value="za">Descending</option>
-        </select>
+            <option value="newest">{t('admin.newestToOldest')}</option>
+            <option value="oldest">{t('admin.oldestToNewest')}</option>
+            <option value="az">{t('admin.ascending')}</option>
+            <option value="za">{t('admin.descending')}</option>
+          </select>
         </div>
         {fetchError && (
           <div style={{ background: '#fff1f2', color: '#e11d48', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span>{fetchError}</span>
-            <button onClick={fetchSessions} style={{ background: '#e11d48', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>Retry</button>
+            <button onClick={fetchSessions} style={{ background: '#e11d48', color: '#fff', border: 'none', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer', fontSize: '0.85rem' }}>{t('admin.retry')}</button>
           </div>
         )}
         <div style={s.sessionList}>
 
           {Object.entries(groupedSessions)
             .sort(([schoolA], [schoolB]) => {
-            if (sortFilter === 'az') return schoolA.localeCompare(schoolB);
-            if (sortFilter === 'za') return schoolB.localeCompare(schoolA);
-            return 0;
-          })
-          .map(([schoolName, classGroups]) => (
-            <div key={schoolName}>
-              <h2 style={s.schoolTitle}>🏫 {schoolName}</h2>
+              if (sortFilter === 'az') return schoolA.localeCompare(schoolB);
+              if (sortFilter === 'za') return schoolB.localeCompare(schoolA);
+              return 0;
+            })
+            .map(([schoolName, classGroups]) => (
+              <div key={schoolName}>
+                <h2 style={s.schoolTitle}>🏫 {schoolName}</h2>
 
-              {Object.entries(classGroups)
-                .sort(([classA], [classB]) => {
-                if (sortFilter === 'az') return classA.localeCompare(classB);
-                if (sortFilter === 'za') return classB.localeCompare(classA);
-                return 0;
-              })
-              .map(([className, classSessions]) => (
-                <div key={className} style={s.classGroup}>
-                  <h3 style={s.classTitle}>📚 {className}</h3>
+                {Object.entries(classGroups)
+                  .sort(([classA], [classB]) => {
+                    if (sortFilter === 'az') return classA.localeCompare(classB);
+                    if (sortFilter === 'za') return classB.localeCompare(classA);
+                    return 0;
+                  })
+                  .map(([className, classSessions]) => (
+                    <div key={className} style={s.classGroup}>
+                      <h3 style={s.classTitle}>📚 {className}</h3>
 
-                  {classSessions.map(session => (
-                    <div key={session.id} style={s.sessionCard}>
-                      <div style={s.sessionTop}>
-                        <div>
-                          <h3 style={s.sessionName}>
-                            {session.session_name}
-                          </h3>
-                        </div>
-
-                        <span
-                          style={
-                            session.is_active
-                              ? s.badgeActive
-                              : s.badgeInactive
-                          }
-                        >
-                          {session.is_active
-                            ? `🟢 ${t('admin.active')}`
-                            : `🔴 ${t('admin.inactive')}`}
-                        </span>
-                      </div>
-
-                      <div style={s.codeWrap}>
-                        <p style={s.codeLabel}>
-                          {t('admin.studentGameCode')}
-                        </p>
-
-                        {admin?.role === 'main_admin' || admin?.role === 'admin' ? (
-                          <>
-                            <div style={s.codeBox}>
-                              {session.unique_token.split('').map((digit, i) => (
-                                <div key={i} style={s.codeDigit}>{digit}</div>
-                              ))}
+                      {classSessions.map(session => (
+                        <div key={session.id} style={s.sessionCard}>
+                          <div style={s.sessionTop}>
+                            <div>
+                              <h3 style={s.sessionName}>
+                                {session.session_name}
+                              </h3>
                             </div>
 
-                            <div style={{ fontSize: '0.85rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                              <span>{t('admin.password')}:</span>
-                              <strong>
-                                {visibleSessionPasswords[session.id]
-                                  ? (session.reveal_password_plain || '-')
-                                  : (session.reveal_password_plain ? '*'.repeat(session.reveal_password_plain.length) : '-')}
-                              </strong>
-                              {session.reveal_password_plain && (
-                                <button
-                                  type="button"
-                                  onClick={() => setVisibleSessionPasswords(prev => ({ ...prev, [session.id]: !prev[session.id] }))}
-                                  style={s.iconBtn}
-                                  title={visibleSessionPasswords[session.id] ? 'Hide password' : 'Show password'}
-                                >
-                                  {visibleSessionPasswords[session.id] ? '🙈' : '👁️'}
-                                </button>
+                            <span
+                              style={
+                                session.is_active
+                                  ? s.badgeActive
+                                  : s.badgeInactive
+                              }
+                            >
+                              {session.is_active
+                                ? `🟢 ${t('admin.active')}`
+                                : `🔴 ${t('admin.inactive')}`}
+                            </span>
+                          </div>
+
+                          <div style={s.codeWrap}>
+                            <p style={s.codeLabel}>
+                              {t('admin.studentGameCode')}
+                            </p>
+
+                            {admin?.role === 'main_admin' || admin?.role === 'admin' ? (
+                              <>
+                                <div style={s.codeBox}>
+                                  {session.unique_token.split('').map((digit, i) => (
+                                    <div key={i} style={s.codeDigit}>{digit}</div>
+                                  ))}
+                                </div>
+
+                                <div style={{ fontSize: '0.85rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                                  <span>{t('admin.password')}:</span>
+                                  <strong>
+                                    {visibleSessionPasswords[session.id]
+                                      ? (session.reveal_password_plain || '-')
+                                      : (session.reveal_password_plain ? '*'.repeat(session.reveal_password_plain.length) : '-')}
+                                  </strong>
+                                  {session.reveal_password_plain && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setVisibleSessionPasswords(prev => ({ ...prev, [session.id]: !prev[session.id] }))}
+                                      style={s.iconBtn}
+                                      title={visibleSessionPasswords[session.id] ? 'Hide password' : 'Show password'}
+                                    >
+                                      {visibleSessionPasswords[session.id] ? '🙈' : '👁️'}
+                                    </button>
+                                  )}
+                                </div>
+                              </>
+                            ) : revealedCodes[session.id] ? (
+                              <div style={s.codeBox}>
+                                {revealedCodes[session.id].split('').map((digit, i) => (
+                                  <div key={i} style={s.codeDigit}>{digit}</div>
+                                ))}
+                              </div>
+                            ) : (
+                              <button style={s.btnCopy} onClick={() => setPasswordModal(session)}>
+                                🔒 {t('admin.revealCode')}
+                              </button>
+                            )}
+
+                            <div style={s.sessionActions}>
+                              {admin?.role === 'main_admin' && (
+                                <>
+                                  <button
+                                    style={s.btnEdit}
+                                    onClick={() => handleEdit(session)}
+                                  >
+                                    ✏️ {t('admin.edit')}
+                                  </button>
+
+                                  <button
+                                    style={
+                                      session.is_active
+                                        ? s.btnDeactivate
+                                        : s.btnActivate
+                                    }
+                                    onClick={() =>
+                                      handleToggle(
+                                        session.id,
+                                        session.is_active
+                                      )
+                                    }
+                                  >
+                                    {session.is_active
+                                      ? t('admin.deactivate')
+                                      : t('admin.activate')}
+                                  </button>
+
+                                  <button
+                                    style={s.btnDelete}
+                                    onClick={() =>
+                                      handleDelete(session.id)
+                                    }
+                                  >
+                                    🗑️ {t('admin.delete')}
+                                  </button>
+                                </>
                               )}
                             </div>
-                          </>
-                        ) : revealedCodes[session.id] ? (
-                          <div style={s.codeBox}>
-                            {revealedCodes[session.id].split('').map((digit, i) => (
-                              <div key={i} style={s.codeDigit}>{digit}</div>
-                            ))}
+
                           </div>
-                        ) : (
-                          <button style={s.btnCopy} onClick={() => setPasswordModal(session)}>
-                            🔒 {t('admin.revealCode')}
-                          </button>
-                        )}
-
-                        <div style={s.sessionActions}>
-                          {admin?.role === 'main_admin' && (
-                            <>
-                              <button
-                                style={s.btnEdit}
-                                onClick={() => handleEdit(session)}
-                              >
-                                ✏️ {t('admin.edit')}
-                              </button>
-
-                              <button
-                                style={
-                                  session.is_active
-                                    ? s.btnDeactivate
-                                    : s.btnActivate
-                                }
-                                onClick={() =>
-                                  handleToggle(
-                                    session.id,
-                                    session.is_active
-                                  )
-                                }
-                              >
-                                {session.is_active
-                                  ? t('admin.deactivate')
-                                  : t('admin.activate')}
-                              </button>
-
-                              <button
-                                style={s.btnDelete}
-                                onClick={() =>
-                                  handleDelete(session.id)
-                                }
-                              >
-                                🗑️ {t('admin.delete')}
-                              </button>
-                            </>
-                          )}
                         </div>
-
-                      </div>
+                      ))}
                     </div>
                   ))}
-                </div>
-              ))}
-            </div>
-          ))}
+              </div>
+            ))}
 
           {sessions.length === 0 && <p style={s.muted}>{t('admin.noSessionsYet')}</p>}
         </div>
@@ -761,8 +765,10 @@ const sortedSessions = [...sessions].sort((a, b) => {
 
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <input
+                name="modal_reveal_password"
+                autoComplete="new-password"
                 type={showModalPass ? 'text' : 'password'}
-                style={{ ...s.input, paddingRight: '2.6rem', ...(revealError ? { borderColor: '#e11d48', background: '#fff1f2' } : {}) }}
+                style={{ ...s.input, paddingRight: '2.6rem' }}
                 placeholder={t('admin.enterPassword')}
                 value={revealPassword}
                 onChange={(e) => { setRevealPassword(e.target.value); setRevealError(''); }}
@@ -824,7 +830,7 @@ const sortedSessions = [...sessions].sort((a, b) => {
                   setRevealError('');
                 }}
               >
-                Cancel
+                {t('admin.cancel')}
               </button>
             </div>
           </div>

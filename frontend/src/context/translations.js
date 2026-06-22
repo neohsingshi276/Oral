@@ -1,7 +1,8 @@
 const bm = {
   // Punam Added Here Also
   compare: {
-    legend: '🟢 Warna hijau menunjukkan prestasi lebih baik · ▲ = menang dalam kategori ini · Percubaan: semakin sedikit semakin baik',
+    // 19/6 Legend BM
+    legend: '🟢 Lebih Baik   ▲ Mendahului Kategori   🔁 Percubaan Rendah = Lebih Baik'
   },
   // Punam Added Until Here
   nav: {
@@ -137,7 +138,7 @@ const bm = {
     learning: 'Pergi ke Pembelajaran',
   },
   game: {
-     arrowKeys: 'Anak Panah',
+    arrowKeys: 'Anak Panah',
     toMove: 'untuk bergerak',
     seconds: 'saat',
     ofFun: 'keseronokan!',
@@ -500,13 +501,36 @@ const bm = {
     avgScore: 'Purata Markah',
     allCp: 'Semua CP',
     avgAttempts: 'purata percubaan',
+    // 19/6 Admin BM
+    fullName: 'Nama Penuh',
+    // Find this and make it comment
+    // searchNickname: '🔍 Cari nama panggilan...',
+    searchNickname: '🔍 Cari nama penuh...',
+    averageAttemptsLower: 'purata percubaan',
+    searchSchoolClassSession: 'Cari sekolah, kelas, atau nama sesi...',
+    allSessions: 'Semua Sesi',
+    activeOnly: 'Aktif Sahaja',
+    inactiveOnly: 'Tidak Aktif Sahaja',
+    newestToOldest: 'Terbaharu ke Tertua',
+    oldestToNewest: 'Tertua ke Terbaharu',
+    ascending: 'Menaik',
+    descending: 'Menurun',
+    retry: 'Cuba Semula',
+    cancel: 'Batal',
+    schoolPlaceholder: 'cth. SK Taman Mutiara',
+    classPlaceholder: 'cth. Kelas 5A',
+    sessionPlaceholder: 'cth. Sesi Januari 2026',
+    keepExistingPassword: 'Kosongkan untuk kekalkan kata laluan sedia ada',
+    setSessionPassword: 'Tetapkan kata laluan untuk kod sesi ini',
+    deleteSessionConfirm: 'Padam sesi ini?',
   },
 };
 
 const bi = {
   // Punam Added Here Also
   compare: {
-    legend: '🟢 Green = better    · ▲ = winner in this category    · Attempts: less = better',
+    // 19/6 Legend BI
+    legend: '🟢 Better Performance   ▲ Leading This Category   🔁 Fewer Attempts = Better'
   },
   // Punam Added Until Here
   nav: {
@@ -663,7 +687,7 @@ const bi = {
     pressEtoEnter: 'Press E to enter',
     loadingVideo: 'Loading video... 🎬',
     stop: 'Stop',
-     arrowKeys: 'Arrow Keys',
+    arrowKeys: 'Arrow Keys',
     toMove: 'to move',
     seconds: 'seconds',
     ofFun: 'of fun!',
@@ -889,6 +913,28 @@ const bi = {
     pickSpecificQuestions: 'Pick specific questions',
     selectedQuestions: 'You have selected',
     questions: 'questions',
+    // 19/6 Admin BI
+    fullName: 'Full Name',
+    // Find this and make it comment
+    // searchNickname: '🔍 Search nickname...',
+    searchNickname: '🔍 Search full name...',
+    averageAttemptsLower: 'average attempts',
+    searchSchoolClassSession: 'Search school, class, or session name...',
+    allSessions: 'All Sessions',
+    activeOnly: 'Active Only',
+    inactiveOnly: 'Inactive Only',
+    newestToOldest: 'Newest to Oldest',
+    oldestToNewest: 'Oldest to Newest',
+    ascending: 'Ascending',
+    descending: 'Descending',
+    retry: 'Retry',
+    cancel: 'Cancel',
+    schoolPlaceholder: 'e.g. SK Taman Mutiara',
+    classPlaceholder: 'e.g. Class 5A',
+    sessionPlaceholder: 'e.g. January 2026 Session',
+    keepExistingPassword: 'Leave blank to keep existing password',
+    setSessionPassword: 'Set password for this session code',
+    deleteSessionConfirm: 'Delete this session?',
     step3Crossword: 'Step 3: Checkpoint 2 (Crossword)',
     chooseWords: 'How do you want to choose words?',
     wordsToPick: 'Number of words in crossword',
@@ -1122,6 +1168,14 @@ export const exactTextTranslations = {
   'Tetapkan Semula Kata Laluan': 'Reset Password',
   'Masukkan kata laluan baru anda di bawah.': 'Enter your new password below.',
   'Kata Laluan Baru': 'New Password',
+  // 19/6 All
+  'Maks': 'Max',
+  // Find this and make it comment
+  // 'Nama Samaran': 'Full Name',
+  // 'Nama Panggilan': 'Full Name',
+  'Reveal password must be at least 4 characters': 'Kata laluan dedah kod mesti sekurang-kurangnya 4 aksara',
+  '(BI/BM auto-diterjemah jika kosong)': '(BI/BM) auto-translated if empty)',
+  'Menerjemah & menyimpan...': 'Translating & saving...',
   'Sahkan Kata Laluan Baru': 'Confirm New Password',
   'Ulang kata laluan baru': 'Repeat new password',
   'Kata laluan tidak sepadan': 'Passwords do not match',

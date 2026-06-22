@@ -31,10 +31,20 @@ const getActivityLogs = async (req, res) => {
       FROM admin_activity_logs al
       JOIN admins a ON al.admin_id = a.id
       ORDER BY al.created_at DESC
-      LIMIT 200
     `);
-    res.json({ logs: rows });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+
+    const [[countRow]] = await db.query(`
+      SELECT COUNT(*) AS total_logs
+      FROM admin_activity_logs
+    `);
+
+    res.json({
+      logs: rows,
+      totalLogs: countRow.total_logs
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
 // Get admin session monitoring (Main Admin — see last session per admin)

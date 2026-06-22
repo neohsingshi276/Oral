@@ -118,14 +118,10 @@ const ManageVideos = () => {
       };
       if (editing) {
         await api.put(`/videos/${editing}`, payload);
-        setMsg(form.source_language === 'bi'
-          ? '✅ Video Updated! (BM auto-translated if empty)'
-          : '✅ Video Dikemaskini! (BI auto-diterjemah jika kosong)');
+        setMsg(`✅ ${tx('Video Dikemaskini!')} ${tx('(BI/BM auto-diterjemah jika kosong)')}`);
       } else {
         await api.post('/videos', payload);
-        setMsg(form.source_language === 'bi'
-          ? '✅ Video Added! (BM auto-translated if empty)'
-          : '✅ Video Ditambah! (BI auto-diterjemah jika kosong)');
+        setMsg(`✅ ${tx('Video Ditambah!')} ${tx('(BI/BM auto-diterjemah jika kosong)')}`);
       }
       setForm(emptyForm);
       setEditing(null);
@@ -148,7 +144,12 @@ const ManageVideos = () => {
       description_translation: video.description_bi || '',
       title_bi: video.title_bi || '', description_bi: video.description_bi || '',
     });
-    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 100);
   };
 
   const handleDelete = async (id) => {
@@ -159,7 +160,11 @@ const ManageVideos = () => {
   return (
     <div>
       <div ref={formRef} style={s.card}>
-        <h2 style={s.cardTitle}>{editing ? `✏️ ${tx('Kemaskini Video')}` : `➕ ${tx('Tambah Video')}`}</h2>
+        <h2 style={s.cardTitle}>
+          {editing
+            ? `✏️ ${tx('Kemaskini Video')}`
+            : `➕ ${tx('Tambah Video')}`}
+        </h2>
         {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
         <form onSubmit={handleSubmit}>
 

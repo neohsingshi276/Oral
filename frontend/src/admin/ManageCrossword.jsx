@@ -18,8 +18,8 @@ const ManageCrossword = () => {
   const [msg, setMsg] = useState('');
   const [search, setSearch] = useState('');
   const [sortFilter, setSortFilter] = useState('latest');
-  const formRef = useRef();
   const [orderFilter, setOrderFilter] = useState('desc');
+  const formRef = useRef(null);
 
   const clueLang = {
     bm: {
@@ -103,12 +103,24 @@ const ManageCrossword = () => {
       source_language: 'bm',
       manual_translation: Boolean(w.clue_bi)
     });
-    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 100);
   };
 
   const handleDelete = async (id) => {
     if (!confirm(t('admin.deleteWord'))) return;
+
     await api.delete(`/crossword/admin/${id}`);
+
+    if (editing === id) {
+      setEditing(null);
+      setForm(emptyForm);
+    }
+
     fetchWords();
   };
 

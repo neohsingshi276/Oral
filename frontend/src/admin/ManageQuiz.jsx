@@ -68,7 +68,7 @@ const ManageQuiz = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [orderFilter, setOrderFilter] = useState('desc');
   const fileRef = useRef();
-  const formRef = useRef();
+  const formRef = useRef(null);
 
   const quizLang = {
     bm: {
@@ -145,18 +145,17 @@ const ManageQuiz = () => {
   };
 
   const handleSourceLanguageChange = (source_language) => {
-    const isTrueFalse = form.question_type === 'true_false';
     setForm({
       ...form,
       source_language,
-      question: '',
-      question_translation: '',
-      question_bi: '',
-      options: isTrueFalse ? makeTrueFalseOptions(source_language) : form.options.map(() => ''),
-      options_translation: isTrueFalse ? makeTrueFalseOptions(source_language === 'bm' ? 'bi' : 'bm') : form.options_translation.map(() => ''),
-      match_pairs: form.match_pairs.map(() => ({ left: '', right: '' })),
-      match_pairs_translation: form.match_pairs_translation.map(() => ({ left: '', right: '' })),
-      correct_answer: []
+      question: form.question,
+      question_translation: form.question_translation,
+      question_bi: form.question_bi,
+      options: form.options,
+      options_translation: form.options_translation,
+      match_pairs: form.match_pairs,
+      match_pairs_translation: form.match_pairs_translation,
+      correct_answer: form.correct_answer,
     });
   };
 
@@ -243,7 +242,7 @@ const ManageQuiz = () => {
     try {
       const fd = new FormData();
       fd.append('question', form.question);
-      fd.append('source_language', form.source_language);
+      fd.append('source_language', editing ? 'bm' : form.source_language);
       if (form.manual_translation && form.question_translation?.trim()) {
         fd.append('question_translation', form.question_translation.trim());
       } else if (form.question_bi?.trim()) {
@@ -285,7 +284,7 @@ const ManageQuiz = () => {
     if (q.question_type === 'match') setForm({
       ...emptyForm,
       source_language: 'bm',
-      manual_translation: Boolean(q.question_bi),
+      manual_translation: false,
       question: q.question,
       question_translation: q.question_bi || '',
       question_bi: q.question_bi || '',
@@ -314,7 +313,13 @@ const ManageQuiz = () => {
     });
     setImagePreview(q.image_url || null);
     setTab('questions');
-    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 100);
   };
 
   const handleDelete = async (id) => { if (!confirm(tx('Padam soalan ini?'))) return; await api.delete(`/quiz/admin/questions/${id}`); fetchQuestions(); };
@@ -340,7 +345,7 @@ const ManageQuiz = () => {
       {tab === 'questions' && (
         <>
           {/* Borang */}
-          <div ref={formRef} style={s.card}>
+          <div style={s.card} ref={formRef}>
             <h2 style={s.cardTitle}>{editing ? '✏️ Kemaskini Soalan' : '➕ Tambah Soalan Baharu'}</h2>
             <form onSubmit={handleSubmit}>
               {/* Pemilih jenis soalan */}
@@ -359,10 +364,11 @@ const ManageQuiz = () => {
                     <label style={s.label} data-no-translate="true">
                       {localText.inputLabel}
                     </label>
-                    <select style={s.compactSelect} value={form.source_language} onChange={e => handleSourceLanguageChange(e.target.value)}>
+                    <select style={s.compactSelect} value={form.source_language} onChange={e => handleSourceLanguageChange(e.target.value)} disabled={Boolean(editing)}>
                       <option value="bm">Bahasa Melayu</option>
                       <option value="bi">English</option>
                     </select>
+                    {editing && <p style={s.translationHint}>Bahasa input dikunci semasa edit untuk elak data tertukar.</p>}
                   </div>
                   <label style={s.checkLabel}>
                     <input type="checkbox" checked={form.manual_translation} onChange={e => setForm({ ...form, manual_translation: e.target.checked })} />
@@ -376,8 +382,10 @@ const ManageQuiz = () => {
 
               {/* Teks soalan */}
               <div style={s.field}>
-                <label style={s.label}>{tx('Soalan (BM)')}</label>
-                <textarea style={{ ...s.input, height: '80px', resize: 'vertical' }} value={form.question} onChange={e => setForm({ ...form, question: e.target.value })} required placeholder={form.source_language === 'bm' ? 'Tulis soalan di sini...' : 'Write the question here...'} maxLength={500} />
+                <label style={s.label} data-no-translate="true">
+                  {form.source_language === 'bm' ? 'Soalan (BM)' : 'Question (English)'}
+                </label>
+                <textarea style={{ ...s.input, height: '80px', resize: 'vertical' }} value={form.question} onChange={e => setForm({ ...form, question: e.target.value })} required data-no-translate="true" placeholder={form.source_language === 'bm' ? 'Tulis soalan di sini...' : 'Write the question here...'} maxLength={500} />
                 <p style={{ color: form.question.length > 450 ? '#e11d48' : '#94a3b8', fontSize: '0.75rem', margin: '0.2rem 0 0', textAlign: 'right' }}>{form.question.length}/500</p>
               </div>
               {form.manual_translation && (
@@ -434,9 +442,10 @@ const ManageQuiz = () => {
                         <button type="button" style={{ ...s.correctBtn, ...(form.correct_answer.includes(idx) ? s.correctBtnActive : {}) }} onClick={() => toggleCorrect(idx)}>
                           {form.correct_answer.includes(idx) ? '✓' : String.fromCharCode(65 + idx)}
                         </button>
-                        <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={form.question_type === 'true_false' ? tx(opt) : opt} onChange={e => handleOptionChange(idx, e.target.value)} placeholder={`Pilihan ${String.fromCharCode(65 + idx)}`} required={form.question_type !== 'true_false'} disabled={form.question_type === 'true_false'} maxLength={200} />
+                        <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={opt} onChange={e => handleOptionChange(idx, e.target.value)} data-no-translate="true"
+                          placeholder={form.source_language === 'bm' ? `Pilihan ${String.fromCharCode(65 + idx)}` : `Option ${String.fromCharCode(65 + idx)}`} required={form.question_type !== 'true_false'} disabled={form.question_type === 'true_false'} maxLength={200} />
                         {form.manual_translation && (
-                          <input style={{ ...s.input, flex: 1, marginBottom: 0, borderColor: '#bfdbfe' }} value={form.options_translation[idx] || ''} onChange={e => handleOptionTranslationChange(idx, e.target.value)} placeholder={form.source_language === 'bm' ? `English ${String.fromCharCode(65 + idx)}` : `BM ${String.fromCharCode(65 + idx)}`} disabled={form.question_type === 'true_false'} maxLength={200} />
+                          <input style={{ ...s.input, flex: 1, marginBottom: 0, borderColor: '#bfdbfe' }} value={form.options_translation[idx] || ''} onChange={e => handleOptionTranslationChange(idx, e.target.value)} data-no-translate="true" placeholder={form.source_language === 'bm' ? `Option ${String.fromCharCode(65 + idx)}` : `Pilihan ${String.fromCharCode(65 + idx)}`} disabled={form.question_type === 'true_false'} maxLength={200} />
                         )}
                         {form.question_type !== 'true_false' && (
                           <button type="button" style={s.removeOptBtn} onClick={() => removeOption(idx)}>✕</button>
@@ -453,16 +462,24 @@ const ManageQuiz = () => {
               {/* Pasangan padanan */}
               {form.question_type === 'match' && (
                 <div style={s.field}>
-                  <label style={s.label}>Pasangan Padanan <span style={s.labelHint}>({tx('kiri')} ↔ {tx('kanan')})</span></label>
+                  <label style={s.label} data-no-translate="true">
+                    {form.source_language === 'bm' ? 'Pasangan Padanan' : 'Matching Pairs'}
+                    <span style={s.labelHint}>
+                      ({form.source_language === 'bm' ? 'kiri' : 'left'} ↔ {form.source_language === 'bm' ? 'kanan' : 'right'})
+                    </span>
+                  </label>
                   {form.match_pairs.map((pair, idx) => (
                     <div key={idx} style={s.matchPairRow}>
-                      <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={pair.left} onChange={e => handleMatchChange(idx, 'left', e.target.value)} placeholder={tx(`Kiri ${idx + 1}`)} required maxLength={100} />
+                      <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={pair.left} onChange={e => handleMatchChange(idx, 'left', e.target.value)} data-no-translate="true"
+                        placeholder={form.source_language === 'bm' ? `Kiri ${idx + 1}` : `Left ${idx + 1}`} required maxLength={100} />
                       <span style={s.matchArrow}>↔</span>
-                      <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={pair.right} onChange={e => handleMatchChange(idx, 'right', e.target.value)} placeholder={tx(`Kanan ${idx + 1}`)} required maxLength={100} />
+                      <input style={{ ...s.input, flex: 1, marginBottom: 0 }} value={pair.right} onChange={e => handleMatchChange(idx, 'right', e.target.value)} data-no-translate="true" placeholder={form.source_language === 'bm' ? `Kanan ${idx + 1}` : `Right ${idx + 1}`} required maxLength={100} />
                       <button type="button" style={s.removeOptBtn} onClick={() => removeMatchPair(idx)}>✕</button>
                     </div>
                   ))}
-                  <button type="button" style={s.addOptBtn} onClick={addMatchPair}>+ Tambah Pasangan</button>
+                  <button type="button" style={s.addOptBtn} data-no-translate="true" onClick={addMatchPair}>
+                    {form.source_language === 'bm' ? '+ Tambah Pasangan' : '+ Add Pair'}
+                  </button>
                 </div>
               )}
 
@@ -556,9 +573,22 @@ const ManageQuiz = () => {
                       )}
                       {q.question_type === 'match' && (
                         <div style={s.qOpts}>
-                          {opts.map((pair, idx) => (
-                            <span key={idx} style={s.qOptCorrect} data-no-translate="true">{pair.left || pair} ↔ {pair.right || pair}</span>
-                          ))}
+                          {parseMaybeJsonArray(q.options).map((pair, idx) => {
+                            const biPairs = parseMaybeJsonArray(q.options_bi);
+                            const biPair = biPairs[idx];
+
+                            return (
+                              <span key={idx} style={s.qOptCorrect} data-no-translate="true">
+                                <strong>BM:</strong> {pair.left || pair} ↔ {pair.right || pair}
+                                {biPair && (
+                                  <>
+                                    <br />
+                                    <strong>BI:</strong> {biPair.left || biPair} ↔ {biPair.right || biPair}
+                                  </>
+                                )}
+                              </span>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -603,7 +633,9 @@ const ManageQuiz = () => {
             <div style={s.field}>
               <label style={s.label}>Bilangan Soalan</label>
               <input style={s.input} type="number" min="1" max={questions.length || 50} step="1" value={qSettings.question_count} onChange={e => setQSettings({ ...qSettings, question_count: parseInt(e.target.value) })} />
-              <p style={{ color: '#94a3b8', fontSize: '0.78rem', margin: '0.25rem 0 0' }}><span>Maks:</span> {questions.length} <span>soalan tersedia</span></p>
+              <p style={{ color: '#94a3b8', fontSize: '0.78rem', margin: '0.25rem 0 0' }}>
+                <span>{tx('Maks')}:</span> {questions.length} <span>{tx('soalan tersedia')}</span>
+              </p>
             </div>
           </div>
           <button style={s.btnPrimary} onClick={saveSettings}>💾 Simpan Tetapan</button>

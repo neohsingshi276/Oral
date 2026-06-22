@@ -90,9 +90,7 @@ const Analytics = ({ setActive }) => {
     }
   };
 
-  const buildReportRows = () => [...displayPlayers]
-    .sort((a, b) => (b.total_mark || 0) - (a.total_mark || 0) || (a.display_nickname || a.nickname || '').localeCompare(b.display_nickname || b.nickname || ''))
-    .map((p, index) => ({
+  const buildReportRows = () => displayPlayers.map((p, index) => ({
     rank: index + 1,
     school: p.school_name || '-',
     className: p.class_name || '-',
@@ -147,7 +145,7 @@ const Analytics = ({ setActive }) => {
       return acc;
     }, {});
     const sections = Object.entries(grouped).map(([group, groupRows]) => {
-      const completion = groupRows.length ? Math.round((groupRows.filter(r => r.completed === 'Completed').length / groupRows.length) * 100) : 0;
+      const completion = groupRows.length ? Math.round((groupRows.filter(r => r.completed === t('admin.completed')).length / groupRows.length) * 100) : 0;
       const avg = groupRows.length ? Math.round(groupRows.reduce((sum, r) => sum + r.total, 0) / groupRows.length) : 0;
       const tableRows = groupRows.map(row => `
         <tr><td>${row.rank}</td><td>${escapeHtml(row.nickname)}</td><td>${row.cp1}</td><td>${row.cp2}</td><td>${row.cp3}</td><td>${row.total}</td><td>${row.completed}</td></tr>
@@ -489,7 +487,7 @@ const Analytics = ({ setActive }) => {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="name" fontSize={11} />
               <YAxis />
-              <Tooltip formatter={(val) => [`${val} ${t('admin.avgAttempts')}`]} />
+              <Tooltip formatter={(val) => [`${val} ${t('admin.averageAttemptsLower')}`]} />
               <Bar dataKey="avgAttempts" name="Purata Percubaan" radius={[6, 6, 0, 0]}>
                 {attemptData.map((entry, i) => (
                   <Cell key={i} fill={parseFloat(entry.avgAttempts) > 2 ? '#e11d48' : parseFloat(entry.avgAttempts) > 1 ? '#f59e0b' : '#16a34a'} />
@@ -620,7 +618,7 @@ const Analytics = ({ setActive }) => {
               <table style={s.table}>
                 <thead><tr style={s.thead}>
                   <th style={s.th}>Kedudukan</th>
-                  <th style={s.th}>{t('admin.fullName')}</th>
+                  <th style={s.th}>Nama Penuh</th>
                   <th style={s.th}>Sesi</th>
                   <th style={s.th}>CP1 Kuiz</th>
                   <th style={s.th}>CP2 Kata Silang</th>
@@ -677,7 +675,7 @@ const Analytics = ({ setActive }) => {
               <table style={s.table}>
                 <thead><tr style={s.thead}>
                   <th style={s.th}>Kedudukan</th>
-                  <th style={s.th}>{t('admin.fullName')}</th>
+                  <th style={s.th}>Nama Panggilan</th>
                   <th style={s.th}>CP1 Kuiz</th>
                   <th style={s.th}>CP2 Kata Silang</th>
                   <th style={s.th}>CP3 Permainan Makanan</th>

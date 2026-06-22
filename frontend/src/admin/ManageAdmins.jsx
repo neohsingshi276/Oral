@@ -36,16 +36,13 @@ const ManageAdmins = ({ currentAdmin }) => {
       setInviteRole('admin');
       fetchAdmins();
     } catch (err) {
-      const errMsg = err.response?.data?.error || '';
-      let displayMsg;
-      if (errMsg === 'This email is already registered as an admin') {
-        displayMsg = language === 'bi'
-          ? 'This email is already registered as an admin'
-          : 'E-mel ini sudah berdaftar sebagai pentadbir';
-      } else {
-        displayMsg = errMsg || (language === 'bi' ? 'Failed to send invitation' : 'Gagal menghantar jemputan');
-      }
-      setMsg('❌ ' + displayMsg);
+      setMsg(
+        '❌ ' +
+        (err.response?.data?.error ||
+          (language === 'bi'
+            ? 'Failed to send invitation'
+            : 'Gagal menghantar jemputan'))
+      );
     }
     finally { setLoading(false); setTimeout(() => setMsg(''), 4000); }
   };
@@ -138,7 +135,10 @@ const ManageAdmins = ({ currentAdmin }) => {
             </select>
           </div>
           <button style={s.btnPrimary} onClick={handleInvite} disabled={loading}>
-            {loading ? (language === 'bi' ? 'Sending...' : 'Menghantar...') : '📧 Hantar Jemputan'}
+            {loading
+              ? (language === 'bi' ? 'Sending...' : 'Menghantar...')
+              : (language === 'bi' ? '📧 Send Invitation' : '📧 Hantar Jemputan')
+            }
           </button>
         </div>
       </div>
@@ -160,7 +160,9 @@ const ManageAdmins = ({ currentAdmin }) => {
                 <span style={s.pendingBadge}>⏳ Tertangguh</span>
                 <button style={s.btnResend} onClick={() => handleResend(invite.id)}>📧 Hantar Semula</button>
                 {['main_admin', 'admin'].includes(currentAdmin?.role) && (
-                  <button style={s.btnCancel} onClick={() => handleCancel(invite.id)}>{language === 'bi' ? 'Cancel' : 'Batal'}</button>
+                  <button style={s.btnCancel} onClick={() => handleCancel(invite.id)}>
+                    {language === 'bi' ? '✕ Cancel' : '✕ Batal'}
+                  </button>
                 )}
               </div>
             ))}
