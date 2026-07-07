@@ -76,8 +76,16 @@ export const CHECKPOINTS = [
   { id: 3, x: 2864, y: 800, radius: 60, color: '#E85D04', label: 'Checkpoint 3' },
 ];
 
+// Video IDs keyed by language ('bm' = Bahasa Melayu, 'bi' = Bahasa Inggeris)
 export const CHECKPOINT_VIDEO_IDS = {
-  1: 'lzBabM39SUE',
-  2: 'ZuysfO_GP9M',
-  3: 'O6jGPTtBUMU',
+  bm: {
+    1: 'lzBabM39SUE',
+    2: 'ZuysfO_GP9M',
+    3: 'O6jGPTtBUMU',
+  },
+  bi: {
+    1: 'phXLxdkYmfU',
+    2: 'eQ9drrprp6s',
+    3: 'cZo2-fxh89w',
+  },
 };

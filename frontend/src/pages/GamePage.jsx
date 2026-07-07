@@ -128,7 +128,7 @@ const TouchButton = ({ children, label, onChange, style }) => {
 };
 
 const GamePage = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { token } = useParams();
   const navigate = useNavigate();
   const [player, setPlayer] = useState(null);
@@ -197,58 +197,58 @@ const GamePage = () => {
   // and crash the entire page. Now we redirect cleanly instead.
   useEffect(() => {
     const init = async () => {
-    const saved = localStorage.getItem('player');
-    if (!saved) {
-      navigate(`/join/${token}`);
-      return;
-    }
-
-    let p;
-    try {
-      p = JSON.parse(saved);
-    } catch {
-      localStorage.removeItem('player');
-      navigate(`/join/${token}`);
-      return;
-    }
-
-    // Ensure the parsed object has the required fields
-    if (!p || !p.id || !p.session_id || !p.nickname) {
-      localStorage.removeItem('player');
-      navigate(`/join/${token}`);
-      return;
-    }
-
-    setPlayer(p);
-
-    // Restore progress and derive the correct checkpoint hint on rejoin
-    try {
-      const tokenToUse = p.chat_token;
-      const chatConfig = tokenToUse ? { headers: { Authorization: `Bearer ${tokenToUse}` } } : null;
-      const res = await api.get(`/game/progress/${p.id}`, chatConfig);
-      const prog = res.data.progress || [];
-      setProgress(prog);
-
-      const allCompleted = prog.every(cp => cp.completed);
-      if (allCompleted && prog.length === 3) {
-        setAllDone(true);
-        setShowTutorial(false);
-      } else {
-        const completedNums = prog.filter(cp => cp.completed).map(cp => cp.checkpoint_number);
-        if (completedNums.length > 0) {
-          // Player has completed at least one CP — skip tutorial and show next hint
-          setShowTutorial(false);
-          localStorage.setItem('tutorial_seen', '1');
-          const maxDone = Math.max(...completedNums);
-          const nextHint = maxDone < 3 ? maxDone + 1 : null;
-          if (nextHint) setCheckpointHint(nextHint);
-        } else if (localStorage.getItem('tutorial_seen')) {
-          setCheckpointHint(1);
-        }
+      const saved = localStorage.getItem('player');
+      if (!saved) {
+        navigate(`/join/${token}`);
+        return;
       }
-    } catch (err) {
-      console.error('Failed to restore progress on rejoin:', err);
-    }
+
+      let p;
+      try {
+        p = JSON.parse(saved);
+      } catch {
+        localStorage.removeItem('player');
+        navigate(`/join/${token}`);
+        return;
+      }
+
+      // Ensure the parsed object has the required fields
+      if (!p || !p.id || !p.session_id || !p.nickname) {
+        localStorage.removeItem('player');
+        navigate(`/join/${token}`);
+        return;
+      }
+
+      setPlayer(p);
+
+      // Restore progress and derive the correct checkpoint hint on rejoin
+      try {
+        const tokenToUse = p.chat_token;
+        const chatConfig = tokenToUse ? { headers: { Authorization: `Bearer ${tokenToUse}` } } : null;
+        const res = await api.get(`/game/progress/${p.id}`, chatConfig);
+        const prog = res.data.progress || [];
+        setProgress(prog);
+
+        const allCompleted = prog.every(cp => cp.completed);
+        if (allCompleted && prog.length === 3) {
+          setAllDone(true);
+          setShowTutorial(false);
+        } else {
+          const completedNums = prog.filter(cp => cp.completed).map(cp => cp.checkpoint_number);
+          if (completedNums.length > 0) {
+            // Player has completed at least one CP — skip tutorial and show next hint
+            setShowTutorial(false);
+            localStorage.setItem('tutorial_seen', '1');
+            const maxDone = Math.max(...completedNums);
+            const nextHint = maxDone < 3 ? maxDone + 1 : null;
+            if (nextHint) setCheckpointHint(nextHint);
+          } else if (localStorage.getItem('tutorial_seen')) {
+            setCheckpointHint(1);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to restore progress on rejoin:', err);
+      }
     };
     init();
   }, [token, navigate]);
@@ -959,7 +959,10 @@ const GamePage = () => {
             {cpStep === 'video' && (
               <div style={s.modalBody}>
                 <p style={s.modalHint}>{t('game.modalHint')}</p>
-                <YouTubePlayer videoId={CHECKPOINT_VIDEO_IDS[activeCP]} onVideoEnd={handleVideoWatched} />
+                <YouTubePlayer
+                  videoId={(CHECKPOINT_VIDEO_IDS[language] ?? CHECKPOINT_VIDEO_IDS.bm)[activeCP]}
+                  onVideoEnd={handleVideoWatched}
+                />
               </div>
             )}
 
