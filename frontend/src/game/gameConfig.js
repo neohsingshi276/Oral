@@ -76,6 +76,12 @@ export const CHECKPOINTS = [
   { id: 3, x: 2864, y: 800, radius: 60, color: '#E85D04', label: 'Checkpoint 3' },
 ];
 
+// Concluding video — shown after all 3 checkpoints are done, before the congrats screen
+export const CONCLUDING_VIDEO_IDS = {
+  bm: 'hYig94ALazM',
+  bi: '2Gs2o_YEcYk',
+};
+
 // Video IDs keyed by language ('bm' = Bahasa Melayu, 'bi' = Bahasa Inggeris)
 export const CHECKPOINT_VIDEO_IDS = {
   bm: {
