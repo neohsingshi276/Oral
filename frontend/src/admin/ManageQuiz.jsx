@@ -55,7 +55,7 @@ const pickQuestionOptions = (question, language) => {
 const ManageQuiz = () => {
   const { tx, language } = useLanguage();
   const [questions, setQuestions] = useState([]);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState({ ...emptyForm, source_language: language });
   const [editing, setEditing] = useState(null);
   const [msg, setMsg] = useState('');
   const [imageFile, setImageFile] = useState(null);
@@ -274,7 +274,7 @@ const ManageQuiz = () => {
     setTimeout(() => setMsg(''), 3000);
   };
 
-  const resetForm = () => { setForm(emptyForm); setEditing(null); setImageFile(null); setImagePreview(null); if (fileRef.current) fileRef.current.value = ''; };
+  const resetForm = () => { setForm({ ...emptyForm, source_language: language }); setEditing(null); setImageFile(null); setImagePreview(null); if (fileRef.current) fileRef.current.value = ''; };
 
   const handleEdit = (q) => {
     setEditing(q.id);
