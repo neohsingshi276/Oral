@@ -60,6 +60,19 @@ const ManageQuiz = () => {
   const [msg, setMsg] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+
+  useEffect(() => {
+    if (editing) return; // don't clobber an in-progress edit
+    if (form.question.trim()) return; // don't clobber content the admin already typed
+    if (form.source_language === language) return;
+    setForm(prev => ({
+      ...prev,
+      source_language: language,
+      options: prev.question_type === 'true_false' ? makeTrueFalseOptions(language) : prev.options,
+      options_translation: prev.question_type === 'true_false' ? makeTrueFalseOptions(language === 'bm' ? 'bi' : 'bm') : prev.options_translation,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
   const [tab, setTab] = useState('questions');
   const [sessions, setSessions] = useState([]);
   const [selSession, setSelSession] = useState('');
@@ -151,8 +164,8 @@ const ManageQuiz = () => {
       question: form.question,
       question_translation: form.question_translation,
       question_bi: form.question_bi,
-      options: form.options,
-      options_translation: form.options_translation,
+      options: form.question_type === 'true_false' ? makeTrueFalseOptions(source_language) : form.options,
+      options_translation: form.question_type === 'true_false' ? makeTrueFalseOptions(source_language === 'bm' ? 'bi' : 'bm') : form.options_translation,
       match_pairs: form.match_pairs,
       match_pairs_translation: form.match_pairs_translation,
       correct_answer: form.correct_answer,
