@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -25,7 +25,8 @@ const FACT_IMAGES = [
   fact5, // dentist with child
 ];
 
-const INITIAL_FACTS_VISIBLE = 8;
+const FACT_CARD_MIN_WIDTH = 260;
+const FACT_GRID_GAP = 24;
 
 // Pick BM or BI field based on current language
 const pickLang = (obj, field, lang) =>
@@ -40,6 +41,8 @@ const DidYouKnowPage = () => {
   const [visible, setVisible] = useState({});
   const [heroIndex, setHeroIndex] = useState(0);
   const [showAllFacts, setShowAllFacts] = useState(false);
+  const [firstRowCount, setFirstRowCount] = useState(1);
+  const gridRef = useRef(null);
 
   useEffect(() => {
     api.get('/facts')
@@ -63,12 +66,28 @@ const DidYouKnowPage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+
+    const updateFirstRowCount = () => {
+      const width = grid.getBoundingClientRect().width;
+      const count = Math.max(1, Math.floor((width + FACT_GRID_GAP) / (FACT_CARD_MIN_WIDTH + FACT_GRID_GAP)));
+      setFirstRowCount(count);
+    };
+
+    updateFirstRowCount();
+    const observer = new ResizeObserver(updateFirstRowCount);
+    observer.observe(grid);
+    return () => observer.disconnect();
+  }, []);
+
   const filtered = facts.filter(f =>
     (f.title.toLowerCase().includes(search.toLowerCase()) || (f.title_bi || '').toLowerCase().includes(search.toLowerCase())) ||
     (f.content.toLowerCase().includes(search.toLowerCase()) || (f.content_bi || '').toLowerCase().includes(search.toLowerCase()))
   );
-  const displayedFacts = showAllFacts ? filtered : filtered.slice(0, INITIAL_FACTS_VISIBLE);
-  const hasHiddenFacts = filtered.length > INITIAL_FACTS_VISIBLE;
+  const displayedFacts = showAllFacts ? filtered : filtered.slice(0, firstRowCount);
+  const hasHiddenFacts = filtered.length > firstRowCount;
 
   const toggleFlip = (id) => setFlipped(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -192,7 +211,7 @@ const DidYouKnowPage = () => {
       <p style={styles.flipHint}>👆 {t('did.flipHint') || 'Ketik mana-mana kad untuk terbalik dan baca fakta penuh!'}</p>
 
       {/* Facts Grid */}
-      <div style={styles.grid}>
+      <div ref={gridRef} style={styles.grid}>
         {displayedFacts.map((fact, index) => {
           const color = CARD_COLORS[index % CARD_COLORS.length];
           const img = fact.image_url
@@ -267,8 +286,8 @@ const DidYouKnowPage = () => {
             {showAllFacts
               ? (language === 'bi' ? 'Show Less' : 'Tunjuk Kurang')
               : (language === 'bi'
-                ? `Show More (${filtered.length - INITIAL_FACTS_VISIBLE} more)`
-                : `Tunjuk Lagi (${filtered.length - INITIAL_FACTS_VISIBLE} lagi)`)}
+                ? `Show More (${filtered.length - firstRowCount} more)`
+                : `Tunjuk Lagi (${filtered.length - firstRowCount} lagi)`)}
           </button>
         </div>
       )}

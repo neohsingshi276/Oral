@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
@@ -6,7 +6,8 @@ import { useLanguage } from '../context/LanguageContext';
 const pickLang = (obj, field, lang) =>
   (lang === 'bi' && obj[`${field}_bi`]) ? obj[`${field}_bi`] : obj[field];
 
-const INITIAL_VIDEOS_VISIBLE = 4;
+const VIDEO_CARD_MIN_WIDTH = 200;
+const VIDEO_GRID_GAP = 16;
 
 const LearningPage = () => {
   const { t, language } = useLanguage();
@@ -14,6 +15,8 @@ const LearningPage = () => {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAllVideos, setShowAllVideos] = useState(false);
+  const [firstRowVideoCount, setFirstRowVideoCount] = useState(1);
+  const videoGridRef = useRef(null);
 
   useEffect(() => {
     api.get('/videos')
@@ -23,6 +26,22 @@ const LearningPage = () => {
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const grid = videoGridRef.current;
+    if (!grid) return;
+
+    const updateFirstRowCount = () => {
+      const width = grid.getBoundingClientRect().width;
+      const count = Math.max(1, Math.floor((width + VIDEO_GRID_GAP) / (VIDEO_CARD_MIN_WIDTH + VIDEO_GRID_GAP)));
+      setFirstRowVideoCount(count);
+    };
+
+    updateFirstRowCount();
+    const observer = new ResizeObserver(updateFirstRowCount);
+    observer.observe(grid);
+    return () => observer.disconnect();
   }, []);
 
   const getEmbedUrl = (url) => {
@@ -40,8 +59,8 @@ const LearningPage = () => {
     return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
   };
 
-  const displayedVideos = showAllVideos ? videos : videos.slice(0, INITIAL_VIDEOS_VISIBLE);
-  const hasHiddenVideos = videos.length > INITIAL_VIDEOS_VISIBLE;
+  const displayedVideos = showAllVideos ? videos : videos.slice(0, firstRowVideoCount);
+  const hasHiddenVideos = videos.length > firstRowVideoCount;
 
   if (loading) return (
     <div style={styles.page}><Navbar /><div style={styles.loading}>{t('learning.loading')} 🦷</div></div>
@@ -164,7 +183,7 @@ const LearningPage = () => {
           )}
 
           {/* Video Cards Row */}
-          <div style={styles.videoGrid}>
+          <div ref={videoGridRef} style={styles.videoGrid}>
             {displayedVideos.map((video, index) => (
               <div
                 key={video.id}
@@ -199,8 +218,8 @@ const LearningPage = () => {
                 {showAllVideos
                   ? (language === 'bi' ? 'Show Less' : 'Tunjuk Kurang')
                   : (language === 'bi'
-                    ? `Show More (${videos.length - INITIAL_VIDEOS_VISIBLE} more)`
-                    : `Tunjuk Lagi (${videos.length - INITIAL_VIDEOS_VISIBLE} lagi)`)}
+                    ? `Show More (${videos.length - firstRowVideoCount} more)`
+                    : `Tunjuk Lagi (${videos.length - firstRowVideoCount} lagi)`)}
               </button>
             </div>
           )}
