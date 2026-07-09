@@ -463,7 +463,10 @@ const ManageSessions = () => {
                     <p style={s.largeBoxSubtitle}>{t('admin.selectedWords')} <strong>{form.cw_selected.length}</strong> {t('admin.words')}. {t('admin.minimumRequired')}</p>
                     <div style={s.tallScrollBox}>
                       {words.map(w => (
-                        <label key={w.id} style={s.checkRowWide}><input type="checkbox" checked={form.cw_selected.includes(w.id)} onChange={() => toggleW(w.id)} /> <strong>{w.word}</strong> — {w.clue}</label>
+                        <label key={w.id} style={s.checkRowWide}>
+                          <input type="checkbox" checked={form.cw_selected.includes(w.id)} onChange={() => toggleW(w.id)} />
+                          <span data-no-translate="true"><strong>{w.word}</strong>{w.word_bi ? ` / ${w.word_bi}` : ''} — {w.clue}</span>
+                        </label>
                       ))}
                     </div>
                   </div>

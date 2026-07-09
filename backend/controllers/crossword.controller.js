@@ -2,6 +2,26 @@ const { logActivity } = require('./activity.controller');
 const db = require('../db');
 const { translateBmToBi, translateBiToBm } = require('../services/translate.service');
 
+const sanitizeWord = (value) => String(value || '').trim().toUpperCase();
+const isLettersOnly = (value) => /^[a-zA-Z]+$/.test(value);
+
+const normalizeCrosswordRowsForLanguage = (rows, language) => rows
+  .map(row => {
+    const bmWord = sanitizeWord(row.word);
+    const biWord = sanitizeWord(row.word_bi);
+    const selectedWord = language === 'bi' && biWord ? biWord : bmWord;
+
+    return {
+      ...row,
+      word_bm: bmWord,
+      word_bi: biWord || null,
+      word: selectedWord,
+      clue: row.clue,
+      clue_bi: row.clue_bi || null,
+    };
+  })
+  .filter(row => isLettersOnly(row.word));
+
 // ============================================
 // AUTO-LAYOUT GENERATOR (v2)
 // ============================================
@@ -342,6 +362,7 @@ const getCrossword = async (req, res) => {
     return res.status(400).json({ error: 'Invalid session ID' });
 
   try {
+    const language = req.query.language === 'bi' ? 'bi' : 'bm';
     const [settingsRows] = await db.query(
       'SELECT * FROM crossword_settings WHERE session_id = ?', [sessionId]
     );
@@ -368,11 +389,12 @@ const getCrossword = async (req, res) => {
     }
 
     const [rows] = await db.query(query, queryParams);
-    const shuffled = rows.sort(() => Math.random() - 0.5);
+    const playableRows = normalizeCrosswordRowsForLanguage(rows, language);
+    const shuffled = playableRows.sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, Math.min(shuffled.length, cfg.word_count || 8));
 
     const layout = generateCrosswordLayout(selected);
-    res.json({ ...layout, settings: cfg });
+    res.json({ ...layout, settings: cfg, language });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -484,12 +506,13 @@ const getAllWords = async (req, res) => {
       FROM crossword_data
       WHERE (
         word LIKE ?
+        OR COALESCE(word_bi, '') LIKE ?
         OR COALESCE(clue, '') LIKE ?
         OR COALESCE(clue_bi, '') LIKE ?
       )
       ORDER BY ${orderBy}
       `,
-      [searchTerm, searchTerm, searchTerm]
+      [searchTerm, searchTerm, searchTerm, searchTerm]
     );
 
     res.json({ words: rows });
@@ -503,18 +526,24 @@ const getAllWords = async (req, res) => {
 // FIX: Added full input validation — presence, type, length, and letter-only
 // check for word — preventing DB errors and bad crossword data.
 const addWord = async (req, res) => {
-  const { word, clue, clue_bi, source_language = 'bm' } = req.body;
+  const { word, word_bi, clue, clue_bi, source_language = 'bm' } = req.body;
 
   if (!word || typeof word !== 'string' || word.trim().length === 0)
-    return res.status(400).json({ error: 'Word is required' });
+    return res.status(400).json({ error: 'BM word is required' });
+  if (!word_bi || typeof word_bi !== 'string' || word_bi.trim().length === 0)
+    return res.status(400).json({ error: 'English word is required' });
   if (!clue || typeof clue !== 'string' || clue.trim().length === 0)
     return res.status(400).json({ error: 'Clue is required' });
   if (word.trim().length > 50)
-    return res.status(400).json({ error: 'Word too long (max 50 characters)' });
+    return res.status(400).json({ error: 'BM word too long (max 50 characters)' });
+  if (word_bi.trim().length > 50)
+    return res.status(400).json({ error: 'English word too long (max 50 characters)' });
   if (clue.trim().length > 200)
     return res.status(400).json({ error: 'Clue too long (max 200 characters)' });
   if (!/^[a-zA-Z]+$/.test(word.trim()))
-    return res.status(400).json({ error: 'Word must contain letters only — no spaces or symbols' });
+    return res.status(400).json({ error: 'BM word must contain letters only - no spaces or symbols' });
+  if (!/^[a-zA-Z]+$/.test(word_bi.trim()))
+    return res.status(400).json({ error: 'English word must contain letters only - no spaces or symbols' });
 
   try {
     const finalClue = clue.trim();
@@ -532,11 +561,11 @@ const addWord = async (req, res) => {
     }
 
     const [result] = await db.query(
-      'INSERT INTO crossword_data (word, clue, clue_bi) VALUES (?, ?, ?)',
-      [word.trim().toUpperCase(), finalClueBm, finalClueBi]
+      'INSERT INTO crossword_data (word, word_bi, clue, clue_bi) VALUES (?, ?, ?, ?)',
+      [word.trim().toUpperCase(), word_bi.trim().toUpperCase(), finalClueBm, finalClueBi]
     );
 
-    await logActivity(req.admin.id, 'Added crossword word', `Word: ${word.trim().toUpperCase()}`);
+    await logActivity(req.admin.id, 'Added crossword word', `Word: ${word.trim().toUpperCase()} / ${word_bi.trim().toUpperCase()}`);
     res.status(201).json({ message: 'Word added', id: result.insertId });
   } catch (err) {
     console.error('Add crossword word error:', err.code, err.message, err.sqlMessage || '');
@@ -546,18 +575,24 @@ const addWord = async (req, res) => {
 
 // ─── updateWord ───────────────────────────────────────────────────────────────
 const updateWord = async (req, res) => {
-  const { word, clue, clue_bi, source_language = 'bm' } = req.body;
+  const { word, word_bi, clue, clue_bi, source_language = 'bm' } = req.body;
 
   if (!word || typeof word !== 'string' || word.trim().length === 0)
-    return res.status(400).json({ error: 'Word is required' });
+    return res.status(400).json({ error: 'BM word is required' });
+  if (!word_bi || typeof word_bi !== 'string' || word_bi.trim().length === 0)
+    return res.status(400).json({ error: 'English word is required' });
   if (!clue || typeof clue !== 'string' || clue.trim().length === 0)
     return res.status(400).json({ error: 'Clue is required' });
   if (word.trim().length > 50)
-    return res.status(400).json({ error: 'Word too long (max 50 characters)' });
+    return res.status(400).json({ error: 'BM word too long (max 50 characters)' });
+  if (word_bi.trim().length > 50)
+    return res.status(400).json({ error: 'English word too long (max 50 characters)' });
   if (clue.trim().length > 200)
     return res.status(400).json({ error: 'Clue too long (max 200 characters)' });
   if (!/^[a-zA-Z]+$/.test(word.trim()))
-    return res.status(400).json({ error: 'Word must contain letters only — no spaces or symbols' });
+    return res.status(400).json({ error: 'BM word must contain letters only - no spaces or symbols' });
+  if (!/^[a-zA-Z]+$/.test(word_bi.trim()))
+    return res.status(400).json({ error: 'English word must contain letters only - no spaces or symbols' });
 
   try {
     const finalClue = clue.trim();
@@ -575,8 +610,8 @@ const updateWord = async (req, res) => {
     }
 
     await db.query(
-      'UPDATE crossword_data SET word=?, clue=?, clue_bi=? WHERE id=?',
-      [word.trim().toUpperCase(), finalClueBm, finalClueBi, req.params.id]
+      'UPDATE crossword_data SET word=?, word_bi=?, clue=?, clue_bi=? WHERE id=?',
+      [word.trim().toUpperCase(), word_bi.trim().toUpperCase(), finalClueBm, finalClueBi, req.params.id]
     );
     await logActivity(req.admin.id, 'Updated crossword word', `Word ID: ${req.params.id}`);
     res.json({ message: 'Word updated' });

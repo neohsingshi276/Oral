@@ -6,11 +6,14 @@ import { useLanguage } from '../context/LanguageContext';
 const pickLang = (obj, field, lang) =>
   (lang === 'bi' && obj[`${field}_bi`]) ? obj[`${field}_bi`] : obj[field];
 
+const INITIAL_VIDEOS_VISIBLE = 4;
+
 const LearningPage = () => {
   const { t, language } = useLanguage();
   const [videos, setVideos] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showAllVideos, setShowAllVideos] = useState(false);
 
   useEffect(() => {
     api.get('/videos')
@@ -36,6 +39,9 @@ const LearningPage = () => {
     const videoId = url.split('v=')[1]?.split('&')[0];
     return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
   };
+
+  const displayedVideos = showAllVideos ? videos : videos.slice(0, INITIAL_VIDEOS_VISIBLE);
+  const hasHiddenVideos = videos.length > INITIAL_VIDEOS_VISIBLE;
 
   if (loading) return (
     <div style={styles.page}><Navbar /><div style={styles.loading}>{t('learning.loading')} 🦷</div></div>
@@ -159,7 +165,7 @@ const LearningPage = () => {
 
           {/* Video Cards Row */}
           <div style={styles.videoGrid}>
-            {videos.map((video, index) => (
+            {displayedVideos.map((video, index) => (
               <div
                 key={video.id}
                 style={{ ...styles.videoCard, ...(selected?.id === video.id ? styles.videoCardActive : {}) }}
@@ -182,6 +188,22 @@ const LearningPage = () => {
               </div>
             ))}
           </div>
+
+          {hasHiddenVideos && (
+            <div style={styles.showMoreWrap}>
+              <button
+                type="button"
+                style={styles.showMoreBtn}
+                onClick={() => setShowAllVideos(prev => !prev)}
+              >
+                {showAllVideos
+                  ? (language === 'bi' ? 'Show Less' : 'Tunjuk Kurang')
+                  : (language === 'bi'
+                    ? `Show More (${videos.length - INITIAL_VIDEOS_VISIBLE} more)`
+                    : `Tunjuk Lagi (${videos.length - INITIAL_VIDEOS_VISIBLE} lagi)`)}
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -239,6 +261,8 @@ const styles = {
   videoNum: { fontSize: '0.75rem', fontWeight: '600', color: '#01306B', background: '#FEF9EE', padding: '0.2rem 0.6rem', borderRadius: '10px' },
   videoCardTitle: { fontSize: '0.88rem', fontWeight: '700', color: '#01306B', margin: '0.4rem 0 0.3rem' },
   videoCardDesc: { fontSize: '0.78rem', color: '#94a3b8', margin: 0, lineHeight: 1.4 },
+  showMoreWrap: { display: 'flex', justifyContent: 'center', marginTop: '1.5rem' },
+  showMoreBtn: { background: '#01306B', color: '#FFD700', border: 'none', borderRadius: '999px', padding: '0.8rem 1.4rem', fontWeight: '800', cursor: 'pointer', boxShadow: '0 6px 18px rgba(1,48,107,0.18)' },
   cta: { background: '#01306B', padding: '3rem 2rem', textAlign: 'center' },
   ctaTitle: { fontSize: '1.8rem', fontWeight: '800', color: '#FFD700', margin: '0 0 0.75rem' },
   ctaText: { color: 'rgba(255,255,255,0.7)', fontSize: '1rem', margin: 0 },

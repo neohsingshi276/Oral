@@ -25,6 +25,8 @@ const FACT_IMAGES = [
   fact5, // dentist with child
 ];
 
+const INITIAL_FACTS_VISIBLE = 8;
+
 // Pick BM or BI field based on current language
 const pickLang = (obj, field, lang) =>
   (lang === 'bi' && obj[`${field}_bi`]) ? obj[`${field}_bi`] : obj[field];
@@ -37,6 +39,7 @@ const DidYouKnowPage = () => {
   const [flipped, setFlipped] = useState({});
   const [visible, setVisible] = useState({});
   const [heroIndex, setHeroIndex] = useState(0);
+  const [showAllFacts, setShowAllFacts] = useState(false);
 
   useEffect(() => {
     api.get('/facts')
@@ -64,6 +67,8 @@ const DidYouKnowPage = () => {
     (f.title.toLowerCase().includes(search.toLowerCase()) || (f.title_bi || '').toLowerCase().includes(search.toLowerCase())) ||
     (f.content.toLowerCase().includes(search.toLowerCase()) || (f.content_bi || '').toLowerCase().includes(search.toLowerCase()))
   );
+  const displayedFacts = showAllFacts ? filtered : filtered.slice(0, INITIAL_FACTS_VISIBLE);
+  const hasHiddenFacts = filtered.length > INITIAL_FACTS_VISIBLE;
 
   const toggleFlip = (id) => setFlipped(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -168,7 +173,10 @@ const DidYouKnowPage = () => {
             style={styles.searchInput}
             placeholder={t('did.searchPlaceholder') || 'Cari fakta...'}
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => {
+              setSearch(e.target.value);
+              setShowAllFacts(false);
+            }}
           />
           {search && (
             <button style={styles.clearBtn} onClick={() => setSearch('')}>✕</button>
@@ -185,7 +193,7 @@ const DidYouKnowPage = () => {
 
       {/* Facts Grid */}
       <div style={styles.grid}>
-        {filtered.map((fact, index) => {
+        {displayedFacts.map((fact, index) => {
           const color = CARD_COLORS[index % CARD_COLORS.length];
           const img = fact.image_url
             ? fact.image_url
@@ -248,6 +256,22 @@ const DidYouKnowPage = () => {
           </div>
         )}
       </div>
+
+      {hasHiddenFacts && (
+        <div style={styles.showMoreWrap}>
+          <button
+            type="button"
+            style={styles.showMoreBtn}
+            onClick={() => setShowAllFacts(prev => !prev)}
+          >
+            {showAllFacts
+              ? (language === 'bi' ? 'Show Less' : 'Tunjuk Kurang')
+              : (language === 'bi'
+                ? `Show More (${filtered.length - INITIAL_FACTS_VISIBLE} more)`
+                : `Tunjuk Lagi (${filtered.length - INITIAL_FACTS_VISIBLE} lagi)`)}
+          </button>
+        </div>
+      )}
 
       {/* Photo Banner */}
       <div style={styles.photoBanner}>
@@ -330,6 +354,8 @@ const styles = {
   cardContent: { color: '#475569', fontSize: '0.9rem', lineHeight: 1.7, margin: '0 0 auto', flex: 1 },
   cardAuthor: { color: '#94a3b8', fontSize: '0.78rem', fontStyle: 'italic', margin: '0.75rem 0 0.25rem' },
   empty: { gridColumn: '1/-1', textAlign: 'center', padding: '4rem' },
+  showMoreWrap: { display: 'flex', justifyContent: 'center', padding: '0 clamp(1rem, 5vw, 4rem) 3rem', marginTop: '-1rem' },
+  showMoreBtn: { background: '#01306B', color: '#FFD700', border: 'none', borderRadius: '999px', padding: '0.8rem 1.4rem', fontWeight: '800', cursor: 'pointer', boxShadow: '0 6px 18px rgba(1,48,107,0.18)' },
   photoBanner: { background: 'linear-gradient(135deg, #01306B 0%, #1e5aad 100%)', padding: '3rem clamp(1rem, 5vw, 4rem)', textAlign: 'center' },
   bannerTitle: { fontSize: '1.8rem', fontWeight: '800', color: '#FFD700', marginBottom: '2rem' },
   photoGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', maxWidth: '1000px', margin: '0 auto' },

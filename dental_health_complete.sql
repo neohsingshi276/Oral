@@ -155,7 +155,9 @@ CREATE TABLE IF NOT EXISTS quiz_settings (
 CREATE TABLE IF NOT EXISTS crossword_data (
   id INT AUTO_INCREMENT PRIMARY KEY,
   word VARCHAR(50) NOT NULL,
+  word_bi VARCHAR(50) NULL,
   clue TEXT NOT NULL,
+  clue_bi TEXT NULL,
   direction ENUM('across', 'down') DEFAULT 'across',
   start_row INT DEFAULT 0,
   start_col INT DEFAULT 0,
@@ -395,17 +397,17 @@ INSERT IGNORE INTO quiz_questions (question, question_type, options, correct_ans
 ('Seseorang yang tidak menjaga kebersihan mulut akan ___________.', 'multiple_choice', '["Mempunyai nafas yang lebih segar", "Disukai oleh rakan-rakan", "Disukai oleh doktor gigi", "Berisiko mendapat penyakit pergigian seperti karies gigi dan penyakit gusi"]', '[3]', 15);
 
 -- Sample Crossword Data
-INSERT IGNORE INTO crossword_data (word, clue, direction, start_row, start_col) VALUES
-('GIGI',   'Organ keras dalam mulut untuk mengunyah',       'across', 0, 0),
-('GUSI',   'Tisu merah yang mengelilingi gigi',             'down',   0, 0),
-('GOSOK',  'Tindakan membersihkan gigi dengan berus',       'across', 2, 1),
-('KARIES', 'Nama lain untuk gigi reput',                    'down',   0, 4),
-('PLAK',   'Lapisan bakteria pada permukaan gigi',          'across', 4, 0),
-('FLOSS',  'Benang untuk membersihkan celah gigi',          'down',   2, 6),
-('UBAT',   'Digunakan bersama berus untuk gosok gigi',      'across', 6, 2),
-('MULUT',  'Rongga tempat gigi berada',                     'across', 8, 0),
-('ENAMEL', 'Lapisan terluar dan terkeras pada gigi',        'down',   2, 3),
-('DOKTOR', 'Pakar yang menjaga kesihatan gigi',             'down',   4, 8);
+INSERT IGNORE INTO crossword_data (word, word_bi, clue, clue_bi, direction, start_row, start_col) VALUES
+('GIGI',   'TOOTH',  'Organ keras dalam mulut untuk mengunyah',       'Hard organ in the mouth used for chewing',          'across', 0, 0),
+('GUSI',   'GUM',    'Tisu merah yang mengelilingi gigi',             'Pink tissue that surrounds the teeth',              'down',   0, 0),
+('GOSOK',  'BRUSH',  'Tindakan membersihkan gigi dengan berus',       'Action of cleaning teeth with a toothbrush',        'across', 2, 1),
+('KARIES', 'CARIES', 'Nama lain untuk gigi reput',                    'Another name for tooth decay',                      'down',   0, 4),
+('PLAK',   'PLAQUE', 'Lapisan bakteria pada permukaan gigi',          'Layer of bacteria on the tooth surface',            'across', 4, 0),
+('FLOSS',  'FLOSS',  'Benang untuk membersihkan celah gigi',          'Thread used to clean between teeth',                'down',   2, 6),
+('UBAT',   'PASTE',  'Digunakan bersama berus untuk gosok gigi',      'Used with a toothbrush to clean teeth',             'across', 6, 2),
+('MULUT',  'MOUTH',  'Rongga tempat gigi berada',                     'Cavity where the teeth are located',                'across', 8, 0),
+('ENAMEL', 'ENAMEL', 'Lapisan terluar dan terkeras pada gigi',        'The outermost and hardest layer of a tooth',        'down',   2, 3),
+('DOKTOR', 'DENTIST','Pakar yang menjaga kesihatan gigi',             'Specialist who cares for dental health',            'down',   4, 8);
 
 -- Sample Learning Videos
 INSERT IGNORE INTO learning_videos (title, youtube_url, description) VALUES

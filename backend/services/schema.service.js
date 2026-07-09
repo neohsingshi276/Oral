@@ -117,8 +117,30 @@ const ensureSchema = async () => {
   await safeAlter("ALTER TABLE quiz_questions ADD COLUMN question_bi TEXT NULL");
   await safeAlter("ALTER TABLE quiz_questions ADD COLUMN options_bi JSON NULL");
 
-  // crossword clues (words stay in English — only clues need translation)
+  // crossword words and clues
+  await safeAlter("ALTER TABLE crossword_data ADD COLUMN word_bi VARCHAR(50) NULL AFTER word");
   await safeAlter("ALTER TABLE crossword_data ADD COLUMN clue_bi TEXT NULL");
+  try {
+    await db.query(`
+      UPDATE crossword_data
+      SET word_bi = CASE word
+        WHEN 'GIGI' THEN 'TOOTH'
+        WHEN 'GUSI' THEN 'GUM'
+        WHEN 'GOSOK' THEN 'BRUSH'
+        WHEN 'KARIES' THEN 'CARIES'
+        WHEN 'PLAK' THEN 'PLAQUE'
+        WHEN 'FLOSS' THEN 'FLOSS'
+        WHEN 'UBAT' THEN 'PASTE'
+        WHEN 'MULUT' THEN 'MOUTH'
+        WHEN 'ENAMEL' THEN 'ENAMEL'
+        WHEN 'DOKTOR' THEN 'DENTIST'
+        ELSE word_bi
+      END
+      WHERE word_bi IS NULL OR word_bi = ''
+    `);
+  } catch (err) {
+    console.warn('Crossword BI word backfill skipped:', err.message);
+  }
 
   // ── Token revocation ───────────────────────────────────────────────────────
   // FIX: Add token_version to admins table. login() includes the current value

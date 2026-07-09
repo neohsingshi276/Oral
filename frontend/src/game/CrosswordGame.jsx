@@ -45,9 +45,36 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   const [settings, setSettings] = useState({ minimum_correct: DEFAULT_MIN_CORRECT });
   const [timerTotal, setTimerTotal] = useState(DEFAULT_TIMER);
 
+  const resetPuzzleState = () => {
+    clearInterval(timerRef.current);
+    setSelectedCell(null);
+    setSelectedWord(null);
+    setCompleted([]);
+    setShowCongrats(false);
+    setChecked(false);
+    setIsGameOver(false);
+    setRevealAll(false);
+    setLeaderboard([]);
+    setShowLeaderboard(false);
+    setScoreSubmitted(false);
+    setHintsUsed(0);
+    setHintedCells(new Set());
+    setShowHintToast(false);
+    setHintToastMsg('');
+    setShowGiveUp(false);
+    setShowCheckResult(false);
+    setCheckResult({ correct: 0, wrong: 0, total: 0 });
+    setReviewingAnswers(false);
+    setReviewPhase('viewing');
+    setShowLB(false);
+    setLbData([]);
+  };
+
   useEffect(() => {
+    resetPuzzleState();
+    setPhase('loading');
     const endpoint = sessionId ? `/crossword/${sessionId}` : '/crossword';
-    api.get(endpoint)
+    api.get(endpoint, { params: { language } })
       .then(res => {
         const w = res.data.words;
         const gs = res.data.gridSize || 12;
@@ -62,7 +89,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
         setPhase('playing');
       })
       .catch(() => setPhase('error'));
-  }, [sessionId]);
+  }, [sessionId, language]);
 
   useEffect(() => {
     if (phase !== 'playing' || isGameOver || showCongrats) return;

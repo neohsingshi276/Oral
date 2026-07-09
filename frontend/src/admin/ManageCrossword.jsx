@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 
 const emptyForm = {
   word: '',
+  word_bi: '',
   clue: '',
   clue_bi: '',
   source_language: 'bm',
@@ -68,10 +69,11 @@ const ManageCrossword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.word.trim() || !form.clue.trim()) return;
+    if (!form.word.trim() || !form.word_bi.trim() || !form.clue.trim()) return;
     try {
       const payload = {
         word: form.word.toUpperCase(),
+        word_bi: form.word_bi.toUpperCase(),
         clue: form.clue,
         source_language: form.source_language,
         ...(form.manual_translation && form.clue_bi.trim() && {
@@ -98,6 +100,7 @@ const ManageCrossword = () => {
     setEditing(w.id);
     setForm({
       word: w.word,
+      word_bi: w.word_bi || '',
       clue: w.clue,
       clue_bi: w.clue_bi || '',
       source_language: 'bm',
@@ -200,7 +203,7 @@ const ManageCrossword = () => {
               </p>
             </div>
             <div style={s.field}>
-              <label style={s.label}>Perkataan</label>
+              <label style={s.label}>Perkataan BM</label>
               <input
                 style={s.input}
                 value={form.word}
@@ -210,6 +213,19 @@ const ManageCrossword = () => {
                 maxLength={15}
               />
               <p style={s.hint}>Maksimum 15 huruf. Sekarang: {form.word.length} huruf</p>
+            </div>
+            <div style={s.field}>
+              <label style={s.label}>English Word</label>
+              <input
+                style={s.input}
+                value={form.word_bi}
+                onChange={e => setForm({ ...form, word_bi: e.target.value.toUpperCase() })}
+                required
+                placeholder="Example: TOOTH"
+                maxLength={15}
+                data-no-translate="true"
+              />
+              <p style={s.hint}>Maximum 15 letters. Current: {form.word_bi.length} letters</p>
             </div>
             <div style={s.field}>
               <label style={s.label}>
@@ -321,7 +337,7 @@ const ManageCrossword = () => {
         <table style={s.table}>
           <thead><tr style={s.thead}>
             <th style={s.th}>#</th>
-            <th style={s.th}>Perkataan</th>
+            <th style={s.th}>Perkataan BM / English</th>
             <th style={s.th}>{t('admin.clueBmBi')}</th>
             <th style={s.th}>Huruf</th>
             <th style={s.th}>Tindakan</th>
@@ -330,12 +346,18 @@ const ManageCrossword = () => {
             {words.map((w, i) => (
               <tr key={w.id} style={i % 2 === 0 ? s.trEven : {}}>
                 <td style={s.td}><div style={{ ...s.wordDot, background: COLORS[i % COLORS.length] }}>{i + 1}</div></td>
-                <td style={s.td} data-no-translate="true"><strong style={{ color: COLORS[i % COLORS.length], letterSpacing: '0.05em' }}>{w.word}</strong></td>
+                <td style={s.td} data-no-translate="true">
+                  <div><strong style={{ color: COLORS[i % COLORS.length], letterSpacing: '0.05em' }}>{w.word}</strong></div>
+                  <div style={s.clueBi}><strong>BI:</strong> {w.word_bi || 'Belum ada perkataan English'}</div>
+                </td>
                 <td style={s.td} data-no-translate="true">
                   <div><strong>BM:</strong> {w.clue} </div>
                   <div style={s.clueBi}><strong>BI:</strong> {w.clue_bi || 'Belum ada terjemahan'} </div>
                 </td>
-                <td style={s.td}><span style={s.letterBadge}>{w.word.length}</span></td>
+                <td style={s.td}>
+                  <span style={s.letterBadge}>BM {w.word.length}</span>
+                  <span style={{ ...s.letterBadge, marginLeft: '0.35rem' }}>BI {(w.word_bi || '').length || '-'}</span>
+                </td>
                 <td style={s.td}>
                   <button style={s.btnEdit} onClick={() => handleEdit(w)}>✏️</button>
                   <button style={s.btnDelete} onClick={() => handleDelete(w.id)}>🗑️</button>
