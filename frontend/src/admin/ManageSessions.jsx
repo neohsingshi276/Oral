@@ -197,24 +197,24 @@ const ManageSessions = () => {
     if (step === 2) {
       const effectiveCount = form.q_mode === 'manual' ? form.q_selected.length : form.q_count;
       if (form.q_min > effectiveCount) {
-        return setMsg(`❌ Minimum betul (${form.q_min}) tidak boleh melebihi jumlah soalan dipilih (${effectiveCount}). Sila kurangkan minimum atau tambah soalan.`);
+        return setMsg(`❌ ${t('admin.minCorrectExceedsQuestions', { min: form.q_min, count: effectiveCount })}`);
       }
       if (form.q_mode === 'manual' && form.q_selected.length === 0) {
-        return setMsg('❌ Sila pilih sekurang-kurangnya satu soalan, atau tukar ke mod rawak.');
+        return setMsg(`❌ ${t('admin.selectAtLeastOneQuestion')}`);
       }
     }
     if (step === 3) {
       const effectiveCwCount = form.cw_mode === 'manual' ? form.cw_selected.length : form.cw_count;
       if (form.cw_min > effectiveCwCount) {
-        return setMsg(`❌ Minimum betul (${form.cw_min}) tidak boleh melebihi jumlah perkataan dipilih (${effectiveCwCount}).`);
+        return setMsg(`❌ ${t('admin.minCorrectExceedsWords', { min: form.cw_min, count: effectiveCwCount })}`);
       }
     }
 
     if (step < 4) { setMsg(''); setStep(step + 1); return; } // Go to next page
 
     // Basic Validation Check against Database Limits before submitting
-    if (form.q_mode === 'random' && form.q_count > questions.length) { setStep(2); return setMsg('❌ Quiz: Requested questions exceeds database limit!'); }
-    if (form.cw_mode === 'random' && form.cw_count > words.length) { setStep(3); return setMsg('❌ Crossword: Requested words exceeds database limit!'); }
+    if (form.q_mode === 'random' && form.q_count > questions.length) { setStep(2); return setMsg(`❌ ${t('admin.quizExceedsDbLimit')}`); }
+    if (form.cw_mode === 'random' && form.cw_count > words.length) { setStep(3); return setMsg(`❌ ${t('admin.crosswordExceedsDbLimit')}`); }
 
     try {
       const payload = {

@@ -252,6 +252,7 @@ const bm = {
     cpHint3Clue: 'Untuk hentian terakhir, fikirkan perkara yang menjadikan gigi kuat. Laluan akan membawa anda ke cabaran yang meminta anda memilih dengan teliti, bukan hanya cepat.',
     preparingCertificate: 'Menyediakan sijil...',
     downloadCertificate: 'Muat Turun Sijil',
+    viewCertificate: 'Lihat Sijil',
     retry: 'Cuba Semula',
     // Trolley / GameCanvas
     trolleyTitle: 'Penangkap Makanan',
@@ -523,6 +524,13 @@ const bm = {
     keepExistingPassword: 'Kosongkan untuk kekalkan kata laluan sedia ada',
     setSessionPassword: 'Tetapkan kata laluan untuk kod sesi ini',
     deleteSessionConfirm: 'Padam sesi ini?',
+    minCorrectExceedsQuestions: 'Minimum betul ({min}) tidak boleh melebihi jumlah soalan dipilih ({count}). Sila kurangkan minimum atau tambah soalan.',
+    selectAtLeastOneQuestion: 'Sila pilih sekurang-kurangnya satu soalan, atau tukar ke mod rawak.',
+    minCorrectExceedsWords: 'Minimum betul ({min}) tidak boleh melebihi jumlah perkataan dipilih ({count}).',
+    quizExceedsDbLimit: 'Kuiz: Bilangan soalan diminta melebihi had pangkalan data!',
+    crosswordExceedsDbLimit: 'Teka silang kata: Bilangan perkataan diminta melebihi had pangkalan data!',
+    loadingPlayerData: 'Memuatkan data pemain…',
+    loadingAnalytics: 'Memuatkan analitik...',
   },
 };
 
@@ -780,6 +788,7 @@ const bi = {
     cpHint3Clue: 'For the last stop, think about what keeps teeth strong. The path will lead you toward something that asks you to choose carefully, not just quickly.',
     preparingCertificate: 'Preparing certificate...',
     downloadCertificate: 'Download Certificate',
+    viewCertificate: 'View Certificate',
     retry: 'Retry',
     // Trolley / GameCanvas
     trolleyTitle: 'Food Catcher',
@@ -1051,6 +1060,13 @@ const bi = {
     avgScore: 'Avg Score',
     allCp: 'All CP',
     avgAttempts: 'average attempts',
+    minCorrectExceedsQuestions: 'Minimum correct ({min}) cannot exceed the number of questions selected ({count}). Please reduce the minimum or add more questions.',
+    selectAtLeastOneQuestion: 'Please select at least one question, or switch to random mode.',
+    minCorrectExceedsWords: 'Minimum correct ({min}) cannot exceed the number of words selected ({count}).',
+    quizExceedsDbLimit: 'Quiz: Requested questions exceeds database limit!',
+    crosswordExceedsDbLimit: 'Crossword: Requested words exceeds database limit!',
+    loadingPlayerData: 'Loading player data…',
+    loadingAnalytics: 'Loading analytics...',
   },
 };
 

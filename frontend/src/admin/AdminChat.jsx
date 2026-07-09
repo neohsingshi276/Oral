@@ -271,7 +271,7 @@ const AdminChat = () => {
             {/* Messages */}
             <div ref={messagesBoxRef} style={s.messages}>
               {messages.length === 0 && (
-                <p style={s.emptyMessages}>{tx('Belum ada mesej. Menunggu pemain menulis dahulu.')}</p>
+                <p style={s.emptyMessages}>{tx('Belum ada mesej')}. {tx('Menunggu pemain menulis dahulu.')}</p>
               )}
               {messages.map((m, i) => {
                 const isAdmin = m.sender_type === 'admin';

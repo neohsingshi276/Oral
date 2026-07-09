@@ -176,7 +176,7 @@ const Analytics = ({ setActive }) => {
     win.document.close();
   };
 
-  if (loading) return <div style={{ color: '#94a3b8', padding: '2rem', textAlign: 'center' }}>Memuatkan analitik... 📊</div>;
+  if (loading) return <div style={{ color: '#94a3b8', padding: '2rem', textAlign: 'center' }}>{t('admin.loadingAnalytics')} 📊</div>;
 
   const sessions = [...new Map(
     (data?.players || []).map(p => [p.session_id, { id: p.session_id, name: p.session_name }])

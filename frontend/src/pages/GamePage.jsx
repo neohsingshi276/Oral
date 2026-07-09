@@ -1093,7 +1093,7 @@ const GamePage = () => {
               onClick={viewCertificate}
               disabled={certificateBusy}
             >
-              {certificateBusy ? t('game.preparingCertificate') : '🎓 View Certificate'}
+              {certificateBusy ? t('game.preparingCertificate') : `🎓 ${t('game.viewCertificate')}`}
             </button>
             <button
               style={{ ...s.continueBtn, background: '#2563eb', marginTop: '0.75rem' }}

@@ -78,10 +78,17 @@ export const LanguageProvider = ({ children, mode = 'student' }) => {
     });
   }, [storageKey]);
 
-  const t = useCallback((key, defaultValue) => {
+  const t = useCallback((key, paramsOrDefault) => {
     const translated = getNestedValue(translations[language], key);
     const fallback = getNestedValue(translations.bm, key);
-    return translated ?? fallback ?? defaultValue ?? key;
+    const isParams = paramsOrDefault && typeof paramsOrDefault === 'object';
+    let result = translated ?? fallback ?? (isParams ? undefined : paramsOrDefault) ?? key;
+    if (isParams && typeof result === 'string') {
+      Object.entries(paramsOrDefault).forEach(([paramKey, paramValue]) => {
+        result = result.replaceAll(`{${paramKey}}`, paramValue);
+      });
+    }
+    return result;
   }, [language]);
 
   const tx = useCallback((text) => translateText(text, language), [language]);

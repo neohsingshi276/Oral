@@ -183,7 +183,7 @@ const ManageStudents = () => {
         )}
 
         {loading ? (
-          <p style={s.muted}>Memuatkan data pemain…</p>
+          <p style={s.muted}>{t('admin.loadingPlayerData')}</p>
         ) : (
 
           <div>
