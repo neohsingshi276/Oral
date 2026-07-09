@@ -327,9 +327,7 @@ const GamePage = () => {
     }
   };
 
-  const [certPreview, setCertPreview] = useState(null); // holds { svg, safeName } for preview
-
-  const fetchCertificate = async () => {
+  const viewCertificate = async () => {
     if (!player) return;
     setCertificateBusy(true);
     try {
@@ -341,12 +339,10 @@ const GamePage = () => {
       const safeName = (cert.nickname || 'student').replace(/[^a-z0-9_-]+/gi, '_');
       const schoolClass = `${cert.school_name || '-'}${cert.class_name ? ` — ${cert.class_name}` : ''}`;
       const displayName = escapeXml(cert.nickname || 'Student');
-      // Dynamic font size: shorter names get larger font, longer names shrink
       const nameLen = (cert.nickname || '').length;
       const nameFontSize = Math.min(72, Math.max(34, Math.floor(1300 / (nameLen * 1.15))));
 
-      const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="990" viewBox="0 0 1400 990">
+      const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 990">
   <defs>
     <linearGradient id="headerGrad" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="#0f2744"/>
@@ -363,106 +359,113 @@ const GamePage = () => {
       <stop offset="100%" stop-color="#0f2744"/>
     </linearGradient>
   </defs>
-
-  <!-- Background -->
   <rect width="1400" height="990" fill="#faf8f2"/>
-
-  <!-- Outer navy border -->
   <rect x="30" y="30" width="1340" height="930" rx="6" fill="none" stroke="#1e3a5f" stroke-width="12"/>
-
-  <!-- Inner gold border -->
   <rect x="55" y="55" width="1290" height="880" rx="4" fill="none" stroke="url(#goldShine)" stroke-width="3"/>
-
-  <!-- Gold corner ornaments — top-left -->
-  <g transform="translate(55, 55)">
-    <line x1="0" y1="0" x2="80" y2="0" stroke="#D4A843" stroke-width="5"/>
-    <line x1="0" y1="0" x2="0" y2="80" stroke="#D4A843" stroke-width="5"/>
-    <line x1="0" y1="0" x2="40" y2="40" stroke="#D4A843" stroke-width="2" opacity="0.5"/>
-  </g>
-  <!-- Gold corner ornaments — top-right -->
-  <g transform="translate(1345, 55)">
-    <line x1="0" y1="0" x2="-80" y2="0" stroke="#D4A843" stroke-width="5"/>
-    <line x1="0" y1="0" x2="0" y2="80" stroke="#D4A843" stroke-width="5"/>
-    <line x1="0" y1="0" x2="-40" y2="40" stroke="#D4A843" stroke-width="2" opacity="0.5"/>
-  </g>
-  <!-- Gold corner ornaments — bottom-left -->
-  <g transform="translate(55, 935)">
-    <line x1="0" y1="0" x2="80" y2="0" stroke="#D4A843" stroke-width="5"/>
-    <line x1="0" y1="0" x2="0" y2="-80" stroke="#D4A843" stroke-width="5"/>
-    <line x1="0" y1="0" x2="40" y2="-40" stroke="#D4A843" stroke-width="2" opacity="0.5"/>
-  </g>
-  <!-- Gold corner ornaments — bottom-right -->
-  <g transform="translate(1345, 935)">
-    <line x1="0" y1="0" x2="-80" y2="0" stroke="#D4A843" stroke-width="5"/>
-    <line x1="0" y1="0" x2="0" y2="-80" stroke="#D4A843" stroke-width="5"/>
-    <line x1="0" y1="0" x2="-40" y2="-40" stroke="#D4A843" stroke-width="2" opacity="0.5"/>
-  </g>
-
-  <!-- Gold side accents -->
+  <g transform="translate(55, 55)"><line x1="0" y1="0" x2="80" y2="0" stroke="#D4A843" stroke-width="5"/><line x1="0" y1="0" x2="0" y2="80" stroke="#D4A843" stroke-width="5"/><line x1="0" y1="0" x2="40" y2="40" stroke="#D4A843" stroke-width="2" opacity="0.5"/></g>
+  <g transform="translate(1345, 55)"><line x1="0" y1="0" x2="-80" y2="0" stroke="#D4A843" stroke-width="5"/><line x1="0" y1="0" x2="0" y2="80" stroke="#D4A843" stroke-width="5"/><line x1="0" y1="0" x2="-40" y2="40" stroke="#D4A843" stroke-width="2" opacity="0.5"/></g>
+  <g transform="translate(55, 935)"><line x1="0" y1="0" x2="80" y2="0" stroke="#D4A843" stroke-width="5"/><line x1="0" y1="0" x2="0" y2="-80" stroke="#D4A843" stroke-width="5"/><line x1="0" y1="0" x2="40" y2="-40" stroke="#D4A843" stroke-width="2" opacity="0.5"/></g>
+  <g transform="translate(1345, 935)"><line x1="0" y1="0" x2="-80" y2="0" stroke="#D4A843" stroke-width="5"/><line x1="0" y1="0" x2="0" y2="-80" stroke="#D4A843" stroke-width="5"/><line x1="0" y1="0" x2="-40" y2="-40" stroke="#D4A843" stroke-width="2" opacity="0.5"/></g>
   <rect x="30" y="200" width="12" height="120" rx="3" fill="#D4A843" opacity="0.7"/>
   <rect x="30" y="670" width="12" height="120" rx="3" fill="#D4A843" opacity="0.7"/>
   <rect x="1358" y="200" width="12" height="120" rx="3" fill="#D4A843" opacity="0.7"/>
   <rect x="1358" y="670" width="12" height="120" rx="3" fill="#D4A843" opacity="0.7"/>
-
-  <!-- Header band -->
   <rect x="80" y="80" width="1240" height="140" rx="4" fill="url(#headerGrad)"/>
   <rect x="80" y="80" width="1240" height="3" fill="#D4A843"/>
   <rect x="80" y="217" width="1240" height="3" fill="#D4A843"/>
-
-  <!-- Title text -->
   <text x="700" y="148" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="bold" fill="#D4A843" letter-spacing="14">DENTAL QUEST</text>
   <text x="700" y="195" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" fill="rgba(255,255,255,0.75)" letter-spacing="8">CERTIFICATE OF COMPLETION</text>
-
-  <!-- Decorative divider -->
   <line x1="400" y1="270" x2="1000" y2="270" stroke="#D4A843" stroke-width="1" opacity="0.5"/>
-  <circle cx="700" cy="270" r="4" fill="#D4A843"/>
-  <circle cx="400" cy="270" r="2.5" fill="#D4A843"/>
-  <circle cx="1000" cy="270" r="2.5" fill="#D4A843"/>
-
-  <!-- Certify text -->
+  <circle cx="700" cy="270" r="4" fill="#D4A843"/><circle cx="400" cy="270" r="2.5" fill="#D4A843"/><circle cx="1000" cy="270" r="2.5" fill="#D4A843"/>
   <text x="700" y="320" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="22" fill="#64748b" font-style="italic">~ This is to certify that ~</text>
-
-  <!-- Name -->
   <text x="700" y="${330 + nameFontSize}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="${nameFontSize}" font-weight="bold" fill="#1e293b">${displayName}</text>
-
-  <!-- Gold underline for name -->
   <line x1="250" y1="${345 + nameFontSize}" x2="1150" y2="${345 + nameFontSize}" stroke="#D4A843" stroke-width="2"/>
-
-  <!-- Description -->
   <text x="700" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#475569">has successfully completed all checkpoints of the</text>
   <text x="700" y="525" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#1e3a5f">Dental Quest Program</text>
   <text x="700" y="565" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="17" fill="#64748b" font-style="italic">and demonstrated excellence in dental health knowledge and awareness</text>
-
-  <!-- Score circle -->
   <circle cx="700" cy="680" r="72" fill="url(#scoreBg)" stroke="#D4A843" stroke-width="4"/>
   <circle cx="700" cy="680" r="62" fill="none" stroke="rgba(212,168,67,0.3)" stroke-width="2"/>
   <text x="700" y="660" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#D4A843" letter-spacing="3">FINAL SCORE</text>
   <text x="700" y="705" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="38" font-weight="bold" fill="#D4A843">${cert.score}/100</text>
-
-  <!-- Session & school info -->
   <text x="700" y="800" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#475569">Session: ${escapeXml(cert.session_name || '-')} | School / Class: ${escapeXml(schoolClass)}</text>
-
-  <!-- Date -->
   <text x="700" y="840" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#94a3b8">Date Completed: ${escapeXml(dateStr)}</text>
-
-  <!-- Bottom decorative divider -->
   <line x1="400" y1="870" x2="1000" y2="870" stroke="#D4A843" stroke-width="1" opacity="0.5"/>
   <circle cx="700" cy="870" r="3" fill="#D4A843"/>
-
-  <!-- Motto -->
   <text x="700" y="910" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" fill="#D4A843" font-style="italic">Keep smiling, keep learning!</text>
 </svg>`;
-      setCertPreview({ svg, safeName });
+
+      const svgForDownload = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="990" viewBox="0 0 1400 990">${svgContent.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '')}</svg>`;
+
+      // Open in new tab with full-page layout
+      const win = window.open('', '_blank');
+      if (!win) {
+        alert('Please allow pop-ups to view your certificate.');
+        return;
+      }
+      win.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Certificate — ${escapeXml(cert.nickname)} | Dental Quest</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0f172a; min-height: 100vh; display: flex; flex-direction: column; align-items: center; font-family: Arial, sans-serif; }
+    .toolbar { width: 100%; background: linear-gradient(135deg, #1e3a5f, #0f2744); padding: 0.85rem 1.5rem; display: flex; align-items: center; justify-content: center; gap: 1rem; flex-shrink: 0; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+    .toolbar h1 { color: #D4A843; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.05em; margin-right: auto; }
+    .btn { padding: 0.7rem 1.8rem; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-download { background: linear-gradient(135deg, #16a34a, #22c55e); color: #fff; box-shadow: 0 4px 16px rgba(22,163,74,0.4); }
+    .btn-print { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; box-shadow: 0 4px 16px rgba(37,99,235,0.3); }
+    .btn-close { background: rgba(255,255,255,0.1); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.2); }
+    .cert-wrap { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .cert-wrap svg { width: 100%; max-width: 1100px; height: auto; border-radius: 6px; box-shadow: 0 12px 48px rgba(0,0,0,0.5); }
+    @media print {
+      .toolbar { display: none !important; }
+      body { background: #fff !important; }
+      .cert-wrap { padding: 0; }
+      .cert-wrap svg { max-width: 100%; box-shadow: none; border-radius: 0; }
+    }
+    @media (max-width: 768px) {
+      .toolbar { flex-wrap: wrap; gap: 0.5rem; }
+      .toolbar h1 { width: 100%; text-align: center; margin-right: 0; font-size: 0.95rem; }
+      .btn { padding: 0.6rem 1.2rem; font-size: 0.85rem; flex: 1; text-align: center; }
+      .cert-wrap { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <h1>🎓 Dental Quest Certificate</h1>
+    <button class="btn btn-download" id="dlBtn">📥 Download</button>
+    <button class="btn btn-print" onclick="window.print()">🖨️ Print</button>
+    <button class="btn btn-close" onclick="window.close()">✕ Close</button>
+  </div>
+  <div class="cert-wrap">
+    ${svgContent}
+  </div>
+  <script>
+    document.getElementById('dlBtn').addEventListener('click', function() {
+      var svgData = ${JSON.stringify(svgForDownload)};
+      var blob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'dental-quest-certificate-${safeName}.svg';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>`);
+      win.document.close();
     } catch (err) {
       alert(err.response?.data?.error || 'Unable to load certificate. Please try again.');
     } finally {
       setCertificateBusy(false);
     }
-  };
-
-  const doDownloadCert = () => {
-    if (!certPreview) return;
-    downloadTextFile(`dental-quest-certificate-${certPreview.safeName}.svg`, certPreview.svg, 'image/svg+xml;charset=utf-8');
   };
 
   const handleQuizRetry = () => {
@@ -1067,7 +1070,7 @@ const GamePage = () => {
       )}
 
       {/* All Done — Congratulations screen (only after concluding video is watched) */}
-      {allDone && concludingVideoWatched && !certPreview && (
+      {allDone && concludingVideoWatched && (
         <div style={s.overlay}>
           <div style={s.doneCard}>
             <div style={{ fontSize: '5rem', animation: 'popIn 0.5s ease' }}>🏆</div>
@@ -1087,7 +1090,7 @@ const GamePage = () => {
             </div>
             <button
               style={{ ...s.continueBtn, background: '#16a34a', marginTop: '0.5rem' }}
-              onClick={fetchCertificate}
+              onClick={viewCertificate}
               disabled={certificateBusy}
             >
               {certificateBusy ? t('game.preparingCertificate') : '🎓 View Certificate'}
@@ -1098,42 +1101,6 @@ const GamePage = () => {
             >
               {t('game.backHome')}
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Certificate Preview Modal */}
-      {certPreview && (
-        <div style={s.overlay}>
-          <div style={{ background: '#1a1a2e', borderRadius: '20px', width: '100%', maxWidth: '920px', maxHeight: '95vh', overflow: 'auto', animation: 'fadeIn 0.3s ease', boxShadow: '0 24px 64px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column' }}>
-            {/* Preview header */}
-            <div style={{ padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-              <h3 style={{ margin: 0, color: '#D4A843', fontSize: '1.15rem', fontWeight: 800, letterSpacing: '0.03em' }}>🎓 Certificate Preview</h3>
-              <button
-                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#94a3b8', borderRadius: '8px', width: '36px', height: '36px', cursor: 'pointer', fontSize: '1.1rem', fontWeight: 700 }}
-                onClick={() => setCertPreview(null)}
-              >✕</button>
-            </div>
-
-            {/* Certificate SVG preview */}
-            <div style={{ padding: '1.5rem', flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'auto' }}>
-              <div
-                style={{ width: '100%', maxWidth: '840px', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
-                dangerouslySetInnerHTML={{ __html: certPreview.svg.replace(/<\?xml[^?]*\?>/, '') }}
-              />
-            </div>
-
-            {/* Action buttons */}
-            <div style={{ padding: '1rem 1.75rem 1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'center', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-              <button
-                style={{ padding: '0.85rem 2.5rem', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.05rem', fontWeight: 800, cursor: 'pointer', boxShadow: '0 6px 20px rgba(22,163,74,0.4)', letterSpacing: '0.01em' }}
-                onClick={doDownloadCert}
-              >📥 Download Certificate</button>
-              <button
-                style={{ padding: '0.85rem 2rem', background: 'rgba(255,255,255,0.1)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '14px', fontSize: '1.05rem', fontWeight: 700, cursor: 'pointer' }}
-                onClick={() => setCertPreview(null)}
-              >✕ Close</button>
-            </div>
           </div>
         </div>
       )}
