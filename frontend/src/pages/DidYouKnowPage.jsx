@@ -67,6 +67,12 @@ const DidYouKnowPage = () => {
   }, []);
 
   useEffect(() => {
+    // This must re-run once loading finishes, because on the very first
+    // mount the component is still showing the loading spinner (the
+    // <div ref={gridRef}> below doesn't exist yet), so gridRef.current
+    // is null and the observer never gets attached. Without this,
+    // firstRowCount stays stuck at its default of 1 forever, and only
+    // 1 card ever shows before "Show More" no matter the screen width.
     const grid = gridRef.current;
     if (!grid) return;
 
@@ -80,7 +86,7 @@ const DidYouKnowPage = () => {
     const observer = new ResizeObserver(updateFirstRowCount);
     observer.observe(grid);
     return () => observer.disconnect();
-  }, []);
+  }, [loading]);
 
   const filtered = facts.filter(f =>
     (f.title.toLowerCase().includes(search.toLowerCase()) || (f.title_bi || '').toLowerCase().includes(search.toLowerCase())) ||

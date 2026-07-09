@@ -33,6 +33,10 @@ const ManageCrossword = () => {
       translationLabelBi: 'Terjemahan Pembayang (BM)',
       placeholderBm: 'Tulis terjemahan pembayang BI',
       placeholderBi: 'Tulis terjemahan BM',
+      // Label/example for the main clue field itself when source_language is 'bm'
+      clueLabel: 'Pembayang (BM)',
+      clueExample: 'cth. Organ keras dalam mulut untuk mengunyah',
+      wordExample: 'cth. GIGI',
     },
     bi: {
       languageLabel: 'Clue input language',
@@ -44,6 +48,10 @@ const ManageCrossword = () => {
       translationLabelBi: 'Clue Translation (BM)',
       placeholderBm: 'Write English clue translation',
       placeholderBi: 'Write BM translation',
+      // Label/example for the main clue field itself when source_language is 'bi'
+      clueLabel: 'Clue (English)',
+      clueExample: 'e.g. Hard organ in the mouth used for chewing',
+      wordExample: 'cth. GIGI',
     }
   };
 
@@ -209,7 +217,7 @@ const ManageCrossword = () => {
                 value={form.word}
                 onChange={e => setForm({ ...form, word: e.target.value.toUpperCase() })}
                 required
-                placeholder={t('admin.wordExample')}
+                placeholder={localText.wordExample}
                 maxLength={15}
               />
               <p style={s.hint}>Maksimum 15 huruf. Sekarang: {form.word.length} huruf</p>
@@ -229,14 +237,14 @@ const ManageCrossword = () => {
             </div>
             <div style={s.field}>
               <label style={s.label}>
-                {t('admin.clueInputLabel')}
+                {localText.clueLabel}
               </label>
               <textarea
                 style={{ ...s.input, height: '80px', resize: 'vertical' }}
                 value={form.clue}
                 onChange={e => setForm({ ...form, clue: e.target.value })}
                 required
-                placeholder={t('admin.clueExample')}
+                placeholder={localText.clueExample}
                 maxLength={200}
               />
             </div>

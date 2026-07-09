@@ -29,6 +29,10 @@ const LearningPage = () => {
   }, []);
 
   useEffect(() => {
+    // Must re-run once loading finishes — on first mount the loading
+    // screen is shown instead of the grid, so videoGridRef.current is
+    // still null and the observer never attaches, leaving
+    // firstRowVideoCount stuck at 1 forever.
     const grid = videoGridRef.current;
     if (!grid) return;
 
@@ -42,7 +46,7 @@ const LearningPage = () => {
     const observer = new ResizeObserver(updateFirstRowCount);
     observer.observe(grid);
     return () => observer.disconnect();
-  }, []);
+  }, [loading]);
 
   const getEmbedUrl = (url) => {
     if (!url) return '';

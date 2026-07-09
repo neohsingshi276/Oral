@@ -74,6 +74,13 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     resetPuzzleState();
     setPhase('loading');
     const endpoint = sessionId ? `/crossword/${sessionId}` : '/crossword';
+    // NOTE: language is intentionally NOT a dependency here. The puzzle
+    // (grid layout + answer words) is fetched ONCE per session and stays
+    // fixed for the whole game. Toggling the language only swaps the
+    // displayed clue text (via pickLang below) — it must never re-fetch
+    // or rebuild the grid, otherwise progress resets and the layout
+    // changes (BM/BI words have different lengths, so the auto-layout
+    // generator produces a different grid each time).
     api.get(endpoint, { params: { language } })
       .then(res => {
         const w = res.data.words;
@@ -89,7 +96,8 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
         setPhase('playing');
       })
       .catch(() => setPhase('error'));
-  }, [sessionId, language]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
 
   useEffect(() => {
     if (phase !== 'playing' || isGameOver || showCongrats) return;
@@ -438,7 +446,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
             <h2 style={{ color: '#e11d48', fontSize: '1.3rem', fontWeight: '800', margin: '0.5rem 0' }}>{t('game.giveUp', 'Menyerah Kalah?')}</h2>
             <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
               {t('game.youAnswered', 'Kamu telah menjawab')} <strong style={{ color: '#2563eb' }}>{completed.length}/{words.length}</strong> {t('game.wordsCorrectly', 'perkataan dengan betul.')}
-              <br/>{t('game.sureGiveUp', 'Adakah kamu pasti mahu menyerah?')}
+              <br />{t('game.sureGiveUp', 'Adakah kamu pasti mahu menyerah?')}
             </p>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button style={{ ...s.doneBtn, background: '#64748b', flex: 1 }} onClick={() => setShowGiveUp(false)}>
