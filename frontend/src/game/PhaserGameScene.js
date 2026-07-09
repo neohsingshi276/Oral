@@ -365,7 +365,7 @@ export default class PhaserGameScene extends Phaser.Scene {
     });
     nameText.setOrigin(0.5, 1);
 
-    this.playerGraphic.add([ nameText, this.bodyPart, this.headPart, this.eyeL, this.eyeR, this.legL, this.legR ]);
+    this.playerGraphic.add([nameText, this.bodyPart, this.headPart, this.eyeL, this.eyeR, this.legL, this.legR]);
     this.playerGraphic.setDepth(1000);
 
     // Physics body for player (invisible rectangle — avoids null-texture bug
@@ -514,7 +514,13 @@ export default class PhaserGameScene extends Phaser.Scene {
     };
     this.keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
 
-    // ── State ────────────────────────────────────────────────────────
+    // Phaser calls preventDefault() on every key it tracks, which blocks WASD/E
+    // from being typed in HTML inputs (e.g. the name field on JoinGamePage).
+    // disableGlobalCapture() stops that — Phaser still reads key states normally,
+    // it just no longer swallows the events from the rest of the page.
+    this.input.keyboard.disableGlobalCapture();
+
+    // ── State ────────────────────────────────────────────────────
     this.nearCheckpointId = null;
     this.walkFrame = 0;
     this.isPaused = false;
@@ -706,51 +712,51 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.virtualEnterQueued = true;
   }
 
-updatePlayerOpacity() {
-  const parts = [
-    this.headPart,
-    this.eyeL,
-    this.eyeR,
-    this.bodyPart,
-    this.legL,
-    this.legR,
-  ];
+  updatePlayerOpacity() {
+    const parts = [
+      this.headPart,
+      this.eyeL,
+      this.eyeR,
+      this.bodyPart,
+      this.legL,
+      this.legR,
+    ];
 
-  // reset first
-  parts.forEach(part => {
-    if (part) part.setAlpha(1);
-  });
-
-  if (!this.treeCollisions || this.treeCollisions.size === 0) return;
-
-  parts.forEach(part => {
-    if (!part) return;
-
-    const partBounds = part.getBounds();
-
-    this.matter.world.localWorld.bodies.forEach(body => {
-      if (body.label !== 'tree') return;
-      if (!this.treeCollisions.has(body.id)) return;
-
-      const treeBounds = {
-        left: body.bounds.min.x,
-        right: body.bounds.max.x,
-        top: body.bounds.min.y,
-        bottom: body.bounds.max.y,
-      };
-
-      const isOverlapping =
-        partBounds.right > treeBounds.left &&
-        partBounds.left < treeBounds.right &&
-        partBounds.bottom > treeBounds.top &&
-        partBounds.top < treeBounds.bottom;
-
-      if (isOverlapping) {
-        part.setAlpha(0.45);
-      }
+    // reset first
+    parts.forEach(part => {
+      if (part) part.setAlpha(1);
     });
-  });
-}
+
+    if (!this.treeCollisions || this.treeCollisions.size === 0) return;
+
+    parts.forEach(part => {
+      if (!part) return;
+
+      const partBounds = part.getBounds();
+
+      this.matter.world.localWorld.bodies.forEach(body => {
+        if (body.label !== 'tree') return;
+        if (!this.treeCollisions.has(body.id)) return;
+
+        const treeBounds = {
+          left: body.bounds.min.x,
+          right: body.bounds.max.x,
+          top: body.bounds.min.y,
+          bottom: body.bounds.max.y,
+        };
+
+        const isOverlapping =
+          partBounds.right > treeBounds.left &&
+          partBounds.left < treeBounds.right &&
+          partBounds.bottom > treeBounds.top &&
+          partBounds.top < treeBounds.bottom;
+
+        if (isOverlapping) {
+          part.setAlpha(0.45);
+        }
+      });
+    });
+  }
 
   getPlayerPosition() {
     return {

@@ -130,7 +130,12 @@ const JoinGamePage = () => {
         nickname: nickname.trim(),
         resume_player_id: resumePlayerId,
       });
-      localStorage.setItem('player', JSON.stringify(res.data.player));
+      // Store player with session token + timestamp so GamePage can validate
+      localStorage.setItem('player', JSON.stringify({
+        ...res.data.player,
+        _token: session.unique_token,
+        _lastActive: Date.now(),
+      }));
       setJoinedPlayer(res.data.player);
       setGuidePage(0);
       setStep('guide');

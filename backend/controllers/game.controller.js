@@ -269,6 +269,9 @@ const getCertificate = async (req, res) => {
   if (!ownsPlayer(req, player_id))
     return res.status(403).json({ error: 'Access denied' });
 
+  const session_id = parseInt(req.playerChat.session_id, 10);
+  const CP_WEIGHT = 100 / 3;
+
   try {
     const [players] = await db.query(`
       SELECT p.id, p.nickname, p.joined_at, s.session_name,
@@ -279,18 +282,58 @@ const getCertificate = async (req, res) => {
       LEFT JOIN schools sch ON s.school_id = sch.id
       LEFT JOIN classes c ON s.class_id = c.id
       WHERE p.id = ? AND p.session_id = ?
-    `, [player_id, req.playerChat.session_id]);
+    `, [player_id, session_id]);
 
     if (players.length === 0)
       return res.status(404).json({ error: 'Player not found' });
 
     const [progress] = await db.query(
       'SELECT checkpoint_number, completed, attempts, completed_at FROM checkpoint_attempts WHERE player_id=? AND session_id=? ORDER BY checkpoint_number',
-      [player_id, req.playerChat.session_id]
+      [player_id, session_id]
     );
 
+    // ── CP1 score: quiz ──────────────────────────────────────────────────
+    const [quizRows] = await db.query(
+      'SELECT score, correct_answers, total_questions FROM quiz_scores WHERE player_id = ? AND session_id = ? ORDER BY id DESC LIMIT 1',
+      [player_id, session_id]
+    );
+    const quiz = quizRows[0] || {};
+    let cp1Exact = 0;
+    if (quiz.total_questions > 0 && quiz.correct_answers != null) {
+      cp1Exact = (quiz.correct_answers / quiz.total_questions) * CP_WEIGHT;
+    } else if (quiz.score > 0) {
+      // Fallback: normalize against max quiz score in session
+      const [[{ maxQuiz }]] = await db.query(
+        'SELECT COALESCE(MAX(score), 1) as maxQuiz FROM quiz_scores WHERE session_id = ?',
+        [session_id]
+      );
+      cp1Exact = (quiz.score / Math.max(1, maxQuiz)) * CP_WEIGHT;
+    }
+
+    // ── CP2 score: crossword (full marks if completed) ───────────────────
+    const cp2Done = progress.find(p => p.checkpoint_number === 2)?.completed;
+    const cp2Exact = cp2Done ? CP_WEIGHT : 0;
+
+    // ── CP3 score: food game ─────────────────────────────────────────────
+    const [cp3Rows] = await db.query(
+      'SELECT score FROM cp3_scores WHERE player_id = ? AND session_id = ? ORDER BY id DESC LIMIT 1',
+      [player_id, session_id]
+    );
+    const cp3Raw = cp3Rows[0]?.score || 0;
+    let cp3Exact = 0;
+    if (cp3Raw > 0) {
+      const [[{ maxCP3 }]] = await db.query(
+        'SELECT COALESCE(MAX(score), 1) as maxCP3 FROM cp3_scores WHERE session_id = ?',
+        [session_id]
+      );
+      cp3Exact = Math.min(CP_WEIGHT, (cp3Raw / Math.max(1, maxCP3)) * CP_WEIGHT);
+    }
+
+    // ── Overall score ────────────────────────────────────────────────────
+    const totalExact = cp1Exact + cp2Exact + cp3Exact;
+    const score = totalExact >= 99.5 ? 100 : Math.floor(totalExact);
+
     const completedCount = progress.filter(p => p.completed).length;
-    const score = Math.round((completedCount / 3) * 100);
     const completedAtValues = progress
       .filter(p => p.completed_at)
       .map(p => new Date(p.completed_at).getTime());
