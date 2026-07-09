@@ -368,30 +368,58 @@ const getCrossword = async (req, res) => {
     );
     const cfg = settingsRows[0] || { word_count: 8, selected_words: null };
 
+    // If the caller already has a fixed set of word ids for this game
+    // (the frontend sends this back when re-fetching the same puzzle in a
+    // different language, e.g. after a language toggle), use exactly
+    // those ids instead of drawing a fresh random set. Otherwise every
+    // fetch — including a same-session language toggle — would silently
+    // swap in a completely different set of 8 words.
+    let forcedIds = [];
+    if (req.query.word_ids) {
+      forcedIds = String(req.query.word_ids)
+        .split(',')
+        .map(x => parseInt(x, 10))
+        .filter(n => Number.isInteger(n) && n > 0);
+    }
+
     let query = 'SELECT * FROM crossword_data';
     let queryParams = [];
 
-    let selectedIds = [];
-    try {
-      if (cfg.selected_words) {
-        selectedIds = typeof cfg.selected_words === 'string'
-          ? JSON.parse(cfg.selected_words)
-          : cfg.selected_words;
-      }
-    } catch (e) {
-      console.error('Failed to parse selected_words JSON:', e.message);
-    }
-
-    if (selectedIds && selectedIds.length > 0) {
-      const placeholders = selectedIds.map(() => '?').join(',');
+    if (forcedIds.length > 0) {
+      const placeholders = forcedIds.map(() => '?').join(',');
       query += ` WHERE id IN (${placeholders})`;
-      queryParams.push(...selectedIds);
+      queryParams.push(...forcedIds);
+    } else {
+      let selectedIds = [];
+      try {
+        if (cfg.selected_words) {
+          selectedIds = typeof cfg.selected_words === 'string'
+            ? JSON.parse(cfg.selected_words)
+            : cfg.selected_words;
+        }
+      } catch (e) {
+        console.error('Failed to parse selected_words JSON:', e.message);
+      }
+
+      if (selectedIds && selectedIds.length > 0) {
+        const placeholders = selectedIds.map(() => '?').join(',');
+        query += ` WHERE id IN (${placeholders})`;
+        queryParams.push(...selectedIds);
+      }
     }
 
     const [rows] = await db.query(query, queryParams);
     const playableRows = normalizeCrosswordRowsForLanguage(rows, language);
-    const shuffled = playableRows.sort(() => Math.random() - 0.5);
-    const selected = shuffled.slice(0, Math.min(shuffled.length, cfg.word_count || 8));
+
+    let selected;
+    if (forcedIds.length > 0) {
+      // Caller pinned an exact word set — use it as-is (already filtered
+      // to just these ids by the WHERE clause above), no random slicing.
+      selected = playableRows;
+    } else {
+      const shuffled = playableRows.sort(() => Math.random() - 0.5);
+      selected = shuffled.slice(0, Math.min(shuffled.length, cfg.word_count || 8));
+    }
 
     const layout = generateCrosswordLayout(selected);
     res.json({ ...layout, settings: cfg, language });

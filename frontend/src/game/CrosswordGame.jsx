@@ -44,6 +44,14 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   const [lbData, setLbData] = useState([]);
   const [settings, setSettings] = useState({ minimum_correct: DEFAULT_MIN_CORRECT });
   const [timerTotal, setTimerTotal] = useState(DEFAULT_TIMER);
+  // Cache of the fully-built layout per language ({ bm: {...}, bi: {...} }),
+  // so switching back and forth doesn't refetch or reshuffle.
+  const [puzzleCache, setPuzzleCache] = useState({});
+  // The fixed set of word ids drawn for this game session. Captured once on
+  // the initial load and reused for every subsequent language fetch so
+  // toggling language never swaps in a different set of clues.
+  const wordIdsRef = useRef(null);
+  const prevLanguageRef = useRef(language);
 
   const resetPuzzleState = () => {
     clearInterval(timerRef.current);
@@ -73,19 +81,21 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   useEffect(() => {
     resetPuzzleState();
     setPhase('loading');
+    setPuzzleCache({});
+    wordIdsRef.current = null;
     const endpoint = sessionId ? `/crossword/${sessionId}` : '/crossword';
-    // NOTE: language is intentionally NOT a dependency here. The puzzle
-    // (grid layout + answer words) is fetched ONCE per session and stays
-    // fixed for the whole game. Toggling the language only swaps the
-    // displayed clue text (via pickLang below) — it must never re-fetch
-    // or rebuild the grid, otherwise progress resets and the layout
-    // changes (BM/BI words have different lengths, so the auto-layout
-    // generator produces a different grid each time).
+    // NOTE: language is intentionally NOT a dependency here. The puzzle is
+    // fetched once at session start; a separate effect below handles
+    // switching languages mid-game (translating completed words instead
+    // of wiping the whole board).
     api.get(endpoint, { params: { language } })
       .then(res => {
         const w = res.data.words;
         const gs = res.data.gridSize || 12;
         const cfg = res.data.settings || {};
+        wordIdsRef.current = w.map(x => x.id);
+        setPuzzleCache({ [language]: { words: w, gridSize: gs } });
+        prevLanguageRef.current = language;
         setWords(w);
         setGridSize(gs);
         setSettings(cfg);
@@ -98,6 +108,67 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       .catch(() => setPhase('error'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
+
+  // Handle language toggles mid-game: swap to that language's layout
+  // (fetching + caching it the first time it's needed, reusing the same
+  // fixed word ids so it's the same 8 clues). Words already solved get
+  // auto-filled with the correct answer in the new language and stay
+  // marked complete; unfinished words are cleared so they can be retyped
+  // in the new grid.
+  useEffect(() => {
+    if (phase !== 'playing') { prevLanguageRef.current = language; return; }
+    if (prevLanguageRef.current === language) return;
+    prevLanguageRef.current = language;
+
+    const applyPuzzle = (data, completedIds) => {
+      const { words: newWords, gridSize: gs } = data;
+      const g = Array(gs).fill(null).map(() => Array(gs).fill(null));
+      newWords.forEach(w => {
+        w.word.toUpperCase().split('').forEach((letter, i) => {
+          const row = w.direction === 'across' ? w.start_row : w.start_row + i;
+          const col = w.direction === 'across' ? w.start_col + i : w.start_col;
+          if (row < gs && col < gs) g[row][col] = letter;
+        });
+      });
+      const newUserGrid = Array(gs).fill(null).map(() => Array(gs).fill(''));
+      const newCompleted = [];
+      newWords.forEach(w => {
+        if (completedIds.includes(w.id)) {
+          w.word.toUpperCase().split('').forEach((letter, i) => {
+            const row = w.direction === 'across' ? w.start_row : w.start_row + i;
+            const col = w.direction === 'across' ? w.start_col + i : w.start_col;
+            newUserGrid[row][col] = letter;
+          });
+          newCompleted.push(w.id);
+        }
+      });
+      setWords(newWords);
+      setGridSize(gs);
+      setGrid(g);
+      setUserGrid(newUserGrid);
+      setCompleted(newCompleted);
+      setSelectedCell(null);
+      setSelectedWord(null);
+      setHintedCells(new Set());
+      setChecked(false);
+    };
+
+    const cached = puzzleCache[language];
+    if (cached) {
+      applyPuzzle(cached, completed);
+      return;
+    }
+
+    const endpoint = sessionId ? `/crossword/${sessionId}` : '/crossword';
+    api.get(endpoint, { params: { language, word_ids: (wordIdsRef.current || []).join(',') } })
+      .then(res => {
+        const data = { words: res.data.words, gridSize: res.data.gridSize || 12 };
+        setPuzzleCache(prev => ({ ...prev, [language]: data }));
+        applyPuzzle(data, completed);
+      })
+      .catch(() => { /* keep the current puzzle on failure */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
 
   useEffect(() => {
     if (phase !== 'playing' || isGameOver || showCongrats) return;
