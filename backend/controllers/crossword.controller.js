@@ -1,6 +1,5 @@
 const { logActivity } = require('./activity.controller');
 const db = require('../db');
-const { translateBmToBi, translateBiToBm } = require('../services/translate.service');
 
 const sanitizeWord = (value) => String(value || '').trim().toUpperCase();
 const isLettersOnly = (value) => /^[a-zA-Z]+$/.test(value);
@@ -554,7 +553,7 @@ const getAllWords = async (req, res) => {
 // FIX: Added full input validation — presence, type, length, and letter-only
 // check for word — preventing DB errors and bad crossword data.
 const addWord = async (req, res) => {
-  const { word, word_bi, clue, clue_bi, source_language = 'bm' } = req.body;
+  const { word, word_bi, clue, clue_bi } = req.body;
 
   if (!word || typeof word !== 'string' || word.trim().length === 0)
     return res.status(400).json({ error: 'BM word is required' });
@@ -562,31 +561,24 @@ const addWord = async (req, res) => {
     return res.status(400).json({ error: 'English word is required' });
   if (!clue || typeof clue !== 'string' || clue.trim().length === 0)
     return res.status(400).json({ error: 'Clue is required' });
+  if (!clue_bi || typeof clue_bi !== 'string' || clue_bi.trim().length === 0)
+    return res.status(400).json({ error: 'English clue is required' });
   if (word.trim().length > 50)
     return res.status(400).json({ error: 'BM word too long (max 50 characters)' });
   if (word_bi.trim().length > 50)
     return res.status(400).json({ error: 'English word too long (max 50 characters)' });
   if (clue.trim().length > 200)
-    return res.status(400).json({ error: 'Clue too long (max 200 characters)' });
+    return res.status(400).json({ error: 'Malay clue too long (max 200 characters)' });
+  if (clue_bi.trim().length > 200)
+    return res.status(400).json({ error: 'English clue too long (max 200 characters)' });
   if (!/^[a-zA-Z]+$/.test(word.trim()))
     return res.status(400).json({ error: 'BM word must contain letters only - no spaces or symbols' });
   if (!/^[a-zA-Z]+$/.test(word_bi.trim()))
     return res.status(400).json({ error: 'English word must contain letters only - no spaces or symbols' });
 
   try {
-    const finalClue = clue.trim();
-    const manualClue = clue_bi?.trim();
-
-    let finalClueBm;
-    let finalClueBi;
-
-    if (source_language === 'bi') {
-      finalClueBi = finalClue;
-      finalClueBm = manualClue || await translateBiToBm(finalClue);
-    } else {
-      finalClueBm = finalClue;
-      finalClueBi = manualClue || await translateBmToBi(finalClue);
-    }
+    const finalClueBm = clue.trim();
+    const finalClueBi = clue_bi.trim();
 
     const [result] = await db.query(
       'INSERT INTO crossword_data (word, word_bi, clue, clue_bi) VALUES (?, ?, ?, ?)',
@@ -603,7 +595,7 @@ const addWord = async (req, res) => {
 
 // ─── updateWord ───────────────────────────────────────────────────────────────
 const updateWord = async (req, res) => {
-  const { word, word_bi, clue, clue_bi, source_language = 'bm' } = req.body;
+  const { word, word_bi, clue, clue_bi } = req.body;
 
   if (!word || typeof word !== 'string' || word.trim().length === 0)
     return res.status(400).json({ error: 'BM word is required' });
@@ -611,31 +603,24 @@ const updateWord = async (req, res) => {
     return res.status(400).json({ error: 'English word is required' });
   if (!clue || typeof clue !== 'string' || clue.trim().length === 0)
     return res.status(400).json({ error: 'Clue is required' });
+  if (!clue_bi || typeof clue_bi !== 'string' || clue_bi.trim().length === 0)
+    return res.status(400).json({ error: 'English clue is required' });
   if (word.trim().length > 50)
     return res.status(400).json({ error: 'BM word too long (max 50 characters)' });
   if (word_bi.trim().length > 50)
     return res.status(400).json({ error: 'English word too long (max 50 characters)' });
   if (clue.trim().length > 200)
-    return res.status(400).json({ error: 'Clue too long (max 200 characters)' });
+    return res.status(400).json({ error: 'Malay clue too long (max 200 characters)' });
+  if (clue_bi.trim().length > 200)
+    return res.status(400).json({ error: 'English clue too long (max 200 characters)' });
   if (!/^[a-zA-Z]+$/.test(word.trim()))
     return res.status(400).json({ error: 'BM word must contain letters only - no spaces or symbols' });
   if (!/^[a-zA-Z]+$/.test(word_bi.trim()))
     return res.status(400).json({ error: 'English word must contain letters only - no spaces or symbols' });
 
   try {
-    const finalClue = clue.trim();
-    const manualClue = clue_bi?.trim();
-
-    let finalClueBm;
-    let finalClueBi;
-
-    if (source_language === 'bi') {
-      finalClueBi = finalClue;
-      finalClueBm = manualClue || await translateBiToBm(finalClue);
-    } else {
-      finalClueBm = finalClue;
-      finalClueBi = manualClue || await translateBmToBi(finalClue);
-    }
+    const finalClueBm = clue.trim();
+    const finalClueBi = clue_bi.trim();
 
     await db.query(
       'UPDATE crossword_data SET word=?, word_bi=?, clue=?, clue_bi=? WHERE id=?',

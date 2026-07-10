@@ -7,8 +7,6 @@ const emptyForm = {
   word_bi: '',
   clue: '',
   clue_bi: '',
-  source_language: 'bm',
-  manual_translation: false
 };
 
 const ManageCrossword = () => {
@@ -21,41 +19,6 @@ const ManageCrossword = () => {
   const [sortFilter, setSortFilter] = useState('latest');
   const [orderFilter, setOrderFilter] = useState('desc');
   const formRef = useRef(null);
-
-  const clueLang = {
-    bm: {
-      languageLabel: 'Bahasa pembayang',
-      manualCheck: 'Saya mahu terjemah manual',
-      hintBm: 'Masukkan pembayang BM. BI akan dijana automatik jika manual tidak ditanda.',
-      hintBi: 'Masukkan pembayang BI. BM akan dijana automatik jika manual tidak ditanda.',
-      manualBadge: '🇬🇧 / 🇲🇾 Terjemahan Manual',
-      translationLabelBm: 'Terjemahan Pembayang (BI)',
-      translationLabelBi: 'Terjemahan Pembayang (BM)',
-      placeholderBm: 'Tulis terjemahan pembayang BI',
-      placeholderBi: 'Tulis terjemahan BM',
-      // Label/example for the main clue field itself when source_language is 'bm'
-      clueLabel: 'Pembayang (BM)',
-      clueExample: 'cth. Organ keras dalam mulut untuk mengunyah',
-      wordExample: 'cth. GIGI',
-    },
-    bi: {
-      languageLabel: 'Clue input language',
-      manualCheck: 'I want to translate manually',
-      hintBm: 'Enter BM clue. English will auto-generate if manual is not checked.',
-      hintBi: 'Enter English clue. BM will auto-generate if manual is not checked.',
-      manualBadge: '🇬🇧 / 🇲🇾 Manual Translation',
-      translationLabelBm: 'Clue Translation (English)',
-      translationLabelBi: 'Clue Translation (BM)',
-      placeholderBm: 'Write English clue translation',
-      placeholderBi: 'Write BM translation',
-      // Label/example for the main clue field itself when source_language is 'bi'
-      clueLabel: 'Clue (English)',
-      clueExample: 'e.g. Hard organ in the mouth used for chewing',
-      wordExample: 'cth. GIGI',
-    }
-  };
-
-  const localText = clueLang[form.source_language];
 
   const fetchWords = () => {
     api.get('/crossword/admin', {
@@ -77,16 +40,13 @@ const ManageCrossword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.word.trim() || !form.word_bi.trim() || !form.clue.trim()) return;
+    if (!form.word.trim() || !form.word_bi.trim() || !form.clue.trim() || !form.clue_bi.trim()) return;
     try {
       const payload = {
         word: form.word.toUpperCase(),
         word_bi: form.word_bi.toUpperCase(),
-        clue: form.clue,
-        source_language: form.source_language,
-        ...(form.manual_translation && form.clue_bi.trim() && {
-          clue_bi: form.clue_bi.trim()
-        })
+        clue: form.clue.trim(),
+        clue_bi: form.clue_bi.trim()
       };
       if (editing) {
         await api.put(`/crossword/admin/${editing}`, payload);
@@ -111,8 +71,6 @@ const ManageCrossword = () => {
       word_bi: w.word_bi || '',
       clue: w.clue,
       clue_bi: w.clue_bi || '',
-      source_language: 'bm',
-      manual_translation: Boolean(w.clue_bi)
     });
     setTimeout(() => {
       formRef.current?.scrollIntoView({
@@ -147,140 +105,62 @@ const ManageCrossword = () => {
 
       <div style={s.twoCol}>
         <div ref={formRef} style={s.card}>
-          <h2 style={s.cardTitle}>{editing ? '✏️ Sunting Perkataan' : '➕ Tambah Perkataan'}</h2>
+          <h2 style={s.cardTitle}>
+            {editing ? `✏️ ${t('admin.editWord')}` : `➕ ${t('admin.addWord')}`}
+          </h2>
           {msg && <div style={msg.includes('✅') ? s.success : s.error}>{msg}</div>}
           <form onSubmit={handleSubmit}>
-            <div style={s.translationPanel}>
-              <div style={s.translationHeader}>
-                <div>
-                  <label style={s.label} data-no-translate="true">
-                    {localText.languageLabel}
-                  </label>
-                  <div style={s.segmented}>
-                    <button
-                      type="button"
-                      style={{
-                        ...s.segmentBtn,
-                        ...(form.source_language === 'bm' ? s.segmentActive : {})
-                      }}
-                      onClick={() => setForm({
-                        ...form,
-                        source_language: 'bm',
-                        clue: '',
-                        clue_bi: ''
-                      })}
-                    >
-                      BM
-                    </button>
-
-                    <button
-                      type="button"
-                      style={{
-                        ...s.segmentBtn,
-                        ...(form.source_language === 'bi' ? s.segmentActive : {})
-                      }}
-                      onClick={() => setForm({
-                        ...form,
-                        source_language: 'bi',
-                        clue: '',
-                        clue_bi: ''
-                      })}
-                    >
-                      English
-                    </button>
-                  </div>
-                </div>
-
-                <label style={s.checkLabel} data-no-translate="true">
-                  <input
-                    type="checkbox"
-                    checked={form.manual_translation}
-                    onChange={e => setForm({
-                      ...form,
-                      manual_translation: e.target.checked
-                    })}
-                  />
-                  {localText.manualCheck}
-                </label>
-              </div>
-
-              <p style={s.translationHint} data-no-translate="true">
-                {form.source_language === 'bm'
-                  ? localText.hintBm
-                  : localText.hintBi}
-              </p>
-            </div>
             <div style={s.field}>
-              <label style={s.label}>Perkataan BM</label>
+              <label style={s.label}>{t('admin.wordBm')}</label>
               <input
                 style={s.input}
                 value={form.word}
                 onChange={e => setForm({ ...form, word: e.target.value.toUpperCase() })}
                 required
-                placeholder={localText.wordExample}
+                placeholder={t('admin.wordBmPlaceholder')}
                 maxLength={15}
               />
               <p style={s.hint}>Maksimum 15 huruf. Sekarang: {form.word.length} huruf</p>
             </div>
             <div style={s.field}>
-              <label style={s.label}>English Word</label>
+              <label style={s.label}>{t('admin.wordBi')}</label>
               <input
                 style={s.input}
                 value={form.word_bi}
                 onChange={e => setForm({ ...form, word_bi: e.target.value.toUpperCase() })}
                 required
-                placeholder="Example: TOOTH"
+                placeholder={t('admin.wordBiPlaceholder')}
                 maxLength={15}
                 data-no-translate="true"
               />
               <p style={s.hint}>Maximum 15 letters. Current: {form.word_bi.length} letters</p>
             </div>
             <div style={s.field}>
-              <label style={s.label}>
-                {localText.clueLabel}
-              </label>
+              <label style={s.label}>{t('admin.clueBm')}</label>
+
               <textarea
                 style={{ ...s.input, height: '80px', resize: 'vertical' }}
                 value={form.clue}
                 onChange={e => setForm({ ...form, clue: e.target.value })}
                 required
-                placeholder={localText.clueExample}
+                placeholder={t('admin.clueBmPlaceholder')}
                 maxLength={200}
               />
             </div>
-            {form.manual_translation && (
-              <div style={s.langSectionBi}>
-                <div style={s.langBadgeBi} data-no-translate="true">
-                  {localText.manualBadge}
-                </div>
 
-                <div style={s.field}>
-                  <label style={s.label} data-no-translate="true">
-                    {form.source_language === 'bm'
-                      ? localText.translationLabelBm
-                      : localText.translationLabelBi}
-                  </label>
+            <div style={s.field}>
+              <label style={s.label}>{t('admin.clueBi')}</label>
 
-                  <textarea
-                    data-no-translate="true"
-                    style={{
-                      ...s.input,
-                      height: '80px',
-                      resize: 'vertical',
-                      borderColor: '#bfdbfe'
-                    }}
-                    value={form.clue_bi}
-                    onChange={e => setForm({ ...form, clue_bi: e.target.value })}
-                    maxLength={200}
-                    placeholder={
-                      form.source_language === 'bm'
-                        ? localText.placeholderBm
-                        : localText.placeholderBi
-                    }
-                  />
-                </div>
-              </div>
-            )}
+              <textarea
+                style={{ ...s.input, height: '80px', resize: 'vertical' }}
+                value={form.clue_bi}
+                onChange={e => setForm({ ...form, clue_bi: e.target.value })}
+                required
+                placeholder={t('admin.clueBiPlaceholder')}
+                maxLength={200}
+              />
+            </div>
+
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button style={s.btnPrimary} type="submit">{editing ? 'Kemaskini' : 'Tambah'}</button>
               {editing && <button style={s.btnSecondary} type="button" onClick={() => { setEditing(null); setForm(emptyForm); }}>Batal</button>}
@@ -363,8 +243,19 @@ const ManageCrossword = () => {
                   <div style={s.clueBi}><strong>BI:</strong> {w.clue_bi || 'Belum ada terjemahan'} </div>
                 </td>
                 <td style={s.td}>
-                  <span style={s.letterBadge}>BM {w.word.length}</span>
-                  <span style={{ ...s.letterBadge, marginLeft: '0.35rem' }}>BI {(w.word_bi || '').length || '-'}</span>
+                  <div style={s.letterCountBox}>
+                    <div>
+                      <strong style={s.letterCountLabel}>BM</strong>
+                      <span style={s.letterCountColon}>:</span>
+                      <span>{w.word.length}</span>
+                    </div>
+
+                    <div>
+                      <strong style={s.letterCountLabel}>BI</strong>
+                      <span style={s.letterCountColon}>:</span>
+                      <span>{(w.word_bi || '').length || '-'}</span>
+                    </div>
+                  </div>
                 </td>
                 <td style={s.td}>
                   <button style={s.btnEdit} onClick={() => handleEdit(w)}>✏️</button>
@@ -409,6 +300,9 @@ const s = {
   trEven: { background: '#fafafa' },
   wordDot: { width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '800', fontSize: '0.75rem' },
   letterBadge: { background: '#f1f5f9', color: '#475569', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: '600' },
+  letterCountBox: { lineHeight: 1.7, fontSize: '0.82rem', color: '#475569' },
+  letterCountLabel: { display: 'inline-block', width: '24px', color: '#1e3a5f', fontWeight: '700' },
+  letterCountColon: { marginRight: '0.35rem', color: '#94a3b8' },
   btnEdit: { background: '#eff6ff', color: '#2563eb', border: 'none', borderRadius: '6px', padding: '0.35rem 0.6rem', cursor: 'pointer', fontSize: '0.82rem', marginRight: '0.4rem' },
   btnDelete: { background: '#fff1f2', color: '#e11d48', border: 'none', borderRadius: '6px', padding: '0.35rem 0.6rem', cursor: 'pointer', fontSize: '0.82rem' },
   filterBar: { display: 'grid', gridTemplateColumns: '1fr 180px 180px', gap: '0.75rem', marginBottom: '1rem' },
