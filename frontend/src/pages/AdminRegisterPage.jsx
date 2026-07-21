@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import LanguageToggle from '../components/LanguageToggle';
+import { useLanguage } from '../context/LanguageContext';
 
 const AdminRegisterPage = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
 
@@ -21,18 +23,18 @@ const AdminRegisterPage = () => {
     if (!token) { setPhase('error'); return; }
     api.get(`/admin/verify-invite/${token}`)
       .then(res => { setEmail(res.data.email); setPhase('form'); })
-      .catch(err => { setError(err.response?.data?.error || 'Pautan jemputan tidak sah atau telah tamat tempoh'); setPhase('error'); });
+      .catch(err => { setError(err.response?.data?.error || t('register.errInvalidLink')); setPhase('error'); });
   }, [token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password !== confirmPassword) { setError('Kata laluan tidak sepadan!'); return; }
-    if (password.length < 6) { setError('Kata laluan mesti sekurang-kurangnya 6 aksara'); return; }
+    if (password !== confirmPassword) { setError(t('register.errMismatch')); return; }
+    if (password.length < 6) { setError(t('register.errMinLength')); return; }
     setLoading(true); setError('');
     try {
       await api.post('/admin/complete-registration', { token, name, password });
       setPhase('done');
-    } catch (err) { setError(err.response?.data?.error || 'Pendaftaran gagal'); }
+    } catch (err) { setError(err.response?.data?.error || t('register.errFailed')); }
     finally { setLoading(false); }
   };
 
@@ -46,7 +48,7 @@ const AdminRegisterPage = () => {
         {phase === 'loading' && (
           <div style={{textAlign:'center', padding:'2rem'}}>
             <div style={s.spinner} />
-            <p style={{color:'#64748b', marginTop:'1rem'}}>Mengesahkan jemputan...</p>
+            <p style={{color:'#64748b', marginTop:'1rem'}}>{t('register.verifying')}</p>
             <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
           </div>
         )}
@@ -54,39 +56,39 @@ const AdminRegisterPage = () => {
         {phase === 'error' && (
           <div style={{textAlign:'center'}}>
             <div style={{fontSize:'4rem', marginBottom:'1rem'}}>❌</div>
-            <h2 style={s.title}>Jemputan Tidak Sah</h2>
-            <p style={{color:'#64748b', marginBottom:'1.5rem'}}>{error || 'Pautan jemputan ini tidak sah atau telah tamat tempoh.'}</p>
-            <button style={s.btn} onClick={() => navigate('/admin/login')}>Pergi ke Log Masuk</button>
+            <h2 style={s.title}>{t('register.invalidTitle')}</h2>
+            <p style={{color:'#64748b', marginBottom:'1.5rem'}}>{error || t('register.invalidDefault')}</p>
+            <button style={s.btn} onClick={() => navigate('/admin/login')}>{t('register.goToLogin')}</button>
           </div>
         )}
 
         {phase === 'form' && (
           <>
-            <h2 style={s.title}>Sediakan Akaun Anda 🎉</h2>
-            <p style={s.subtitle}>Anda telah dijemput untuk menyertai DentalQuest. Lengkapkan profil anda di bawah.</p>
+            <h2 style={s.title}>{t('register.setupTitle')}</h2>
+            <p style={s.subtitle}>{t('register.setupSubtitle')}</p>
             <div style={s.emailBadge}>📧 {email}</div>
             {error && <div style={s.error}>{error}</div>}
             <form onSubmit={handleSubmit}>
               <div style={s.field}>
-                <label style={s.label}>Nama Penuh Anda</label>
-                <input style={s.input} value={name} onChange={e => setName(e.target.value)} required placeholder="cth. Cikgu Ahmad" autoFocus maxLength={80} />
+                <label style={s.label}>{t('register.fullName')}</label>
+                <input style={s.input} value={name} onChange={e => setName(e.target.value)} required placeholder={t('register.namePlaceholder')} autoFocus maxLength={80} />
               </div>
               <div style={s.field}>
-                <label style={s.label}>Kata Laluan</label>
+                <label style={s.label}>{t('register.password')}</label>
                 <div style={s.passWrap}>
-                  <input style={{...s.input, flex:1}} type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required placeholder="Min 6 aksara" minLength={6} maxLength={128} />
+                  <input style={{...s.input, flex:1}} type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required placeholder={t('register.passwordPlaceholder')} minLength={6} maxLength={128} />
                   <button type="button" style={s.eyeBtn} onClick={() => setShowPass(!showPass)}>{showPass ? '🙈' : '👁️'}</button>
                 </div>
               </div>
               <div style={s.field}>
-                <label style={s.label}>Sahkan Kata Laluan</label>
-                <input style={s.input} type={showPass ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="Ulang kata laluan" maxLength={128} />
+                <label style={s.label}>{t('register.confirmPassword')}</label>
+                <input style={s.input} type={showPass ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder={t('register.confirmPlaceholder')} maxLength={128} />
                 {password && confirmPassword && password !== confirmPassword && (
-                  <p style={{color:'#e11d48', fontSize:'0.78rem', margin:'0.25rem 0 0'}}>⚠️ Kata laluan tidak sepadan</p>
+                  <p style={{color:'#e11d48', fontSize:'0.78rem', margin:'0.25rem 0 0'}}>{t('register.passwordMismatch')}</p>
                 )}
               </div>
               <button style={s.btn} type="submit" disabled={loading}>
-                {loading ? 'Mencipta Akaun...' : '✅ Cipta Akaun'}
+                {loading ? t('register.creating') : t('register.createBtn')}
               </button>
             </form>
           </>
@@ -95,9 +97,9 @@ const AdminRegisterPage = () => {
         {phase === 'done' && (
           <div style={{textAlign:'center'}}>
             <div style={{fontSize:'4rem', marginBottom:'1rem'}}>🎉</div>
-            <h2 style={s.title}>Akaun Berjaya Dicipta!</h2>
-            <p style={{color:'#64748b', marginBottom:'1.5rem'}}>Akaun anda telah berjaya disediakan. Anda boleh log masuk sekarang!</p>
-            <button style={s.btn} onClick={() => navigate('/admin/login')}>→ Pergi ke Log Masuk</button>
+            <h2 style={s.title}>{t('register.doneTitle')}</h2>
+            <p style={{color:'#64748b', marginBottom:'1.5rem'}}>{t('register.doneSubtitle')}</p>
+            <button style={s.btn} onClick={() => navigate('/admin/login')}>→ {t('register.goToLogin')}</button>
           </div>
         )}
       </div>

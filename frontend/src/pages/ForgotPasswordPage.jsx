@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import LanguageToggle from '../components/LanguageToggle';
+import { useLanguage } from '../context/LanguageContext';
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [step, setStep] = useState('email'); // email | otp | reset | done
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState(['', '', '', '']);
@@ -21,7 +23,7 @@ const ForgotPasswordPage = () => {
     try {
       await api.post('/auth/forgot-password', { email });
       setStep('otp');
-    } catch (err) { setError(err.response?.data?.error || 'Gagal menghantar OTP'); }
+    } catch (err) { setError(err.response?.data?.error || t('forgotPw.errSendOtp')); }
     finally { setLoading(false); }
   };
 
@@ -36,25 +38,25 @@ const ForgotPasswordPage = () => {
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
     const otpStr = otp.join('');
-    if (otpStr.length !== 4) { setError('Sila masukkan OTP 4 digit penuh'); return; }
+    if (otpStr.length !== 4) { setError(t('forgotPw.errFullOtp')); return; }
     setLoading(true); setError('');
     try {
       const res = await api.post('/auth/verify-otp', { email, otp: otpStr });
       setResetToken(res.data.resetToken);
       setStep('reset');
-    } catch (err) { setError(err.response?.data?.error || 'OTP tidak sah'); }
+    } catch (err) { setError(err.response?.data?.error || t('forgotPw.errInvalidOtp')); }
     finally { setLoading(false); }
   };
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (newPassword !== confirmPassword) { setError('Kata laluan tidak sepadan!'); return; }
-    if (newPassword.length < 6) { setError('Kata laluan mesti sekurang-kurangnya 6 aksara'); return; }
+    if (newPassword !== confirmPassword) { setError(t('forgotPw.errMismatch')); return; }
+    if (newPassword.length < 6) { setError(t('forgotPw.errMinLength')); return; }
     setLoading(true); setError('');
     try {
       await api.post('/auth/reset-password', { resetToken, newPassword });
       setStep('done');
-    } catch (err) { setError(err.response?.data?.error || 'Gagal menetapkan semula kata laluan'); }
+    } catch (err) { setError(err.response?.data?.error || t('forgotPw.errResetFailed')); }
     finally { setLoading(false); }
   };
 
@@ -70,19 +72,19 @@ const ForgotPasswordPage = () => {
         {/* Step 1: Enter Email */}
         {step === 'email' && (
           <>
-            <h2 style={s.title}>Lupa Kata Laluan? 🔑</h2>
-            <p style={s.subtitle}>Masukkan e-mel pentadbir anda dan kami akan menghantar OTP 4 digit untuk menetapkan semula kata laluan anda.</p>
+            <h2 style={s.title}>{t('forgotPw.title')}</h2>
+            <p style={s.subtitle}>{t('forgotPw.subtitle')}</p>
             <form onSubmit={handleSendOTP}>
               <div style={s.field}>
-                <label style={s.label}>E-mel Pentadbir</label>
-                <input style={s.input} type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="guru@contoh.com" autoFocus maxLength={120} />
+                <label style={s.label}>{t('forgotPw.emailLabel')}</label>
+                <input style={s.input} type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder={t('forgotPw.emailPlaceholder')} autoFocus maxLength={120} />
               </div>
               <button style={s.btn} type="submit" disabled={loading}>
-                {loading ? 'Menghantar...' : '📧 Hantar OTP'}
+                {loading ? t('forgotPw.sending') : t('forgotPw.sendOtp')}
               </button>
             </form>
             <div style={s.backLink}>
-              <Link to="/admin/login" style={s.link}>← Kembali ke Log Masuk</Link>
+              <Link to="/admin/login" style={s.link}>{t('forgotPw.backToLogin')}</Link>
             </div>
           </>
         )}
@@ -90,8 +92,8 @@ const ForgotPasswordPage = () => {
         {/* Step 2: Enter OTP */}
         {step === 'otp' && (
           <>
-            <h2 style={s.title}>Masukkan OTP 📬</h2>
-            <p style={s.subtitle}>Kami telah menghantar OTP 4 digit ke <strong>{email}</strong>. Semak peti masuk anda!</p>
+            <h2 style={s.title}>{t('forgotPw.otpTitle')}</h2>
+            <p style={s.subtitle}>{t('forgotPw.otpSubtitlePre')} <strong>{email}</strong>{t('forgotPw.otpSubtitlePost')}</p>
             <form onSubmit={handleVerifyOTP}>
               <div style={s.otpRow}>
                 {otp.map((digit, idx) => (
@@ -110,12 +112,12 @@ const ForgotPasswordPage = () => {
                 ))}
               </div>
               <button style={s.btn} type="submit" disabled={loading || otp.join('').length !== 4}>
-                {loading ? 'Mengesahkan...' : '✅ Sahkan OTP'}
+                {loading ? t('forgotPw.verifying') : t('forgotPw.verifyOtp')}
               </button>
             </form>
             <div style={s.backLink}>
               <button style={s.linkBtn} onClick={() => { setStep('email'); setOtp(['','','','']); setError(''); }}>
-                ← Hantar Semula OTP
+                {t('forgotPw.resendOtp')}
               </button>
             </div>
           </>
@@ -124,25 +126,25 @@ const ForgotPasswordPage = () => {
         {/* Step 3: Reset Password */}
         {step === 'reset' && (
           <>
-            <h2 style={s.title}>Tetapkan Semula Kata Laluan 🔒</h2>
-            <p style={s.subtitle}>Masukkan kata laluan baru anda di bawah.</p>
+            <h2 style={s.title}>{t('forgotPw.resetTitle')}</h2>
+            <p style={s.subtitle}>{t('forgotPw.resetSubtitle')}</p>
             <form onSubmit={handleResetPassword}>
               <div style={s.field}>
-                <label style={s.label}>Kata Laluan Baru</label>
+                <label style={s.label}>{t('forgotPw.newPassword')}</label>
                 <div style={s.passWrap}>
-                  <input style={{...s.input, flex:1}} type={showPass ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)} required placeholder="Min 6 aksara" minLength={6} maxLength={128} />
+                  <input style={{...s.input, flex:1}} type={showPass ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)} required placeholder={t('forgotPw.newPasswordPlaceholder')} minLength={6} maxLength={128} />
                   <button type="button" style={s.eyeBtn} onClick={() => setShowPass(!showPass)}>{showPass ? '🙈' : '👁️'}</button>
                 </div>
               </div>
               <div style={s.field}>
-                <label style={s.label}>Sahkan Kata Laluan Baru</label>
-                <input style={s.input} type={showPass ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder="Ulang kata laluan baru" maxLength={128} />
+                <label style={s.label}>{t('forgotPw.confirmPassword')}</label>
+                <input style={s.input} type={showPass ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required placeholder={t('forgotPw.confirmPasswordPlaceholder')} maxLength={128} />
                 {newPassword && confirmPassword && newPassword !== confirmPassword && (
-                  <p style={{color:'#e11d48', fontSize:'0.78rem', margin:'0.25rem 0 0'}}>⚠️ Kata laluan tidak sepadan</p>
+                  <p style={{color:'#e11d48', fontSize:'0.78rem', margin:'0.25rem 0 0'}}>{t('forgotPw.passwordMismatch')}</p>
                 )}
               </div>
               <button style={s.btn} type="submit" disabled={loading}>
-                {loading ? 'Menetapkan semula...' : '🔒 Tetapkan Semula Kata Laluan'}
+                {loading ? t('forgotPw.resetting') : t('forgotPw.resetBtn')}
               </button>
             </form>
           </>
@@ -152,10 +154,10 @@ const ForgotPasswordPage = () => {
         {step === 'done' && (
           <div style={{textAlign:'center'}}>
             <div style={{fontSize:'4rem', marginBottom:'1rem'}}>🎉</div>
-            <h2 style={s.title}>Kata Laluan Ditetapkan Semula!</h2>
-            <p style={s.subtitle}>Kata laluan anda telah berjaya ditetapkan semula. Anda boleh log masuk dengan kata laluan baru anda sekarang.</p>
+            <h2 style={s.title}>{t('forgotPw.doneTitle')}</h2>
+            <p style={s.subtitle}>{t('forgotPw.doneSubtitle')}</p>
             <button style={s.btn} onClick={() => navigate('/admin/login')}>
-              → Pergi ke Log Masuk
+              {t('forgotPw.goToLogin')}
             </button>
           </div>
         )}
