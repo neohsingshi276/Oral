@@ -2,6 +2,123 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 
+// ─── Web Audio Sound System ────────────────────────────────────────────────────
+// All sounds are synthesized via the Web Audio API — no audio files required.
+let audioCtx = null;
+let bgMusicInterval = null;
+let bgGainNode = null;
+
+const getAudioCtx = () => {
+  if (!audioCtx || audioCtx.state === 'closed') {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+};
+
+// 🎵 Cheerful ascending chime — plays when catching GOOD food
+const playGoodFoodSound = (muted) => {
+  if (muted) return;
+  try {
+    const ctx = getAudioCtx();
+    // C5 → E5 → G5 major arpeggio — bright & rewarding
+    const notes = [523.25, 659.25, 783.99];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const start = ctx.currentTime + i * 0.08;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.25, start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3);
+      osc.start(start);
+      osc.stop(start + 0.35);
+    });
+  } catch { /* AudioContext blocked */ }
+};
+
+// 🔴 Descending buzzy tone — plays when catching BAD food
+const playBadFoodSound = (muted) => {
+  if (muted) return;
+  try {
+    const ctx = getAudioCtx();
+    // Two descending tones with 'sawtooth' for a buzzy, warning feel
+    const notes = [440, 330];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.value = freq;
+      const start = ctx.currentTime + i * 0.12;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.15, start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
+      osc.start(start);
+      osc.stop(start + 0.3);
+    });
+  } catch { /* AudioContext blocked */ }
+};
+
+// 🎶 Background music — a fun looping melody using Web Audio synthesis
+const startBgMusic = (muted) => {
+  stopBgMusic(); // ensure no double-play
+  if (muted) return;
+  try {
+    const ctx = getAudioCtx();
+    bgGainNode = ctx.createGain();
+    bgGainNode.gain.value = 0.08;
+    bgGainNode.connect(ctx.destination);
+
+    // Simple fun melody: pentatonic notes in C major
+    const melody = [
+      523.25, 587.33, 659.25, 783.99, 880.00,  // C5 D5 E5 G5 A5
+      783.99, 659.25, 587.33, 523.25, 659.25,  // G5 E5 D5 C5 E5
+      783.99, 880.00, 783.99, 659.25, 523.25,  // G5 A5 G5 E5 C5
+      587.33, 659.25, 523.25, 440.00, 523.25,  // D5 E5 C5 A4 C5
+    ];
+    let noteIndex = 0;
+    const noteDuration = 0.22;
+    const noteGap = 0.25;
+
+    const playNote = () => {
+      if (!bgGainNode) return;
+      const osc = ctx.createOscillator();
+      const noteGain = ctx.createGain();
+      osc.connect(noteGain);
+      noteGain.connect(bgGainNode);
+      osc.type = 'triangle';
+      osc.frequency.value = melody[noteIndex % melody.length];
+      const now = ctx.currentTime;
+      noteGain.gain.setValueAtTime(0, now);
+      noteGain.gain.linearRampToValueAtTime(0.5, now + 0.03);
+      noteGain.gain.setValueAtTime(0.5, now + noteDuration - 0.05);
+      noteGain.gain.exponentialRampToValueAtTime(0.001, now + noteDuration);
+      osc.start(now);
+      osc.stop(now + noteDuration + 0.05);
+      noteIndex++;
+    };
+
+    playNote(); // first note immediately
+    bgMusicInterval = setInterval(playNote, noteGap * 1000);
+  } catch { /* AudioContext blocked */ }
+};
+
+const stopBgMusic = () => {
+  if (bgMusicInterval) {
+    clearInterval(bgMusicInterval);
+    bgMusicInterval = null;
+  }
+  if (bgGainNode) {
+    try { bgGainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3); } catch { /* */ }
+    bgGainNode = null;
+  }
+};
+
 const DEFAULT_DURATION = 60;
 const TROLLEY_SPEED = 1.5;
 const TROLLEY_ACCELERATION = 0.18;
@@ -56,6 +173,8 @@ const CP3Game = ({ player, onComplete }) => {
   const [finalScore, setFinalScore] = useState(0);
   const [gameDuration, setGameDuration] = useState(DEFAULT_DURATION);
   const [targetScore, setTargetScore] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const isMutedRef = useRef(false);
 
   const gameAreaRef = useRef(null);
   const keysPressed = useRef({});
@@ -66,9 +185,10 @@ const CP3Game = ({ player, onComplete }) => {
   const scoreRef = useRef(0);
   const trolleyPosRef = useRef(50);
 
-  // Keep scoreRef in sync
+  // Keep refs in sync
   useEffect(() => { scoreRef.current = score; }, [score]);
   useEffect(() => { trolleyPosRef.current = trolleyPos; }, [trolleyPos]);
+  useEffect(() => { isMutedRef.current = isMuted; }, [isMuted]);
 
   // Fetch admin settings on mount
   useEffect(() => {
@@ -94,7 +214,14 @@ const CP3Game = ({ player, onComplete }) => {
     setParticles([]);
     setCombo(0);
     trolleyVelocity.current = 0;
+    startBgMusic(isMutedRef.current);
   };
+
+  // Stop music when game ends or component unmounts
+  useEffect(() => {
+    if (gameState !== 'playing') stopBgMusic();
+    return () => stopBgMusic();
+  }, [gameState]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -157,6 +284,9 @@ const CP3Game = ({ player, onComplete }) => {
                 scoreRef.current = ns;
                 return ns;
               });
+              // Play sound based on food type
+              if (item.points > 0) playGoodFoodSound(isMutedRef.current);
+              else playBadFoodSound(isMutedRef.current);
               createParticles(item.x, trolleyY, item.points > 0);
               const now = Date.now();
               if (item.points > 0 && now - lastComboTime.current < 2000) setCombo(c => c + 1);
@@ -365,6 +495,20 @@ const CP3Game = ({ player, onComplete }) => {
             <span style={{ fontSize: '0.72rem', color: '#888', margin: '0 0.25rem' }}>|</span>
             <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#e11d48' }}>{BAD_FOODS.map(f => f.emoji).slice(0, 4).join('')} -70</span>
           </div>
+          <button
+            style={s.muteBtn}
+            onClick={() => {
+              setIsMuted(m => {
+                const next = !m;
+                if (next) stopBgMusic();
+                else if (gameState === 'playing') startBgMusic(false);
+                return next;
+              });
+            }}
+            title={isMuted ? t('game.unmute') || 'Unmute' : t('game.mute') || 'Mute'}
+          >
+            {isMuted ? '🔇' : '🔊'}
+          </button>
           <div style={s.timerPanel}>
             <span style={{ ...s.timerVal, color: timeLeft <= 10 ? '#e11d48' : '#4ECDC4' }}>{timeLeft}</span>
             <span style={{ fontSize: '0.75rem', color: '#666' }}>{t('game.seconds')}</span>
@@ -435,6 +579,7 @@ const s = {
   trolley: { position: 'absolute', bottom: '20px', transform: 'translateX(-50%)', willChange: 'transform' },
   controlsHint: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginTop: '0.75rem', background: '#fff', padding: '0.75rem 2rem', borderRadius: '50px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', border: '2px solid #FFE66D' },
   keyBtn: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', background: 'linear-gradient(135deg,#4ECDC4,#44A08D)', color: '#fff', borderRadius: '8px', fontWeight: '800', fontSize: '1rem' },
+  muteBtn: { background: '#fff', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '1.4rem', width: '42px', height: '42px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'transform 0.15s', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' },
   lbCard: { background: '#fff', borderRadius: '24px', padding: '2rem', maxWidth: '600px', width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', maxHeight: '90vh', overflowY: 'auto' },
   lbTitle: { fontSize: '1.8rem', fontWeight: '900', textAlign: 'center', color: '#FF6B35', margin: '0.5rem 0 1rem', textShadow: '2px 2px 0 #FFE66D' },
   yourScore: { background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', borderRadius: '16px', padding: '1.25rem', textAlign: 'center', marginBottom: '1.5rem' },
