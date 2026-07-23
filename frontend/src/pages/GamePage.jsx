@@ -179,15 +179,7 @@ const GamePage = () => {
       const chatConfig = tokenToUse ? { headers: { Authorization: `Bearer ${tokenToUse}` } } : null;
       const res = await api.get(`/game/progress/${playerId}`, chatConfig);
       setProgress(res.data.progress);
-      const allCompleted = res.data.progress.every(p => p.completed);
-      if (allCompleted && res.data.progress.length === 3) {
-        setAllDone(true);
-        if (!reduceMotion) {
-          playSuccessChime();
-          setTimeout(() => { playSuccessChime(); }, 600);
-          setShowConfetti(true);
-        }
-      }
+      // allDone is now triggered by reaching CP4, not by having 3 CPs complete
     } catch (err) {
       console.error(err);
     }
@@ -256,7 +248,7 @@ const GamePage = () => {
 
         const allCompleted = prog.every(cp => cp.completed);
         if (allCompleted && prog.length === 3) {
-          setAllDone(true);
+          // Don't auto-trigger allDone — player must walk to CP4
           setShowTutorial(false);
         } else {
           const completedNums = prog.filter(cp => cp.completed).map(cp => cp.checkpoint_number);
@@ -287,6 +279,18 @@ const GamePage = () => {
     // Removing the duplicate check here — it caused false rejections due
     // to stale progress state, keeping CP2/CP3 locked even after completion.
     console.log(`[CP] handleCheckpointReached CP${cpId}`, JSON.stringify(progressStateRef.current));
+    // CP4 is special — no video/activity, directly trigger allDone flow
+    if (cpId === 4) {
+      setAllDone(true);
+      setConcludingVideoWatched(false);
+      if (!reduceMotion) {
+        playSuccessChime();
+        setTimeout(() => { playSuccessChime(); }, 600);
+        setShowConfetti(true);
+      }
+      return;
+    }
+
     const chatConfig = getPlayerChatConfig();
     try {
       await api.post('/game/attempt', { player_id: player.id, checkpoint_number: cpId }, chatConfig);
@@ -320,8 +324,8 @@ const GamePage = () => {
     }
 
     if (completedCP === 3) {
-      setActiveCP(null);
-      setCpStep('video');
+      // CP3 now shows the "done" card like CP1 and CP2
+      setCpStep('done');
     } else {
       setCpStep('done');
     }
@@ -481,7 +485,7 @@ const GamePage = () => {
     // this checkpoint (cpStep === 'done'). Cancelling during the video
     // should NOT trigger the "Welcome to CP2/CP3" card.
     const didComplete = cpStep === 'done';
-    const nextHint = activeCP === 1 ? 2 : activeCP === 2 ? 3 : null;
+    const nextHint = activeCP === 1 ? 2 : activeCP === 2 ? 3 : activeCP === 3 ? 4 : null;
     setActiveCP(null);
     setCpStep('video');
     if (didComplete && nextHint) setCheckpointHint(nextHint);
@@ -595,6 +599,16 @@ const GamePage = () => {
       clue: t('game.cpHint3Clue'),
       activity: t('game.foodGame'),
     },
+    4: {
+      title: t('game.cpHint4Title'),
+      badge: '🏆',
+      photo: null,
+      accent: '#D4A843',
+      bg: '#fef9ee',
+      heading: t('game.cpHint4Heading'),
+      clue: t('game.cpHint4Clue'),
+      activity: t('game.cpHint4Activity') || 'Concluding Video',
+    },
   };
 
   useEffect(() => {
@@ -642,11 +656,13 @@ const GamePage = () => {
         </div>
         <div style={s.headerRight}>
           <LanguageToggle compact style={{ background: 'rgba(255,255,255,0.1)', color: '#FFD700' }} />
-          {[1, 2, 3].map(cp => {
-            const done = progress.find(p => p.checkpoint_number === cp)?.completed;
+          {[1, 2, 3, 4].map(cp => {
+            const done = cp <= 3
+              ? progress.find(p => p.checkpoint_number === cp)?.completed
+              : allDone;
             return (
-              <div key={cp} style={{ ...s.cpBadge, background: done ? '#16a34a' : '#94a3b8' }}>
-                {done ? '✓' : cp}
+              <div key={cp} style={{ ...s.cpBadge, background: done ? '#16a34a' : cp === 4 ? '#D4A843' : '#94a3b8' }}>
+                {done ? '✓' : cp === 4 ? '🏆' : cp}
               </div>
             );
           })}
@@ -1178,29 +1194,33 @@ const GamePage = () => {
               />
             )}
 
-            {cpStep === 'done' && activeCP !== 3 && (
+            {cpStep === 'done' && (
               <div style={{ ...s.modalBody, textAlign: 'center' }}>
                 <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎉</div>
                 <h3 style={{ color: '#16a34a', fontSize: '1.4rem', fontWeight: '800' }}>
                   {t('game.checkpoint')} {activeCP} {t('game.checkpointDone')}
                 </h3>
                 <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
-                  {t('game.nextCheckpoint')}
+                  {activeCP === 3
+                    ? (language === 'bi' ? 'Walk to the Final Checkpoint to watch the concluding video and claim your certificate!' : 'Jalan ke Pusat Pemeriksaan Akhir untuk menonton video penutup dan dapatkan sijil anda!')
+                    : t('game.nextCheckpoint')}
                 </p>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button
-                    style={{ ...s.continueBtn, background: '#64748b', flex: '0 0 auto', width: 'auto', padding: '0.85rem 1.25rem', fontSize: '0.9rem' }}
-                    onClick={() => {
-                      api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }, getPlayerChatConfig()).catch(console.error);
-                      if (activeCP === 1) setQuizKey(prev => prev + 1);
-                      if (activeCP === 2) setCrosswordKey(prev => prev + 1);
-                      setCpStep('video');
-                    }}
-                  >
-                    🔄 {t('game.retry', 'Cuba Semula')}
-                  </button>
-                  <button style={{ ...s.continueBtn, background: '#16a34a', flex: 1 }} onClick={handleCloseCPModal}>
-                    {t('game.continueAdventure')} →
+                  {activeCP !== 3 && (
+                    <button
+                      style={{ ...s.continueBtn, background: '#64748b', flex: '0 0 auto', width: 'auto', padding: '0.85rem 1.25rem', fontSize: '0.9rem' }}
+                      onClick={() => {
+                        api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }, getPlayerChatConfig()).catch(console.error);
+                        if (activeCP === 1) setQuizKey(prev => prev + 1);
+                        if (activeCP === 2) setCrosswordKey(prev => prev + 1);
+                        setCpStep('video');
+                      }}
+                    >
+                      🔄 {t('game.retry', 'Cuba Semula')}
+                    </button>
+                  )}
+                  <button style={{ ...s.continueBtn, background: activeCP === 3 ? 'linear-gradient(135deg, #D4A843, #B8922E)' : '#16a34a', flex: 1 }} onClick={handleCloseCPModal}>
+                    {activeCP === 3 ? `🏆 ${language === 'bi' ? 'Go to Final Checkpoint' : 'Pergi ke Pusat Pemeriksaan Akhir'}` : `${t('game.continueAdventure')} →`}
                   </button>
                 </div>
               </div>

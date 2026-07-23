@@ -158,7 +158,7 @@ const BAD_FOODS = [
 ];
 
 const CP3Game = ({ player, onComplete }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [gameState, setGameState] = useState('start');
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(DEFAULT_DURATION);
@@ -390,7 +390,105 @@ const CP3Game = ({ player, onComplete }) => {
             <div style={s.foodRow}>{BAD_FOODS.map((f, i) => <div key={i} style={s.foodChip}>{f.emoji}</div>)}</div>
           </div>
         </div>
-        <button style={s.startBtn} onClick={startGame}>🎮 {t('game.startGame')}</button>
+        <button style={s.startBtn} onClick={() => setGameState('education')}>📚 {language === 'bi' ? 'Learn About the Foods!' : 'Belajar Tentang Makanan!'}</button>
+      </div>
+    </div>
+  );
+
+  // EDUCATION SCREEN — teaches cariogenic vs non-cariogenic foods
+  if (gameState === 'education') return (
+    <div style={s.fullPage}>
+      <style>{animStyles}</style>
+      <div style={{ ...s.startCard, maxWidth: '780px', maxHeight: '92vh', overflowY: 'auto', padding: '1.5rem 2rem' }}>
+
+        {/* Header */}
+        <h1 style={{ ...s.title, fontSize: '2rem', marginBottom: '0.4rem' }}>🦷 {language === 'bi' ? 'Food & Dental Health' : 'Makanan & Kesihatan Gigi'}</h1>
+        <div style={s.badge}>{t('game.checkpoint3')}</div>
+
+        {/* What is Cariogenic? */}
+        <div style={{ background: 'linear-gradient(135deg, #fff1f2, #ffe4e6)', borderRadius: '16px', padding: '1.25rem 1.5rem', marginBottom: '1rem', border: '2px solid #fecdd3', textAlign: 'left' }}>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#e11d48', margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            🔬 {language === 'bi' ? 'What is Cariogenic Food?' : 'Apa Itu Makanan Kariogenik?'}
+          </h2>
+          <p style={{ color: '#1e293b', fontSize: '0.95rem', lineHeight: 1.7, margin: 0, fontWeight: 600 }}>
+            {language === 'bi'
+              ? '"Cariogenic" means food that causes tooth decay (caries). These foods are high in sugar — when you eat them, bacteria in your mouth turn the sugar into acid that attacks your tooth enamel! 😱'
+              : '"Kariogenik" bermaksud makanan yang menyebabkan kerosakan gigi (karies). Makanan ini tinggi gula — apabila anda memakannya, bakteria dalam mulut anda menukar gula menjadi asid yang menyerang enamel gigi! 😱'}
+          </p>
+        </div>
+
+        {/* Two columns: Good vs Bad */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+
+          {/* GOOD FOODS — Non-cariogenic */}
+          <div style={{ background: '#f0fdf4', borderRadius: '14px', padding: '1rem', border: '2px solid #86efac' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <span style={{ background: '#16a34a', color: '#fff', borderRadius: '8px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: 900 }}>✅</span>
+              <h3 style={{ fontSize: '1rem', fontWeight: 900, color: '#15803d', margin: 0 }}>
+                {language === 'bi' ? 'Good for Teeth' : 'Baik Untuk Gigi'}
+              </h3>
+            </div>
+            <p style={{ color: '#166534', fontSize: '0.78rem', fontWeight: 600, margin: '0 0 0.6rem', lineHeight: 1.5 }}>
+              {language === 'bi'
+                ? 'Non-cariogenic! These foods strengthen teeth and help prevent cavities. Catch them in the game! (+100 points)'
+                : 'Bukan kariogenik! Makanan ini menguatkan gigi dan membantu mencegah gigi berlubang. Tangkap dalam permainan! (+100 mata)'}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              {GOOD_FOODS.map((f, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff', borderRadius: '8px', padding: '0.3rem 0.6rem', border: '1px solid #bbf7d0' }}>
+                  <span style={{ fontSize: '1.3rem' }}>{f.emoji}</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e293b' }}>{f.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* BAD FOODS — Cariogenic */}
+          <div style={{ background: '#fff1f2', borderRadius: '14px', padding: '1rem', border: '2px solid #fca5a5' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <span style={{ background: '#e11d48', color: '#fff', borderRadius: '8px', padding: '0.3rem 0.6rem', fontSize: '0.75rem', fontWeight: 900 }}>❌</span>
+              <h3 style={{ fontSize: '1rem', fontWeight: 900, color: '#be123c', margin: 0 }}>
+                {language === 'bi' ? 'Bad for Teeth (Cariogenic!)' : 'Buruk Untuk Gigi (Kariogenik!)'}
+              </h3>
+            </div>
+            <p style={{ color: '#9f1239', fontSize: '0.78rem', fontWeight: 600, margin: '0 0 0.6rem', lineHeight: 1.5 }}>
+              {language === 'bi'
+                ? 'Cariogenic! These sugary foods feed bacteria that cause cavities. Avoid them in the game! (-70 points)'
+                : 'Kariogenik! Makanan bergula ini memberi makan bakteria yang menyebabkan gigi berlubang. Elakkan dalam permainan! (-70 mata)'}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              {BAD_FOODS.map((f, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff', borderRadius: '8px', padding: '0.3rem 0.6rem', border: '1px solid #fecdd3' }}>
+                  <span style={{ fontSize: '1.3rem' }}>{f.emoji}</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e293b' }}>{f.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Key takeaway */}
+        <div style={{ background: '#eff6ff', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '1rem', border: '1.5px solid #bfdbfe', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span style={{ fontSize: '2rem', flexShrink: 0 }}>💡</span>
+          <p style={{ margin: 0, color: '#1e40af', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.5 }}>
+            {language === 'bi'
+              ? 'Remember: In the game, use your trolley to CATCH the healthy foods and DODGE the cariogenic ones!'
+              : 'Ingat: Dalam permainan, gunakan troli anda untuk TANGKAP makanan sihat dan ELAK yang kariogenik!'}
+          </p>
+        </div>
+
+        {/* Buttons */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem' }}>
+          <button
+            style={{ ...s.startBtn, background: '#64748b', boxShadow: '0 4px 15px rgba(100,116,139,0.3)', fontSize: '1rem' }}
+            onClick={() => setGameState('start')}
+          >
+            ← {language === 'bi' ? 'Back' : 'Kembali'}
+          </button>
+          <button style={s.startBtn} onClick={startGame}>
+            🎮 {t('game.startGame')}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -58,6 +58,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
   // getIsCheckpointUnlocked reads from progressRef.current directly (a ref, not state),
   // so it always has the latest progress every Phaser frame without re-creating the callback.
   // CP1 is always unlocked. CP2 requires CP1 completed. CP3 requires CP2 completed.
+  // CP4 requires CP3 completed (it's a virtual "finish" checkpoint with no game activity).
   const getIsCheckpointUnlocked = useCallback((cpId) => {
     if (cpId === 1) return true;
     const prev = progressRef.current.find(p => p.checkpoint_number === cpId - 1);
