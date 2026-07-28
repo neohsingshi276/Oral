@@ -95,13 +95,6 @@ const ManageCrossword = () => {
 
   return (
     <div>
-      <div style={s.infoBanner}>
-        <span style={{ fontSize: '1.2rem' }}>🧩</span>
-        <div>
-          <strong>Susun Atur Automatik</strong> — Grid teka silang kata dijana secara automatik! Hanya tambah perkataan dan pembayang.
-          Sistem memilih 8 perkataan rawak setiap permainan dan menyusunnya dengan mencari huruf yang bersilang.
-        </div>
-      </div>
 
       <div style={s.twoCol}>
         <div ref={formRef} style={s.card}>
@@ -179,15 +172,6 @@ const ManageCrossword = () => {
               <div style={{ ...s.statValue, color: words.length >= 8 ? '#16a34a' : '#e11d48' }}>{words.length >= 8 ? '✅' : '❌'}</div>
               <div style={s.statLabel}>{words.length >= 8 ? 'Sedia untuk dimain!' : `Perlu ${8 - words.length} lagi`}</div>
             </div>
-          </div>
-          <div style={s.infoBox}>
-            <p style={s.infoText}><strong>Cara ia berfungsi:</strong></p>
-            <ul style={s.infoList}>
-              <li>Setiap permainan memilih <strong>8 perkataan rawak</strong> daripada bank perkataan</li>
-              <li>Sistem <strong>menyusun secara automatik</strong> ke dalam grid teka silang kata</li>
-              <li>Pemain perlu <strong>80%</strong> betul untuk lulus</li>
-              <li>Lebih banyak perkataan = lebih pelbagai untuk setiap permainan!</li>
-            </ul>
           </div>
         </div>
       </div>
@@ -274,7 +258,6 @@ const ManageCrossword = () => {
 const COLORS = ['#2563eb', '#16a34a', '#e11d48', '#f59e0b', '#9333ea', '#0d9488', '#ea580c', '#db2777', '#0284c7', '#65a30d'];
 
 const s = {
-  infoBanner: { display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '1rem 1.25rem', marginBottom: '1.5rem', fontSize: '0.88rem', color: '#1e40af', lineHeight: 1.5 },
   twoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' },
   card: { background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
   cardTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#1e3a5f', margin: '0 0 1.25rem' },
@@ -290,9 +273,6 @@ const s = {
   statCard: { background: '#f8fafc', borderRadius: '12px', padding: '1.25rem', textAlign: 'center', border: '1px solid #e2e8f0' },
   statValue: { fontSize: '2rem', fontWeight: '800', color: '#2563eb' },
   statLabel: { color: '#64748b', fontSize: '0.82rem', marginTop: '0.25rem' },
-  infoBox: { background: '#f8fafc', borderRadius: '12px', padding: '1rem', border: '1px solid #e2e8f0' },
-  infoText: { color: '#475569', fontSize: '0.85rem', margin: '0 0 0.5rem' },
-  infoList: { color: '#64748b', fontSize: '0.82rem', margin: 0, paddingLeft: '1.25rem', lineHeight: 1.8 },
   table: { width: '100%', borderCollapse: 'collapse' },
   thead: { background: '#f8fafc' },
   th: { padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.82rem', fontWeight: '600', color: '#64748b', borderBottom: '1px solid #e2e8f0' },

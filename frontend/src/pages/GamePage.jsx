@@ -377,25 +377,25 @@ const GamePage = () => {
   <rect x="80" y="80" width="1240" height="140" rx="4" fill="url(#headerGrad)"/>
   <rect x="80" y="80" width="1240" height="3" fill="#D4A843"/>
   <rect x="80" y="217" width="1240" height="3" fill="#D4A843"/>
-  <text x="700" y="148" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="bold" fill="#D4A843" letter-spacing="14">DENTAL QUEST</text>
-  <text x="700" y="195" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" fill="rgba(255,255,255,0.75)" letter-spacing="8">CERTIFICATE OF COMPLETION</text>
+  <text x="700" y="148" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="bold" fill="#D4A843" letter-spacing="14">${language === 'bm' ? 'KEMBARA GIGI SIHAT' : 'DENTAL QUEST'}</text>
+  <text x="700" y="195" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" fill="rgba(255,255,255,0.75)" letter-spacing="8">${language === 'bm' ? 'SIJIL PENCAPAIAN' : 'CERTIFICATE OF COMPLETION'}</text>
   <line x1="400" y1="270" x2="1000" y2="270" stroke="#D4A843" stroke-width="1" opacity="0.5"/>
   <circle cx="700" cy="270" r="4" fill="#D4A843"/><circle cx="400" cy="270" r="2.5" fill="#D4A843"/><circle cx="1000" cy="270" r="2.5" fill="#D4A843"/>
-  <text x="700" y="320" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="22" fill="#64748b" font-style="italic">~ This is to certify that ~</text>
+  <text x="700" y="320" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="22" fill="#64748b" font-style="italic">${language === 'bm' ? '~ Ini adalah untuk mengesahkan bahawa ~' : '~ This is to certify that ~'}</text>
   <text x="700" y="${330 + nameFontSize}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="${nameFontSize}" font-weight="bold" fill="#1e293b">${displayName}</text>
   <line x1="250" y1="${345 + nameFontSize}" x2="1150" y2="${345 + nameFontSize}" stroke="#D4A843" stroke-width="2"/>
-  <text x="700" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#475569">has successfully completed all checkpoints of the</text>
-  <text x="700" y="525" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#1e3a5f">Dental Quest Program</text>
-  <text x="700" y="565" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="17" fill="#64748b" font-style="italic">and demonstrated excellence in dental health knowledge and awareness</text>
+  <text x="700" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#475569">${language === 'bm' ? 'telah berjaya melengkapkan semua pusat pemeriksaan' : 'has successfully completed all checkpoints of the'}</text>
+  <text x="700" y="525" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#1e3a5f">${language === 'bm' ? 'Program Kembara Gigi Sihat' : 'Dental Quest Program'}</text>
+  <text x="700" y="565" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="17" fill="#64748b" font-style="italic">${language === 'bm' ? 'dan menunjukkan kecemerlangan dalam pengetahuan dan kesedaran kesihatan pergigian' : 'and demonstrated excellence in dental health knowledge and awareness'}</text>
   <circle cx="700" cy="680" r="72" fill="url(#scoreBg)" stroke="#D4A843" stroke-width="4"/>
   <circle cx="700" cy="680" r="62" fill="none" stroke="rgba(212,168,67,0.3)" stroke-width="2"/>
-  <text x="700" y="660" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#D4A843" letter-spacing="3">FINAL SCORE</text>
+  <text x="700" y="660" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#D4A843" letter-spacing="3">${language === 'bm' ? 'MARKAH AKHIR' : 'FINAL SCORE'}</text>
   <text x="700" y="705" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="38" font-weight="bold" fill="#D4A843">${cert.score}/100</text>
   <text x="700" y="800" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#475569">Session: ${escapeXml(cert.session_name || '-')} | School / Class: ${escapeXml(schoolClass)}</text>
   <text x="700" y="840" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#94a3b8">Date Completed: ${escapeXml(dateStr)}</text>
   <line x1="400" y1="870" x2="1000" y2="870" stroke="#D4A843" stroke-width="1" opacity="0.5"/>
   <circle cx="700" cy="870" r="3" fill="#D4A843"/>
-  <text x="700" y="910" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" fill="#D4A843" font-style="italic">Keep smiling, keep learning!</text>
+  <text x="700" y="910" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" fill="#D4A843" font-style="italic">${language === 'bm' ? 'Teruskan senyum, teruskan belajar!' : 'Keep smiling, keep learning!'}</text>
 </svg>`;
 
       const svgForDownload = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="990" viewBox="0 0 1400 990">${svgContent.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '')}</svg>`;
@@ -411,7 +411,7 @@ const GamePage = () => {
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Certificate — ${escapeXml(cert.nickname)} | Dental Quest</title>
+  <title>Certificate — ${escapeXml(cert.nickname)} | ${language === 'bm' ? 'Kembara Gigi Sihat' : 'Dental Quest'}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #0f172a; min-height: 100vh; display: flex; flex-direction: column; align-items: center; font-family: Arial, sans-serif; }
@@ -440,7 +440,7 @@ const GamePage = () => {
 </head>
 <body>
   <div class="toolbar">
-    <h1>🎓 Dental Quest Certificate</h1>
+    <h1>🎓 ${language === 'bm' ? 'Sijil Kembara Gigi Sihat' : 'Dental Quest Certificate'}</h1>
     <button class="btn btn-download" id="dlBtn">📥 Download</button>
     <button class="btn btn-print" onclick="window.print()">🖨️ Print</button>
     <button class="btn btn-close" onclick="window.close()">✕ Close</button>
@@ -651,7 +651,7 @@ const GamePage = () => {
       {/* Header */}
       <div style={s.header}>
         <div style={s.headerLeft}>
-          <span style={s.logo}>🦷 Dental Quest</span>
+          <span style={s.logo}>🦷 {t('join.appTitle')}</span>
           <span style={s.playerBadge} title={player.nickname}>👤 {player.nickname}</span>
         </div>
         <div style={s.headerRight}>
@@ -685,6 +685,7 @@ const GamePage = () => {
           externalGameRef={gameInstanceRef}
           virtualInput={virtualInput}
           enterSignal={enterSignal}
+          loadingText={t('game.loadingGame')}
         />
       </div>
 

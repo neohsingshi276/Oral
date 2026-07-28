@@ -50,35 +50,35 @@ const getSessions = async (req, res) => {
     // No WHERE filter needed; the password modal is the access control.
     // (Previously filtered by teacher_id which was always the admin's id — so always 0 results.)
 
-if (search.trim()) {
-  query += `
+    if (search.trim()) {
+      query += `
     AND (
       s.session_name LIKE ?
       OR sch.school_name LIKE ?
       OR c.class_name LIKE ?
     )
   `;
-  const keyword = `%${search.trim()}%`;
-  params.push(keyword, keyword, keyword);
-}
+      const keyword = `%${search.trim()}%`;
+      params.push(keyword, keyword, keyword);
+    }
 
-if (status === 'active') {
-  query += ` AND s.is_active = TRUE`;
-}
+    if (status === 'active') {
+      query += ` AND s.is_active = TRUE`;
+    }
 
-if (status === 'inactive') {
-  query += ` AND s.is_active = FALSE`;
-}
+    if (status === 'inactive') {
+      query += ` AND s.is_active = FALSE`;
+    }
 
-if (sort === 'oldest') {
-  query += ` ORDER BY s.created_at ASC`;
-} else if (sort === 'az') {
-  query += ` ORDER BY sch.school_name ASC, c.class_name ASC, s.session_name ASC`;
-} else if (sort === 'za') {
-  query += ` ORDER BY sch.school_name DESC, c.class_name DESC, s.session_name DESC`;
-} else {
-  query += ` ORDER BY s.created_at DESC`;
-}
+    if (sort === 'oldest') {
+      query += ` ORDER BY s.created_at ASC`;
+    } else if (sort === 'az') {
+      query += ` ORDER BY sch.school_name ASC, c.class_name ASC, s.session_name ASC`;
+    } else if (sort === 'za') {
+      query += ` ORDER BY sch.school_name DESC, c.class_name DESC, s.session_name DESC`;
+    } else {
+      query += ` ORDER BY s.created_at DESC`;
+    }
 
     const [sessions] = await db.query(query, params);
 
@@ -198,9 +198,10 @@ const createSession = async (req, res) => {
 
     if (crossword_settings) {
       await db.query(
-        'INSERT INTO crossword_settings (session_id, word_count, selected_words, minimum_correct) VALUES (?,?,?,?)',
+        'INSERT INTO crossword_settings (session_id, timer_seconds, word_count, selected_words, minimum_correct) VALUES (?,?,?,?,?)',
         [
           sessionId,
+          safeInt(crossword_settings.timer_seconds, 300, 30, 1800),
           safeInt(crossword_settings.word_count, 8, 3, 50),
           JSON.stringify(crossword_settings.selected_words || []),
           safeInt(crossword_settings.minimum_correct, 0, 0, 50)
@@ -297,16 +298,18 @@ const updateSession = async (req, res) => {
 
     if (crossword_settings) {
       await db.query(
-        `INSERT INTO crossword_settings (session_id, word_count, selected_words, minimum_correct)
-         VALUES (?,?,?,?)
+        `INSERT INTO crossword_settings (session_id, timer_seconds, word_count, selected_words, minimum_correct)
+         VALUES (?,?,?,?,?)
          ON DUPLICATE KEY UPDATE
+          timer_seconds=VALUES(timer_seconds),
            word_count=VALUES(word_count), selected_words=VALUES(selected_words),
            minimum_correct=VALUES(minimum_correct)`,
         [
           sessionId,
+          safeInt(crossword_settings.timer_seconds, 300, 30, 1800),
           safeInt(crossword_settings.word_count, 8, 3, 50),
           JSON.stringify(crossword_settings.selected_words || []),
-          safeInt(crossword_settings.minimum_correct, 0, 0, 50),
+          safeInt(crossword_settings.minimum_correct, 0, 0, 50)
         ]
       );
     }

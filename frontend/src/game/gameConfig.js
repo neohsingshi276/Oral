@@ -86,9 +86,9 @@ export const CONCLUDING_VIDEO_IDS = {
 // Video IDs keyed by language ('bm' = Bahasa Melayu, 'bi' = Bahasa Inggeris)
 export const CHECKPOINT_VIDEO_IDS = {
   bm: {
-    1: 'lzBabM39SUE',
-    2: 'ZuysfO_GP9M',
-    3: 'O6jGPTtBUMU',
+    1: 'LqyiRPbXwsw',
+    2: 'qec7yX56Rjk',
+    3: 'z_KdORV4TSs',
   },
   bi: {
     1: 'phXLxdkYmfU',

@@ -192,7 +192,7 @@ const JoinGamePage = () => {
                 <div style={s.icon}>🗺️</div>
               </div>
             </div>
-            <h1 style={s.title}>Dental Quest!</h1>
+            <h1 style={s.title}>{t('join.appTitle')}</h1>
             <p style={s.tagline}>{t('join.tagline')}</p>
           </>
         )}

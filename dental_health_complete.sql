@@ -421,6 +421,17 @@ INSERT IGNORE INTO facts (created_by, title, content) VALUES
 (1, 'Enamel Adalah Bahan Paling Keras', 'Enamel gigi adalah bahan paling keras dalam badan manusia, lebih keras daripada tulang!'),
 (1, 'Bakteria Dalam Mulut', 'Terdapat lebih 700 jenis bakteria dalam mulut manusia. Memberus gigi membantu mengurangkan bakteria berbahaya.');
 
+CREATE TABLE IF NOT EXISTS crossword_settings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id INT NOT NULL UNIQUE,
+  word_count INT DEFAULT 8,
+  selected_words JSON NULL,
+  minimum_correct INT DEFAULT 0,
+  FOREIGN KEY (session_id) REFERENCES game_sessions(id) ON DELETE CASCADE
+);
+
+ALTER TABLE crossword_settings
+ADD COLUMN timer_seconds INT DEFAULT 300;
 SET FOREIGN_KEY_CHECKS = 1;
 SET SQL_SAFE_UPDATES = 1;
 

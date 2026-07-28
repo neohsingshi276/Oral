@@ -78,7 +78,7 @@ const ManageSessions = () => {
     session_name: '',
     reveal_password: '',
     q_mode: 'random', q_timer: 15, q_order: 'shuffle', q_count: 0, q_min: 0, q_selected: [],
-    cw_mode: 'random', cw_count: 0, cw_selected: [], cw_min: 0,
+    cw_mode: 'random', cw_timer: 300, cw_count: 0, cw_selected: [], cw_min: 0,
     cp3_timer: 60, cp3_min: 0
   };
 
@@ -168,6 +168,7 @@ const ManageSessions = () => {
       q_selected: qSel,
 
       cw_mode: cwSel.length > 0 ? 'manual' : 'random',
+      cw_timer: cs.timer_seconds || 300,
       cw_count: cs.word_count || 8,
       cw_selected: cwSel,
       cw_min: cs.minimum_correct || 0,
@@ -230,6 +231,7 @@ const ManageSessions = () => {
           selected_questions: form.q_mode === 'manual' ? form.q_selected : null
         },
         crossword_settings: {
+          timer_seconds: form.cw_timer,
           word_count: form.cw_mode === 'manual' ? form.cw_selected.length : form.cw_count,
           selected_words: form.cw_mode === 'manual' ? form.cw_selected : null,
           minimum_correct: form.cw_min
@@ -432,6 +434,25 @@ const ManageSessions = () => {
             {step === 3 && (
               <div style={s.stepContent}>
                 <h3 style={s.secTitle}>{t('admin.step3Crossword')}</h3>
+
+                <div style={{ maxWidth: '600px' }}>
+                  <SelectOrCustom
+                    t={t}
+                    label={t('admin.crosswordTimeLimit')}
+                    value={form.cw_timer}
+                    onChange={v => setForm({ ...form, cw_timer: v })}
+                    min={30}
+                    max={1800}
+                    options={[
+                      { value: 120, label: t('admin.twoMinutes') },
+                      { value: 300, label: t('admin.fiveMinutes') },
+                      { value: 600, label: t('admin.tenMinutes') }
+                    ]}
+                  />
+                  <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '-0.5rem', marginBottom: '1rem' }}>
+                    {t('admin.customTimeSecondsHint')}
+                  </p>
+                </div>
 
                 <div style={s.field}>
                   <label style={s.label}>{t('admin.chooseWords')}</label>
