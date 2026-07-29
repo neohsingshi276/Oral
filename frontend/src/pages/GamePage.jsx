@@ -559,53 +559,54 @@ const GamePage = () => {
   }, [player, token, navigate]);
 
   const mapTutorialPages = [
-    { icon: '➡️', title: t('game.step1Title'), desc: t('game.step1Desc'), bg: '#eff6ff', accent: '#2563eb', arrows: [
-      { color: '#2563eb', label: t('game.step1Blue') },
-      { color: '#7B2FBE', label: t('game.step1Purple') },
-      { color: '#dc2626', label: t('game.step1Red') },
-    ] },
+    {
+      icon: '➡️', title: t('game.step1Title'), desc: t('game.step1Desc'), bg: '#eff6ff', accent: '#2563eb', arrows: [
+        { color: '#2563eb', label: t('game.step1Blue') },
+        { color: '#7B2FBE', label: t('game.step1Purple') },
+        { color: '#dc2626', label: t('game.step1Red') },
+      ]
+    },
     { icon: '🔢', title: t('game.step2Title'), desc: t('game.step2Desc'), bg: '#f0fdf4', accent: '#16a34a' },
     { icon: '🎬', title: t('game.step3Title'), desc: t('game.step3Desc'), bg: '#eff6ff', accent: '#2563eb' },
     { icon: '✅', title: t('game.step4Title'), desc: t('game.step4Desc'), bg: '#f0fdf4', accent: '#16a34a' },
     { icon: '🔄', title: t('game.step5Title'), desc: t('game.step5Desc'), bg: '#fff7ed', accent: '#ea580c' },
     { icon: '🏆', title: t('game.step6Title'), desc: t('game.step6Desc'), bg: '#fdf4ff', accent: '#7c3aed' },
-    { icon: '🦷', title: t('game.step7Title'), desc: '', bg: '#f8fafc', accent: '#1e3a5f', checkpoints: [
-      { color: '#2563eb', label: t('game.step7Cp1') },
-      { color: '#7B2FBE', label: t('game.step7Cp2') },
-      { color: '#dc2626', label: t('game.step7Cp3') },
-    ] },
+    {
+      icon: '🦷', title: t('game.step7Title'), desc: '', bg: '#f8fafc', accent: '#1e3a5f', checkpoints: [
+        { color: '#2563eb', label: t('game.step7Cp1') },
+        { color: '#7B2FBE', label: t('game.step7Cp2') },
+        { color: '#dc2626', label: t('game.step7Cp3') },
+      ]
+    },
   ];
 
   const checkpointHints = {
     1: {
       title: t('game.cpHint1Title'),
-      badge: 'CP1',
+      badge: 'Checkpoint 1',
       photo: cp1Photo,
       accent: '#7B2FBE',
       bg: '#ede9fe',
       heading: t('game.cpHint1Heading'),
       clue: t('game.cpHint1Clue'),
-      activity: t('game.quiz'),
     },
     2: {
       title: t('game.cpHint2Title'),
-      badge: 'CP2',
+      badge: 'Checkpoint 2',
       photo: cp2Photo,
       accent: '#CC3380',
       bg: '#fce7f3',
       heading: t('game.cpHint2Heading'),
       clue: t('game.cpHint2Clue'),
-      activity: t('game.crossword'),
     },
     3: {
       title: t('game.cpHint3Title'),
-      badge: 'CP3',
+      badge: 'Checkpoint 3',
       photo: cp3Photo,
       accent: '#E85D04',
       bg: '#fff7ed',
       heading: t('game.cpHint3Heading'),
       clue: t('game.cpHint3Clue'),
-      activity: t('game.foodGame'),
     },
     4: {
       title: t('game.cpHint4Title'),
@@ -862,7 +863,7 @@ const GamePage = () => {
                 </div>
 
                 {/* Big badge */}
-                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '110px', height: '110px', borderRadius: '28px', background: hint.accent, color: '#fff', fontWeight: 900, fontSize: '2.4rem', marginBottom: '1rem', boxShadow: `0 10px 32px ${hint.accent}55`, position: 'relative' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.8rem 1.8rem', borderRadius: '20px', background: hint.accent, color: '#fff', fontWeight: 900, fontSize: '1.6rem', marginBottom: '1rem', boxShadow: `0 10px 32px ${hint.accent}55`, position: 'relative' }}>
                   {hint.badge}
                 </div>
 
