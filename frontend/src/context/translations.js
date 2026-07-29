@@ -552,11 +552,7 @@ const bm = {
     crosswordExceedsDbLimit: 'Teka silang kata: Bilangan perkataan diminta melebihi had pangkalan data!',
     loadingPlayerData: 'Memuatkan data pemain…',
     loadingAnalytics: 'Memuatkan analitik...',
-    crosswordTimeLimit: "Crossword Time Limit",
-    twoMinutes: "2 minutes",
-    fiveMinutes: "5 minutes",
-    tenMinutes: "10 minutes",
-    customTimeSecondsHint: "💡 Custom time must be entered in seconds (e.g., 240 seconds = 4 minutes)",
+
   },
   forgotPw: {
     title: 'Lupa Kata Laluan? 🔑',
