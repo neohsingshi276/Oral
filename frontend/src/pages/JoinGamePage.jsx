@@ -239,7 +239,7 @@ const JoinGamePage = () => {
           <>
             <div style={s.sessionFound}>
               <div style={s.sessionFoundIcon}>✅</div>
-              <p style={s.sessionFoundText}>{t('join.success')} <strong>{session.session_name}</strong></p>
+              <p style={s.sessionFoundText}>{t('join.success')}</p>
             </div>
 
             <div style={s.stepBadge}>
