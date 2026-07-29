@@ -559,13 +559,21 @@ const GamePage = () => {
   }, [player, token, navigate]);
 
   const mapTutorialPages = [
-    { icon: '🎬', title: t('game.stepWatchTitle'), subtitle: `${t('game.checkpointsTitle')} • 1 / 7`, desc: t('game.stepWatchDesc'), bg: '#eff6ff' },
-    { icon: '🎮', title: t('game.stepActivityTitle'), subtitle: `${t('game.checkpointsTitle')} • 2 / 7`, desc: t('game.stepActivityDesc'), bg: '#f0fdf4' },
-    { icon: '⚠️', title: t('game.retryTitle'), subtitle: `${t('game.checkpointsTitle')} • 3 / 7`, desc: t('game.retryDesc'), bg: '#fff7ed' },
-    { icon: '🏆', title: t('game.scoreboardTitle'), subtitle: `${t('game.checkpointsTitle')} • 4 / 7`, desc: t('game.scoreboardDesc'), bg: '#fdf4ff' },
-    { badge: 'CP1', accent: '#7B2FBE', title: `${t('game.cp1Title')} ?`, subtitle: `${t('game.checkpointDetailsTitle')} • 5 / 7`, desc: t('game.cp1Desc'), bg: '#ede9fe' },
-    { badge: 'CP2', accent: '#CC3380', title: `${t('game.cp2Title')} 🧩`, subtitle: `${t('game.checkpointDetailsTitle')} • 6 / 7`, desc: t('game.cp2Desc'), bg: '#fce7f3' },
-    { badge: 'CP3', accent: '#E85D04', title: `${t('game.cp3Title')} 🍎`, subtitle: `${t('game.checkpointDetailsTitle')} • 7 / 7`, desc: t('game.cp3Desc'), bg: '#fff7ed', note: t('game.scoreboardNote') },
+    { icon: '➡️', title: t('game.step1Title'), desc: t('game.step1Desc'), bg: '#eff6ff', accent: '#2563eb', arrows: [
+      { color: '#2563eb', label: t('game.step1Blue') },
+      { color: '#7B2FBE', label: t('game.step1Purple') },
+      { color: '#dc2626', label: t('game.step1Red') },
+    ] },
+    { icon: '🔢', title: t('game.step2Title'), desc: t('game.step2Desc'), bg: '#f0fdf4', accent: '#16a34a' },
+    { icon: '🎬', title: t('game.step3Title'), desc: t('game.step3Desc'), bg: '#eff6ff', accent: '#2563eb' },
+    { icon: '✅', title: t('game.step4Title'), desc: t('game.step4Desc'), bg: '#f0fdf4', accent: '#16a34a' },
+    { icon: '🔄', title: t('game.step5Title'), desc: t('game.step5Desc'), bg: '#fff7ed', accent: '#ea580c' },
+    { icon: '🏆', title: t('game.step6Title'), desc: t('game.step6Desc'), bg: '#fdf4ff', accent: '#7c3aed' },
+    { icon: '🦷', title: t('game.step7Title'), desc: '', bg: '#f8fafc', accent: '#1e3a5f', checkpoints: [
+      { color: '#2563eb', label: t('game.step7Cp1') },
+      { color: '#7B2FBE', label: t('game.step7Cp2') },
+      { color: '#dc2626', label: t('game.step7Cp3') },
+    ] },
   ];
 
   const checkpointHints = {
@@ -615,7 +623,7 @@ const GamePage = () => {
     if (!showTutorial || tutorialPage >= mapTutorialPages.length - 1) return;
     const timer = setTimeout(() => {
       setTutorialPage(page => Math.min(page + 1, mapTutorialPages.length - 1));
-    }, 4000);
+    }, 10000);
     return () => clearTimeout(timer);
   }, [showTutorial, tutorialPage, mapTutorialPages.length]);
 
@@ -745,7 +753,6 @@ const GamePage = () => {
                 )}
 
                 <h2 style={{ fontSize: '2.2rem', fontWeight: 900, color: '#1e3a5f', margin: '0 0 0.35rem', lineHeight: 1.2 }}>{page.title}</h2>
-                <p style={{ color: '#475569', fontSize: '1.1rem', margin: 0, fontWeight: 700 }}>{page.subtitle}</p>
               </div>
 
               {/* ── Card body ── */}
@@ -758,15 +765,39 @@ const GamePage = () => {
                   </div>
                 )}
 
-                {/* Description row */}
-                <div style={{ background: page.bg, borderRadius: '16px', padding: '1.4rem 1.5rem', display: 'flex', alignItems: 'flex-start', gap: '1.1rem', textAlign: 'left', marginBottom: '1.5rem', border: `1.5px solid ${page.accent || '#e2e8f0'}33` }}>
-                  {page.badge ? (
-                    <div style={{ color: '#fff', background: page.accent, borderRadius: '10px', padding: '0.45rem 0.8rem', fontSize: '1.05rem', fontWeight: 900, flexShrink: 0, marginTop: '2px' }}>{page.badge}</div>
-                  ) : (
+                {/* Description row — only when desc is non-empty */}
+                {page.desc && (
+                  <div style={{ background: page.bg, borderRadius: '16px', padding: '1.4rem 1.5rem', display: 'flex', alignItems: 'flex-start', gap: '1.1rem', textAlign: 'left', marginBottom: '1.5rem', border: `1.5px solid ${page.accent || '#e2e8f0'}33` }}>
                     <span style={{ fontSize: '2.5rem', width: '56px', textAlign: 'center', flexShrink: 0, lineHeight: 1, marginTop: '2px' }}>{page.icon}</span>
-                  )}
-                  <p style={{ margin: 0, color: '#1e293b', fontSize: '1.2rem', lineHeight: 1.65, fontWeight: 700 }}>{page.desc}</p>
-                </div>
+                    <p style={{ margin: 0, color: '#1e293b', fontSize: '1.2rem', lineHeight: 1.65, fontWeight: 700 }}>{page.desc}</p>
+                  </div>
+                )}
+
+                {/* Arrow indicators for Step 1 */}
+                {page.arrows && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                    {page.arrows.map((arrow, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#fff', borderRadius: '14px', padding: '0.9rem 1.2rem', border: `2px solid ${arrow.color}33`, boxShadow: `0 2px 8px ${arrow.color}15` }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: arrow.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <span style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 900 }}>▶</span>
+                        </div>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>{arrow.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Checkpoint list for Step 7 */}
+                {page.checkpoints && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                    {page.checkpoints.map((cp, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#fff', borderRadius: '14px', padding: '0.9rem 1.2rem', border: `2px solid ${cp.color}33`, boxShadow: `0 2px 8px ${cp.color}15` }}>
+                        <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: cp.color, flexShrink: 0, boxShadow: `0 2px 6px ${cp.color}55` }} />
+                        <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1e293b' }}>Checkpoint {i + 1}: <span style={{ color: cp.color }}>{cp.label}</span></span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {page.note && (
                   <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '14px', padding: '1rem 1.1rem', color: '#15803d', fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem' }}>
@@ -930,40 +961,53 @@ const GamePage = () => {
             </div>
           </div>,
 
-          // Page 1 — Checkpoints overview
+          // Page 1 — Steps overview
           <div key="p1" style={{ ...s.doneCard, maxWidth: '520px', padding: '2rem' }}>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
               <div style={{ fontSize: '3.5rem' }}>🏁</div>
-              <h2 style={{ ...s.doneTitle, fontSize: '1.4rem', margin: '0.5rem 0 0.25rem' }}>{t('game.checkpointsTitle')}</h2>
-              <p style={{ color: '#64748b', fontSize: '0.88rem', margin: 0 }}>{t('game.checkpointsSub')} • 2 / 3</p>
+              <h2 style={{ ...s.doneTitle, fontSize: '1.4rem', margin: '0.5rem 0 0.25rem' }}>{t('game.step1Title')}</h2>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', margin: '1.25rem 0' }}>
               <div style={tut.row('#eff6ff')}>
-                <span style={tut.icon}>🎬</span>
+                <span style={tut.icon}>➡️</span>
                 <div>
-                  <strong style={tut.title}>{t('game.stepWatchTitle')}</strong>
-                  <p style={tut.desc}>{t('game.stepWatchDesc')}</p>
+                  <strong style={tut.title}>{t('game.step1Title')}</strong>
+                  <p style={tut.desc}>{t('game.step1Desc')}</p>
                 </div>
               </div>
               <div style={tut.row('#f0fdf4')}>
-                <span style={tut.icon}>🎮</span>
+                <span style={tut.icon}>🔢</span>
                 <div>
-                  <strong style={tut.title}>{t('game.stepActivityTitle')}</strong>
-                  <p style={tut.desc}>{t('game.stepActivityDesc')}</p>
+                  <strong style={tut.title}>{t('game.step2Title')}</strong>
+                  <p style={tut.desc}>{t('game.step2Desc')}</p>
+                </div>
+              </div>
+              <div style={tut.row('#eff6ff')}>
+                <span style={tut.icon}>🎬</span>
+                <div>
+                  <strong style={tut.title}>{t('game.step3Title')}</strong>
+                  <p style={tut.desc}>{t('game.step3Desc')}</p>
+                </div>
+              </div>
+              <div style={tut.row('#f0fdf4')}>
+                <span style={tut.icon}>✅</span>
+                <div>
+                  <strong style={tut.title}>{t('game.step4Title')}</strong>
+                  <p style={tut.desc}>{t('game.step4Desc')}</p>
                 </div>
               </div>
               <div style={tut.row('#fff7ed')}>
-                <span style={tut.icon}>⚠️</span>
+                <span style={tut.icon}>🔄</span>
                 <div>
-                  <strong style={tut.title}>{t('game.retryTitle')}</strong>
-                  <p style={tut.desc}>{t('game.retryDesc')}</p>
+                  <strong style={tut.title}>{t('game.step5Title')}</strong>
+                  <p style={tut.desc}>{t('game.step5Desc')}</p>
                 </div>
               </div>
               <div style={tut.row('#fdf4ff')}>
                 <span style={tut.icon}>🏆</span>
                 <div>
-                  <strong style={tut.title}>{t('game.scoreboardTitle')}</strong>
-                  <p style={tut.desc}>{t('game.scoreboardDesc')}</p>
+                  <strong style={tut.title}>{t('game.step6Title')}</strong>
+                  <p style={tut.desc}>{t('game.step6Desc')}</p>
                 </div>
               </div>
             </div>
@@ -980,34 +1024,27 @@ const GamePage = () => {
           <div key="p2" style={{ ...s.doneCard, maxWidth: '540px', padding: '2rem' }}>
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
               <div style={{ fontSize: '3.5rem' }}>🦷</div>
-              <h2 style={{ ...s.doneTitle, fontSize: '1.4rem', margin: '0.5rem 0 0.25rem' }}>{t('game.checkpointDetailsTitle')}</h2>
-              <p style={{ color: '#64748b', fontSize: '0.88rem', margin: 0 }}>{t('game.activityList')} • 3 / 3</p>
+              <h2 style={{ ...s.doneTitle, fontSize: '1.4rem', margin: '0.5rem 0 0.25rem' }}>{t('game.step7Title')}</h2>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', margin: '1.25rem 0' }}>
-              <div style={tut.row('#ede9fe')}>
-                <div style={{ ...tut.cpBadge, background: '#7B2FBE' }}>CP1</div>
+              <div style={tut.row('#eff6ff')}>
+                <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#2563eb', flexShrink: 0, boxShadow: '0 2px 6px #2563eb55' }} />
                 <div>
-                  <strong style={tut.title}>{t('game.cp1Title')} ❓</strong>
-                  <p style={tut.desc}>{t('game.cp1Desc')}</p>
+                  <strong style={tut.title}>Checkpoint 1: {t('game.step7Cp1')}</strong>
                 </div>
               </div>
-              <div style={tut.row('#fce7f3')}>
-                <div style={{ ...tut.cpBadge, background: '#CC3380' }}>CP2</div>
+              <div style={tut.row('#f3e8ff')}>
+                <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#7B2FBE', flexShrink: 0, boxShadow: '0 2px 6px #7B2FBE55' }} />
                 <div>
-                  <strong style={tut.title}>{t('game.cp2Title')} 🧩</strong>
-                  <p style={tut.desc}>{t('game.cp2Desc')}</p>
+                  <strong style={tut.title}>Checkpoint 2: {t('game.step7Cp2')}</strong>
                 </div>
               </div>
-              <div style={tut.row('#fff7ed')}>
-                <div style={{ ...tut.cpBadge, background: '#E85D04' }}>CP3</div>
+              <div style={tut.row('#fee2e2')}>
+                <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#dc2626', flexShrink: 0, boxShadow: '0 2px 6px #dc262655' }} />
                 <div>
-                  <strong style={tut.title}>{t('game.cp3Title')} 🍎</strong>
-                  <p style={tut.desc}>{t('game.cp3Desc')}</p>
+                  <strong style={tut.title}>Checkpoint 3: {t('game.step7Cp3')}</strong>
                 </div>
               </div>
-            </div>
-            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '1.25rem', fontSize: '0.83rem', color: '#15803d' }}>
-              🏆 {t('game.scoreboardNote')}
             </div>
             <div style={tut.nav}>
               <div style={tut.dots}>{[0, 1, 2].map(i => <div key={i} style={{ ...tut.dot, background: i === 2 ? '#2563eb' : '#cbd5e1' }} />)}</div>

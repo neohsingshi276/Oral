@@ -74,7 +74,7 @@ const JoinGamePage = () => {
     if (step !== 'guide' || isLastGuidePage) return;
     const timer = setTimeout(() => {
       setGuidePage(page => Math.min(page + 1, guidePages.length - 1));
-    }, 4000);
+    }, 10000);
     return () => clearTimeout(timer);
   }, [step, guidePage, isLastGuidePage]);
 
