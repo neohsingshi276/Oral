@@ -260,7 +260,7 @@ const GamePage = () => {
             const nextHint = maxDone < 3 ? maxDone + 1 : null;
             if (nextHint) setCheckpointHint(nextHint);
           } else if (localStorage.getItem('tutorial_seen')) {
-            setCheckpointHint(1);
+            // Tutorial already seen, no checkpoint hint on re-entry
           }
         }
       } catch (err) {
@@ -836,7 +836,7 @@ const GamePage = () => {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: '0.75rem' }}>
                     <button style={{ padding: '1rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1rem', fontWeight: 800, cursor: 'pointer' }} onClick={() => { localStorage.removeItem('player'); navigate('/'); }}>🏠 {t('nav.home')}</button>
                     <button style={{ padding: '1rem', background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1rem', fontWeight: 800, cursor: 'pointer' }} onClick={() => setTutorialPage(0)}>↺ {t('game.restart')}</button>
-                    <button style={{ padding: '1rem', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.1rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 6px 20px rgba(22,163,74,0.4)' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); setCheckpointHint(1); }}>🚀 {t('game.playGame')}</button>
+                    <button style={{ padding: '1rem', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.1rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 6px 20px rgba(22,163,74,0.4)' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}>🚀 {t('game.playGame')}</button>
                   </div>
                 )}
               </div>
@@ -865,12 +865,6 @@ const GamePage = () => {
                 </div>
 
                 <h2 style={{ fontSize: '2.4rem', fontWeight: 900, color: '#1e3a5f', margin: '0 0 0.5rem', lineHeight: 1.2 }}>{hint.title}</h2>
-
-                {/* Activity pill */}
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: hint.accent, color: '#fff', padding: '0.45rem 1.2rem', borderRadius: '999px', fontSize: '1.1rem', fontWeight: 800 }}>
-                  <span>{t('game.nextActivity')}:</span>
-                  <span>{hint.activity}</span>
-                </div>
               </div>
 
               {/* ── Card body ── */}
