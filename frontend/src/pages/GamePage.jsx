@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import cp1Photo from '../assets/cp1-quiz.png';
+import cp1Photo from '../assets/cp1.jpg';
 import cp2Photo from '../assets/cp2-crossword.png';
-import cp3Photo from '../assets/cp3-food.png';
+import cp3Photo from '../assets/cp3.jpg';
 import { useParams, useNavigate } from 'react-router-dom';
 import GameCanvas from '../game/GameCanvas';
 import { CHECKPOINT_VIDEO_IDS, CONCLUDING_VIDEO_IDS } from '../game/gameConfig';
@@ -338,7 +338,7 @@ const GamePage = () => {
       const res = await api.get(`/game/certificate/${player.id}`, getPlayerChatConfig());
       const cert = res.data.certificate;
       const date = new Date(cert.completed_at);
-      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
       const dateStr = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
       const safeName = (cert.nickname || 'student').replace(/[^a-z0-9_-]+/gi, '_');
       const schoolClass = `${cert.school_name || '-'}${cert.class_name ? ` — ${cert.class_name}` : ''}`;
