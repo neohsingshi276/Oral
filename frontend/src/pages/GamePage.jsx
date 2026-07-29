@@ -587,7 +587,6 @@ const GamePage = () => {
       photo: cp1Photo,
       accent: '#7B2FBE',
       bg: '#ede9fe',
-      heading: t('game.cpHint1Heading'),
       clue: t('game.cpHint1Clue'),
     },
     2: {
@@ -596,7 +595,6 @@ const GamePage = () => {
       photo: cp2Photo,
       accent: '#CC3380',
       bg: '#fce7f3',
-      heading: t('game.cpHint2Heading'),
       clue: t('game.cpHint2Clue'),
     },
     3: {
@@ -605,7 +603,6 @@ const GamePage = () => {
       photo: cp3Photo,
       accent: '#E85D04',
       bg: '#fff7ed',
-      heading: t('game.cpHint3Heading'),
       clue: t('game.cpHint3Clue'),
     },
     4: {
@@ -888,7 +885,7 @@ const GamePage = () => {
 
                 {/* Clue box */}
                 <div style={{ background: hint.bg, borderRadius: '12px', padding: '0.9rem 1rem', textAlign: 'left', marginBottom: '0.8rem', border: `1.5px solid ${hint.accent}33` }}>
-                  <h3 style={{ color: '#1e3a5f', margin: '0 0 0.65rem', fontSize: '1.45rem', fontWeight: 900, lineHeight: 1.3 }}>{hint.heading}</h3>
+                  {hint.heading && <h3 style={{ color: '#1e3a5f', margin: '0 0 0.65rem', fontSize: '1.45rem', fontWeight: 900, lineHeight: 1.3 }}>{hint.heading}</h3>}
                   <p style={{ color: '#334155', margin: 0, fontSize: '1.18rem', lineHeight: 1.7, fontWeight: 600 }}>{hint.clue}</p>
                 </div>
 
