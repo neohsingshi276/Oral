@@ -297,8 +297,7 @@ const GamePage = () => {
     } catch (err) {
       console.error('Failed to record checkpoint attempt:', err);
     }
-    setActiveCP(cpId);
-    setCpStep('video');
+    setCheckpointHint(cpId);
   };
 
   const handleVideoWatched = () => setCpStep('activity');
@@ -885,7 +884,7 @@ const GamePage = () => {
 
                 <button
                   style={{ width: '100%', padding: '1.1rem', background: `linear-gradient(135deg, ${hint.accent}, ${hint.accent}cc)`, color: '#fff', border: 'none', borderRadius: '16px', fontSize: '1.25rem', fontWeight: 900, cursor: 'pointer', boxShadow: `0 8px 24px ${hint.accent}44`, letterSpacing: '0.01em' }}
-                  onClick={() => setCheckpointHint(null)}
+                  onClick={() => { const cp = checkpointHint; setCheckpointHint(null); setActiveCP(cp); setCpStep('video'); }}
                 >
                   {t('game.letsGo')} 🚀
                 </button>
