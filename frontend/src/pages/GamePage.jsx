@@ -161,6 +161,7 @@ const GamePage = () => {
   );
   const [certificateBusy, setCertificateBusy] = useState(false);
   const [quizSettings, setQuizSettings] = useState(null);
+  const [crosswordSettings, setCrosswordSettings] = useState(null);
 
   useEffect(() => {
     if (!player?.session_id) return;
@@ -168,6 +169,14 @@ const GamePage = () => {
       .then(res => {
         if (res.data?.settings) {
           setQuizSettings(res.data.settings);
+        }
+      })
+      .catch(() => {});
+
+    api.get(`/crossword/${player.session_id}`)
+      .then(res => {
+        if (res.data?.settings) {
+          setCrosswordSettings(res.data.settings);
         }
       })
       .catch(() => {});
@@ -1227,16 +1236,18 @@ const GamePage = () => {
                     {activeCP === 1 ? '❓' : activeCP === 2 ? '🧩' : '🍎'}
                   </div>
                   <h3 style={{ color: '#1e3a5f', fontSize: '1.3rem', fontWeight: '800', marginBottom: '1.25rem' }}>
-                    {activeCP === 1 ? t('game.cp1InstructionsTitle') : activeCP === 2 ? t('game.crossword') : t('game.foodGame')}
+                    {activeCP === 1 ? t('game.cp1InstructionsTitle') : activeCP === 2 ? t('game.cp2InstructionsTitle') : t('game.foodGame')}
                   </h3>
                   <div style={{ textAlign: 'left', background: '#f8fafc', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
                     {(() => {
-                      const minCorrect = quizSettings?.minimum_correct ?? 8;
-                      const totalQuestions = quizSettings?.question_count || 10;
-                      const instructions = activeCP === 1 ? t('game.cp1Instructions') : [];
+                      const settingsObj = activeCP === 1 ? quizSettings : activeCP === 2 ? crosswordSettings : null;
+                      const minCorrect = settingsObj?.minimum_correct ?? (activeCP === 1 ? 8 : 8);
+                      const totalItems = activeCP === 1 ? (settingsObj?.question_count || 10) : (settingsObj?.word_count || 8);
+                      const rawInstructions = activeCP === 1 ? t('game.cp1Instructions') : activeCP === 2 ? t('game.cp2Instructions') : [];
+                      const instructions = Array.isArray(rawInstructions) ? rawInstructions : [];
                       return instructions.map((instruction, idx) => {
                         const text = instruction
-                          .replace('{count}', totalQuestions)
+                          .replace('{count}', totalItems)
                           .replace('{min}', minCorrect);
                         return (
                           <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: idx < instructions.length - 1 ? '0.75rem' : 0 }}>
@@ -1251,7 +1262,7 @@ const GamePage = () => {
                     style={{ ...s.continueBtn, background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', fontSize: '1.1rem', padding: '1rem 2rem', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
                     onClick={() => setCpStep('activity')}
                   >
-                    🚀 {activeCP === 1 ? t('game.cp1StartBtn') : t('game.continueAdventure')}
+                    🚀 {activeCP === 1 ? t('game.cp1StartBtn') : activeCP === 2 ? t('game.cp2StartBtn') : t('game.continueAdventure')}
                   </button>
                 </div>
               </div>
