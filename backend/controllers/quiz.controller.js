@@ -6,7 +6,7 @@ const getSessionQuestions = async (req, res) => {
   const { session_id } = req.params;
   try {
     const [settings] = await db.query('SELECT * FROM quiz_settings WHERE session_id = ?', [session_id]);
-    const cfg = settings[0] || { timer_seconds: 15, question_order: 'shuffle', question_count: 10, minimum_correct: 0, selected_questions: null };
+    const cfg = settings[0] || { timer_seconds: 15, question_order: 'shuffle', question_count: 10, minimum_correct: 8, selected_questions: null };
 
     let query = 'SELECT id, question, question_bi, question_type, image_url, options, options_bi, correct_answer FROM quiz_questions';
     let queryParams = [];

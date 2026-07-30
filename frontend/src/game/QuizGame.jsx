@@ -261,63 +261,70 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     </div>
   );
 
-  if (phase === 'result') return (
-    <div style={s.resultWrap}>
-      <style>{`@keyframes pop{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      <div style={s.scoreCard}>
-        <div style={s.scoreTrophy}>{result.correct === result.total ? '🏆' : result.correct >= result.total / 2 ? '⭐' : '💪'}</div>
-        <h2 style={s.scoreTitle}>{t('game.quizDoneTitle', 'Tahniah! Kuiz Selesai!')}</h2>
-        <div style={s.scoreBig}>{result.score}</div>
-        <p style={s.scorePoints}>{t('game.points', 'mata')}</p>
-        <div style={s.scoreStats}>
-          <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#16a34a' }}>{result.correct}</div><div style={s.scoreStatLabel}>{t('game.correct', 'Betul')}</div></div>
-          <div style={s.scoreDivider} />
-          <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#e11d48' }}>{result.total - result.correct}</div><div style={s.scoreStatLabel}>{t('game.wrong', 'Salah')}</div></div>
-          <div style={s.scoreDivider} />
-          <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#f59e0b' }}>{result.total}</div><div style={s.scoreStatLabel}>{t('game.total', 'Jumlah')}</div></div>
-        </div>
-      </div>
+  if (phase === 'result') {
+    const minToPass = settings.minimum_correct ?? 8;
+    const hasPassed = result.correct >= minToPass;
 
-      <div style={s.lbCard}>
-        <h3 style={s.lbTitle}>🏆 {t('game.sessionScoreboard', 'Papan Markah Sesi')}</h3>
-        <div style={s.lbList}>
-          {leaderboard.map((entry, i) => (
-            <div key={entry.id} style={{ ...s.lbRow, ...(entry.player_id === player.id ? s.lbRowMe : {}), background: i === 0 ? '#fef9ee' : i === 1 ? '#f8fafc' : i === 2 ? '#fff7ed' : '#fff' }}>
-              <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
-              <div style={s.lbName}>{entry.nickname}{entry.player_id === player.id && <span style={s.youBadge}>{t('game.you', 'Anda')}</span>}</div>
-              <div style={s.lbScore}>{entry.score} {t('game.points', 'mata')}</div>
-              <div style={s.lbCorrect}>{entry.correct_answers}/{entry.total_questions} ✓</div>
-            </div>
-          ))}
-          {leaderboard.length === 0 && <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem' }}>{t('game.noScoresYet', 'Tiada markah lagi')}</p>}
-        </div>
-      </div>
-      {result.correct >= (settings.minimum_correct || 0) ? (
-        <button style={s.doneBtn} onClick={onQuizComplete}>
-          {t('game.continueAdventureMap', 'Teruskan Pengembaraan! 🗺️')}
-        </button>
-      ) : (
-        <div>
-          <div style={s.failBox}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>😢</div>
-            <h3 style={{ color: '#e11d48', fontWeight: '800', margin: '0 0 0.5rem' }}>
-              {t('game.notPassed', 'Belum Lulus!')}
-            </h3>
-            <p style={{ color: '#64748b', margin: '0 0 1rem', fontSize: '0.95rem' }}>
-              {language === 'bi' ? (
-                <>You need to get at least <strong>{settings.minimum_correct || 0} questions</strong> correct to pass. You got <strong>{result.correct}/{result.total}</strong>.</>
-              ) : (
-                <>Kamu perlu betulkan sekurang-kurangnya <strong>{settings.minimum_correct || 0} soalan</strong> untuk lulus. Kamu betulkan <strong>{result.correct}/{result.total}</strong>.</>
-              )}
-            </p>
-            <button style={s.retryBtn} onClick={onRetry}>
-              {t('game.retryQuiz', 'Cuba Semula Kuiz')}
-            </button>
+    return (
+      <div style={s.resultWrap}>
+        <style>{`@keyframes pop{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        <div style={s.scoreCard}>
+          <div style={s.scoreTrophy}>{hasPassed ? (result.correct === result.total ? '🏆' : '⭐') : '💪'}</div>
+          <h2 style={s.scoreTitle}>
+            {hasPassed ? t('game.quizDoneTitle') : t('game.notPassed', 'Belum Lulus!')}
+          </h2>
+          <div style={s.scoreBig}>{result.score}</div>
+          <p style={s.scorePoints}>{t('game.points', 'mata')}</p>
+          <div style={s.scoreStats}>
+            <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#16a34a' }}>{result.correct}</div><div style={s.scoreStatLabel}>{t('game.correct', 'Betul')}</div></div>
+            <div style={s.scoreDivider} />
+            <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#e11d48' }}>{result.total - result.correct}</div><div style={s.scoreStatLabel}>{t('game.wrong', 'Salah')}</div></div>
+            <div style={s.scoreDivider} />
+            <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#f59e0b' }}>{result.total}</div><div style={s.scoreStatLabel}>{t('game.total', 'Jumlah')}</div></div>
           </div>
         </div>
-      )}
-    </div>
-  );
+
+        <div style={s.lbCard}>
+          <h3 style={s.lbTitle}>🏆 {t('game.sessionScoreboard', 'Papan Kedudukan')}</h3>
+          <div style={s.lbList}>
+            {leaderboard.map((entry, i) => (
+              <div key={entry.id} style={{ ...s.lbRow, ...(entry.player_id === player.id ? s.lbRowMe : {}), background: i === 0 ? '#fef9ee' : i === 1 ? '#f8fafc' : i === 2 ? '#fff7ed' : '#fff' }}>
+                <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
+                <div style={s.lbName}>{entry.nickname}{entry.player_id === player.id && <span style={s.youBadge}>{t('game.you', 'Anda')}</span>}</div>
+                <div style={s.lbScore}>{entry.score} {t('game.points', 'mata')}</div>
+                <div style={s.lbCorrect}>{entry.correct_answers}/{entry.total_questions} ✓</div>
+              </div>
+            ))}
+            {leaderboard.length === 0 && <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem' }}>{t('game.noScoresYet', 'Tiada markah lagi')}</p>}
+          </div>
+        </div>
+        {hasPassed ? (
+          <button style={s.doneBtn} onClick={onQuizComplete}>
+            {t('game.continueAdventureMap', 'Teruskan Pengembaraan! 🗺️')}
+          </button>
+        ) : (
+          <div>
+            <div style={s.failBox}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>😢</div>
+              <h3 style={{ color: '#e11d48', fontWeight: '800', margin: '0 0 0.5rem' }}>
+                {t('game.notPassed', 'Belum Lulus!')}
+              </h3>
+              <p style={{ color: '#64748b', margin: '0 0 1rem', fontSize: '0.95rem' }}>
+                {language === 'bi' ? (
+                  <>You need to answer at least <strong>{minToPass} questions</strong> correctly to pass. You got <strong>{result.correct}/{result.total}</strong>.</>
+                ) : (
+                  <>Anda perlu menjawab sekurang-kurangnya <strong>{minToPass} soalan</strong> dengan betul untuk lulus. Anda betulkan <strong>{result.correct}/{result.total}</strong>.</>
+                )}
+              </p>
+              <button style={s.retryBtn} onClick={onRetry}>
+                🔄 {t('game.retryQuiz', 'Cuba Semula Kuiz')}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const q = questions[currentQ];
   const _rawOpts = Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]');
