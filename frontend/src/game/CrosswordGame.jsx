@@ -482,10 +482,10 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     return idx >= 0 ? idx + 1 : null;
   };
 
-  const cellSize = gridSize > 18 ? 44 : gridSize > 14 ? 52 : 62;
-  const fontSize = gridSize > 18 ? '0.95rem' : gridSize > 14 ? '1.1rem' : '1.3rem';
-  const minCorrect = settings.minimum_correct || DEFAULT_MIN_CORRECT;
-  const passed = minCorrect > 0 ? completed.length >= minCorrect : true;
+  const cellSize = gridSize > 18 ? 32 : gridSize > 14 ? 36 : 38;
+  const fontSize = gridSize > 18 ? '0.82rem' : gridSize > 14 ? '0.92rem' : '1rem';
+  const minCorrect = words.length;
+  const passed = words.length > 0 && completed.length >= words.length;
   const pct = words.length > 0 ? Math.round((completed.length / words.length) * 100) : 0;
 
   if (phase === 'loading') return (
@@ -684,13 +684,13 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
           <div>
             {selectedWord
               ? <><strong>{words.indexOf(selectedWord) + 1}. {selectedWord.direction === 'across' ? '→' : '↓'}</strong> {pickLang(selectedWord, 'clue', language)} <span style={{ color: '#93c5fd' }}>({selectedWord.word.length} {t('game.letters', 'huruf')})</span></>
-              : <span style={{ color: '#475569' }}>{t('game.clickBoxToSelect', 'Klik pada kotak untuk memilih perkataan')}</span>
+              : <span style={{ color: '#f8fafc', fontWeight: '700' }}>{t('game.clickBoxToSelect', 'Klik pada kotak untuk mengisi jawapan')}</span>
             }
           </div>
           <div style={{ display: 'flex', gap: '1rem', fontSize: '0.78rem', color: '#64748b', flexShrink: 0 }}>
             <span>⏱️ {t('game.timeLimit', 'Had masa:')} <strong style={{ color: '#93c5fd' }}>{formatTime(timerTotal)}</strong></span>
             <span>💡 {t('game.hintLabel', 'Petunjuk:')} <strong style={{ color: '#fbbf24' }}>{MAX_HINTS} {t('game.times', 'kali')}</strong></span>
-            {minCorrect > 0 && <span>🎯 {t('game.passLimit', 'Lulus:')} <strong style={{ color: '#86efac' }}>{minCorrect} {t('game.words', 'perkataan')}</strong></span>}
+            <span>{t('game.passLimit', 'Lulus:')} <strong style={{ color: '#86efac' }}>{t('game.allWordsRequired', 'Semua perkataan')}</strong></span>
           </div>
         </div>
       </div>
@@ -710,7 +710,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                   onClick={() => { if (!isGameOver) { setSelectedWord(w); setSelectedCell({ row: w.start_row, col: w.start_col }); inputRefs.current[`${w.start_row}-${w.start_col}`]?.focus(); } }}
                 >
                   <span style={s.clueNum}>{words.indexOf(w) + 1}.</span>
-                  <span style={{ ...s.clueText, textDecoration: isDone ? 'line-through' : 'none', color: isDone ? '#16a34a' : isFull ? '#f87171' : '#cbd5e1' }}>{pickLang(w, 'clue', language)}</span>
+                  <span style={{ ...s.clueText, textDecoration: isDone ? 'line-through' : 'none', color: isDone ? '#22c55e' : isFull ? '#fecaca' : '#f8fafc' }}>{pickLang(w, 'clue', language)}</span>
                   {isDone && <span style={{ color: '#16a34a', flexShrink: 0 }}>✓</span>}
                 </div>
               );
@@ -760,7 +760,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                   onClick={() => { if (!isGameOver) { setSelectedWord(w); setSelectedCell({ row: w.start_row, col: w.start_col }); inputRefs.current[`${w.start_row}-${w.start_col}`]?.focus(); } }}
                 >
                   <span style={s.clueNum}>{words.indexOf(w) + 1}.</span>
-                  <span style={{ ...s.clueText, textDecoration: isDone ? 'line-through' : 'none', color: isDone ? '#16a34a' : isFull ? '#f87171' : '#cbd5e1' }}>{pickLang(w, 'clue', language)}</span>
+                  <span style={{ ...s.clueText, textDecoration: isDone ? 'line-through' : 'none', color: isDone ? '#22c55e' : isFull ? '#fecaca' : '#f8fafc' }}>{pickLang(w, 'clue', language)}</span>
                   {isDone && <span style={{ color: '#16a34a', flexShrink: 0 }}>✓</span>}
                 </div>
               );
@@ -790,19 +790,19 @@ const s = {
   checkBtn: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 0.75rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.78rem', height: '32px', lineHeight: '1', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' },
   hintBtn: { background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 0.75rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.78rem', height: '32px', lineHeight: '1', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' },
   hintBar: { background: '#1e293b', color: '#e2e8f0', padding: '0.5rem 1rem', fontSize: '0.83rem', lineHeight: 1.5, flexShrink: 0 },
-  mainLayout: { flex: 1, display: 'flex', gap: '1rem', padding: '1rem 1.25rem', overflow: 'auto', alignItems: 'flex-start' },
-  cluesPanel: { width: '220px', flexShrink: 0, background: '#1e293b', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', maxHeight: '100%' },
-  cluesPanelTitle: { color: '#FFD700', fontWeight: '800', fontSize: '0.85rem', marginBottom: '0.6rem', flexShrink: 0, borderBottom: '1px solid #334155', paddingBottom: '0.4rem' },
-  cluesList: { flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.35rem' },
-  clueRow: { display: 'flex', alignItems: 'flex-start', gap: '0.4rem', padding: '0.4rem 0.6rem', borderRadius: '6px', cursor: 'pointer', transition: 'background 0.15s' },
+  mainLayout: { flex: 1, display: 'flex', gap: '0.75rem', padding: '0.65rem 0.9rem', overflow: 'hidden', alignItems: 'flex-start' },
+  cluesPanel: { width: '230px', flexShrink: 0, background: '#1e293b', borderRadius: '10px', padding: '0.65rem', display: 'flex', flexDirection: 'column', maxHeight: '100%', overflow: 'hidden' },
+  cluesPanelTitle: { color: '#FFD700', fontWeight: '800', fontSize: '0.8rem', marginBottom: '0.4rem', flexShrink: 0, borderBottom: '1px solid #334155', paddingBottom: '0.3rem' },
+  cluesList: { flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column', gap: '0.18rem' },
+  clueRow: { display: 'flex', alignItems: 'flex-start', gap: '0.32rem', padding: '0.22rem 0.35rem', borderRadius: '6px', cursor: 'pointer', transition: 'background 0.15s' },
   clueRowActive: { background: '#2563eb' },
   clueRowDone: { opacity: 0.6 },
-  clueNum: { fontSize: '0.72rem', fontWeight: '800', color: '#60a5fa', flexShrink: 0, minWidth: '18px', paddingTop: '2px' },
-  clueText: { fontSize: '0.78rem', color: '#cbd5e1', lineHeight: 1.5, flex: 1 },
-  gridSection: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '0.5rem' },
+  clueNum: { fontSize: '0.8rem', fontWeight: '900', color: '#93c5fd', flexShrink: 0, minWidth: '18px', paddingTop: '1px' },
+  clueText: { fontSize: '0.72rem', color: '#f8fafc', lineHeight: 1.25, flex: 1 },
+  gridSection: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '0.25rem' },
   grid: { display: 'grid', gap: '1px', background: '#0f172a', border: '2px solid #334155', borderRadius: '8px', overflow: 'hidden' },
   cell: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  cellNum: { position: 'absolute', top: '4px', left: '5px', fontSize: '14px', fontWeight: '900', color: '#1e40af', background: 'rgba(255,255,255,0.7)', borderRadius: '3px', padding: '1px 3px', lineHeight: 1, zIndex: 2, pointerEvents: 'none' },
+  cellNum: { position: 'absolute', top: '2px', left: '3px', fontSize: '15px', fontWeight: '900', color: '#1e40af', background: 'rgba(255,255,255,0.85)', borderRadius: '3px', padding: '1px 3px', lineHeight: 1, zIndex: 2, pointerEvents: 'none' },
   cellInput: { width: '100%', height: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontWeight: '800', textTransform: 'uppercase', outline: 'none', cursor: 'pointer', padding: 0 },
   lbBox: { background: '#f1f5f9', borderRadius: '12px', padding: '0.75rem', margin: '0.75rem 0', textAlign: 'left', width: '100%' },
   lbTitle: { fontSize: '0.88rem', fontWeight: '800', color: '#1e3a5f', margin: '0 0 0.5rem' },
@@ -815,3 +815,4 @@ const s = {
 };
 
 export default CrosswordGame;
+
