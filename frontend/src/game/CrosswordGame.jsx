@@ -492,11 +492,11 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     return idx >= 0 ? idx + 1 : null;
   };
 
-  const sidePanelWidth = Math.floor(Math.max(300, Math.min(420, viewport.width * 0.24)));
+  const sidePanelWidth = Math.floor(Math.max(330, Math.min(390, viewport.width * 0.21)));
   const availableGridHeight = viewport.height - 112;
   const availableGridWidth = viewport.width - (sidePanelWidth * 2) - 48;
-  const cellSize = Math.floor(Math.max(32, Math.min(50, availableGridHeight / gridSize, availableGridWidth / gridSize)));
-  const fontSize = cellSize >= 46 ? '1.18rem' : cellSize >= 40 ? '1.05rem' : '0.94rem';
+  const cellSize = Math.floor(Math.max(34, Math.min(56, availableGridHeight / gridSize, availableGridWidth / gridSize)));
+  const fontSize = cellSize >= 52 ? '1.3rem' : cellSize >= 46 ? '1.16rem' : '1rem';
   const minCorrect = words.length;
   const passed = words.length > 0 && completed.length >= words.length;
   const pct = words.length > 0 ? Math.round((completed.length / words.length) * 100) : 0;
@@ -803,15 +803,15 @@ const s = {
   checkBtn: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 0.75rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.78rem', height: '32px', lineHeight: '1', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' },
   hintBtn: { background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 0.75rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.78rem', height: '32px', lineHeight: '1', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' },
   hintBar: { background: '#1e293b', color: '#e2e8f0', padding: '0.5rem 1rem', fontSize: '0.83rem', lineHeight: 1.5, flexShrink: 0 },
-  mainLayout: { flex: 1, display: 'grid', justifyContent: 'center', columnGap: '0.35rem', padding: '0.35rem 0.45rem', overflow: 'hidden', alignItems: 'start' },
-  cluesPanel: { width: '100%', boxSizing: 'border-box', flexShrink: 0, background: '#1e293b', borderRadius: '10px', padding: '0.75rem 0.85rem', display: 'flex', flexDirection: 'column', maxHeight: '100%', overflow: 'hidden' },
-  cluesPanelTitle: { color: '#FFD700', fontWeight: '800', fontSize: '1rem', marginBottom: '0.45rem', flexShrink: 0, borderBottom: '1px solid #334155', paddingBottom: '0.35rem' },
-  cluesList: { flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column', gap: '0.22rem' },
-  clueRow: { display: 'flex', alignItems: 'flex-start', gap: '0.42rem', padding: '0.24rem 0.3rem', borderRadius: '6px', cursor: 'pointer', transition: 'background 0.15s' },
+  mainLayout: { flex: 1, display: 'grid', justifyContent: 'center', columnGap: '0.28rem', padding: '0.28rem 0.35rem', overflow: 'hidden', alignItems: 'stretch' },
+  cluesPanel: { width: '100%', height: '100%', boxSizing: 'border-box', flexShrink: 0, background: '#1e293b', borderRadius: '10px', padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', maxHeight: '100%', overflow: 'hidden' },
+  cluesPanelTitle: { color: '#FFD700', fontWeight: '800', fontSize: '1.1rem', marginBottom: '0.55rem', flexShrink: 0, borderBottom: '1px solid #334155', paddingBottom: '0.4rem' },
+  cluesList: { flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly', gap: '0.3rem' },
+  clueRow: { display: 'flex', alignItems: 'flex-start', gap: '0.48rem', padding: '0.3rem 0.35rem', borderRadius: '6px', cursor: 'pointer', transition: 'background 0.15s' },
   clueRowActive: { background: '#2563eb' },
   clueRowDone: { opacity: 0.6 },
-  clueNum: { fontSize: '0.95rem', fontWeight: '900', color: '#93c5fd', flexShrink: 0, minWidth: '24px', paddingTop: '1px' },
-  clueText: { fontSize: '0.92rem', color: '#f8fafc', lineHeight: 1.22, flex: 1 },
+  clueNum: { fontSize: '1.05rem', fontWeight: '900', color: '#93c5fd', flexShrink: 0, minWidth: '28px', paddingTop: '1px' },
+  clueText: { fontSize: '1rem', color: '#f8fafc', lineHeight: 1.25, flex: 1 },
   gridSection: { display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflow: 'hidden', padding: 0 },
   grid: { display: 'grid', gap: '1px', background: '#0f172a', border: '2px solid #334155', borderRadius: '8px', overflow: 'hidden' },
   cell: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' },
