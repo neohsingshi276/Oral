@@ -52,6 +52,16 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   // toggling language never swaps in a different set of clues.
   const wordIdsRef = useRef(null);
   const prevLanguageRef = useRef(language);
+  const [viewport, setViewport] = useState(() => ({
+    width: typeof window === 'undefined' ? 1280 : window.innerWidth,
+    height: typeof window === 'undefined' ? 720 : window.innerHeight,
+  }));
+
+  useEffect(() => {
+    const updateViewport = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', updateViewport);
+    return () => window.removeEventListener('resize', updateViewport);
+  }, []);
 
   const resetPuzzleState = () => {
     clearInterval(timerRef.current);
@@ -482,8 +492,10 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     return idx >= 0 ? idx + 1 : null;
   };
 
-  const cellSize = gridSize > 18 ? 32 : gridSize > 14 ? 36 : 38;
-  const fontSize = gridSize > 18 ? '0.82rem' : gridSize > 14 ? '0.92rem' : '1rem';
+  const availableGridHeight = viewport.height - 118;
+  const availableGridWidth = viewport.width - 520;
+  const cellSize = Math.floor(Math.max(30, Math.min(46, availableGridHeight / gridSize, availableGridWidth / gridSize)));
+  const fontSize = cellSize >= 42 ? '1.1rem' : cellSize >= 36 ? '1rem' : '0.88rem';
   const minCorrect = words.length;
   const passed = words.length > 0 && completed.length >= words.length;
   const pct = words.length > 0 ? Math.round((completed.length / words.length) * 100) : 0;
@@ -790,7 +802,7 @@ const s = {
   checkBtn: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 0.75rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.78rem', height: '32px', lineHeight: '1', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' },
   hintBtn: { background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 0.75rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.78rem', height: '32px', lineHeight: '1', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' },
   hintBar: { background: '#1e293b', color: '#e2e8f0', padding: '0.5rem 1rem', fontSize: '0.83rem', lineHeight: 1.5, flexShrink: 0 },
-  mainLayout: { flex: 1, display: 'flex', gap: '0.75rem', padding: '0.65rem 0.9rem', overflow: 'hidden', alignItems: 'flex-start' },
+  mainLayout: { flex: 1, display: 'grid', gridTemplateColumns: '230px auto 230px', justifyContent: 'center', columnGap: '0.5rem', padding: '0.45rem 0.6rem', overflow: 'hidden', alignItems: 'start' },
   cluesPanel: { width: '230px', flexShrink: 0, background: '#1e293b', borderRadius: '10px', padding: '0.65rem', display: 'flex', flexDirection: 'column', maxHeight: '100%', overflow: 'hidden' },
   cluesPanelTitle: { color: '#FFD700', fontWeight: '800', fontSize: '0.8rem', marginBottom: '0.4rem', flexShrink: 0, borderBottom: '1px solid #334155', paddingBottom: '0.3rem' },
   cluesList: { flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column', gap: '0.18rem' },
@@ -799,7 +811,7 @@ const s = {
   clueRowDone: { opacity: 0.6 },
   clueNum: { fontSize: '0.8rem', fontWeight: '900', color: '#93c5fd', flexShrink: 0, minWidth: '18px', paddingTop: '1px' },
   clueText: { fontSize: '0.72rem', color: '#f8fafc', lineHeight: 1.25, flex: 1 },
-  gridSection: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '0.25rem' },
+  gridSection: { display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflow: 'hidden', padding: 0 },
   grid: { display: 'grid', gap: '1px', background: '#0f172a', border: '2px solid #334155', borderRadius: '8px', overflow: 'hidden' },
   cell: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   cellNum: { position: 'absolute', top: '2px', left: '3px', fontSize: '15px', fontWeight: '900', color: '#1e40af', background: 'rgba(255,255,255,0.85)', borderRadius: '3px', padding: '1px 3px', lineHeight: 1, zIndex: 2, pointerEvents: 'none' },
