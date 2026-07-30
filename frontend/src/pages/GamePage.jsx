@@ -300,7 +300,7 @@ const GamePage = () => {
     setCheckpointHint(cpId);
   };
 
-  const handleVideoWatched = () => setCpStep('activity');
+  const handleVideoWatched = () => setCpStep('instructions');
 
   const handleActivityDone = async () => {
     const chatConfig = getPlayerChatConfig();
@@ -1197,7 +1197,7 @@ const GamePage = () => {
                   ? (activeCP === 1 ? t('game.quiz') : activeCP === 2 ? t('game.crossword') : t('game.foodGame'))
                   : label;
                 return (
-                  <div key={i} style={{ ...s.step, ...((['video', 'activity', 'done'][i] === cpStep) ? s.stepActive : {}) }}>
+                  <div key={i} style={{ ...s.step, ...((['video', 'instructions', 'done'][i] === cpStep || (['activity'][0] === cpStep && i === 1)) ? s.stepActive : {}) }}>
                     <div style={s.stepDot}>{i + 1}</div>
                     <span>{displayLabel}</span>
                   </div>
@@ -1212,6 +1212,33 @@ const GamePage = () => {
                   videoId={(CHECKPOINT_VIDEO_IDS[language] ?? CHECKPOINT_VIDEO_IDS.bm)[activeCP]}
                   onVideoEnd={handleVideoWatched}
                 />
+              </div>
+            )}
+
+            {cpStep === 'instructions' && (
+              <div style={s.modalBody}>
+                <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>
+                    {activeCP === 1 ? '❓' : activeCP === 2 ? '🧩' : '🍎'}
+                  </div>
+                  <h3 style={{ color: '#1e3a5f', fontSize: '1.3rem', fontWeight: '800', marginBottom: '1.25rem' }}>
+                    {activeCP === 1 ? t('game.cp1InstructionsTitle') : activeCP === 2 ? t('game.crossword') : t('game.foodGame')}
+                  </h3>
+                  <div style={{ textAlign: 'left', background: '#f8fafc', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
+                    {(activeCP === 1 ? t('game.cp1Instructions') : []).map((instruction, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: idx < (t('game.cp1Instructions').length - 1) ? '0.75rem' : 0 }}>
+                        <span style={{ color: '#2563eb', fontWeight: '800', fontSize: '1rem', lineHeight: '1.5' }}>{idx + 1}.</span>
+                        <span style={{ color: '#334155', fontSize: '0.95rem', lineHeight: '1.5' }}>{instruction}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    style={{ ...s.continueBtn, background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', fontSize: '1.1rem', padding: '1rem 2rem', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                    onClick={() => setCpStep('activity')}
+                  >
+                    🚀 {activeCP === 1 ? t('game.cp1StartBtn') : t('game.continueAdventure')}
+                  </button>
+                </div>
               </div>
             )}
 
