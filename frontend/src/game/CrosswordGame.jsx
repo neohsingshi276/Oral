@@ -493,13 +493,16 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   };
 
   const sidePanelWidth = Math.floor(Math.max(330, Math.min(390, viewport.width * 0.21)));
-  const availableGridHeight = viewport.height - 112;
-  // Panels now sit flush against the left/right screen edges, so the grid
-  // can claim almost all of the remaining middle space (just a small
-  // allowance for gaps/borders) instead of the old fixed 48px margin.
+  // Panels sit flush against the left/right screen edges, so the grid can
+  // claim almost all of the remaining middle space (just a small allowance
+  // for gaps/borders) instead of the old fixed 48px margin.
   const availableGridWidth = viewport.width - (sidePanelWidth * 2) - 16;
-  const cellSize = Math.floor(Math.max(34, Math.min(80, availableGridHeight / gridSize, availableGridWidth / gridSize)));
-  const fontSize = cellSize >= 52 ? '1.3rem' : cellSize >= 46 ? '1.16rem' : '1rem';
+  // Size is driven by available WIDTH only, with no low ceiling — cells keep
+  // growing to consume every bit of leftover side space. If that makes the
+  // grid taller than the viewport, the grid section scrolls vertically
+  // instead of shrinking the cells back down.
+  const cellSize = Math.floor(Math.max(34, Math.min(160, availableGridWidth / gridSize)));
+  const fontSize = cellSize >= 90 ? '1.8rem' : cellSize >= 70 ? '1.5rem' : cellSize >= 52 ? '1.3rem' : cellSize >= 46 ? '1.16rem' : '1rem';
   const minCorrect = words.length;
   const passed = words.length > 0 && completed.length >= words.length;
   const pct = words.length > 0 ? Math.round((completed.length / words.length) * 100) : 0;
@@ -815,7 +818,7 @@ const s = {
   clueRowDone: { opacity: 0.6 },
   clueNum: { fontSize: '1.05rem', fontWeight: '900', color: '#93c5fd', flexShrink: 0, minWidth: '28px', paddingTop: '1px' },
   clueText: { fontSize: '1rem', color: '#f8fafc', lineHeight: 1.25, flex: 1 },
-  gridSection: { display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflow: 'hidden', padding: 0 },
+  gridSection: { display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflowX: 'hidden', overflowY: 'auto', padding: 0, maxHeight: '100%' },
   grid: { display: 'grid', gap: '1px', background: '#0f172a', border: '2px solid #334155', borderRadius: '8px', overflow: 'hidden' },
   cell: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   cellNum: { position: 'absolute', top: '2px', left: '3px', fontSize: '15px', fontWeight: '900', color: '#1e40af', background: 'rgba(255,255,255,0.85)', borderRadius: '3px', padding: '1px 3px', lineHeight: 1, zIndex: 2, pointerEvents: 'none' },
