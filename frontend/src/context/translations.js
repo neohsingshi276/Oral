@@ -192,9 +192,9 @@ const bm = {
     quiz: 'Kuiz Pergigian',
     cp1InstructionsTitle: 'Kuiz Pergigian',
     cp1Instructions: [
-      'Jawab 10 soalan berdasarkan video.',
+      'Jawab {count} soalan berdasarkan video.',
       'Pilih satu jawapan yang betul bagi setiap soalan.',
-      'Anda mesti menjawab sekurang-kurangnya 8 soalan dengan betul untuk lulus kuiz.',
+      'Anda mesti menjawab sekurang-kurangnya {min} soalan dengan betul untuk lulus kuiz.',
       'Jawab dengan betul dan sepantas yang anda boleh untuk memperoleh skor tertinggi!',
     ],
     cp1StartBtn: 'Mula Kuiz!',
@@ -811,9 +811,9 @@ const bi = {
     quiz: 'Dental Quiz',
     cp1InstructionsTitle: 'Dental Quiz',
     cp1Instructions: [
-      'Answer 10 questions based on the video.',
+      'Answer {count} questions based on the video.',
       'Select one correct answer for each question.',
-      'You must answer at least 8 questions correctly to pass the quiz.',
+      'You must answer at least {min} questions correctly to pass the quiz.',
       'Answer correctly and as quickly as you can to achieve the highest score!',
     ],
     cp1StartBtn: 'Start Quiz!',

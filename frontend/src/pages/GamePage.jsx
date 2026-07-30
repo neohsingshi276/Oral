@@ -160,6 +160,18 @@ const GamePage = () => {
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || localStorage.getItem('dq_reduce_motion') === '1'
   );
   const [certificateBusy, setCertificateBusy] = useState(false);
+  const [quizSettings, setQuizSettings] = useState(null);
+
+  useEffect(() => {
+    if (!player?.session_id) return;
+    api.get(`/quiz/session/${player.session_id}`)
+      .then(res => {
+        if (res.data?.settings) {
+          setQuizSettings(res.data.settings);
+        }
+      })
+      .catch(() => {});
+  }, [player?.session_id]);
 
   // Ref to the Phaser game instance — used to pause keyboard input while typing in chat
   const gameInstanceRef = useRef(null);
@@ -1225,12 +1237,22 @@ const GamePage = () => {
                     {activeCP === 1 ? t('game.cp1InstructionsTitle') : activeCP === 2 ? t('game.crossword') : t('game.foodGame')}
                   </h3>
                   <div style={{ textAlign: 'left', background: '#f8fafc', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
-                    {(activeCP === 1 ? t('game.cp1Instructions') : []).map((instruction, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: idx < (t('game.cp1Instructions').length - 1) ? '0.75rem' : 0 }}>
-                        <span style={{ color: '#2563eb', fontWeight: '800', fontSize: '1rem', lineHeight: '1.5' }}>{idx + 1}.</span>
-                        <span style={{ color: '#334155', fontSize: '0.95rem', lineHeight: '1.5' }}>{instruction}</span>
-                      </div>
-                    ))}
+                    {(() => {
+                      const minCorrect = quizSettings?.minimum_correct ?? 8;
+                      const totalQuestions = quizSettings?.question_count || 10;
+                      const instructions = activeCP === 1 ? t('game.cp1Instructions') : [];
+                      return instructions.map((instruction, idx) => {
+                        const text = instruction
+                          .replace('{count}', totalQuestions)
+                          .replace('{min}', minCorrect);
+                        return (
+                          <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: idx < instructions.length - 1 ? '0.75rem' : 0 }}>
+                            <span style={{ color: '#2563eb', fontWeight: '800', fontSize: '1rem', lineHeight: '1.5' }}>{idx + 1}.</span>
+                            <span style={{ color: '#334155', fontSize: '0.95rem', lineHeight: '1.5' }}>{text}</span>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                   <button
                     style={{ ...s.continueBtn, background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', fontSize: '1.1rem', padding: '1rem 2rem', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
