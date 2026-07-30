@@ -1210,10 +1210,12 @@ const GamePage = () => {
 
             {cpStep === 'video' && (
               <div style={s.modalBody}>
-                <p style={s.modalHint}>{t('game.modalHint')}</p>
+                <p style={s.modalHint}>{t(`game.modalHintCp${activeCP}`, t('game.modalHint'))}</p>
                 <YouTubePlayer
                   videoId={(CHECKPOINT_VIDEO_IDS[language] ?? CHECKPOINT_VIDEO_IDS.bm)[activeCP]}
                   onVideoEnd={handleVideoWatched}
+                  finishVideoText={t(`game.finishVideoCp${activeCP}`, t('game.finishVideo'))}
+                  videoDoneText={t(`game.videoDoneCp${activeCP}`, t('game.videoDone'))}
                 />
               </div>
             )}

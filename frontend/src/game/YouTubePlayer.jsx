@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 
-const YouTubePlayer = ({ videoId, onVideoEnd }) => {
+const YouTubePlayer = ({ videoId, onVideoEnd, finishVideoText, videoDoneText }) => {
   const { t } = useLanguage();
   const containerRef = useRef(null);
   const playerRef = useRef(null);
@@ -152,11 +152,11 @@ const YouTubePlayer = ({ videoId, onVideoEnd }) => {
       {/* Continue button — only shows when video ends */}
       {videoEnded ? (
         <button style={styles.continueBtn} onClick={onVideoEnd}>
-          ✅ {t('game.videoDone', 'Video Selesai! Teruskan! →')}
+          ✅ {videoDoneText || t('game.videoDone', 'Video Selesai! Teruskan! →')}
         </button>
       ) : (
         <button style={styles.lockedBtn} disabled>
-          🔒 {t('game.finishVideo', 'Habiskan video untuk meneruskan')}
+          🔒 {finishVideoText || t('game.finishVideo', 'Habiskan video untuk meneruskan')}
         </button>
       )}
     </div>
