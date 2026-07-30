@@ -114,6 +114,7 @@ export default class PhaserGameScene extends Phaser.Scene {
     if (data?.getIsCheckpointUnlocked) this.getIsCheckpointUnlocked = data.getIsCheckpointUnlocked;
     if (data?.playerNickname) this.playerNickname = data.playerNickname;
     if (data?.initialPos) this.initialPos = data.initialPos;
+    if (data?.pressEtoEnterText) this.pressEtoEnterText = data.pressEtoEnterText;
 
     // Safe defaults so create() never crashes on undefined callbacks
     this.onNearCheckpoint = this.onNearCheckpoint || (() => { });
@@ -468,7 +469,7 @@ export default class PhaserGameScene extends Phaser.Scene {
       });
 
       // Press E hint
-      const hintText = this.add.text(0, 42, 'Press E to enter', {
+      const hintText = this.add.text(0, 42, this.pressEtoEnterText || 'Press E to enter', {
         fontSize: '10px',
         fontFamily: 'sans-serif',
         fontStyle: 'bold',

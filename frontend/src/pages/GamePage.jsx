@@ -691,6 +691,7 @@ const GamePage = () => {
           virtualInput={virtualInput}
           enterSignal={enterSignal}
           loadingText={t('game.loadingGame')}
+          pressEtoEnterText={t('game.pressEtoEnter')}
         />
       </div>
 
@@ -1190,12 +1191,18 @@ const GamePage = () => {
             </div>
 
             <div style={s.steps}>
-              {t('game.steps').map((label, i) => (
-                <div key={i} style={{ ...s.step, ...((['video', 'activity', 'done'][i] === cpStep) ? s.stepActive : {}) }}>
-                  <div style={s.stepDot}>{i + 1}</div>
-                  <span>{label}</span>
-                </div>
-              ))}
+              {t('game.steps').map((label, i) => {
+                // Step 2 (index 1) shows the checkpoint-specific activity name
+                const displayLabel = i === 1
+                  ? (activeCP === 1 ? t('game.quiz') : activeCP === 2 ? t('game.crossword') : t('game.foodGame'))
+                  : label;
+                return (
+                  <div key={i} style={{ ...s.step, ...((['video', 'activity', 'done'][i] === cpStep) ? s.stepActive : {}) }}>
+                    <div style={s.stepDot}>{i + 1}</div>
+                    <span>{displayLabel}</span>
+                  </div>
+                );
+              })}
             </div>
 
             {cpStep === 'video' && (

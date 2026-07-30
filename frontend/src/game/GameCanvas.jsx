@@ -6,7 +6,7 @@ import dentalImage from '../assets/dental.png';
 
 const SAVE_INTERVAL = 5000;
 
-const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, virtualInput, enterSignal, loadingText }) => {
+const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, virtualInput, enterSignal, loadingText, pressEtoEnterText }) => {
   const containerRef = useRef(null);
   const gameRef = useRef(null);
   const sceneRef = useRef(null);
@@ -146,6 +146,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
           getIsCheckpointUnlocked,
           playerNickname: player.nickname,
           initialPos,
+          pressEtoEnterText,
           onNearCheckpoint: () => { },
           onLoadProgress: (pct) => setLoadPct(Math.round(pct * 100)),
           onLoadComplete: () => setReady(true),
