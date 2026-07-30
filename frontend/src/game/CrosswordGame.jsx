@@ -428,11 +428,14 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     checkWords(ng);
     setHintsUsed(h => h + 1);
     const remaining = MAX_HINTS - hintsUsed - 1;
-    setHintToastMsg(
-      remaining === 0
-        ? `💡 ${t('game.hintLetterRevealed', 'Huruf didedahkan!')} ${t('game.noHintsLeft', 'Tiada petunjuk lagi.')}`
-        : `💡 ${t('game.hintLetterRevealed', 'Huruf didedahkan!')} ${remaining} ${t('game.hintsRemaining', 'petunjuk berbaki.')}`
-    );
+    if (remaining === 0) {
+      setHintToastMsg(`💡 ${t('game.hintLetterRevealed', 'Huruf dipaparkan!')} ${t('game.noHintsLeft', 'Tiada petunjuk lagi!')}`);
+    } else {
+      const template = remaining === 1
+        ? t('game.hintsRemainingTemplateSingular', 'Tinggal {n} petunjuk!')
+        : t('game.hintsRemainingTemplate', 'Tinggal {n} petunjuk!');
+      setHintToastMsg(`💡 ${t('game.hintLetterRevealed', 'Huruf dipaparkan!')} ${template.replace('{n}', remaining)}`);
+    }
     setShowHintToast(true);
     setTimeout(() => setShowHintToast(false), 2500);
   };
