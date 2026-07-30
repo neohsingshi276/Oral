@@ -265,12 +265,9 @@ const GamePage = () => {
         } else {
           const completedNums = prog.filter(cp => cp.completed).map(cp => cp.checkpoint_number);
           if (completedNums.length > 0) {
-            // Player has completed at least one CP — skip tutorial and show next hint
+            // Player has completed at least one CP — skip tutorial
             setShowTutorial(false);
             localStorage.setItem('tutorial_seen', '1');
-            const maxDone = Math.max(...completedNums);
-            const nextHint = maxDone < 3 ? maxDone + 1 : null;
-            if (nextHint) setCheckpointHint(nextHint);
           } else if (localStorage.getItem('tutorial_seen')) {
             // Tutorial already seen, no checkpoint hint on re-entry
           }
@@ -492,14 +489,8 @@ const GamePage = () => {
   };
 
   const handleCloseCPModal = () => {
-    // Only show the next checkpoint hint if the player actually completed
-    // this checkpoint (cpStep === 'done'). Cancelling during the video
-    // should NOT trigger the "Welcome to CP2/CP3" card.
-    const didComplete = cpStep === 'done';
-    const nextHint = activeCP === 1 ? 2 : activeCP === 2 ? 3 : activeCP === 3 ? 4 : null;
     setActiveCP(null);
     setCpStep('video');
-    if (didComplete && nextHint) setCheckpointHint(nextHint);
   };
 
   const sendChat = async () => {
