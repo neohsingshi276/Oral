@@ -1286,9 +1286,11 @@ const GamePage = () => {
                   {t('game.checkpoint')} {activeCP} {t('game.checkpointDone')}
                 </h3>
                 <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
-                  {activeCP === 3
-                    ? (language === 'bi' ? 'Walk to the Final Checkpoint to watch the concluding video and claim your certificate!' : 'Jalan ke Pusat Pemeriksaan Akhir untuk menonton video penutup dan dapatkan sijil anda!')
-                    : t('game.nextCheckpoint')}
+                  {activeCP === 1
+                    ? (language === 'bi' ? 'Follow the purple arrows to Checkpoint 2!' : 'Jom ikut anak panah ungu ke Checkpoint 2!')
+                    : activeCP === 2
+                    ? (language === 'bi' ? 'Follow the red arrows to Checkpoint 3!' : 'Jom ikut anak panah merah ke Checkpoint 3!')
+                    : (language === 'bi' ? 'Walk to the Final Checkpoint to watch the concluding video and claim your certificate!' : 'Jalan ke Pusat Pemeriksaan Akhir untuk menonton video penutup dan dapatkan sijil anda!')}
                 </p>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   {activeCP !== 3 && (
