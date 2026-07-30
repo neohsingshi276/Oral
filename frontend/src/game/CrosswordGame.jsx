@@ -494,8 +494,11 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
 
   const sidePanelWidth = Math.floor(Math.max(330, Math.min(390, viewport.width * 0.21)));
   const availableGridHeight = viewport.height - 112;
-  const availableGridWidth = viewport.width - (sidePanelWidth * 2) - 48;
-  const cellSize = Math.floor(Math.max(34, Math.min(56, availableGridHeight / gridSize, availableGridWidth / gridSize)));
+  // Panels now sit flush against the left/right screen edges, so the grid
+  // can claim almost all of the remaining middle space (just a small
+  // allowance for gaps/borders) instead of the old fixed 48px margin.
+  const availableGridWidth = viewport.width - (sidePanelWidth * 2) - 16;
+  const cellSize = Math.floor(Math.max(34, Math.min(80, availableGridHeight / gridSize, availableGridWidth / gridSize)));
   const fontSize = cellSize >= 52 ? '1.3rem' : cellSize >= 46 ? '1.16rem' : '1rem';
   const minCorrect = words.length;
   const passed = words.length > 0 && completed.length >= words.length;
@@ -709,7 +712,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       </div>
 
       {/* Main layout */}
-      <div style={{ ...s.mainLayout, gridTemplateColumns: `${sidePanelWidth}px ${gridSize * cellSize}px ${sidePanelWidth}px` }}>
+      <div style={{ ...s.mainLayout, gridTemplateColumns: `${sidePanelWidth}px minmax(0, 1fr) ${sidePanelWidth}px` }}>
         {/* Across clues */}
         <div style={s.cluesPanel}>
           <div style={s.cluesPanelTitle}>→ {t('game.across', 'Mendatar')}</div>
@@ -803,7 +806,7 @@ const s = {
   checkBtn: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 0.75rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.78rem', height: '32px', lineHeight: '1', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' },
   hintBtn: { background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 0.75rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.78rem', height: '32px', lineHeight: '1', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' },
   hintBar: { background: '#1e293b', color: '#e2e8f0', padding: '0.5rem 1rem', fontSize: '0.83rem', lineHeight: 1.5, flexShrink: 0 },
-  mainLayout: { flex: 1, display: 'grid', justifyContent: 'center', columnGap: '0.28rem', padding: '0.28rem 0.35rem', overflow: 'hidden', alignItems: 'stretch' },
+  mainLayout: { flex: 1, display: 'grid', width: '100%', columnGap: '0.28rem', padding: '0.28rem 0', overflow: 'hidden', alignItems: 'stretch' },
   cluesPanel: { width: '100%', height: '100%', boxSizing: 'border-box', flexShrink: 0, background: '#1e293b', borderRadius: '10px', padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', maxHeight: '100%', overflow: 'hidden' },
   cluesPanelTitle: { color: '#FFD700', fontWeight: '800', fontSize: '1.1rem', marginBottom: '0.55rem', flexShrink: 0, borderBottom: '1px solid #334155', paddingBottom: '0.4rem' },
   cluesList: { flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly', gap: '0.3rem' },
@@ -828,4 +831,3 @@ const s = {
 };
 
 export default CrosswordGame;
-
