@@ -613,9 +613,9 @@ const CP3Game = ({ player, onComplete, onBack }) => {
                 </button>
                 <button
                   style={{ ...s.startBtn, background: 'linear-gradient(135deg,#16a34a,#15803d)', boxShadow: '0 8px 25px rgba(22,163,74,0.4)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
-                  onClick={onComplete}
+                  onClick={handleShowFinal}
                 >
-                  🚀 {language === 'bi' ? 'Continue Adventure!' : 'Teruskan Pengembaraan!'}
+                  🏆 {language === 'bi' ? 'View Overall Leaderboard' : 'Lihat Papan Kedudukan Keseluruhan'}
                 </button>
               </div>
             </div>
