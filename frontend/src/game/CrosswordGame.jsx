@@ -575,13 +575,13 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
           <div style={s.congratsCard}>
             <div style={{ fontSize: '4rem' }}>🎉</div>
             <h2 style={{ color: '#16a34a', fontSize: '1.5rem', fontWeight: '800', margin: '0.5rem 0' }}>{t('game.congratsTitle', 'Tahniah!')}</h2>
-            <p style={{ color: '#64748b', margin: '0 0 0.5rem' }}>{t('game.allWordsDone', 'KAnda telah berjaya menyelesaikan teka silang kata dengan semua jawapan yang betul! 🧩')}</p>
+            <p style={{ color: '#64748b', margin: '0 0 0.5rem' }}>{t('game.allWordsDone', 'Anda telah berjaya menyelesaikan teka silang kata dengan semua jawapan yang betul!')}</p>
             <p style={{ color: '#2563eb', fontWeight: '700', margin: '0 0 1rem' }}>⏱️ {t('game.timeLeft', 'Masa berbaki:')} {formatTime(timeLeft)}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
               <button style={{ ...s.doneBtn, background: '#f59e0b' }} onClick={() => {
                 setReviewingAnswers(true);
               }}>👁️ {t('game.viewAnswers', 'Lihat Jawapan')}</button>
-              <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={openCrosswordLeaderboard}>{t('game.toScoreboard', 'Teruskan ke Papan Kedudukan 🏆')}</button>
+              <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={openCrosswordLeaderboard}>{t('game.toScoreboard', 'Teruskan ke Papan Kedudukan')}</button>
             </div>
           </div>
         </div>
@@ -608,7 +608,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                 👁️ {t('game.showAllAnswers', 'Tunjuk Semua Jawapan')}
               </button>
               {passed ? (
-                <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={openCrosswordLeaderboard}>{t('game.seeScoreboard', 'Lihat Papan Markah 🏆 & Teruskan')}</button>
+                <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={openCrosswordLeaderboard}>{t('game.seeScoreboard', 'Lihat Papan Kedudukan 🏆 & Teruskan')}</button>
               ) : (
                 <button style={{ ...s.doneBtn, background: '#e11d48' }} onClick={onRetry}>
                   🔄 {t('game.retry', 'Cuba Semula')}
@@ -633,7 +633,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                   <span style={{ ...s.lbScore, color: entry.completed ? '#16a34a' : '#e11d48' }}>{entry.completed ? `✅ ${t('game.done', 'Selesai')}` : `${entry.words_correct || 0}/${words.length}`}</span>
                 </div>
               )) : (
-                <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem', fontSize: '0.85rem' }}>{t('game.noScoreboardData', 'Tiada data papan markah lagi.')}</p>
+                <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem', fontSize: '0.85rem' }}>{t('game.noScoreboardData', 'Tiada data papan kedudukan lagi.')}</p>
               )}
             </div>
             <button style={s.doneBtn} onClick={passed ? onComplete : onRetry}>
@@ -652,7 +652,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
               style={{ ...s.doneBtn, width: 'auto', padding: '0.7rem 2rem', background: passed ? '#7c3aed' : '#e11d48', fontSize: '0.95rem', borderRadius: '12px', boxShadow: passed ? '0 4px 15px rgba(124,58,237,0.4)' : '0 4px 15px rgba(225,29,72,0.35)' }}
               onClick={passed ? openCrosswordLeaderboard : onRetry}
             >
-              {passed ? t('game.continueToScoreboard', 'Teruskan → Lihat Papan Markah 🏆') : `🔄 ${t('game.retry', 'Cuba Semula')}`}
+              {passed ? t('game.continueToScoreboard', 'Teruskan ke Papan Kedudukan') : `🔄 ${t('game.retry', 'Cuba Semula')}`}
             </button>
           </div>
         </div>
