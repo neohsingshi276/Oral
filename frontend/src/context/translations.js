@@ -2171,9 +2171,11 @@ export const exactTextTranslations = {
   'CP3:': 'CP3:',
 
   // CompareAnalytics bar chart label
-  'CP2 Silang Kata': 'CP2 Crossword',
+  'CP2 Silang Kata': 'CP2 Crossword Puzzle',
 
   // CrosswordGame leaderboard
+  'Teka Silang Kata': 'Crossword Puzzle',
+  'Crossword': 'Crossword Puzzle',
   'Papan Markah': 'Leaderboard',
   'Papan Kedudukan': 'Leaderboard',
   'Scoreboard': 'Leaderboard',
@@ -2220,7 +2222,7 @@ export const exactTextTranslations = {
   'Papan Markah Akhir!': 'Final Leaderboard!',
   'Lihat Papan Markah Akhir 🏆': 'View Final Leaderboard 🏆',
   'mata.': 'points.',
-  'CP1 Quiz + CP2 Crossword + CP3 Food Game (masing-masing 33.33%)': 'CP1 Quiz + CP2 Crossword + CP3 Food Game (33.33% each)',
+  'CP1 Quiz + CP2 Crossword + CP3 Food Game (masing-masing 33.33%)': 'CP1 Quiz + CP2 Crossword Puzzle + CP3 Food Game (33.33% each)',
   'Formula: (Skor CP / Skor Max) × 33.33 = Markah (Jumlah /100)': 'Formula: (CP Score / Max Score) × 33.33 = Mark (Total /100)',
 
   'guru@sekolah.com': 'teacher@school.com',
