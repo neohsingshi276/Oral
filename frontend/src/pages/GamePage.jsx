@@ -1366,14 +1366,14 @@ const GamePage = () => {
                 <h3 style={{ color: '#16a34a', fontSize: '1.4rem', fontWeight: '800' }}>
                   {t('game.checkpoint')} {activeCP} {t('game.checkpointDone')}
                 </h3>
-                <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
-                  {activeCP === 1
-                    ? (language === 'bi' ? 'Follow the purple arrows to Checkpoint 2!' : 'Jom ikut anak panah ungu ke Checkpoint 2!')
-                    : activeCP === 2
-                      ? (language === 'bi' ? 'Follow the red arrows to Checkpoint 3!' : 'Jom ikut anak panah merah ke Checkpoint 3!')
-                      : (language === 'bi' ? 'Walk to the Final Checkpoint to watch the concluding video and claim your certificate!' : 'Jalan ke Pusat Pemeriksaan Akhir untuk menonton video penutup dan dapatkan sijil anda!')}
-                </p>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                {activeCP !== 3 && (
+                  <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
+                    {activeCP === 1
+                      ? (language === 'bi' ? 'Follow the purple arrows to Checkpoint 2!' : 'Jom ikut anak panah ungu ke Checkpoint 2!')
+                      : (language === 'bi' ? 'Follow the red arrows to Checkpoint 3!' : 'Jom ikut anak panah merah ke Checkpoint 3!')}
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: activeCP === 3 ? '1.5rem' : 0 }}>
                   {activeCP !== 3 && (
                     <button
                       style={{ ...s.continueBtn, background: '#64748b', flex: '0 0 auto', width: 'auto', padding: '0.85rem 1.25rem', fontSize: '0.9rem' }}
@@ -1387,8 +1387,14 @@ const GamePage = () => {
                       🔄 {t('game.retry', 'Cuba Semula')}
                     </button>
                   )}
-                  <button style={{ ...s.continueBtn, background: activeCP === 3 ? 'linear-gradient(135deg, #D4A843, #B8922E)' : '#16a34a', flex: 1 }} onClick={handleCloseCPModal}>
-                    {activeCP === 3 ? `🏆 ${language === 'bi' ? 'Go to Final Checkpoint' : 'Pergi ke Pusat Pemeriksaan Akhir'}` : `${t('game.continueAdventure')} →`}
+                  <button
+                    style={{ ...s.continueBtn, background: activeCP === 3 ? 'linear-gradient(135deg, #D4A843, #B8922E)' : '#16a34a', flex: 1 }}
+                    onClick={() => {
+                      handleCloseCPModal();
+                      if (activeCP === 3) setShowFullCP3(true);
+                    }}
+                  >
+                    {activeCP === 3 ? `🏆 ${language === 'bi' ? 'View Overall Leaderboard' : 'Lihat Papan Kedudukan Keseluruhan'}` : `${t('game.continueAdventure')} →`}
                   </button>
                 </div>
               </div>
