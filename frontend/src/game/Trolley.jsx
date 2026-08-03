@@ -120,8 +120,8 @@ const stopBgMusic = () => {
 };
 
 const DEFAULT_DURATION = 60;
-const TROLLEY_SPEED = 1.5;
-const TROLLEY_ACCELERATION = 0.18;
+const TROLLEY_SPEED = 0.85;
+const TROLLEY_ACCELERATION = 0.14;
 const FOOD_FALL_SPEED = 2.5;
 const SPAWN_INTERVAL = 600;
 
@@ -276,9 +276,13 @@ const CP3Game = ({ player, onComplete, onBack }) => {
       lastTime = currentTime;
       setTrolleyPos(prev => {
         let velocity = trolleyVelocity.current;
-        if (keysPressed.current['ArrowLeft']) velocity -= TROLLEY_ACCELERATION * deltaTime;
-        else if (keysPressed.current['ArrowRight']) velocity += TROLLEY_ACCELERATION * deltaTime;
-        else velocity *= 0.9;
+        if (keysPressed.current['ArrowLeft'] || keysPressed.current['a'] || keysPressed.current['A']) {
+          velocity -= TROLLEY_ACCELERATION * deltaTime;
+        } else if (keysPressed.current['ArrowRight'] || keysPressed.current['d'] || keysPressed.current['D']) {
+          velocity += TROLLEY_ACCELERATION * deltaTime;
+        } else {
+          velocity *= 0.65;
+        }
         velocity = Math.max(-TROLLEY_SPEED, Math.min(TROLLEY_SPEED, velocity));
         trolleyVelocity.current = velocity;
         const nextPos = Math.max(5, Math.min(95, prev + velocity * deltaTime));
@@ -578,12 +582,20 @@ const CP3Game = ({ player, onComplete, onBack }) => {
                   🎉 {language === 'bi' ? 'Congratulations! You have passed the Food Catcher Game.' : 'Tahniah! Anda telah lulus Permainan Tangkap Makanan'}
                 </p>
               </div>
-              <button
-                style={{ ...s.startBtn, background: 'linear-gradient(135deg,#16a34a,#15803d)', boxShadow: '0 8px 25px rgba(22,163,74,0.4)', fontSize: '1.15rem', fontWeight: '900', padding: '0.95rem' }}
-                onClick={onComplete}
-              >
-                🚀 {language === 'bi' ? 'Continue Adventure!' : 'Teruskan Pengembaraan!'}
-              </button>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem' }}>
+                <button
+                  style={{ ...s.startBtn, background: '#64748b', boxShadow: '0 4px 15px rgba(100,116,139,0.3)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
+                  onClick={() => { setGameState('start'); setShowLeaderboard(false); setShowFinalLeaderboard(false); }}
+                >
+                  🔄 {language === 'bi' ? 'Retry' : 'Cuba Semula'}
+                </button>
+                <button
+                  style={{ ...s.startBtn, background: 'linear-gradient(135deg,#16a34a,#15803d)', boxShadow: '0 8px 25px rgba(22,163,74,0.4)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
+                  onClick={onComplete}
+                >
+                  🚀 {language === 'bi' ? 'Continue Adventure!' : 'Teruskan Pengembaraan!'}
+                </button>
+              </div>
             </div>
           )}
 
