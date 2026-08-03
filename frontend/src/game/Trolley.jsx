@@ -726,7 +726,7 @@ const animStyles = `
 
 const s = {
   fullPage: { position: 'fixed', inset: 0, background: 'linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', padding: '0.5rem', overflowY: 'auto' },
-  startCard: { background: '#fff', borderRadius: '24px', padding: '2rem', maxWidth: '700px', width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', textAlign: 'center' },
+  startCard: { background: '#fff', borderRadius: '24px', padding: '2rem', maxWidth: '700px', width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', textAlign: 'center', maxHeight: '92vh', overflowY: 'auto' },
   title: { fontSize: '2.5rem', fontWeight: '900', color: '#FF6B35', margin: '0 0 0.5rem', textShadow: '3px 3px 0 #FFE66D' },
   badge: { display: 'inline-block', background: 'linear-gradient(135deg,#FF6B35,#F7931E)', color: '#fff', padding: '0.4rem 1.5rem', borderRadius: '50px', fontSize: '0.9rem', fontWeight: '700', marginBottom: '1.5rem' },
   instrGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' },

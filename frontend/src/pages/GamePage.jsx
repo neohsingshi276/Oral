@@ -325,7 +325,13 @@ const GamePage = () => {
     setCheckpointHint(cpId);
   };
 
-  const handleVideoWatched = () => setCpStep('instructions');
+  const handleVideoWatched = () => {
+    if (activeCP === 3) {
+      setCpStep('activity');
+    } else {
+      setCpStep('instructions');
+    }
+  };
 
   const handleActivityDone = async () => {
     const chatConfig = getPlayerChatConfig();
@@ -1307,14 +1313,14 @@ const GamePage = () => {
                     {activeCP === 1 ? '❓' : activeCP === 2 ? '🧩' : '🍎'}
                   </div>
                   <h3 style={{ color: '#1e3a5f', fontSize: '1.3rem', fontWeight: '800', marginBottom: '1.25rem' }}>
-                    {activeCP === 1 ? t('game.cp1InstructionsTitle') : activeCP === 2 ? t('game.cp2InstructionsTitle') : t('game.foodGame')}
+                    {activeCP === 1 ? t('game.cp1InstructionsTitle') : activeCP === 2 ? t('game.cp2InstructionsTitle') : t('game.cp3InstructionsTitle')}
                   </h3>
                   <div style={{ textAlign: 'left', background: '#f8fafc', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
                     {(() => {
                       const settingsObj = activeCP === 1 ? quizSettings : activeCP === 2 ? crosswordSettings : null;
                       const minCorrect = settingsObj?.minimum_correct ?? (activeCP === 1 ? 8 : 8);
                       const totalItems = activeCP === 1 ? (settingsObj?.question_count || 10) : (settingsObj?.word_count || 8);
-                      const rawInstructions = activeCP === 1 ? t('game.cp1Instructions') : activeCP === 2 ? t('game.cp2Instructions') : [];
+                      const rawInstructions = activeCP === 1 ? t('game.cp1Instructions') : activeCP === 2 ? t('game.cp2Instructions') : t('game.cp3Instructions');
                       const instructions = Array.isArray(rawInstructions) ? rawInstructions : [];
                       return instructions.map((instruction, idx) => {
                         const text = instruction
@@ -1333,7 +1339,7 @@ const GamePage = () => {
                     style={{ ...s.continueBtn, background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', fontSize: '1.1rem', padding: '1rem 2rem', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
                     onClick={() => setCpStep('activity')}
                   >
-                    🚀 {activeCP === 1 ? t('game.cp1StartBtn') : activeCP === 2 ? t('game.cp2StartBtn') : t('game.continueAdventure')}
+                    🚀 {activeCP === 1 ? t('game.cp1StartBtn') : activeCP === 2 ? t('game.cp2StartBtn') : t('game.cp3StartBtn')}
                   </button>
                 </div>
               </div>
