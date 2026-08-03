@@ -622,7 +622,7 @@ const Analytics = ({ setActive }) => {
                   <th style={s.th}>Sesi</th>
                   <th style={s.th}>CP1 Kuiz</th>
                   <th style={s.th}>CP2 Kata Silang</th>
-                  <th style={s.th}>CP3 Permainan Makanan</th>
+                  <th style={s.th}>CP3 Permainan Tangkap Makanan</th>
                   <th style={s.th}>Jumlah / 100</th>
                 </tr></thead>
                 <tbody>
@@ -678,7 +678,7 @@ const Analytics = ({ setActive }) => {
                   <th style={s.th}>Nama Panggilan</th>
                   <th style={s.th}>CP1 Kuiz</th>
                   <th style={s.th}>CP2 Kata Silang</th>
-                  <th style={s.th}>CP3 Permainan Makanan</th>
+                  <th style={s.th}>CP3 Permainan Tangkap Makanan</th>
                   <th style={s.th}>Jumlah / 100</th>
                 </tr></thead>
                 <tbody>

@@ -206,7 +206,7 @@ const ManageStudents = () => {
                                 <th style={s.th}>Sesi</th>
                                 <th style={s.th}>CP1 Kuiz</th>
                                 <th style={s.th}>CP2 Teka Silang Kata</th>
-                                <th style={s.th}>CP3 Permainan Makanan</th>
+                                <th style={s.th}>CP3 Permainan Tangkap Makanan</th>
                                 <th style={s.th}>Disertai Pada</th>
                                 {canDelete && <th style={s.th}>Tindakan</th>}
                               </tr>
