@@ -112,8 +112,9 @@ export default class PhaserGameScene extends Phaser.Scene {
     if (data?.onLoadComplete) this.onLoadComplete = data.onLoadComplete;
     if (data?.getProgress) this.getProgress = data.getProgress;
     if (data?.getIsCheckpointUnlocked) this.getIsCheckpointUnlocked = data.getIsCheckpointUnlocked;
-    if (data?.playerNickname) this.playerNickname = data.playerNickname;
-    if (data?.initialPos) this.initialPos = data.initialPos;
+    if (data?.playerNickname) { this.playerNickname = data.playerNickname; }
+    if (data?.selectedCharacter) { this.selectedCharacter = data.selectedCharacter; }
+    if (data?.initialPos) { this.initialPos = data.initialPos; }
     if (data?.pressEtoEnterText) this.pressEtoEnterText = data.pressEtoEnterText;
 
     // Safe defaults so create() never crashes on undefined callbacks
@@ -124,6 +125,7 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.getProgress = this.getProgress || (() => []);
     this.getIsCheckpointUnlocked = this.getIsCheckpointUnlocked || (() => true);
     this.playerNickname = this.playerNickname || 'Player';
+    this.selectedCharacter = this.selectedCharacter || 'boy';
     this.initialPos = this.initialPos || null;
   }
 
@@ -331,31 +333,232 @@ export default class PhaserGameScene extends Phaser.Scene {
       }
     };
 
-    // Create the player with arcade physics, using a simple graphic character
+    const isGirl = this.selectedCharacter === 'girl';
+
+    const characterColors = isGirl
+      ? {
+        shirt: 0xec4899,
+        shirtBorder: 0x9d174d,
+        trousers: 0x7c3aed,
+        shoes: 0x4c1d95,
+        hair: 0x4a2c1b,
+        hairBorder: 0x2d160c,
+        backpack: 0xa855f7,
+        backpackBorder: 0x6b21a8,
+      }
+      : {
+        shirt: 0x38bdf8,
+        shirtBorder: 0x075985,
+        trousers: 0x334155,
+        shoes: 0x111827,
+        hair: 0x5b321f,
+        hairBorder: 0x2f1b12,
+        backpack: 0xf97316,
+        backpackBorder: 0x9a3412,
+      };
+
+    // ── Cute chibi player character ─────────────────────────────────────
     this.playerGraphic = this.add.container(startX, startY);
 
-    // Body (blue rectangle)
-    this.bodyPart = this.add.rectangle(0, 3, 18, 20, 0x2563eb);
-    this.bodyPart.setOrigin(0.5, 0.5);
+    // Soft shadow under the character
+    this.playerShadow = this.add.ellipse(
+      0,
+      25,
+      24,
+      9,
+      0x000000,
+      0.22
+    );
 
-    this.headPart = this.add.circle(0, -12, 10, 0xFBBF24);
-    this.headPart.setStrokeStyle(1.5, 0xD97706);
+    // Legs
+    this.legL = this.add.rectangle(
+      -5,
+      17,
+      7,
+      11,
+      characterColors.trousers
+    );
+    this.legL.setOrigin(0.5);
 
-    this.eyeL = this.add.circle(-3, -13, 1.5, 0x1e3a5f);
-    this.eyeR = this.add.circle(3, -13, 1.5, 0x1e3a5f);
+    this.legR = this.add.rectangle(
+      5,
+      17,
+      7,
+      11,
+      characterColors.trousers
+    );
+    this.legR.setOrigin(0.5);
 
-    this.legL = this.add.rectangle(-4, 19, 6, 9, 0x1e3a5f);
-    this.legR = this.add.rectangle(4, 19, 6, 9, 0x1e3a5f);
+    // Shoes
+    this.shoeL = this.add.ellipse(
+      -5,
+      23,
+      9,
+      5,
+      characterColors.shoes
+    );
 
-    // Head (yellow circle)
-    const head = this.add.circle(0, -12, 10, 0xFBBF24);
-    head.setStrokeStyle(1.5, 0xD97706);
+    this.shoeR = this.add.ellipse(
+      5,
+      23,
+      9,
+      5,
+      characterColors.shoes
+    );
 
-    // Name label background
+    // Body
+    this.bodyPart = this.add.rectangle(
+      0,
+      4,
+      22,
+      23,
+      characterColors.shirt
+    );
+
+    this.bodyPart.setStrokeStyle(
+      2,
+      characterColors.shirtBorder
+    );
+
+    // Shirt detail
+    this.shirtDetail = this.add.circle(0, 5, 3, 0xffffff);
+
+    // Arms
+    this.armL = this.add.rectangle(
+      -14,
+      4,
+      7,
+      18,
+      0xf6c28b
+    );
+    this.armL.setStrokeStyle(1.5, 0xc97c4b);
+
+    this.armR = this.add.rectangle(
+      14,
+      4,
+      7,
+      18,
+      0xf6c28b
+    );
+    this.armR.setStrokeStyle(1.5, 0xc97c4b);
+
+    // Hair behind head
+    this.hairBack = this.add.circle(
+      0,
+      -14,
+      13,
+      characterColors.hair
+    );
+
+    this.hairBack.setStrokeStyle(
+      2,
+      characterColors.hairBorder
+    );
+
+    this.girlHairLeft = null;
+    this.girlHairRight = null;
+    this.hairBow = null;
+
+    if (isGirl) {
+      this.girlHairLeft = this.add.ellipse(
+        -10,
+        -7,
+        8,
+        21,
+        characterColors.hair
+      );
+
+      this.girlHairRight = this.add.ellipse(
+        10,
+        -7,
+        8,
+        21,
+        characterColors.hair
+      );
+
+      this.girlHairLeft.setStrokeStyle(
+        1.5,
+        characterColors.hairBorder
+      );
+
+      this.girlHairRight.setStrokeStyle(
+        1.5,
+        characterColors.hairBorder
+      );
+
+      this.hairBow = this.add.text(
+        8,
+        -25,
+        '🎀',
+        {
+          fontSize: '9px',
+        }
+      );
+
+      this.hairBow.setOrigin(0.5);
+    }
+
+    // Face
+    this.headPart = this.add.circle(0, -12, 11, 0xf6c28b);
+    this.headPart.setStrokeStyle(1.8, 0xc97c4b);
+
+    // Hair fringe
+    this.hairFront = this.add.arc(
+      0,
+      -17,
+      10,
+      195,
+      345,
+      false,
+      characterColors.hair
+    );
+
+    // Cute large eyes
+    this.eyeL = this.add.circle(-4, -13, 2.1, 0x1e293b);
+    this.eyeR = this.add.circle(4, -13, 2.1, 0x1e293b);
+
+    // Eye highlights
+    this.eyeHighlightL = this.add.circle(-3.4, -13.7, 0.7, 0xffffff);
+    this.eyeHighlightR = this.add.circle(4.6, -13.7, 0.7, 0xffffff);
+
+    // Blush
+    this.blushL = this.add.ellipse(-7, -9, 4, 2, 0xfb7185, 0.6);
+    this.blushR = this.add.ellipse(7, -9, 4, 2, 0xfb7185, 0.6);
+
+    // Smile
+    this.mouth = this.add.arc(
+      0,
+      -9,
+      3,
+      20,
+      160,
+      false,
+      0x7c2d12
+    );
+    this.mouth.setStrokeStyle(1.2, 0x7c2d12);
+
+    // Small backpack
+    this.backpack = this.add.rectangle(
+      -11,
+      3,
+      7,
+      15,
+      characterColors.backpack
+    );
+
+    this.backpack.setStrokeStyle(
+      1.5,
+      characterColors.backpackBorder
+    );
+
+    this.backpack.setDepth(-1);
+
+    // Name label
     const playerLabel = this.playerNickname.length > 24
       ? `${this.playerNickname.slice(0, 23)}...`
       : this.playerNickname;
-    const nameText = this.add.text(0, -30, playerLabel, {
+
+    this.nameText = this.add.text(0, -32, playerLabel, {
       fontSize: '10px',
       fontFamily: 'sans-serif',
       fontStyle: 'bold',
@@ -364,10 +567,54 @@ export default class PhaserGameScene extends Phaser.Scene {
       stroke: '#1e3a5f',
       strokeThickness: 3,
     });
-    nameText.setOrigin(0.5, 1);
 
-    this.playerGraphic.add([nameText, this.bodyPart, this.headPart, this.eyeL, this.eyeR, this.legL, this.legR]);
+    this.nameText.setOrigin(0.5, 1);
+
+    const characterParts = [
+      this.playerShadow,
+      this.backpack,
+      this.legL,
+      this.legR,
+      this.shoeL,
+      this.shoeR,
+      this.armL,
+      this.armR,
+      this.bodyPart,
+      this.shirtDetail,
+      this.hairBack,
+    ];
+
+    if (this.girlHairLeft) {
+      characterParts.push(this.girlHairLeft);
+    }
+
+    if (this.girlHairRight) {
+      characterParts.push(this.girlHairRight);
+    }
+
+    characterParts.push(
+      this.headPart,
+      this.hairFront,
+      this.eyeL,
+      this.eyeR,
+      this.eyeHighlightL,
+      this.eyeHighlightR,
+      this.blushL,
+      this.blushR,
+      this.mouth
+    );
+
+    if (this.hairBow) {
+      characterParts.push(this.hairBow);
+    }
+
+    characterParts.push(this.nameText);
+
+    this.playerGraphic.add(characterParts);
+
     this.playerGraphic.setDepth(1000);
+    this.playerGraphic.setScale(1.15);
+
 
     // Physics body for player (invisible rectangle — avoids null-texture bug
     // where physics.add.sprite(x, y, null) places the body at (0,0) instead
@@ -524,6 +771,7 @@ export default class PhaserGameScene extends Phaser.Scene {
     // ── State ────────────────────────────────────────────────────
     this.nearCheckpointId = null;
     this.walkFrame = 0;
+    this.facingDirection = 1;
     this.isPaused = false;
     this.virtualInput = { up: false, down: false, left: false, right: false };
     this.virtualEnterQueued = false;
@@ -593,15 +841,68 @@ export default class PhaserGameScene extends Phaser.Scene {
 
       // ── ANIMATION ──
       const isMoving = vx !== 0 || vy !== 0;
+      if (vx < 0) {
+        this.facingDirection = -1;
+      } else if (vx > 0) {
+        this.facingDirection = 1;
+      }
 
       if (isMoving) {
-        this.walkFrame += 0.15;
+        this.walkFrame += 0.18;
+
         const legOffset = Math.sin(this.walkFrame) * 3;
-        this.legL.y = 19 + legOffset;
-        this.legR.y = 19 - legOffset;
+        const armOffset = Math.sin(this.walkFrame) * 12;
+        const bounce = Math.abs(Math.sin(this.walkFrame)) * 1.5;
+
+        // Legs
+        this.legL.y = 17 + legOffset;
+        this.legR.y = 17 - legOffset;
+
+        // Shoes follow legs
+        this.shoeL.y = 23 + legOffset;
+        this.shoeR.y = 23 - legOffset;
+
+        // Arms swing
+        this.armL.angle = armOffset;
+        this.armR.angle = -armOffset;
+
+        // Small cute body bounce
+        const baseScale = 1.15;
+
+        this.playerGraphic.setScale(
+          this.facingDirection * (baseScale + bounce * 0.006),
+          baseScale - bounce * 0.01
+        );
+
+        this.nameText.setScale(
+          this.facingDirection,
+          1
+        );
+
+        // Shadow becomes slightly smaller while bouncing
+        this.playerShadow.scaleX = 1 - bounce * 0.04;
       } else {
-        this.legL.y = 19;
-        this.legR.y = 19;
+        this.legL.y = 17;
+        this.legR.y = 17;
+
+        this.shoeL.y = 23;
+        this.shoeR.y = 23;
+
+        this.armL.angle = 0;
+        this.armR.angle = 0;
+
+        const baseScale = 1.15;
+
+        this.playerGraphic.setScale(
+          this.facingDirection * baseScale,
+          baseScale
+        );
+
+        this.nameText.setScale(
+          this.facingDirection,
+          1
+        );
+        this.playerShadow.setScale(1);
       }
 
       // ── SAFE PROGRESS ──
@@ -716,19 +1017,38 @@ export default class PhaserGameScene extends Phaser.Scene {
   updatePlayerOpacity() {
     const parts = [
       this.headPart,
+      this.hairBack,
+      this.hairFront,
+      this.girlHairLeft,
+      this.girlHairRight,
+      this.hairBow,
       this.eyeL,
       this.eyeR,
+      this.eyeHighlightL,
+      this.eyeHighlightR,
+      this.blushL,
+      this.blushR,
+      this.mouth,
       this.bodyPart,
+      this.shirtDetail,
+      this.armL,
+      this.armR,
       this.legL,
       this.legR,
+      this.shoeL,
+      this.shoeR,
+      this.backpack,
     ];
 
-    // reset first
     parts.forEach(part => {
-      if (part) part.setAlpha(1);
+      if (part) {
+        part.setAlpha(1);
+      }
     });
 
-    if (!this.treeCollisions || this.treeCollisions.size === 0) return;
+    if (!this.treeCollisions || this.treeCollisions.size === 0) {
+      return;
+    }
 
     parts.forEach(part => {
       if (!part) return;

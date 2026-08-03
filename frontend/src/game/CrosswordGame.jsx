@@ -596,7 +596,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
               {timeLeft === 0 ? t('game.timesUp', 'Masa Tamat!') : t('game.giveUp', 'Menyerah Kalah')}
             </h2>
             <p style={{ color: '#64748b', margin: '0 0 1rem' }}>
-              {t('game.youCompleted', 'Kamu selesaikan')} <strong style={{ color: '#2563eb' }}>{completed.length}/{words.length}</strong> {t('game.words', 'perkataan')} ({pct}%)
+              {t('game.youCompleted', 'Anda Telah Menjawab')} <strong style={{ color: '#2563eb' }}>{completed.length}/{words.length}</strong> {t('game.words', 'perkataan')} ({pct}%)
             </p>
             {minCorrect > 0 && !passed && (
               <p style={{ color: '#f59e0b', margin: '0 0 1rem', fontSize: '0.88rem', background: '#fef9ee', padding: '0.5rem', borderRadius: '8px' }}>
@@ -647,7 +647,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       {reviewingAnswers && !showLB && (
         <div style={s.reviewBar}>
           <div style={s.reviewBarInner}>
-            <span style={{ color: '#16a34a', fontWeight: '700', fontSize: '0.95rem' }}>👁️ {t('game.checkYourAnswers', 'Semua jawapan ditunjukkan — Semak jawapan anda!')}</span>
+            <span style={{ color: '#16a34a', fontWeight: '700', fontSize: '0.95rem' }}>👁️ {t('game.checkYourAnswers', 'Semua jawapan ditunjukkan')}</span>
             <button
               style={{ ...s.doneBtn, width: 'auto', padding: '0.7rem 2rem', background: passed ? '#7c3aed' : '#e11d48', fontSize: '0.95rem', borderRadius: '12px', boxShadow: passed ? '0 4px 15px rgba(124,58,237,0.4)' : '0 4px 15px rgba(225,29,72,0.35)' }}
               onClick={passed ? openCrosswordLeaderboard : onRetry}

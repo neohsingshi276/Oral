@@ -160,6 +160,13 @@ const GamePage = () => {
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || localStorage.getItem('dq_reduce_motion') === '1'
   );
   const [certificateBusy, setCertificateBusy] = useState(false);
+  const [selectedCharacter, setSelectedCharacter] = useState(() => {
+    return localStorage.getItem('dq_selected_character') || '';
+  });
+  const chooseCharacter = (character) => {
+    setSelectedCharacter(character);
+    localStorage.setItem('dq_selected_character', character);
+  };
   const [quizSettings, setQuizSettings] = useState(null);
   const [crosswordSettings, setCrosswordSettings] = useState(null);
 
@@ -171,7 +178,7 @@ const GamePage = () => {
           setQuizSettings(res.data.settings);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     api.get(`/crossword/${player.session_id}`)
       .then(res => {
@@ -179,7 +186,7 @@ const GamePage = () => {
           setCrosswordSettings(res.data.settings);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [player?.session_id]);
 
   // Ref to the Phaser game instance — used to pause keyboard input while typing in chat
@@ -693,21 +700,85 @@ const GamePage = () => {
       </div>
 
       {/* Game Canvas */}
-      <div style={s.canvasWrap}>
-        <GameCanvas
-          player={player}
-          progress={progress}
-          onCheckpointReached={handleCheckpointReached}
-          paused={isWorldPaused}
-          externalGameRef={gameInstanceRef}
-          virtualInput={virtualInput}
-          enterSignal={enterSignal}
-          loadingText={t('game.loadingGame')}
-          pressEtoEnterText={t('game.pressEtoEnter')}
-        />
-      </div>
+      {/* Character selection or game canvas */}
+      {!selectedCharacter ? (
+        <div style={s.characterSelectWrap}>
+          <div style={s.characterSelectCard}>
+            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>
+              🎮
+            </div>
 
-      {isMobile && (
+            <h2 style={s.characterTitle}>
+              Choose Your Character
+            </h2>
+
+            <p style={s.characterSubtitle}>
+              Select either the boy or girl character before starting the game.
+            </p>
+
+            <div style={s.characterOptions}>
+              <button
+                type="button"
+                style={{
+                  ...s.characterButton,
+                  background: '#e0f2fe',
+                  borderColor: '#38bdf8',
+                }}
+                onClick={() => chooseCharacter('boy')}
+              >
+                <div style={s.characterEmoji}>👦</div>
+
+                <div
+                  style={{
+                    ...s.characterName,
+                    color: '#075985',
+                  }}
+                >
+                  Boy
+                </div>
+              </button>
+
+              <button
+                type="button"
+                style={{
+                  ...s.characterButton,
+                  background: '#fce7f3',
+                  borderColor: '#ec4899',
+                }}
+                onClick={() => chooseCharacter('girl')}
+              >
+                <div style={s.characterEmoji}>👧</div>
+
+                <div
+                  style={{
+                    ...s.characterName,
+                    color: '#9d174d',
+                  }}
+                >
+                  Girl
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={s.canvasWrap}>
+          <GameCanvas
+            player={player}
+            progress={progress}
+            onCheckpointReached={handleCheckpointReached}
+            paused={isWorldPaused}
+            externalGameRef={gameInstanceRef}
+            virtualInput={virtualInput}
+            enterSignal={enterSignal}
+            loadingText={t('game.loadingGame')}
+            pressEtoEnterText={t('game.pressEtoEnter')}
+            selectedCharacter={selectedCharacter}
+          />
+        </div>
+      )}
+
+      {isMobile && selectedCharacter && (
         <div style={s.touchControls} aria-label="Touch game controls">
           <div style={s.dpad}>
             <TouchButton label="Up" style={{ gridColumn: 2 }} onChange={down => setVirtualInput(v => ({ ...v, up: down }))}>↑</TouchButton>
@@ -728,7 +799,7 @@ const GamePage = () => {
 
 
       {/* Tutorial Overlay — 3-page walkthrough */}
-      {showTutorial && (() => {
+      {selectedCharacter && showTutorial && (() => {
         const page = mapTutorialPages[tutorialPage] || mapTutorialPages[0];
         const isLast = tutorialPage === mapTutorialPages.length - 1;
         const accentColor = page.accent || '#2563eb';
@@ -1293,8 +1364,8 @@ const GamePage = () => {
                   {activeCP === 1
                     ? (language === 'bi' ? 'Follow the purple arrows to Checkpoint 2!' : 'Jom ikut anak panah ungu ke Checkpoint 2!')
                     : activeCP === 2
-                    ? (language === 'bi' ? 'Follow the red arrows to Checkpoint 3!' : 'Jom ikut anak panah merah ke Checkpoint 3!')
-                    : (language === 'bi' ? 'Walk to the Final Checkpoint to watch the concluding video and claim your certificate!' : 'Jalan ke Pusat Pemeriksaan Akhir untuk menonton video penutup dan dapatkan sijil anda!')}
+                      ? (language === 'bi' ? 'Follow the red arrows to Checkpoint 3!' : 'Jom ikut anak panah merah ke Checkpoint 3!')
+                      : (language === 'bi' ? 'Walk to the Final Checkpoint to watch the concluding video and claim your certificate!' : 'Jalan ke Pusat Pemeriksaan Akhir untuk menonton video penutup dan dapatkan sijil anda!')}
                 </p>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   {activeCP !== 3 && (
@@ -1446,6 +1517,14 @@ const s = {
   chatInput: { display: 'flex', gap: '0.5rem', padding: '0.75rem', borderTop: '1px solid #e2e8f0' },
   chatInputField: { flex: 1, padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.88rem', outline: 'none' },
   chatSendBtn: { background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' },
+  characterSelectWrap: { flex: 1, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', boxSizing: 'border-box', background: '#0f172a', },
+  characterSelectCard: { width: '100%', maxWidth: '580px', background: '#ffffff', borderRadius: '24px', padding: '2.5rem', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.35)', },
+  characterTitle: { margin: '0 0 0.5rem', color: '#1e3a5f', fontSize: '2rem', fontWeight: '900', },
+  characterSubtitle: { margin: '0 0 2rem', color: '#64748b', fontSize: '1rem', lineHeight: 1.5, },
+  characterOptions: { display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap', },
+  characterButton: { width: '190px', padding: '1.5rem', borderRadius: '20px', border: '4px solid', cursor: 'pointer', transition: 'transform 0.2s ease, box-shadow 0.2s ease', },
+  characterEmoji: { fontSize: '4.5rem', lineHeight: 1, marginBottom: '0.8rem', },
+  characterName: { fontSize: '1.25rem', fontWeight: '900', },
 };
 
 export default GamePage;

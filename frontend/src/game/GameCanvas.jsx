@@ -6,7 +6,7 @@ import dentalImage from '../assets/dental.png';
 
 const SAVE_INTERVAL = 5000;
 
-const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, virtualInput, enterSignal, loadingText, pressEtoEnterText }) => {
+const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, virtualInput, enterSignal, loadingText, pressEtoEnterText, selectedCharacter }) => {
   const containerRef = useRef(null);
   const gameRef = useRef(null);
   const sceneRef = useRef(null);
@@ -145,6 +145,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
           getProgress,
           getIsCheckpointUnlocked,
           playerNickname: player.nickname,
+          selectedCharacter: selectedCharacter || 'boy',
           initialPos,
           pressEtoEnterText,
           onNearCheckpoint: () => { },
@@ -220,7 +221,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
           gap: 16,
           minHeight: 300,
         }}>
-         <img src={dentalImage} style={{ width:120, animation: 'spin 1.2s linear infinite' }} />
+          <img src={dentalImage} style={{ width: 120, animation: 'spin 1.2s linear infinite' }} />
           <div style={{ color: '#FFD700', fontWeight: 'bold', fontSize: 18 }}>
             {loadingText || 'Loading...'}
           </div>

@@ -126,39 +126,54 @@ const FOOD_FALL_SPEED = 2.5;
 const SPAWN_INTERVAL = 600;
 
 const GOOD_FOODS = [
-  { emoji: '🥛', name: 'Susu', points: 100, color: '#FFE5B4' },
-  { emoji: '🧀', name: 'Keju', points: 100, color: '#FFD700' },
-  { emoji: '🥕', name: 'Lobak Merah', points: 100, color: '#FF8C42' },
-  { emoji: '🥦', name: 'Brokoli', points: 100, color: '#90EE90' },
-  { emoji: '🍎', name: 'Epal', points: 100, color: '#FF6B6B' },
-  { emoji: '🥬', name: 'Sayur Berdaun', points: 100, color: '#7FFF7F' },
-  { emoji: '🥚', name: 'Telur', points: 100, color: '#FFEFD5' },
-  { emoji: '🐟', name: 'Ikan', points: 100, color: '#87CEFA' },
-  { emoji: '🍌', name: 'Pisang', points: 100, color: '#FFE135' },
-  { emoji: '🌽', name: 'Jagung', points: 100, color: '#F0C040' },
-  { emoji: '🥜', name: 'Kekacang', points: 100, color: '#D2A679' },
-  { emoji: '🍇', name: 'Anggur', points: 100, color: '#9B59B6' },
-  { emoji: '💧', name: 'Air', points: 100, color: '#B0E0E6' },
-  { emoji: '🍊', name: 'Oren', points: 100, color: '#FFA500' },
+  { image: '/assets/foods/good/peanut.png', nameBm: 'Kacang Tanah', nameBi: 'Peanut', points: 100, color: '#D2A679' },
+  { image: '/assets/foods/good/egg.png', nameBm: 'Telur', nameBi: 'Egg', points: 100, color: '#FFEFD5' },
+  { image: '/assets/foods/good/cheese.png', nameBm: 'Keju', nameBi: 'Cheese', points: 100, color: '#FFD700' },
+  { image: '/assets/foods/good/milk.png', nameBm: 'Susu', nameBi: 'Milk', points: 100, color: '#FFE5B4' },
+  { image: '/assets/foods/good/lettuce.png', nameBm: 'Selada', nameBi: 'Lettuce', points: 100, color: '#7FFF7F' },
+  { image: '/assets/foods/good/broccoli.png', nameBm: 'Brokoli', nameBi: 'Broccoli', points: 100, color: '#90EE90' },
+  { image: '/assets/foods/good/cucumber.png', nameBm: 'Timun', nameBi: 'Cucumber', points: 100, color: '#8FBC8F' },
+  { image: '/assets/foods/good/carrot.png', nameBm: 'Lobak Merah', nameBi: 'Carrot', points: 100, color: '#FF8C42' },
+  { image: '/assets/foods/good/tomato.png', nameBm: 'Tomato', nameBi: 'Tomato', points: 100, color: '#FF6B6B' },
+  { image: '/assets/foods/good/avocado.png', nameBm: 'Avokado', nameBi: 'Avocado', points: 100, color: '#A3D977' },
+  { image: '/assets/foods/good/fish.png', nameBm: 'Ikan', nameBi: 'Fish', points: 100, color: '#87CEFA' },
+  { image: '/assets/foods/good/chicken-drumstick.png', nameBm: 'Ayam', nameBi: 'Chicken', points: 100, color: '#F4A460' },
+  { image: '/assets/foods/good/shrimp.png', nameBm: 'Udang', nameBi: 'Shrimp', points: 100, color: '#FA8072' },
+  { image: '/assets/foods/good/squid.png', nameBm: 'Sotong', nameBi: 'Squid', points: 100, color: '#D8BFD8' },
+  { image: '/assets/foods/good/mushroom.png', nameBm: 'Cendawan', nameBi: 'Mushroom', points: 100, color: '#F5DEB3' },
+  { image: '/assets/foods/good/water.png', nameBm: 'Air', nameBi: 'Water', points: 100, color: '#B0E0E6' },
+  { image: '/assets/foods/good/apple.png', nameBm: 'Epal', nameBi: 'Apple', points: 100, color: '#FF6B6B' },
+  { image: '/assets/foods/good/pear.png', nameBm: 'Buah Pir', nameBi: 'Pear', points: 100, color: '#E6D85C' },
+  { image: '/assets/foods/good/watermelon.png', nameBm: 'Tembikai', nameBi: 'Watermelon', points: 100, color: '#FF7F7F' },
+  { image: '/assets/foods/good/crab.png', nameBm: 'Ketam', nameBi: 'Crab', points: 100, color: '#FF7043' },
 ];
 
 const BAD_FOODS = [
-  { emoji: '🍭', name: 'Lolipop', points: -70, color: '#FF69B4' },
-  { emoji: '🍬', name: 'Gula-gula', points: -70, color: '#DDA0DD' },
-  { emoji: '🍫', name: 'Coklat', points: -70, color: '#8B4513' },
-  { emoji: '🍩', name: 'Donat', points: -70, color: '#FFB6C1' },
-  { emoji: '🧁', name: 'Kek Cawan', points: -70, color: '#FF99CC' },
-  { emoji: '🥤', name: 'Soda', points: -70, color: '#87CEEB' },
-  { emoji: '🍪', name: 'Biskut', points: -70, color: '#D2691E' },
-  { emoji: '🎂', name: 'Kek', points: -70, color: '#FFB7C5' },
-  { emoji: '🍿', name: 'Bertih Jagung Karamel', points: -70, color: '#DAA520' },
-  { emoji: '🧃', name: 'Jus Kotak', points: -70, color: '#FFA07A' },
-  { emoji: '🍦', name: 'Aiskrim', points: -70, color: '#FFFDD0' },
-  { emoji: '🍡', name: 'Gula-gula Kapas', points: -70, color: '#FFB6D9' },
+  { image: '/assets/foods/bad/donut.png', nameBm: 'Donat', nameBi: 'Donut', points: -70, color: '#FFB6C1' },
+  { image: '/assets/foods/bad/cookie.png', nameBm: 'Biskut Coklat', nameBi: 'Chocolate Chip Cookie', points: -70, color: '#D2691E' },
+  { image: '/assets/foods/bad/chocolate.png', nameBm: 'Coklat', nameBi: 'Chocolate', points: -70, color: '#8B4513' },
+  { image: '/assets/foods/bad/mango-sticky-rice.png', nameBm: 'Pulut Mangga', nameBi: 'Mango Sticky Rice', points: -70, color: '#FFD166' },
+  { image: '/assets/foods/bad/bubble-tea.png', nameBm: 'Teh Boba', nameBi: 'Bubble Tea', points: -70, color: '#D2A679' },
+  { image: '/assets/foods/bad/cupcake.png', nameBm: 'Kek Cawan', nameBi: 'Cupcake', points: -70, color: '#FF99CC' },
+  { image: '/assets/foods/bad/ice-cream.png', nameBm: 'Aiskrim', nameBi: 'Ice Cream', points: -70, color: '#FFFDD0' },
+  { image: '/assets/foods/bad/cereal.png', nameBm: 'Bijirin Bergula', nameBi: 'Sugary Cereal', points: -70, color: '#FFA07A' },
+  { image: '/assets/foods/bad/oreo.png', nameBm: 'Biskut Krim Coklat', nameBi: 'Chocolate Cream Cookie', points: -70, color: '#5C4033' },
+  { image: '/assets/foods/bad/lollipop.png', nameBm: 'Lolipop', nameBi: 'Lollipop', points: -70, color: '#FF69B4' },
+  { image: '/assets/foods/bad/soft-drink.png', nameBm: 'Minuman Ringan', nameBi: 'Soft Drink', points: -70, color: '#87CEEB' },
+  { image: '/assets/foods/bad/chocolate-cake.png', nameBm: 'Kek Coklat', nameBi: 'Chocolate Cake', points: -70, color: '#8B4513' },
+  { image: '/assets/foods/bad/orange-juice.png', nameBm: 'Jus Kotak', nameBi: 'Boxed Juice', points: -70, color: '#FFA500' },
+  { image: '/assets/foods/bad/hard-candy.png', nameBm: 'Gula-gula', nameBi: 'Candy', points: -70, color: '#DDA0DD' },
+  { image: '/assets/foods/bad/chocolate-wafer.png', nameBm: 'Wafer Coklat', nameBi: 'Chocolate Wafer', points: -70, color: '#8B4513' },
+  { image: '/assets/foods/bad/cinnamon-roll.png', nameBm: 'Roti Gulung Manis', nameBi: 'Cinnamon Roll', points: -70, color: '#D2A679' },
+  { image: '/assets/foods/bad/honey.png', nameBm: 'Madu', nameBi: 'Honey', points: -70, color: '#DAA520' },
+  { image: '/assets/foods/bad/potato-chips.png', nameBm: 'Kerepek Kentang', nameBi: 'Potato Chips', points: -70, color: '#F4C542' },
+  { image: '/assets/foods/bad/seri-muka.png', nameBm: 'Kuih Seri Muka', nameBi: 'Seri Muka', points: -70, color: '#90C987' },
+  { image: '/assets/foods/bad/tanghulu.png', nameBm: 'Buah Bersalut Gula', nameBi: 'Candied Fruit Skewer', points: -70, color: '#FF6B6B' },
 ];
 
 const CP3Game = ({ player, onComplete }) => {
   const { t, language } = useLanguage();
+  const getFoodName = (food) => language === 'bi' ? food.nameBi : food.nameBm;
   const [gameState, setGameState] = useState('start');
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(DEFAULT_DURATION);
@@ -323,7 +338,7 @@ const CP3Game = ({ player, onComplete }) => {
       const food = allFoods[Math.floor(Math.random() * allFoods.length)];
       setFallingItems(prev => [...prev, {
         id: now + Math.random(),
-        emoji: food.emoji, name: food.name, points: food.points, color: food.color,
+        image: food.image, nameBm: food.nameBm, nameBi: food.nameBi, points: food.points, color: food.color,
         x: Math.random() * 80 + 10, y: -50, caught: false,
         rotation: Math.random() * 360, rotationSpeed: (Math.random() - 0.5) * 4,
       }]);
@@ -383,11 +398,11 @@ const CP3Game = ({ player, onComplete }) => {
         <div style={s.foodCols}>
           <div style={s.goodCol}>
             <div style={s.colTitle}>✅ {t('game.catchThese')} (+100)</div>
-            <div style={s.foodRow}>{GOOD_FOODS.map((f, i) => <div key={i} style={s.foodChip}>{f.emoji}</div>)}</div>
+            <div style={s.foodRow}>{GOOD_FOODS.map((f, i) => (<div key={i} style={s.foodChip}> <img src={f.image} alt={getFoodName(f)} title={getFoodName(f)} style={{ width: '38px', height: '38px', objectFit: 'contain' }} /> </div>))}</div>
           </div>
           <div style={s.badCol}>
             <div style={s.colTitle}>❌ {t('game.avoidThese')} (-70)</div>
-            <div style={s.foodRow}>{BAD_FOODS.map((f, i) => <div key={i} style={s.foodChip}>{f.emoji}</div>)}</div>
+            <div style={s.foodRow}>{BAD_FOODS.map((f, i) => (<div key={i} style={s.foodChip}> <img src={f.image} alt={getFoodName(f)} title={getFoodName(f)} style={{ width: '38px', height: '38px', objectFit: 'contain' }} /> </div>))}</div>
           </div>
         </div>
         <button style={s.startBtn} onClick={() => setGameState('education')}>📚 {language === 'bi' ? 'Learn About the Foods!' : 'Belajar Tentang Makanan!'}</button>
@@ -436,8 +451,8 @@ const CP3Game = ({ player, onComplete }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
               {GOOD_FOODS.map((f, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff', borderRadius: '8px', padding: '0.3rem 0.6rem', border: '1px solid #bbf7d0' }}>
-                  <span style={{ fontSize: '1.3rem' }}>{f.emoji}</span>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e293b' }}>{f.name}</span>
+                  <img src={f.image} alt={getFoodName(f)} style={{ width: '38px', height: '38px', objectFit: 'contain', flexShrink: 0 }} />
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e293b' }}>{getFoodName(f)}</span>
                 </div>
               ))}
             </div>
@@ -459,8 +474,8 @@ const CP3Game = ({ player, onComplete }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
               {BAD_FOODS.map((f, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff', borderRadius: '8px', padding: '0.3rem 0.6rem', border: '1px solid #fecdd3' }}>
-                  <span style={{ fontSize: '1.3rem' }}>{f.emoji}</span>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e293b' }}>{f.name}</span>
+                  <img src={f.image} alt={getFoodName(f)} style={{ width: '38px', height: '38px', objectFit: 'contain', flexShrink: 0 }} />
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e293b' }}>{getFoodName(f)}</span>
                 </div>
               ))}
             </div>
@@ -587,12 +602,74 @@ const CP3Game = ({ player, onComplete }) => {
             </div>
             {combo > 1 && <span style={s.combo}>🔥 {combo}x!</span>}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff', padding: '0.35rem 0.75rem', borderRadius: '10px', border: '2px solid #e2e8f0' }}>
-            <span style={{ fontSize: '0.72rem', color: '#888', fontWeight: '600' }}>✅</span>
-            <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#16a34a' }}>{GOOD_FOODS.map(f => f.emoji).slice(0, 4).join('')} +100</span>
-            <span style={{ fontSize: '0.72rem', color: '#888', margin: '0 0.25rem' }}>|</span>
-            <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#e11d48' }}>{BAD_FOODS.map(f => f.emoji).slice(0, 4).join('')} -70</span>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: '#fff',
+            padding: '8px 12px',
+            borderRadius: '10px',
+            border: '2px solid #e2e8f0',
+            maxWidth: '700px'
+          }}>
+
+            <span style={{ color: '#16a34a', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+              ✅ +100
+            </span>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(10, 22px)',
+                gridAutoRows: '22px',
+                gap: '4px'
+              }}
+            >
+              {GOOD_FOODS.map(food => (
+                <img
+                  key={food.image}
+                  src={food.image}
+                  alt={getFoodName(food)}
+                  style={{
+                    width: 22,
+                    height: 22,
+                    objectFit: 'contain'
+                  }}
+                />
+              ))}
+            </div>
+
+            <span style={{ color: '#999' }}>|</span>
+
+            <span style={{ color: '#e11d48', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+              ❌ -70
+            </span>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(10, 22px)',
+                gridAutoRows: '22px',
+                gap: '4px'
+              }}
+            >
+              {BAD_FOODS.map(food => (
+                <img
+                  key={food.image}
+                  src={food.image}
+                  alt={getFoodName(food)}
+                  style={{
+                    width: 22,
+                    height: 22,
+                    objectFit: 'contain'
+                  }}
+                />
+              ))}
+            </div>
+
           </div>
+
           <button
             style={s.muteBtn}
             onClick={() => {
@@ -622,7 +699,7 @@ const CP3Game = ({ player, onComplete }) => {
           {fallingItems.map(item => (
             <div key={item.id} style={{ ...s.fallingItem, left: `${item.x}%`, top: `${item.y}px` }}>
               <div style={{ ...s.foodBubble, background: item.color + '40' }}>
-                <span style={{ fontSize: '2.5rem' }}>{item.emoji}</span>
+                <img src={item.image} alt={getFoodName(item)} style={{ width: '52px', height: '52px', objectFit: 'contain', display: 'block' }} />
               </div>
             </div>
           ))}
