@@ -574,14 +574,14 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
         <div style={s.overlay}>
           <div style={s.congratsCard}>
             <div style={{ fontSize: '4rem' }}>🎉</div>
-            <h2 style={{ color: '#16a34a', fontSize: '1.5rem', fontWeight: '800', margin: '0.5rem 0' }}>{t('game.congratsTitle', 'Tahniah! Selesai!')}</h2>
-            <p style={{ color: '#64748b', margin: '0 0 0.5rem' }}>{t('game.allWordsDone', 'Kamu berjaya melengkapkan semua perkataan! 🧩')}</p>
+            <h2 style={{ color: '#16a34a', fontSize: '1.5rem', fontWeight: '800', margin: '0.5rem 0' }}>{t('game.congratsTitle', 'Tahniah!')}</h2>
+            <p style={{ color: '#64748b', margin: '0 0 0.5rem' }}>{t('game.allWordsDone', 'KAnda telah berjaya menyelesaikan teka silang kata dengan semua jawapan yang betul! 🧩')}</p>
             <p style={{ color: '#2563eb', fontWeight: '700', margin: '0 0 1rem' }}>⏱️ {t('game.timeLeft', 'Masa berbaki:')} {formatTime(timeLeft)}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
               <button style={{ ...s.doneBtn, background: '#f59e0b' }} onClick={() => {
                 setReviewingAnswers(true);
-              }}>👁️ {t('game.viewAnswers', 'Lihat Jawapan di Papan')}</button>
-              <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={openCrosswordLeaderboard}>{t('game.toScoreboard', 'Teruskan ke Papan Markah 🏆')}</button>
+              }}>👁️ {t('game.viewAnswers', 'Lihat Jawapan')}</button>
+              <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={openCrosswordLeaderboard}>{t('game.toScoreboard', 'Teruskan ke Papan Kedudukan 🏆')}</button>
             </div>
           </div>
         </div>
@@ -596,11 +596,11 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
               {timeLeft === 0 ? t('game.timesUp', 'Masa Tamat!') : t('game.giveUp', 'Menyerah Kalah')}
             </h2>
             <p style={{ color: '#64748b', margin: '0 0 1rem' }}>
-              {t('game.youCompleted', 'Anda Telah Menjawab')} <strong style={{ color: '#2563eb' }}>{completed.length}/{words.length}</strong> {t('game.words', 'perkataan')} ({pct}%)
+              {t('game.youCompleted', 'Anda telah menjawab')} <strong style={{ color: '#2563eb' }}>{completed.length}/{words.length}</strong> {t('game.wordsCorrectly', 'perkataan dengan betul')} ({pct}%)
             </p>
             {minCorrect > 0 && !passed && (
               <p style={{ color: '#f59e0b', margin: '0 0 1rem', fontSize: '0.88rem', background: '#fef9ee', padding: '0.5rem', borderRadius: '8px' }}>
-                ⚠️ {t('game.needMinimum', 'Perlu sekurang-kurangnya')} <strong>{minCorrect} {t('game.words', 'perkataan')}</strong> {t('game.toPass', 'untuk lulus.')}
+                ⚠️ {t('game.needMinimum', 'Anda mesti menyelesaikan')} <strong>{minCorrect}</strong> {t('game.toPass', 'teka silang kata dengan betul untuk lulus.')}
               </p>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem', width: '100%' }}>
@@ -624,7 +624,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
         <div style={s.overlay}>
           <div style={s.congratsCard}>
             <div style={{ fontSize: '3rem' }}>🏆</div>
-            <h2 style={{ color: '#7c3aed', fontSize: '1.4rem', fontWeight: '800', margin: '0.5rem 0' }}>{t('game.scoreboard', 'Papan Markah')}</h2>
+            <h2 style={{ color: '#7c3aed', fontSize: '1.4rem', fontWeight: '800', margin: '0.5rem 0' }}>{t('game.scoreboard', 'Papan Kedudukan')}</h2>
             <div style={{ ...s.lbBox, margin: '0.5rem 0 1rem' }}>
               {lbData.length > 0 ? lbData.map((entry, i) => (
                 <div key={entry.player_id} style={s.lbRow}>

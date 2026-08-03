@@ -963,7 +963,7 @@ const GamePage = () => {
                 {/* Clue box */}
                 <div style={{ background: hint.bg, borderRadius: '12px', padding: '0.9rem 1rem', textAlign: 'left', marginBottom: '0.8rem', border: `1.5px solid ${hint.accent}33` }}>
                   {hint.heading && <h3 style={{ color: '#1e3a5f', margin: '0 0 0.65rem', fontSize: '1.45rem', fontWeight: 900, lineHeight: 1.3 }}>{hint.heading}</h3>}
-                  <p style={{ color: '#334155', margin: 0, fontSize: '1.18rem', lineHeight: 1.7, fontWeight: 600 }}>{hint.clue}</p>
+                  <p style={{ color: '#334155', margin: 0, fontSize: '1.18rem', lineHeight: 1.7, fontWeight: 600, whiteSpace: 'pre-line' }}>{hint.clue}</p>
                 </div>
 
                 <button
