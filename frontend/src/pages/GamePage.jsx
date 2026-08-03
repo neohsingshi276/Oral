@@ -1263,7 +1263,7 @@ const GamePage = () => {
 
       {/* Full Screen CP3 — Food Game */}
       {showFullCP3 && (
-        <CP3Game player={player} onComplete={handleActivityDone} />
+        <CP3Game player={player} onComplete={handleActivityDone} onBack={() => { setShowFullCP3(false); setCpStep('instructions'); }} />
       )}
 
       {/* Checkpoint Modal */}
