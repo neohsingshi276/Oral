@@ -487,7 +487,7 @@ const CP3Game = ({ player, onComplete, onBack }) => {
   if (showFinalLeaderboard) return (
     <div style={s.fullPage}>
       <style>{animStyles}</style>
-      <div style={s.lbCard}>
+      <div style={{ ...s.lbCard, maxHeight: '92vh', overflowY: 'auto' }}>
         <div style={{ fontSize: '4rem', textAlign: 'center' }}>🏆</div>
         <h2 style={s.lbTitle}>{t('game.finalLeaderboard')}</h2>
         <p style={{ textAlign: 'center', color: '#64748b', marginBottom: '0.5rem', fontSize: '0.88rem' }}>{t('game.finalScoreFormulaTitle')}</p>
@@ -510,59 +510,87 @@ const CP3Game = ({ player, onComplete, onBack }) => {
             </div>
           ))}
         </div>
-        {(targetScore === 0 || finalScore >= targetScore) ? (
-          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.25rem' }}>
-            <button
-              style={{ ...s.doneBtn, background: 'linear-gradient(135deg,#64748b,#475569)', flex: '0 0 auto', width: 'auto', padding: '0.85rem 1.25rem', fontSize: '0.9rem' }}
-              onClick={() => { setGameState('start'); setShowFinalLeaderboard(false); setShowLeaderboard(false); }}
-            >
-              🔄 {t('game.retry')}
-            </button>
-            <button style={{ ...s.doneBtn, flex: 1 }} onClick={onComplete}>🎉 {t('game.finishDentalQuest')}</button>
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ background: '#fff1f2', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', border: '1px solid #fecdd3' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>😢</div>
-              <p style={{ color: '#e11d48', fontWeight: '700', margin: '0 0 0.25rem' }}>{t('game.notPassed')}</p>
-              <p style={{ color: '#64748b', fontSize: '0.88rem', margin: 0 }}>
-                {t('game.yourScoreLower')} <strong>{finalScore}</strong> — {t('game.needAtLeast')} <strong>{targetScore}</strong> {t('game.points')}.
-              </p>
-            </div>
-            <button style={{ ...s.doneBtn, background: 'linear-gradient(135deg,#e11d48,#be123c)' }} onClick={() => { setGameState('start'); setShowFinalLeaderboard(false); setShowLeaderboard(false); }}>
-              🔄 {t('game.retry')}
-            </button>
-          </div>
-        )}
+        <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
+          <button style={{ ...s.doneBtn, flex: 1 }} onClick={onComplete}>🎉 {t('game.finishDentalQuest')}</button>
+        </div>
       </div>
     </div>
   );
 
-  // CP3 LEADERBOARD
-  if (showLeaderboard) return (
-    <div style={s.fullPage}>
-      <style>{animStyles}</style>
-      <div style={s.lbCard}>
-        <div style={{ fontSize: '4rem', textAlign: 'center' }}>🎯</div>
-        <h2 style={s.lbTitle}>{t('game.foodCatcher')}</h2>
-        <div style={s.yourScore}>
-          <div style={{ color: '#fff', fontSize: '0.9rem', marginBottom: '0.25rem' }}>{t('game.yourScore')}</div>
-          <div style={{ color: '#FFD700', fontSize: '3.5rem', fontWeight: '900' }}>{finalScore}</div>
-        </div>
-        <div style={s.lbList}>
-          {leaderboard.map((entry, i) => (
-            <div key={entry.player_id} style={{ ...s.lbRow, ...(entry.player_id === player?.id ? s.lbRowMe : {}) }}>
-              <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
-              <div style={{ flex: 1, fontWeight: '600', color: '#1e3a5f' }}>{entry.nickname}{entry.player_id === player?.id && <span style={s.youBadge}>{t('game.you')}</span>}</div>
-              <div style={s.lbScore}>{entry.score} {t('game.points')}</div>
+  // CP3 LEADERBOARD (FOOD CATCHER GAME LEADERBOARD)
+  if (showLeaderboard) {
+    const minPassScore = targetScore || 1000;
+    const hasPassed = finalScore >= minPassScore;
+    return (
+      <div style={s.fullPage}>
+        <style>{animStyles}</style>
+        <div style={{ ...s.lbCard, maxHeight: '92vh', overflowY: 'auto' }}>
+          <div style={{ fontSize: '3.5rem', textAlign: 'center', marginBottom: '0.2rem' }}>🎯</div>
+          <h2 style={{ ...s.lbTitle, fontSize: '2rem', marginBottom: '0.75rem' }}>
+            {language === 'bi' ? 'Food Catcher Game' : 'Permainan Tangkap Makanan'}
+          </h2>
+          
+          {/* Your Score Section */}
+          <div style={s.yourScore}>
+            <div style={{ color: '#fff', fontSize: '1.35rem', fontWeight: '800', marginBottom: '0.3rem', textTransform: 'none' }}>
+              {language === 'bi' ? 'Your Score' : 'Skor Anda'}
             </div>
-          ))}
-          {leaderboard.length === 0 && <p style={{ textAlign: 'center', color: '#94a3b8', padding: '1rem' }}>{t('game.noScoresYet')}</p>}
+            <div style={{ color: '#FFD700', fontSize: '3.6rem', fontWeight: '900', lineHeight: 1 }}>{finalScore}</div>
+          </div>
+
+          {/* Leaderboard Table */}
+          <div style={s.lbList}>
+            {leaderboard.map((entry, i) => (
+              <div key={entry.player_id} style={{ ...s.lbRow, ...(entry.player_id === player?.id ? s.lbRowMe : {}) }}>
+                <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
+                <div style={{ flex: 1, fontWeight: '600', color: '#1e3a5f' }}>{entry.nickname}{entry.player_id === player?.id && <span style={s.youBadge}>{t('game.you')}</span>}</div>
+                <div style={s.lbScore}>{entry.score} {t('game.points')}</div>
+              </div>
+            ))}
+            {leaderboard.length === 0 && <p style={{ textAlign: 'center', color: '#94a3b8', padding: '1rem' }}>{t('game.noScoresYet')}</p>}
+          </div>
+
+          {/* Pass / Fail Section at bottom of Food Catcher Leaderboard */}
+          {!hasPassed ? (
+            <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
+              <div style={{ background: '#fff1f2', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem', border: '2px solid #fecdd3' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>😭</div>
+                <h3 style={{ color: '#be123c', fontSize: '1.25rem', fontWeight: '900', margin: '0 0 0.4rem' }}>
+                  {language === 'bi' ? 'Not Passed Yet!' : 'Belum Lulus!'}
+                </h3>
+                <p style={{ color: '#9f1239', fontSize: '0.92rem', fontWeight: '700', margin: 0 }}>
+                  {language === 'bi'
+                    ? `Your score ${finalScore} — need at least ${minPassScore} points.`
+                    : `Skor kamu ${finalScore} — perlu sekurang-kurangnya ${minPassScore} mata.`}
+                </p>
+              </div>
+              <button
+                style={{ ...s.startBtn, background: 'linear-gradient(135deg,#e11d48,#be123c)', boxShadow: '0 8px 25px rgba(225,29,72,0.4)', fontSize: '1.15rem', fontWeight: '900', padding: '0.95rem' }}
+                onClick={() => { setGameState('start'); setShowLeaderboard(false); setShowFinalLeaderboard(false); }}
+              >
+                🔄 {language === 'bi' ? 'Retry' : 'Cuba Semula'}
+              </button>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
+              <div style={{ background: '#f0fdf4', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem', border: '2px solid #86efac' }}>
+                <p style={{ color: '#15803d', fontSize: '1rem', fontWeight: '800', margin: 0 }}>
+                  🎉 {language === 'bi' ? 'Congratulations! You have passed the Food Catcher Game.' : 'Tahniah! Anda telah lulus Permainan Tangkap Makanan'}
+                </p>
+              </div>
+              <button
+                style={{ ...s.startBtn, background: 'linear-gradient(135deg,#16a34a,#15803d)', boxShadow: '0 8px 25px rgba(22,163,74,0.4)', fontSize: '1.15rem', fontWeight: '900', padding: '0.95rem' }}
+                onClick={onComplete}
+              >
+                🚀 {language === 'bi' ? 'Continue Adventure!' : 'Teruskan Pengembaraan!'}
+              </button>
+            </div>
+          )}
+
         </div>
-        <button style={s.nextBtn} onClick={handleShowFinal}>{t('game.viewFinalLeaderboard')}</button>
       </div>
-    </div>
-  );
+    );
+  }
 
   // GAME SCREEN
   return (
