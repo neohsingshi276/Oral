@@ -169,6 +169,8 @@ const GamePage = () => {
   };
   const [quizSettings, setQuizSettings] = useState(null);
   const [crosswordSettings, setCrosswordSettings] = useState(null);
+  const [showCP4Leaderboard, setShowCP4Leaderboard] = useState(false);
+  const [cp4LeaderboardData, setCp4LeaderboardData] = useState([]);
 
   useEffect(() => {
     if (!player?.session_id) return;
@@ -304,15 +306,12 @@ const GamePage = () => {
     // Removing the duplicate check here — it caused false rejections due
     // to stale progress state, keeping CP2/CP3 locked even after completion.
     console.log(`[CP] handleCheckpointReached CP${cpId}`, JSON.stringify(progressStateRef.current));
-    // CP4 is special — no video/activity, directly trigger allDone flow
+    // CP4 is special — show Overall Leaderboard first when pressing E
     if (cpId === 4) {
-      setAllDone(true);
-      setConcludingVideoWatched(false);
-      if (!reduceMotion) {
-        playSuccessChime();
-        setTimeout(() => { playSuccessChime(); }, 600);
-        setShowConfetti(true);
-      }
+      api.get(`/cp3/final/${player.session_id}`)
+        .then(res => setCp4LeaderboardData(res.data.leaderboard || []))
+        .catch(console.error);
+      setShowCP4Leaderboard(true);
       return;
     }
 
@@ -1199,6 +1198,75 @@ const GamePage = () => {
 
             <div style={{ padding: '0.75rem 1.5rem 1.5rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.82rem', fontWeight: 600 }}>
               {language === 'bi' ? '🎬 Almost there — certificate unlocks when the video ends!' : '🎬 Hampir sampai — sijil dibuka apabila video tamat!'}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CP4 Overall Leaderboard Overlay (Triggered by pressing E at Checkpoint 4) */}
+      {showCP4Leaderboard && (
+        <div style={s.overlay}>
+          <div style={{ ...s.doneCard, maxWidth: '680px', maxHeight: '92vh', overflowY: 'auto', padding: '2rem' }}>
+            <div style={{ fontSize: '4rem', textAlign: 'center' }}>🏆</div>
+            <h2 style={{ ...s.doneTitle, fontSize: '1.8rem', color: '#FF6B35', margin: '0.4rem 0' }}>
+              {language === 'bi' ? 'Overall Leaderboard' : 'Papan Kedudukan Keseluruhan'}
+            </h2>
+            <p style={{ textAlign: 'center', color: '#475569', marginBottom: '1.25rem', fontSize: '0.9rem', fontWeight: '700' }}>
+              {language === 'bi'
+                ? 'Dental Quiz + Crossword Puzzle + Food Catcher Game Score'
+                : 'Skor Kuiz Pergigian + Teka Silang Kata + Permainan Tangkap Makanan'}
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem' }}>
+              {cp4LeaderboardData.map((entry, i) => (
+                <div key={entry.player_id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px', background: entry.player_id === player?.id ? '#eff6ff' : i === 0 ? '#fef9ee' : i === 1 ? '#f8fafc' : i === 2 ? '#fff7ed' : '#fff', border: entry.player_id === player?.id ? '2px solid #3b82f6' : '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: '1.4rem', width: '32px', textAlign: 'center' }}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
+                  <div style={{ flex: 1, textAlign: 'left' }}>
+                    <div style={{ fontWeight: '700', color: '#1e3a5f', marginBottom: '0.25rem' }}>
+                      {entry.nickname}{entry.player_id === player?.id && <span style={{ marginLeft: '0.5rem', background: '#2563eb', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '6px', fontSize: '0.7rem' }}>{t('game.you')}</span>}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', gap: '0.75rem' }}>
+                      <span>CP1: {Math.round(entry.cp1_mark / 33 * 100)}/100</span>
+                      <span>CP2: {Math.round(entry.cp2_mark / 33 * 100)}/100</span>
+                      <span>CP3: {Math.round(entry.cp3_mark / 33 * 100)}/100</span>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#1e3a5f' }}>{entry.total_mark}<span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>/100</span></div>
+                </div>
+              ))}
+              {cp4LeaderboardData.length === 0 && (
+                <p style={{ textAlign: 'center', color: '#94a3b8', padding: '1rem' }}>{t('game.noScoresYet')}</p>
+              )}
+            </div>
+
+            {/* Text before buttons */}
+            <p style={{ textAlign: 'center', color: '#d97706', fontWeight: 800, fontSize: '0.95rem', margin: '1rem 0 0.85rem' }}>
+              ✨ {language === 'bi' ? 'Follow the gold arrows to the Finish Point!' : 'Jom ikut anak panah emas ke Penamat!'}
+            </p>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem' }}>
+              <button
+                style={{ ...s.continueBtn, background: '#64748b', boxShadow: '0 4px 15px rgba(100,116,139,0.3)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
+                onClick={() => setShowCP4Leaderboard(false)}
+              >
+                🔄 {language === 'bi' ? 'Retry' : 'Cuba Semula'}
+              </button>
+              <button
+                style={{ ...s.continueBtn, background: 'linear-gradient(135deg, #16a34a, #15803d)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
+                onClick={() => {
+                  setShowCP4Leaderboard(false);
+                  setAllDone(true);
+                  setConcludingVideoWatched(false);
+                  if (!reduceMotion) {
+                    playSuccessChime();
+                    setTimeout(() => { playSuccessChime(); }, 600);
+                    setShowConfetti(true);
+                  }
+                }}
+              >
+                🚀 {language === 'bi' ? 'Continue Adventure!' : 'Teruskan Pengembaraan!'}
+              </button>
             </div>
           </div>
         </div>
