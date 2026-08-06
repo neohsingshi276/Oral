@@ -12,7 +12,7 @@ const LanguageToggle = ({ compact = false, style }) => {
       style={{ ...styles.button, ...(compact ? styles.compact : {}), ...style }}
     >
       <span aria-hidden="true">🌐</span>
-      <span>{language === 'bm' ? 'BM' : 'BI'}</span>
+      <span>{language === 'bm' ? 'BM' : 'EN'}</span>
     </button>
   );
 };

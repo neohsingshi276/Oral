@@ -3,16 +3,25 @@ import { useLanguage } from '../context/LanguageContext';
 import LanguageToggle from './LanguageToggle';
 
 const Navbar = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+
+  const handleLockedLearningZone = (event) => {
+    event.preventDefault();
+
+    alert(
+      language === 'bm'
+        ? 'Dikunci! Selesaikan Kembara Gigi Sihat untuk membuka Zon Pembelajaran!'
+        : 'Locked! Complete Kembara Gigi Sihat to unlock the Learning Zone!'
+    );
+  };
 
   return (
     <nav style={styles.nav}>
-      <Link to="/" style={styles.logo}>🦷 DentalQuest</Link>
+      <Link to="/" style={styles.logo}>🦷 Kembara Gigi Sihat</Link>
       <div style={styles.links}>
         <Link to="/" style={styles.link}>{t('nav.home')}</Link>
         <Link to="/learning" style={styles.link}>{t('nav.learning')}</Link>
-        <Link to="/did-you-know" style={styles.link}>{t('nav.didYouKnow')}</Link>
-        <Link to="/join" style={styles.link}>{t('nav.joinGame')}</Link>
+        <Link to="/learning" onClick={handleLockedLearningZone} style={styles.link}>{t('nav.joinGame')}</Link>
         <LanguageToggle />
       </div>
     </nav>

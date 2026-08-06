@@ -66,6 +66,9 @@ const TILESET_ASSETS = [
   { key: 'A', file: 'A.png' },
   { key: 'B', file: 'B.png' },
   { key: 'Arrows', file: 'Arrows.png' },
+  { key: 'Start', file: 'Start.jpg' },
+  { key: 'Checkpoint', file: 'Checkpoint.png' },
+  { key: 'Checkpoint_2', file: 'Checkpoint.png' },    // duplicate
 ];
 
 // The order above matches the order of tilesets in map.json — this is critical

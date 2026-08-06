@@ -4,13 +4,23 @@
 
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import heroImage from '../assets/child.jpeg';
 import { useLanguage } from '../context/LanguageContext';
 
 const HomePage = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const featureCards = t('home.cards');
-  const details = t('home.details');
+
+  const handleLockedLearningZone = (event) => {
+    event.preventDefault();
+
+    alert(
+      language === 'bm'
+        ? 'Dikunci! Selesaikan Kembara Gigi Sihat untuk membuka Zon Pembelajaran!'
+        : 'Locked! Complete Kembara Gigi Sihat to unlock the Learning Zone!'
+    );
+  };
 
   return (
     <>
@@ -127,7 +137,7 @@ const HomePage = () => {
         }
 
         .hero-subtitle {
-          font-size: 1.25rem;
+          font-size: 1.10rem;
           color: #475569;
           line-height: 1.7;
           font-weight: 400;
@@ -387,28 +397,28 @@ const HomePage = () => {
             text-align: center;
             gap: 3rem;
           }
-          
+
           .hero-content {
             align-items: center;
           }
-          
+
           .hero-badge {
             margin: 0 auto;
           }
-          
+
           .hero-title {
             font-size: 4.5rem;
           }
-          
+
           .hero-subtitle {
              margin-left: auto;
              margin-right: auto;
           }
-          
+
           .hero-actions {
             justify-content: center;
           }
-          
+
           .features-nav {
             grid-template-columns: 1fr;
             max-width: 500px;
@@ -421,22 +431,22 @@ const HomePage = () => {
           .hero-title {
             font-size: 3.5rem;
           }
-          
+
           .hero-actions {
             flex-direction: column;
             width: 100%;
           }
-          
+
           .btn {
             width: 100%;
           }
-          
+
           .card-1 {
             left: -10px;
             bottom: -20px;
             transform: scale(0.85);
           }
-          
+
           .card-2 {
             right: -10px;
             top: -20px;
@@ -455,28 +465,30 @@ const HomePage = () => {
 
           <section className="hero-section">
             <div className="hero-content">
-              <div className="hero-badge">
-                <span className="badge-icon">🌺</span>
-                <span className="badge-text">{t('home.badge')}</span>
-              </div>
 
               <h1 className="hero-title">
-                Dental<br />
-                <span className="text-gradient">Quest</span>
+                Kembara<br />
+                <span className="text-gradient">Gigi Sihat</span>
               </h1>
 
               <p className="hero-subtitle">
-                {t('home.subtitle')} 😁
+                <i>{t('home.sub')}</i> <br />
+                {t('home.subtitle')}
               </p>
 
               <div className="hero-actions">
-                <Link to="/learning" className="btn btn-primary">
+                <Link to="/join" className="btn btn-primary">
                   <span>{t('home.primaryButton')}</span>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </Link>
-                <Link to="/join" className="btn btn-secondary">
+
+                <Link
+                  to="/learning"
+                  className="btn btn-secondary"
+                  onClick={handleLockedLearningZone}
+                >
                   {t('home.secondaryButton')}
                 </Link>
               </div>
@@ -492,7 +504,9 @@ const HomePage = () => {
                 <div className="floating-card stat-card card-1">
                   <span className="emoji">🦷</span>
                   <div className="stat-info">
-                    <span className="stat-value">100%</span>
+                    <span className="stat-value">
+                      {language === 'bm' ? 'Tonton • Main • Belajar' : 'Watch • Play • Learn'}
+                    </span>
                     <span className="stat-label">{t('home.statOneLabel')}</span>
                   </div>
                 </div>
@@ -509,53 +523,26 @@ const HomePage = () => {
 
           <section className="features-nav">
             <div className="feature-nav-card">
-              <div className="nav-card-icon bg-blue">📘</div>
+              <div className="nav-card-icon bg-gold">🎥</div>
               <h3>{featureCards[0].title}</h3>
               <p>{featureCards[0].text}</p>
             </div>
             <div className="feature-nav-card">
-              <div className="nav-card-icon bg-gold">🎮</div>
+              <div className="nav-card-icon bg-blue">🧩</div>
               <h3>{featureCards[1].title}</h3>
               <p>{featureCards[1].text}</p>
             </div>
             <div className="feature-nav-card">
-              <div className="nav-card-icon bg-red">🌱</div>
+              <div className="nav-card-icon bg-red">🏆</div>
               <h3>{featureCards[2].title}</h3>
               <p>{featureCards[2].text}</p>
             </div>
           </section>
 
-          <section className="detailed-features">
-            <div className="feature-box">
-              <div className="feature-icon-wrapper">
-                <span className="feature-icon">📚</span>
-              </div>
-              <div className="feature-text">
-                <h3 className="feature-title">{details[0].title}</h3>
-                <p className="feature-desc">{details[0].text}</p>
-              </div>
-            </div>
-            <div className="feature-box">
-              <div className="feature-icon-wrapper">
-                <span className="feature-icon">🕹️</span>
-              </div>
-              <div className="feature-text">
-                <h3 className="feature-title">{details[1].title}</h3>
-                <p className="feature-desc">{details[1].text}</p>
-              </div>
-            </div>
-            <div className="feature-box">
-              <div className="feature-icon-wrapper">
-                <span className="feature-icon">💡</span>
-              </div>
-              <div className="feature-text">
-                <h3 className="feature-title">{details[2].title}</h3>
-                <p className="feature-desc">{details[2].text}</p>
-              </div>
-            </div>
-          </section>
-
         </main>
+
+        <Footer />
+
       </div>
     </>
   );

@@ -234,7 +234,8 @@ const GamePage = () => {
       try {
         p = JSON.parse(saved);
       } catch {
-        localStorage.removeItem('player');
+      localStorage.removeItem('player');
+        localStorage.removeItem('dq_selected_character');
         navigate(`/join/${token}`);
         return;
       }
@@ -242,6 +243,7 @@ const GamePage = () => {
       // Ensure the parsed object has the required fields
       if (!p || !p.id || !p.session_id || !p.nickname) {
         localStorage.removeItem('player');
+        localStorage.removeItem('dq_selected_character');
         navigate(`/join/${token}`);
         return;
       }
@@ -251,6 +253,7 @@ const GamePage = () => {
       if (p._token && p._token !== token) {
         localStorage.removeItem('player');
         localStorage.removeItem('tutorial_seen');
+        localStorage.removeItem('dq_selected_character');
         navigate(`/join/${token}`);
         return;
       }
@@ -260,6 +263,7 @@ const GamePage = () => {
       if (p._lastActive && Date.now() - p._lastActive > SESSION_EXPIRY_MS) {
         localStorage.removeItem('player');
         localStorage.removeItem('tutorial_seen');
+        localStorage.removeItem('dq_selected_character');
         navigate(`/join/${token}`);
         return;
       }
@@ -568,6 +572,7 @@ const GamePage = () => {
         if (!res.data.exists) {
           clearInterval(interval);
           localStorage.removeItem('player');
+          localStorage.removeItem('dq_selected_character');
           navigate(`/join/${token}`);
         }
       } catch {

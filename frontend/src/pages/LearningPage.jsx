@@ -1,7 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
+import chero from '../assets/chero.png';
+import Brush from '../assets/Brush.png';
+import Rinse from '../assets/Rinse.png';
+import Floss from '../assets/Floss.png';
+import Reduce from '../assets/Reduce.png';
+import Smoking from '../assets/Smoking.png';
+import Check from '../assets/Check.png';
 
 const pickLang = (obj, field, lang) =>
   (lang === 'bi' && obj[`${field}_bi`]) ? obj[`${field}_bi`] : obj[field];
@@ -16,6 +24,7 @@ const LearningPage = () => {
   const [loading, setLoading] = useState(true);
   const [showAllVideos, setShowAllVideos] = useState(false);
   const [firstRowVideoCount, setFirstRowVideoCount] = useState(1);
+  const [flippedFact, setFlippedFact] = useState(null);
   const videoGridRef = useRef(null);
 
   useEffect(() => {
@@ -78,87 +87,102 @@ const LearningPage = () => {
       <div style={styles.hero}>
         <div style={styles.heroLeft}>
           <div style={styles.heroBadge}>📚 {t('learning.heroBadge')}</div>
-          <h1 style={styles.heroTitle}>{t('learning.heroTitleTop')}<br />{t('learning.heroTitleBottom')} 🦷</h1>
+          <h1 style={styles.heroTitle}>{t('learning.heroTitleTop')}<br />{t('learning.heroTitleBottom')} </h1>
           <p style={styles.heroText}>{t('learning.heroText')}</p>
         </div>
-        <div style={styles.heroEmojis}>
-          <span style={{ fontSize: '5rem' }}>🦷</span>
-          <span style={{ fontSize: '4rem', marginLeft: '1rem' }}>😁</span>
+        <div style={styles.cheroContainer}>
+          <img src={chero} alt="Happy Child" style={styles.chero} />
         </div>
       </div>
 
-      {/* What is Oral Health */}
-      <section style={styles.section}>
-        <div style={styles.sectionInner}>
-          <h2 style={styles.sectionTitle}>🌟 {t('learning.oralTitle')}</h2>
-          <p style={styles.sectionText}>{t('learning.oralOne')} 😊</p>
-          <p style={styles.sectionText}>{t('learning.oralTwo')} 🎉</p>
-        </div>
-      </section>
-
-      {/* Fun Fact Cards */}
+      {/* Fun Fact Flip Cards */}
       <section style={{ ...styles.section, background: '#FEF9EE' }}>
         <div style={styles.sectionInner}>
-          <h2 style={styles.sectionTitle}>⚡ {t('learning.factsTitle')}</h2>
+          <h2 style={styles.sectionTitle}>
+            ⚡ {t('learning.factsTitle')}
+          </h2>
+
+          <p style={styles.flipInstruction}>
+            {language === 'bi'
+              ? 'Click a card to reveal the fun fact!'
+              : 'Klik kad untuk melihat fakta menarik!'}
+          </p>
+
           <div style={styles.factGrid}>
             {[
-              { icon: '🦠', ...t('learning.facts')[0] },
-              { icon: '🍬', ...t('learning.facts')[1] },
-              { icon: '🪥', ...t('learning.facts')[2] },
-              { icon: '💧', ...t('learning.facts')[3] },
-              { icon: '🧵', ...t('learning.facts')[4] },
-              { icon: '👨‍⚕️', ...t('learning.facts')[5] },
-            ].map((fact, i) => (
-              <div key={i} style={{ ...styles.factCard, background: ['#fff7ed', '#f0fdf4', '#eff6ff', '#fdf4ff', '#fff1f2', '#f0fdfa'][i] }}>
-                <div style={styles.factIcon}>{fact.icon}</div>
-                <h3 style={styles.factTitle}>{fact.title}</h3>
-                <p style={styles.factText}>{fact.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+              { image: Brush, ...t('learning.facts')[0] },
+              { image: Rinse, ...t('learning.facts')[1] },
+              { image: Floss, ...t('learning.facts')[2] },
+              { image: Reduce, ...t('learning.facts')[3] },
+              { image: Smoking, ...t('learning.facts')[4] },
+              { image: Check, ...t('learning.facts')[5] },
+            ].map((fact, i) => {
+              const isFlipped = flippedFact === i;
 
-      {/* How to Brush Steps */}
-      <section style={styles.section}>
-        <div style={styles.sectionInner}>
-          <h2 style={styles.sectionTitle}>🪥 {t('learning.brushTitle')}</h2>
-          <div style={styles.stepsRow}>
-            {[
-              { step: '1', icon: '🪥', ...t('learning.steps')[0] },
-              { step: '2', icon: '⏱️', ...t('learning.steps')[1] },
-              { step: '3', icon: '🔄', ...t('learning.steps')[2] },
-              { step: '4', icon: '👅', ...t('learning.steps')[3] },
-              { step: '5', icon: '💦', ...t('learning.steps')[4] },
-            ].map((s, i) => (
-              <div key={i} style={styles.stepCard}>
-                <div style={styles.stepNumber}>{s.step}</div>
-                <div style={styles.stepIcon}>{s.icon}</div>
-                <h4 style={styles.stepTitle}>{s.title}</h4>
-                <p style={styles.stepText}>{s.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+              return (
+                <div
+                  key={i}
+                  style={styles.flipCard}
+                  onClick={() => setFlippedFact(isFlipped ? null : i)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={fact.title}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setFlippedFact(isFlipped ? null : i);
+                    }
+                  }}
+                >
+                  <div
+                    style={{
+                      ...styles.flipCardInner,
+                      transform: isFlipped
+                        ? 'rotateY(180deg)'
+                        : 'rotateY(0deg)',
+                    }}
+                  >
+                    {/* Front */}
+                    <div style={styles.flipCardFront}>
+                      <img
+                        src={fact.image}
+                        alt={fact.title}
+                        style={styles.factImage}
+                      />
 
-      {/* Foods Section */}
-      <section style={{ ...styles.section, background: '#f0fdf4' }}>
-        <div style={styles.sectionInner}>
-          <h2 style={styles.sectionTitle}>🍎 {t('learning.foodTitle')}</h2>
-          <div style={styles.foodGrid}>
-            <div style={styles.foodCard}>
-              <h3 style={styles.foodGoodTitle}>✅ {t('learning.goodFoodTitle')}</h3>
-              {t('learning.goodFoods').map((f, i) => (
-                <div key={i} style={styles.foodItem}>{['🥛', '🍎', '💧', '🥦', '🥜'][i]} {f}</div>
-              ))}
-            </div>
-            <div style={{ ...styles.foodCard, background: '#fff1f2' }}>
-              <h3 style={styles.foodBadTitle}>❌ {t('learning.badFoodTitle')}</h3>
-              {t('learning.badFoods').map((f, i) => (
-                <div key={i} style={styles.foodItemBad}>{['🍬', '🥤', '🍟', '🧃', '🍦'][i]} {f}</div>
-              ))}
-            </div>
+                      <div style={styles.factFrontOverlay}>
+                        <h3 style={styles.factFrontTitle}>
+                          {fact.title}
+                        </h3>
+
+                        <span style={styles.flipHint}>
+                          {language === 'bi'
+                            ? 'Click to flip'
+                            : 'Klik untuk pusing'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Back */}
+                    <div style={styles.flipCardBack}>
+                      <h3 style={styles.factTitle}>
+                        {fact.title}
+                      </h3>
+
+                      <p style={styles.factText}>
+                        {fact.text}
+                      </p>
+
+                      <span style={styles.flipBackHint}>
+                        {language === 'bi'
+                          ? 'Click to return'
+                          : 'Klik untuk kembali'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -230,12 +254,9 @@ const LearningPage = () => {
         </div>
       </section>
 
-      {/* Footer CTA */}
-      <section style={styles.cta}>
-        <h2 style={styles.ctaTitle}>{t('learning.ctaTitle')} 🎮</h2>
-        <p style={styles.ctaText}>{t('learning.ctaText')}</p>
-      </section>
+      <Footer />
     </div>
+
   );
 };
 
@@ -247,16 +268,25 @@ const styles = {
   heroBadge: { display: 'inline-block', background: '#D4A843', color: '#fff', padding: '0.3rem 1rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600', marginBottom: '1rem' },
   heroTitle: { fontSize: 'clamp(1.8rem, 5vw, 2.8rem)', fontWeight: '800', color: '#FFD700', margin: '0 0 1rem', lineHeight: 1.2 },
   heroText: { fontSize: '1.1rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.7, margin: 0 },
-  heroEmojis: { display: 'flex', alignItems: 'center' },
+  cheroContainer: { display: 'flex', alignItems: 'center', justifyContent: 'center', },
+  chero: { width: '280px', maxWidth: '100%', objectFit: 'cover', display: 'block', },
   section: { padding: '3rem 2rem', background: '#fff' },
   sectionInner: { maxWidth: '1100px', margin: '0 auto' },
   sectionTitle: { fontSize: '1.8rem', fontWeight: '800', color: '#01306B', marginBottom: '1.5rem', textAlign: 'center' },
   sectionText: { fontSize: '1.05rem', color: '#475569', lineHeight: 1.8, marginBottom: '1rem', maxWidth: '800px', margin: '0 auto 1rem' },
-  factGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.2rem', marginTop: '1rem' },
-  factCard: { padding: '1.5rem', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid rgba(212,168,67,0.15)' },
-  factIcon: { fontSize: '2.2rem', marginBottom: '0.75rem' },
-  factTitle: { fontSize: '1.05rem', fontWeight: '700', color: '#01306B', margin: '0 0 0.5rem' },
-  factText: { color: '#64748b', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 },
+  factGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', marginTop: '1rem' },
+  flipInstruction: { textAlign: 'center', color: '#64748b', fontSize: '0.95rem', margin: '-0.75rem 0 1.5rem' },
+  flipCard: { width: '100%', height: '320px', perspective: '1000px', cursor: 'pointer', outline: 'none' },
+  flipCardInner: { position: 'relative', width: '100%', height: '100%', transition: 'transform 0.65s ease', transformStyle: 'preserve-3d' },
+  flipCardFront: { position: 'absolute', width: '100%', height: '100%', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: '18px', overflow: 'hidden', background: '#ffffff', border: '2px solid rgba(212,168,67,0.25)', boxShadow: '0 8px 24px rgba(1,48,107,0.12)', display: 'flex', flexDirection: 'column' },
+  flipCardBack: { position: 'absolute', width: '100%', height: '100%', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)', borderRadius: '18px', background: 'linear-gradient(135deg, #01306B, #1e5aad)', border: '2px solid #D4A843', boxShadow: '0 8px 24px rgba(1,48,107,0.18)', padding: '1.75rem', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' },
+  factImage: { width: '100%', height: '220px', objectFit: 'contain', display: 'block', padding: '0.75rem', boxSizing: 'border-box' },
+  factFrontOverlay: { flex: 1, padding: '0.8rem 1rem', textAlign: 'center', background: '#01306B', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' },
+  factFrontTitle: { color: '#ffffff', fontSize: '1.1rem', fontWeight: '800', margin: '0 0 0.4rem' },
+  flipHint: { display: 'inline-block', color: '#01306B', background: '#FFD700', borderRadius: '999px', padding: '0.3rem 0.75rem', fontSize: '0.75rem', fontWeight: '700' },
+  factTitle: { fontSize: '1.2rem', fontWeight: '800', color: '#FFD700', margin: '0 0 1rem' },
+  factText: { color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem', lineHeight: 1.7, margin: 0 },
+  flipBackHint: { marginTop: '1.25rem', color: '#01306B', background: '#ffffff', borderRadius: '999px', padding: '0.35rem 0.8rem', fontSize: '0.75rem', fontWeight: '700' },
   stepsRow: { display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '1rem', marginTop: '1rem' },
   stepCard: { minWidth: '180px', flex: 1, background: '#FAFAF5', border: '2px solid rgba(212,168,67,0.2)', borderRadius: '16px', padding: '1.5rem', textAlign: 'center' },
   stepNumber: { background: '#01306B', color: '#FFD700', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', margin: '0 auto 0.75rem', fontSize: '1rem' },

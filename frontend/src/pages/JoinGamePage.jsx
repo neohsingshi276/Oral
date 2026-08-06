@@ -126,6 +126,7 @@ const JoinGamePage = () => {
 
       localStorage.removeItem('player');
       localStorage.removeItem('tutorial_seen');
+      localStorage.removeItem('dq_selected_character');
       const res = await api.post(`/game/join/${session.unique_token}`, {
         nickname: nickname.trim(),
         resume_player_id: resumePlayerId,
@@ -153,6 +154,7 @@ const JoinGamePage = () => {
   const handleBackHome = () => {
     localStorage.removeItem('player');
     localStorage.removeItem('tutorial_seen');
+    localStorage.removeItem('dq_selected_character');
     navigate('/');
   };
 
