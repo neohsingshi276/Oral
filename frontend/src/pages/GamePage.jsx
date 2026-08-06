@@ -1148,59 +1148,33 @@ const GamePage = () => {
         );
       })()}
 
-      {/* Concluding Video — mandatory watch before congrats screen */}
+      {/* Concluding Video — mandatory watch before congrats screen (same template as Checkpoints 1–3) */}
       {allDone && !concludingVideoWatched && (
         <div style={s.overlay}>
-          <div style={{ background: '#fff', borderRadius: '24px', width: '100%', maxWidth: '700px', maxHeight: '92vh', overflow: 'auto', animation: 'fadeIn 0.4s ease', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-
-            {/* ── Gradient banner ── */}
-            <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #7c3aed 100%)', padding: '1.75rem 1.75rem 1.5rem', borderRadius: '24px 24px 0 0', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-              {/* Decorative blurred circles */}
-              <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(255,255,255,0.07)' }} />
-              <div style={{ position: 'absolute', bottom: '-20px', left: '-20px', width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(255,255,255,0.07)' }} />
-
-              <div style={{ fontSize: '3rem', marginBottom: '0.6rem', lineHeight: 1 }}>🎓</div>
-              <h2 style={{ color: '#FFD700', fontWeight: 900, fontSize: '1.6rem', margin: '0 0 0.5rem', letterSpacing: '-0.01em' }}>
-                {language === 'bi' ? 'One Last Step!' : 'Satu Langkah Lagi!'}
+          <div style={s.modal}>
+            <div style={s.modalHeader}>
+              <h2 style={s.modalTitle}>
+                🎓 {t('game.finishPointTitle')}
               </h2>
-              <p style={{ color: 'rgba(255,255,255,0.88)', fontSize: '0.95rem', margin: 0, fontWeight: 600, lineHeight: 1.5 }}>
-                {language === 'bi'
-                  ? 'Watch this final video before claiming your certificate 🏆'
-                  : 'Tonton video penutup ini sebelum mendapatkan sijil anda 🏆'}
-              </p>
             </div>
 
-            {/* ── Completed checkpoints strip ── */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.6rem', padding: '0.85rem 1rem', background: '#f0fdf4', borderBottom: '1px solid #bbf7d0', flexWrap: 'wrap' }}>
-              {[
-                { label: t('game.quiz'), icon: '❓' },
-                { label: t('game.crossword'), icon: '🧩' },
-                { label: t('game.foodGame'), icon: '🍎' },
-              ].map(({ label, icon }) => (
-                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#dcfce7', color: '#15803d', padding: '0.35rem 0.9rem', borderRadius: '999px', fontSize: '0.82rem', fontWeight: 800, border: '1.5px solid #86efac' }}>
-                  ✅ {icon} {label}
+            <div style={s.steps}>
+              {t('game.concludingSteps').map((label, i) => (
+                <div key={i} style={{ ...s.step, ...(i === 0 ? s.stepActive : {}) }}>
+                  <div style={s.stepDot}>{i + 1}</div>
+                  <span>{label}</span>
                 </div>
               ))}
             </div>
 
-            {/* ── Video ── */}
-            <div style={{ padding: '1.5rem 1.5rem 0.5rem' }}>
-              <div style={{ background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: '12px', padding: '0.75rem 1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <span style={{ fontSize: '1.3rem' }}>🔒</span>
-                <p style={{ margin: 0, color: '#1d4ed8', fontSize: '0.88rem', fontWeight: 700 }}>
-                  {language === 'bi'
-                    ? 'Watch the full video to unlock your certificate!'
-                    : 'Tonton video sepenuhnya untuk membuka sijil anda!'}
-                </p>
-              </div>
+            <div style={s.modalBody}>
+              <p style={s.modalHint}>{t('game.modalHintConcluding')}</p>
               <YouTubePlayer
                 videoId={CONCLUDING_VIDEO_IDS[language] ?? CONCLUDING_VIDEO_IDS.bm}
                 onVideoEnd={() => setConcludingVideoWatched(true)}
+                finishVideoText={t('game.finishVideoCertificate')}
+                videoDoneText={t('game.videoDoneCertificate')}
               />
-            </div>
-
-            <div style={{ padding: '0.75rem 1.5rem 1.5rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.82rem', fontWeight: 600 }}>
-              {language === 'bi' ? '🎬 Almost there — certificate unlocks when the video ends!' : '🎬 Hampir sampai — sijil dibuka apabila video tamat!'}
             </div>
           </div>
         </div>
