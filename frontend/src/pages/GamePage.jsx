@@ -390,10 +390,6 @@ const GamePage = () => {
       <stop offset="50%" stop-color="#F0D27A"/>
       <stop offset="100%" stop-color="#D4A843"/>
     </linearGradient>
-    <linearGradient id="scoreBg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1e3a5f"/>
-      <stop offset="100%" stop-color="#0f2744"/>
-    </linearGradient>
   </defs>
   <rect width="1400" height="990" fill="#faf8f2"/>
   <rect x="30" y="30" width="1340" height="930" rx="6" fill="none" stroke="#1e3a5f" stroke-width="12"/>
@@ -409,25 +405,22 @@ const GamePage = () => {
   <rect x="80" y="80" width="1240" height="140" rx="4" fill="url(#headerGrad)"/>
   <rect x="80" y="80" width="1240" height="3" fill="#D4A843"/>
   <rect x="80" y="217" width="1240" height="3" fill="#D4A843"/>
-  <text x="700" y="148" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="bold" fill="#D4A843" letter-spacing="14">${language === 'bm' ? 'KEMBARA GIGI SIHAT' : 'DENTAL QUEST'}</text>
-  <text x="700" y="195" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" fill="rgba(255,255,255,0.75)" letter-spacing="8">${language === 'bm' ? 'SIJIL PENCAPAIAN' : 'CERTIFICATE OF COMPLETION'}</text>
+  <text x="700" y="148" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="bold" fill="#D4A843" letter-spacing="14">KEMBARA GIGI SIHAT</text>
+  <text x="700" y="195" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" fill="rgba(255,255,255,0.75)" letter-spacing="8">${language === 'bm' ? 'SIJIL PENCAPAIAN' : 'CERTIFICATE OF ACHIEVEMENT'}</text>
   <line x1="400" y1="270" x2="1000" y2="270" stroke="#D4A843" stroke-width="1" opacity="0.5"/>
   <circle cx="700" cy="270" r="4" fill="#D4A843"/><circle cx="400" cy="270" r="2.5" fill="#D4A843"/><circle cx="1000" cy="270" r="2.5" fill="#D4A843"/>
-  <text x="700" y="320" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="22" fill="#64748b" font-style="italic">${language === 'bm' ? '~ Ini adalah untuk mengesahkan bahawa ~' : '~ This is to certify that ~'}</text>
+  <text x="700" y="320" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="22" fill="#64748b" font-style="italic">${language === 'bm' ? '~ Sijil ini dengan sukacitanya dianugerahkan kepada ~' : '~ This certificate is proudly presented to ~'}</text>
   <text x="700" y="${330 + nameFontSize}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="${nameFontSize}" font-weight="bold" fill="#1e293b">${displayName}</text>
   <line x1="250" y1="${345 + nameFontSize}" x2="1150" y2="${345 + nameFontSize}" stroke="#D4A843" stroke-width="2"/>
-  <text x="700" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#475569">${language === 'bm' ? 'telah berjaya melengkapkan semua pusat pemeriksaan' : 'has successfully completed all checkpoints of the'}</text>
-  <text x="700" y="525" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#1e3a5f">${language === 'bm' ? 'Program Kembara Gigi Sihat' : 'Dental Quest Program'}</text>
-  <text x="700" y="565" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="17" fill="#64748b" font-style="italic">${language === 'bm' ? 'dan menunjukkan kecemerlangan dalam pengetahuan dan kesedaran kesihatan pergigian' : 'and demonstrated excellence in dental health knowledge and awareness'}</text>
-  <circle cx="700" cy="680" r="72" fill="url(#scoreBg)" stroke="#D4A843" stroke-width="4"/>
-  <circle cx="700" cy="680" r="62" fill="none" stroke="rgba(212,168,67,0.3)" stroke-width="2"/>
-  <text x="700" y="660" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#D4A843" letter-spacing="3">${language === 'bm' ? 'MARKAH AKHIR' : 'FINAL SCORE'}</text>
-  <text x="700" y="705" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="38" font-weight="bold" fill="#D4A843">${cert.score}/100</text>
-  <text x="700" y="800" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#475569">Session: ${escapeXml(cert.session_name || '-')} | School / Class: ${escapeXml(schoolClass)}</text>
-  <text x="700" y="840" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#94a3b8">Date Completed: ${escapeXml(dateStr)}</text>
-  <line x1="400" y1="870" x2="1000" y2="870" stroke="#D4A843" stroke-width="1" opacity="0.5"/>
-  <circle cx="700" cy="870" r="3" fill="#D4A843"/>
-  <text x="700" y="910" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="20" fill="#D4A843" font-style="italic">${language === 'bm' ? 'Teruskan senyum, teruskan belajar!' : 'Keep smiling, keep learning!'}</text>
+  <text x="700" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#475569">${language === 'bm' ? 'kerana berjaya menyelesaikan' : 'for successfully completing'}</text>
+  <text x="700" y="530" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="bold" fill="#1e3a5f">Kembara Gigi Sihat</text>
+  <text x="700" y="575" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="17" fill="#64748b" font-style="italic">${language === 'bm' ? 'Permainan Video Interaktif Pendidikan Kesihatan Pergigian' : 'An Interactive Oral Health Education Video Game'}</text>
+  <line x1="400" y1="620" x2="1000" y2="620" stroke="#D4A843" stroke-width="1" opacity="0.5"/>
+  <circle cx="700" cy="620" r="3" fill="#D4A843"/>
+  <text x="700" y="700" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#475569">${language === 'bm' ? 'Sesi' : 'Session'}: ${escapeXml(cert.session_name || '-')}</text>
+  <text x="700" y="740" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#475569">${language === 'bm' ? 'Tarikh' : 'Date'}: ${escapeXml(dateStr)}</text>
+  <line x1="400" y1="790" x2="1000" y2="790" stroke="#D4A843" stroke-width="1" opacity="0.5"/>
+  <circle cx="700" cy="790" r="3" fill="#D4A843"/>
 </svg>`;
 
       const svgForDownload = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="990" viewBox="0 0 1400 990">${svgContent.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '')}</svg>`;
@@ -472,10 +465,10 @@ const GamePage = () => {
 </head>
 <body>
   <div class="toolbar">
-    <h1>🎓 ${language === 'bm' ? 'Sijil Kembara Gigi Sihat' : 'Dental Quest Certificate'}</h1>
-    <button class="btn btn-download" id="dlBtn">📥 Download</button>
-    <button class="btn btn-print" onclick="window.print()">🖨️ Print</button>
-    <button class="btn btn-close" onclick="window.close()">✕ Close</button>
+    <h1>🎓 ${language === 'bm' ? 'Sijil Kembara Gigi Sihat' : 'Kembara Gigi Sihat Certificate'}</h1>
+    <button class="btn btn-download" id="dlBtn">📥 ${language === 'bm' ? 'Muat Turun' : 'Download'}</button>
+    <button class="btn btn-print" onclick="window.print()">🖨️ ${language === 'bm' ? 'Cetak' : 'Print'}</button>
+    <button class="btn btn-close" onclick="window.close()">✕ ${language === 'bm' ? 'Tutup' : 'Close'}</button>
   </div>
   <div class="cert-wrap">
     ${svgContent}
