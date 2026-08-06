@@ -468,7 +468,7 @@ const GamePage = () => {
     <h1>🎓 ${language === 'bm' ? 'Sijil Kembara Gigi Sihat' : 'Kembara Gigi Sihat Certificate'}</h1>
     <button class="btn btn-download" id="dlBtn">📥 ${language === 'bm' ? 'Muat Turun' : 'Download'}</button>
     <button class="btn btn-print" onclick="window.print()">🖨️ ${language === 'bm' ? 'Cetak' : 'Print'}</button>
-    <button class="btn btn-close" onclick="window.close()">✕ ${language === 'bm' ? 'Tutup' : 'Close'}</button>
+    <button class="btn btn-close" onclick="window.location.href='/';">🏠 ${language === 'bm' ? 'Kembali ke Halaman Utama' : 'Back to Home'}</button>
   </div>
   <div class="cert-wrap">
     ${svgContent}
@@ -1183,29 +1183,12 @@ const GamePage = () => {
             <h2 style={s.doneTitle}>{t('game.congrats')}</h2>
             <p style={s.doneText}>{t('game.completedAll')}</p>
             <p style={s.doneText}>{t('game.champion')}</p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', margin: '1.5rem 0', background: '#f8fafc', borderRadius: '16px', padding: '1.25rem' }}>
-              {[{ label: t('game.quiz'), cp: 1 }, { label: t('game.crossword'), cp: 2 }, { label: t('game.foodGame'), cp: 3 }].map(({ label, cp }) => {
-                const done = progress.find(p => p.checkpoint_number === cp)?.completed;
-                return (
-                  <div key={cp} style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '2rem' }}>{done ? '✅' : '⭕'}</div>
-                    <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.25rem', fontWeight: '600' }}>{label}</div>
-                  </div>
-                );
-              })}
-            </div>
             <button
-              style={{ ...s.continueBtn, background: '#16a34a', marginTop: '0.5rem' }}
+              style={{ ...s.continueBtn, background: '#16a34a', marginTop: '1.5rem' }}
               onClick={viewCertificate}
               disabled={certificateBusy}
             >
               {certificateBusy ? t('game.preparingCertificate') : `🎓 ${t('game.viewCertificate')}`}
-            </button>
-            <button
-              style={{ ...s.continueBtn, background: '#2563eb', marginTop: '0.75rem' }}
-              onClick={() => { localStorage.removeItem('player'); navigate('/'); }}
-            >
-              {t('game.backHome')}
             </button>
           </div>
         </div>
