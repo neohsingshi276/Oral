@@ -418,40 +418,38 @@ const CP3Game = ({ player, onComplete, onBack }) => {
           </div>
         </div>
 
-        {/* 2-Column Food List: Good vs Bad */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem', textAlign: 'left' }}>
+        {/* 2-Column Food Grid Cards: Good vs Bad */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '1.25rem', textAlign: 'left' }}>
           
           {/* GOOD FOODS — Non-Cariogenic */}
-          <div style={{ background: '#f0fdf4', borderRadius: '14px', padding: '1rem', border: '2px solid #86efac' }}>
+          <div style={{ background: '#f0fdf4', borderRadius: '18px', padding: '1.1rem 1.25rem', border: '2px solid #86efac', boxShadow: '0 4px 12px rgba(22,163,74,0.06)' }}>
             <div style={{ fontWeight: '900', fontSize: '0.92rem', color: '#15803d', marginBottom: '0.15rem' }}>
               ✅ {language === 'bi' ? 'Catch NON-CARIOGENIC food (+100)' : 'Tangkap makanan BUKAN KARIOGENIK (+100)'}
             </div>
             <div style={{ fontSize: '0.78rem', fontStyle: 'italic', fontWeight: 600, color: '#166534', marginBottom: '0.65rem' }}>
               {language === 'bi' ? '(do not cause dental caries)' : '(tidak menyebabkan karies gigi)'}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: '200px', overflowY: 'auto', paddingRight: '0.2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.65rem 0.4rem', justifyContent: 'items-center', alignContent: 'start' }}>
               {GOOD_FOODS.map((f, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff', borderRadius: '8px', padding: '0.3rem 0.6rem', border: '1px solid #bbf7d0' }}>
-                  <img src={f.image} alt={getFoodName(f)} style={{ width: '32px', height: '32px', objectFit: 'contain', flexShrink: 0 }} />
-                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e293b' }}>{getFoodName(f)}</span>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '10px', padding: '0.35rem', border: '1px solid #bbf7d0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                  <img src={f.image} alt={getFoodName(f)} title={getFoodName(f)} style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
                 </div>
               ))}
             </div>
           </div>
 
           {/* BAD FOODS — Cariogenic */}
-          <div style={{ background: '#fff1f2', borderRadius: '14px', padding: '1rem', border: '2px solid #fca5a5' }}>
+          <div style={{ background: '#fff1f2', borderRadius: '18px', padding: '1.1rem 1.25rem', border: '2px solid #fca5a5', boxShadow: '0 4px 12px rgba(225,29,72,0.06)' }}>
             <div style={{ fontWeight: '900', fontSize: '0.92rem', color: '#be123c', marginBottom: '0.15rem' }}>
               ❌ {language === 'bi' ? 'Avoid CARIOGENIC food (-70)' : 'Elakkan makanan KARIOGENIK (-70)'}
             </div>
             <div style={{ fontSize: '0.78rem', fontStyle: 'italic', fontWeight: 600, color: '#9f1239', marginBottom: '0.65rem' }}>
               {language === 'bi' ? '(cause dental caries)' : '(menyebabkan karies gigi)'}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: '200px', overflowY: 'auto', paddingRight: '0.2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.65rem 0.4rem', justifyContent: 'items-center', alignContent: 'start' }}>
               {BAD_FOODS.map((f, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff', borderRadius: '8px', padding: '0.3rem 0.6rem', border: '1px solid #fecdd3' }}>
-                  <img src={f.image} alt={getFoodName(f)} style={{ width: '32px', height: '32px', objectFit: 'contain', flexShrink: 0 }} />
-                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e293b' }}>{getFoodName(f)}</span>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '10px', padding: '0.35rem', border: '1px solid #fecdd3', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                  <img src={f.image} alt={getFoodName(f)} title={getFoodName(f)} style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
                 </div>
               ))}
             </div>

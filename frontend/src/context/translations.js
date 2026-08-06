@@ -298,7 +298,7 @@ const bm = {
     // Trolley / GameCanvas
     trolleyTitle: 'Penangkap Makanan',
     catchThis: 'Tangkap Ini! (+100)',
-    avoidThis: 'Elak Ini! (-70)',
+    avoidThis: 'Elakkan Ini! (-70)',
     startGame: 'MULA PERMAINAN!',
     scoreLabel: 'Markah',
     ofFun: 'masa bermain!',
@@ -945,8 +945,8 @@ const bi = {
     retry: 'Retry',
     // Trolley / GameCanvas
     trolleyTitle: 'Food Catcher',
-    catchThis: 'Catch This! (+100)',
-    avoidThis: 'Avoid This! (-70)',
+    catchThis: 'Catch These! (+100)',
+    avoidThis: 'Avoid These! (-70)',
     startGame: 'START GAME!',
     scoreLabel: 'Score',
     ofFun: 'of fun!',
