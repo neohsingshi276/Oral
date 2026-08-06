@@ -431,8 +431,8 @@ const CP3Game = ({ player, onComplete, onBack }) => {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.65rem 0.4rem', justifyContent: 'items-center', alignContent: 'start' }}>
               {GOOD_FOODS.map((f, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '10px', padding: '0.35rem', border: '1px solid #bbf7d0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                  <img src={f.image} alt={getFoodName(f)} title={getFoodName(f)} style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', padding: '0.2rem' }}>
+                  <img src={f.image} alt={getFoodName(f)} title={getFoodName(f)} style={{ width: '34px', height: '34px', objectFit: 'contain', background: 'transparent' }} />
                 </div>
               ))}
             </div>
@@ -448,8 +448,8 @@ const CP3Game = ({ player, onComplete, onBack }) => {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.65rem 0.4rem', justifyContent: 'items-center', alignContent: 'start' }}>
               {BAD_FOODS.map((f, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', borderRadius: '10px', padding: '0.35rem', border: '1px solid #fecdd3', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                  <img src={f.image} alt={getFoodName(f)} title={getFoodName(f)} style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', padding: '0.2rem' }}>
+                  <img src={f.image} alt={getFoodName(f)} title={getFoodName(f)} style={{ width: '34px', height: '34px', objectFit: 'contain', background: 'transparent' }} />
                 </div>
               ))}
             </div>
