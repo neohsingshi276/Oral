@@ -1082,6 +1082,16 @@ export default class PhaserGameScene extends Phaser.Scene {
     });
   }
 
+  updateTranslations(pressEtoEnterText) {
+    this.pressEtoEnterText = pressEtoEnterText;
+
+    if (!this.checkpointGraphics) return;
+
+    this.checkpointGraphics.forEach(cp => {
+      cp.hintText.setText(pressEtoEnterText);
+    });
+  }
+
   getPlayerPosition() {
     return {
       x: this.playerGraphic?.x || START_POS.x,

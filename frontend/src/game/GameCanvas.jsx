@@ -50,6 +50,10 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
   }, [virtualInput]);
 
   useEffect(() => {
+    sceneRef.current?.updateTranslations?.(pressEtoEnterText);
+  }, [pressEtoEnterText]);
+
+  useEffect(() => {
     if (enterSignal) sceneRef.current?.triggerVirtualEnter?.();
   }, [enterSignal]);
 

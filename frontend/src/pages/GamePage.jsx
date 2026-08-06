@@ -235,7 +235,7 @@ const GamePage = () => {
       try {
         p = JSON.parse(saved);
       } catch {
-      localStorage.removeItem('player');
+        localStorage.removeItem('player');
         localStorage.removeItem('dq_selected_character');
         navigate(`/join/${token}`);
         return;
@@ -708,7 +708,7 @@ const GamePage = () => {
 
       {/* Controls hint */}
       <div style={s.controls}>
-        <span>Gerak: <strong>W A S D</strong> atau <strong>Anak Panah</strong></span>
+        <span>Tekan: <strong>W A S D</strong> atau <strong>Anak Panah</strong></span>
         <span style={{ marginLeft: '1.5rem' }}>Masuk zon: <strong>Tekan E</strong></span>
       </div>
 
