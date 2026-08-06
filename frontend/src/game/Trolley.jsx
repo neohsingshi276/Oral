@@ -171,7 +171,7 @@ const BAD_FOODS = [
   { image: '/assets/foods/bad/tanghulu.png', nameBm: 'Buah Bersalut Gula', nameBi: 'Candied Fruit Skewer', points: -70, color: '#FF6B6B' },
 ];
 
-const CP3Game = ({ player, onComplete, onBack }) => {
+const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
   const { t, language } = useLanguage();
   const getFoodName = (food) => language === 'bi' ? food.nameBi : food.nameBm;
   const [gameState, setGameState] = useState('start');
@@ -182,7 +182,7 @@ const CP3Game = ({ player, onComplete, onBack }) => {
   const [leaderboard, setLeaderboard] = useState([]);
   const [finalLeaderboard, setFinalLeaderboard] = useState([]);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [showFinalLeaderboard, setShowFinalLeaderboard] = useState(false);
+  const [showFinalLeaderboard, setShowFinalLeaderboard] = useState(initialShowFinal);
   const [particles, setParticles] = useState([]);
   const [combo, setCombo] = useState(0);
   const [finalScore, setFinalScore] = useState(0);
@@ -387,6 +387,12 @@ const CP3Game = ({ player, onComplete, onBack }) => {
     } catch (err) { console.error(err); }
     setShowFinalLeaderboard(true);
   };
+
+  useEffect(() => {
+    if (initialShowFinal && player?.session_id) {
+      handleShowFinal();
+    }
+  }, [initialShowFinal, player?.session_id]);
 
   // START SCREEN
   if (gameState === 'start') return (
@@ -611,9 +617,11 @@ const CP3Game = ({ player, onComplete, onBack }) => {
                 </button>
                 <button
                   style={{ ...s.startBtn, background: 'linear-gradient(135deg,#16a34a,#15803d)', boxShadow: '0 8px 25px rgba(22,163,74,0.4)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
-                  onClick={handleShowFinal}
+                  onClick={() => {
+                    if (onComplete) onComplete();
+                  }}
                 >
-                  🏆 {language === 'bi' ? 'View Overall Leaderboard' : 'Lihat Papan Kedudukan Keseluruhan'}
+                  🚀 {language === 'bi' ? 'Continue' : 'Teruskan'}
                 </button>
               </div>
             </div>
