@@ -495,6 +495,12 @@ const GamePage = () => {
 </body>
 </html>`);
       win.document.close();
+
+      // Clean up player session and redirect main window to Home page
+      localStorage.removeItem('player');
+      localStorage.removeItem('dq_selected_character');
+      localStorage.removeItem('tutorial_seen');
+      navigate('/');
     } catch (err) {
       alert(err.response?.data?.error || 'Unable to load certificate. Please try again.');
     } finally {
