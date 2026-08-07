@@ -395,6 +395,72 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
     }
   }, [initialShowFinal, player?.session_id]);
 
+  // FINAL LEADERBOARD
+  if (showFinalLeaderboard) return (
+    <div style={s.fullPage}>
+      <style>{animStyles}</style>
+      <div style={{ ...s.lbCard, maxHeight: '92vh', overflowY: 'auto' }}>
+        <div style={{ fontSize: '4rem', textAlign: 'center' }}>🏆</div>
+        <h2 style={{ ...s.lbTitle, fontSize: '1.8rem', marginBottom: '0.4rem' }}>
+          {language === 'bi' ? 'Overall Leaderboard' : 'Papan Kedudukan Keseluruhan'}
+        </h2>
+        <p style={{ textAlign: 'center', color: '#475569', marginBottom: '1.25rem', fontSize: '0.9rem', fontWeight: '700' }}>
+          {language === 'bi'
+            ? 'Dental Quiz + Crossword Puzzle + Food Catcher Game Score'
+            : 'Skor Kuiz Pergigian + Teka Silang Kata + Permainan Tangkap Makanan'}
+        </p>
+
+        <div style={s.lbList}>
+          {finalLeaderboard.map((entry, i) => (
+            <div key={entry.player_id} style={{ ...s.lbRow, ...(entry.player_id === player?.id ? s.lbRowMe : {}), background: i === 0 ? '#fef9ee' : i === 1 ? '#f8fafc' : i === 2 ? '#fff7ed' : '#fff' }}>
+              <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: '700', color: '#1e3a5f', marginBottom: '0.25rem' }}>{entry.nickname}{entry.player_id === player?.id && <span style={s.youBadge}>{t('game.you')}</span>}</div>
+                <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', gap: '0.75rem' }}>
+                  <span>CP1: {Math.round(entry.cp1_mark / 33 * 100)}/100</span>
+                  <span>CP2: {Math.round(entry.cp2_mark / 33 * 100)}/100</span>
+                  <span>CP3: {Math.round(entry.cp3_mark / 33 * 100)}/100</span>
+                </div>
+              </div>
+              <div style={{ ...s.lbScore, fontSize: '1.2rem' }}>{entry.total_mark}<span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>/100</span></div>
+            </div>
+          ))}
+        </div>
+
+        {/* Text before buttons */}
+        <p style={{ textAlign: 'center', color: '#d97706', fontWeight: 800, fontSize: '0.95rem', margin: '1.25rem 0 0.85rem' }}>
+          ✨ {language === 'bi' ? 'Follow the gold arrows to the Finish Point!' : 'Jom ikut anak panah emas ke Penamat!'}
+        </p>
+
+        {/* Buttons */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem' }}>
+          <button
+            style={{ ...s.startBtn, background: '#64748b', boxShadow: '0 4px 15px rgba(100,116,139,0.3)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
+            onClick={() => {
+              if (initialShowFinal && onBack) {
+                onBack();
+              } else {
+                setGameState('start');
+                setShowFinalLeaderboard(false);
+                setShowLeaderboard(false);
+              }
+            }}
+          >
+            🔄 {language === 'bi' ? 'Retry' : 'Cuba Semula'}
+          </button>
+          <button
+            style={{ ...s.startBtn, background: 'linear-gradient(135deg, #16a34a, #15803d)', boxShadow: '0 8px 25px rgba(22,163,74,0.4)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
+            onClick={() => {
+              if (onComplete) onComplete();
+            }}
+          >
+            🚀 {language === 'bi' ? 'Continue Adventure!' : 'Teruskan Pengembaraan!'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   // START SCREEN
   if (gameState === 'start') return (
     <div style={s.fullPage}>
@@ -488,72 +554,6 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
           </button>
         </div>
 
-      </div>
-    </div>
-  );
-
-  // FINAL LEADERBOARD
-  if (showFinalLeaderboard) return (
-    <div style={s.fullPage}>
-      <style>{animStyles}</style>
-      <div style={{ ...s.lbCard, maxHeight: '92vh', overflowY: 'auto' }}>
-        <div style={{ fontSize: '4rem', textAlign: 'center' }}>🏆</div>
-        <h2 style={{ ...s.lbTitle, fontSize: '1.8rem', marginBottom: '0.4rem' }}>
-          {language === 'bi' ? 'Overall Leaderboard' : 'Papan Kedudukan Keseluruhan'}
-        </h2>
-        <p style={{ textAlign: 'center', color: '#475569', marginBottom: '1.25rem', fontSize: '0.9rem', fontWeight: '700' }}>
-          {language === 'bi'
-            ? 'Dental Quiz + Crossword Puzzle + Food Catcher Game Score'
-            : 'Skor Kuiz Pergigian + Teka Silang Kata + Permainan Tangkap Makanan'}
-        </p>
-
-        <div style={s.lbList}>
-          {finalLeaderboard.map((entry, i) => (
-            <div key={entry.player_id} style={{ ...s.lbRow, ...(entry.player_id === player?.id ? s.lbRowMe : {}), background: i === 0 ? '#fef9ee' : i === 1 ? '#f8fafc' : i === 2 ? '#fff7ed' : '#fff' }}>
-              <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: '700', color: '#1e3a5f', marginBottom: '0.25rem' }}>{entry.nickname}{entry.player_id === player?.id && <span style={s.youBadge}>{t('game.you')}</span>}</div>
-                <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', gap: '0.75rem' }}>
-                  <span>CP1: {Math.round(entry.cp1_mark / 33 * 100)}/100</span>
-                  <span>CP2: {Math.round(entry.cp2_mark / 33 * 100)}/100</span>
-                  <span>CP3: {Math.round(entry.cp3_mark / 33 * 100)}/100</span>
-                </div>
-              </div>
-              <div style={{ ...s.lbScore, fontSize: '1.2rem' }}>{entry.total_mark}<span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>/100</span></div>
-            </div>
-          ))}
-        </div>
-
-        {/* Text before buttons */}
-        <p style={{ textAlign: 'center', color: '#d97706', fontWeight: 800, fontSize: '0.95rem', margin: '1.25rem 0 0.85rem' }}>
-          ✨ {language === 'bi' ? 'Follow the gold arrows to the Finish Point!' : 'Jom ikut anak panah emas ke Penamat!'}
-        </p>
-
-        {/* Buttons */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem' }}>
-          <button
-            style={{ ...s.startBtn, background: '#64748b', boxShadow: '0 4px 15px rgba(100,116,139,0.3)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
-            onClick={() => {
-              if (initialShowFinal && onBack) {
-                onBack();
-              } else {
-                setGameState('start');
-                setShowFinalLeaderboard(false);
-                setShowLeaderboard(false);
-              }
-            }}
-          >
-            🔄 {language === 'bi' ? 'Retry' : 'Cuba Semula'}
-          </button>
-          <button
-            style={{ ...s.startBtn, background: 'linear-gradient(135deg, #16a34a, #15803d)', boxShadow: '0 8px 25px rgba(22,163,74,0.4)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
-            onClick={() => {
-              if (onComplete) onComplete();
-            }}
-          >
-            🚀 {language === 'bi' ? 'Continue Adventure!' : 'Teruskan Pengembaraan!'}
-          </button>
-        </div>
       </div>
     </div>
   );

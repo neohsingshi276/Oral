@@ -1369,8 +1369,9 @@ const GamePage = () => {
                   <button
                     style={{ ...s.continueBtn, background: activeCP === 3 ? 'linear-gradient(135deg, #D4A843, #B8922E)' : '#16a34a', flex: 1 }}
                     onClick={() => {
+                      const wasCP3 = activeCP === 3;
                       handleCloseCPModal();
-                      if (activeCP === 3) setShowCP3FinalLeaderboard(true);
+                      if (wasCP3) setShowCP3FinalLeaderboard(true);
                     }}
                   >
                     {activeCP === 3 ? `🏆 ${language === 'bi' ? 'View Overall Leaderboard' : 'Lihat Papan Kedudukan Keseluruhan'}` : `${t('game.continueAdventure')} →`}
