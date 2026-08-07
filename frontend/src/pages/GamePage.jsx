@@ -595,6 +595,7 @@ const GamePage = () => {
         { color: '#2563eb', label: t('game.step1Blue') },
         { color: '#7B2FBE', label: t('game.step1Purple') },
         { color: '#dc2626', label: t('game.step1Red') },
+        { color: '#D4A843', label: t('game.step1Gold') },
       ]
     },
     { icon: '🔢', title: t('game.step2Title'), desc: t('game.step2Desc'), bg: '#f0fdf4', accent: '#16a34a' },
@@ -607,6 +608,7 @@ const GamePage = () => {
         { color: '#2563eb', label: t('game.step7Cp1') },
         { color: '#7B2FBE', label: t('game.step7Cp2') },
         { color: '#dc2626', label: t('game.step7Cp3') },
+        { color: '#D4A843', label: t('game.step7Cp4') },
       ]
     },
   ];
@@ -873,7 +875,7 @@ const GamePage = () => {
                     {page.arrows.map((arrow, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#fff', borderRadius: '14px', padding: '0.9rem 1.2rem', border: `2px solid ${arrow.color}33`, boxShadow: `0 2px 8px ${arrow.color}15` }}>
                         <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: arrow.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 900 }}>▶</span>
+                          <span style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 900 }}>➔</span>
                         </div>
                         <span style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>{arrow.label}</span>
                       </div>
