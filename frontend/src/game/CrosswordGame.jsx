@@ -495,19 +495,18 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     return idx >= 0 ? idx + 1 : null;
   };
 
-  const sidePanelWidth = Math.floor(Math.max(330, Math.min(390, viewport.width * 0.21)));
-  // Panels sit flush against the left/right screen edges, so the grid can
-  // claim almost all of the remaining middle space (just a small allowance
-  // for gaps/borders) instead of the old fixed 48px margin.
-  const availableGridWidth = viewport.width - (sidePanelWidth * 2) - 16;
-  // Size is driven by available WIDTH only, with no low ceiling — cells keep
-  // growing to consume every bit of leftover side space. If that makes the
-  // grid taller than the viewport, the grid section scrolls vertically
-  // instead of shrinking the cells back down.
-  const cellSize = Math.floor(Math.max(34, Math.min(160, availableGridWidth / gridSize)));
-  const fontSize = cellSize >= 90 ? '1.8rem' : cellSize >= 70 ? '1.5rem' : cellSize >= 52 ? '1.3rem' : cellSize >= 46 ? '1.16rem' : '1rem';
-  const minCorrect = words.length;
-  const passed = words.length > 0 && completed.length >= words.length;
+  const sidePanelWidth = Math.floor(Math.max(300, Math.min(370, viewport.width * 0.20)));
+  const availableGridWidth = viewport.width - (sidePanelWidth * 2) - 24;
+  // Available height for the grid inside the viewport (subtracting header, hint bar, and margins)
+  const availableGridHeight = Math.max(200, viewport.height - 130);
+  // Cap cellSize by BOTH available width and height so the grid fits without scrolling
+  const cellSize = Math.floor(Math.max(28, Math.min(availableGridWidth / gridSize, availableGridHeight / gridSize)));
+  const fontSize = cellSize >= 60 ? '1.4rem' : cellSize >= 48 ? '1.2rem' : cellSize >= 38 ? '1.05rem' : cellSize >= 32 ? '0.92rem' : '0.82rem';
+  const minRequired = (settings?.minimum_correct && settings.minimum_correct > 0)
+    ? Math.min(settings.minimum_correct, words.length)
+    : words.length;
+  const minCorrect = minRequired;
+  const passed = words.length > 0 && completed.length >= minRequired;
   const pct = words.length > 0 ? Math.round((completed.length / words.length) * 100) : 0;
 
   if (phase === 'loading') return (
@@ -712,7 +711,14 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
           <div style={{ display: 'flex', gap: '1rem', fontSize: '0.78rem', color: '#64748b', flexShrink: 0 }}>
             <span>⏱️ {t('game.timeLimit', 'Had masa:')} <strong style={{ color: '#93c5fd' }}>{formatTime(timerTotal)}</strong></span>
             <span>💡 {t('game.hintLabel', 'Petunjuk:')} <strong style={{ color: '#fbbf24' }}>{MAX_HINTS} {t('game.times', 'kali')}</strong></span>
-            <span>{t('game.passLimit', 'Lulus:')} <strong style={{ color: '#86efac' }}>{t('game.allWordsRequired', 'Semua perkataan')}</strong></span>
+            <span>
+              {t('game.passLimit', 'Lulus:')}{' '}
+              <strong style={{ color: '#86efac' }}>
+                {minRequired < words.length
+                  ? `${minRequired} ${t('game.words', 'perkataan')}`
+                  : t('game.allWordsRequired', 'Semua perkataan')}
+              </strong>
+            </span>
           </div>
         </div>
       </div>
@@ -821,7 +827,7 @@ const s = {
   clueRowDone: { opacity: 0.6 },
   clueNum: { fontSize: '1.05rem', fontWeight: '900', color: '#93c5fd', flexShrink: 0, minWidth: '28px', paddingTop: '1px' },
   clueText: { fontSize: '1rem', color: '#f8fafc', lineHeight: 1.25, flex: 1 },
-  gridSection: { display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflowX: 'hidden', overflowY: 'auto', padding: 0, maxHeight: '100%' },
+  gridSection: { display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 0, maxHeight: '100%' },
   grid: { display: 'grid', gap: '1px', background: '#0f172a', border: '2px solid #334155', borderRadius: '8px', overflow: 'hidden' },
   cell: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   cellNum: { position: 'absolute', top: '2px', left: '3px', fontSize: '15px', fontWeight: '900', color: '#1e40af', background: 'rgba(255,255,255,0.85)', borderRadius: '3px', padding: '1px 3px', lineHeight: 1, zIndex: 2, pointerEvents: 'none' },
