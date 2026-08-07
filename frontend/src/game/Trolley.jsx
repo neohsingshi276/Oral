@@ -120,8 +120,8 @@ const stopBgMusic = () => {
 };
 
 const DEFAULT_DURATION = 60;
-const TROLLEY_SPEED = 0.85;
-const TROLLEY_ACCELERATION = 0.14;
+const TROLLEY_SPEED = 1.1;
+const TROLLEY_ACCELERATION = 0.22;
 const FOOD_FALL_SPEED = 2.5;
 const SPAWN_INTERVAL = 600;
 
@@ -257,15 +257,15 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
   }, []);
 
   const createParticles = useCallback((x, y, isGood) => {
-    const newParticles = Array.from({ length: 8 }, (_, i) => ({
-      id: Date.now() + i,
+    const newParticles = Array.from({ length: 4 }, (_, i) => ({
+      id: Date.now() + i + Math.random(),
       x, y,
-      vx: (Math.random() - 0.5) * 10,
-      vy: -Math.random() * 8 - 4,
+      vx: (Math.random() - 0.5) * 8,
+      vy: -Math.random() * 6 - 3,
       color: isGood ? '#4CAF50' : '#FF5252',
       life: 1,
     }));
-    setParticles(prev => [...prev, ...newParticles]);
+    setParticles(prev => [...prev.slice(-8), ...newParticles]);
   }, []);
 
   useEffect(() => {
@@ -281,7 +281,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
         } else if (keysPressed.current['ArrowRight'] || keysPressed.current['d'] || keysPressed.current['D']) {
           velocity += TROLLEY_ACCELERATION * deltaTime;
         } else {
-          velocity *= 0.65;
+          velocity *= 0.85;
         }
         velocity = Math.max(-TROLLEY_SPEED, Math.min(TROLLEY_SPEED, velocity));
         trolleyVelocity.current = velocity;
@@ -317,15 +317,16 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
           return { ...item, y: newY };
         }).filter(item => item.y < gameAreaHeight && !item.caught);
       });
-      setParticles(prev =>
-        prev.map(p => ({
+      setParticles(prev => {
+        if (prev.length === 0) return prev;
+        return prev.map(p => ({
           ...p,
           x: p.x + p.vx * deltaTime,
           y: p.y + p.vy * deltaTime,
           vy: p.vy + 0.5 * deltaTime,
-          life: p.life - 0.02 * deltaTime,
-        })).filter(p => p.life > 0)
-      );
+          life: p.life - 0.04 * deltaTime,
+        })).filter(p => p.life > 0);
+      });
       animationFrameRef.current = requestAnimationFrame(gameLoop);
     };
     animationFrameRef.current = requestAnimationFrame(gameLoop);
@@ -801,10 +802,10 @@ const s = {
   gameArea: { position: 'relative', flex: 1, minHeight: '300px', background: 'linear-gradient(180deg,#FFF9E6 0%,#FFE66D 100%)', borderRadius: '20px', overflow: 'hidden', border: '4px solid #fff', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' },
   shelf: { position: 'absolute', top: '25%', left: 0, right: 0, height: '10px', background: '#8B6F47', opacity: 0.3 },
   shelf2: { position: 'absolute', top: '55%', left: 0, right: 0, height: '10px', background: '#8B6F47', opacity: 0.3 },
-  particle: { position: 'absolute', width: '8px', height: '8px', borderRadius: '50%', pointerEvents: 'none' },
-  fallingItem: { position: 'absolute', transform: 'translateX(-50%)', pointerEvents: 'none' },
+  particle: { position: 'absolute', width: '8px', height: '8px', borderRadius: '50%', pointerEvents: 'none', willChange: 'top, left', transform: 'translateZ(0)' },
+  fallingItem: { position: 'absolute', transform: 'translateX(-50%) translateZ(0)', pointerEvents: 'none', willChange: 'top, left' },
   foodBubble: { width: '60px', height: '60px', borderRadius: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' },
-  trolley: { position: 'absolute', bottom: '20px', transform: 'translateX(-50%)', willChange: 'transform' },
+  trolley: { position: 'absolute', bottom: '20px', transform: 'translateX(-50%) translateZ(0)', willChange: 'left' },
   controlsHint: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginTop: '0.75rem', background: '#fff', padding: '0.75rem 2rem', borderRadius: '50px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', border: '2px solid #FFE66D' },
   keyBtn: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', background: 'linear-gradient(135deg,#4ECDC4,#44A08D)', color: '#fff', borderRadius: '8px', fontWeight: '800', fontSize: '1rem' },
   muteBtn: { background: '#fff', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '1.4rem', width: '42px', height: '42px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'transform 0.15s', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' },
