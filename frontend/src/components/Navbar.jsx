@@ -21,7 +21,8 @@ const Navbar = () => {
       <div style={styles.links}>
         <Link to="/" style={styles.link}>{t('nav.home')}</Link>
         <Link to="/learning" style={styles.link}>{t('nav.learning')}</Link>
-        <Link to="/learning" onClick={handleLockedLearningZone} style={styles.link}>{t('nav.joinGame')}</Link>
+        <Link to="/learning" onClick={handleLockedLearningZone} style={styles.link}>{t('nav.learning')}</Link>
+        <Link to="/join" style={styles.link}>{t('nav.joinGame')}</Link>
         <LanguageToggle />
       </div>
     </nav>
