@@ -722,11 +722,11 @@ const GamePage = () => {
             </div>
 
             <h2 style={s.characterTitle}>
-              Choose Your Character
+              {t('game.chooseCharacter')}
             </h2>
 
             <p style={s.characterSubtitle}>
-              Select either the boy or girl character before starting the game.
+              {t('game.chooseCharacterSubtitle')}
             </p>
 
             <div style={s.characterOptions}>
@@ -747,7 +747,7 @@ const GamePage = () => {
                     color: '#075985',
                   }}
                 >
-                  Boy
+                  {t('game.boy')}
                 </div>
               </button>
 
@@ -768,7 +768,7 @@ const GamePage = () => {
                     color: '#9d174d',
                   }}
                 >
-                  Girl
+                  {t('game.girl')}
                 </div>
               </button>
             </div>

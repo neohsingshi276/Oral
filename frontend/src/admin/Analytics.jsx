@@ -381,7 +381,7 @@ const Analytics = ({ setActive }) => {
         <>
           <div style={s.grid2}>
             <div style={s.card}>
-              <h3 style={s.cardTitle}>Kadar Penyelesaian mengikut Pusat Semak</h3>
+              <h3 style={s.cardTitle}>Kadar Penyelesaian mengikut Checkpoint</h3>
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={completionData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -407,7 +407,7 @@ const Analytics = ({ setActive }) => {
 
           {/* Purata Markah Ringkasan */}
           <div style={s.card}>
-            <h3 style={s.cardTitle}>📋 Purata Markah setiap Pusat Semak (jumlah /100)</h3>
+            <h3 style={s.cardTitle}>📋 Purata Markah setiap Checkpoint (jumlah /100)</h3>
             <div style={s.markOverview}>
               {completionData.map((cp, i) => {
                 const pct = (cp.avgMark / 33) * 100;
@@ -450,7 +450,7 @@ const Analytics = ({ setActive }) => {
       {/* Penyelesaian */}
       {activeTab === 'completion' && (
         <div style={s.card}>
-          <h3 style={s.cardTitle}>📈 Kadar Penyelesaian setiap Pusat Semak</h3>
+          <h3 style={s.cardTitle}>📈 Kadar Penyelesaian setiap Checkpoint</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={completionData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -481,7 +481,7 @@ const Analytics = ({ setActive }) => {
       {/* Percubaan */}
       {activeTab === 'attempts' && (
         <div style={s.card}>
-          <h3 style={s.cardTitle}>🔁 Purata Percubaan setiap Pusat Semak</h3>
+          <h3 style={s.cardTitle}>🔁 Purata Percubaan setiap Checkpoint</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={attemptData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -613,7 +613,7 @@ const Analytics = ({ setActive }) => {
           {selectedSession === 'all' ? (
             <>
               <p style={s.hint}>
-                Setiap pusat semak dinilai /33.33 — jumlah /100. Markah berdasarkan prestasi sebenar.
+                Setiap checkpoint dinilai /33.33 — jumlah /100. Markah berdasarkan prestasi sebenar.
               </p>
               <table style={s.table}>
                 <thead><tr style={s.thead}>
@@ -670,7 +670,7 @@ const Analytics = ({ setActive }) => {
           ) : (
             <>
               <p style={s.hint}>
-                Setiap pusat semak dinilai /33.33 — jumlah /100. Markah berdasarkan prestasi sebenar.
+                Setiap checkpoint dinilai /33.33 — jumlah /100. Markah berdasarkan prestasi sebenar.
               </p>
               <table style={s.table}>
                 <thead><tr style={s.thead}>
