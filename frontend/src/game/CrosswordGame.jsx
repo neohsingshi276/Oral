@@ -143,7 +143,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       const newUserGrid = Array(gs).fill(null).map(() => Array(gs).fill(''));
       const newCompleted = [];
       newWords.forEach(w => {
-        if (completedIds.includes(w.id)) {
+        if (completedIds.includes(w.id) || revealAll) {
           w.word.toUpperCase().split('').forEach((letter, i) => {
             const row = w.direction === 'across' ? w.start_row : w.start_row + i;
             const col = w.direction === 'across' ? w.start_col + i : w.start_col;
@@ -155,8 +155,8 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       setWords(newWords);
       setGridSize(gs);
       setGrid(g);
-      setUserGrid(newUserGrid);
-      setCompleted(newCompleted);
+      setUserGrid(revealAll ? g.map(r => r.map(c => c || '')) : newUserGrid);
+      setCompleted(revealAll ? newWords.map(w => w.id) : newCompleted);
       setSelectedCell(null);
       setSelectedWord(null);
       setHintedCells(new Set());
@@ -705,7 +705,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
           <div>
             {selectedWord
               ? <><strong>{words.indexOf(selectedWord) + 1}. {selectedWord.direction === 'across' ? '→' : '↓'}</strong> {pickLang(selectedWord, 'clue', language)} <span style={{ color: '#93c5fd' }}>({selectedWord.word.length} {t('game.letters', 'huruf')})</span></>
-              : <span style={{ color: '#f8fafc', fontWeight: '700' }}>{t('game.clickBoxToSelect', 'Klik pada kotak untuk mengisi jawapan')}</span>
+              : <span style={{ color: '#f8fafc', fontWeight: '700' }}>{t('game.clickBoxToSelect', 'Pilih perkataan untuk memasukkan jawapan anda')}</span>
             }
           </div>
           <div style={{ display: 'flex', gap: '1rem', fontSize: '0.78rem', color: '#64748b', flexShrink: 0 }}>
@@ -761,7 +761,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                         ref={el => inputRefs.current[`${row}-${col}`] = el}
                         style={{ ...s.cellInput, color: getCellTextColor(row, col), fontSize }}
                         maxLength={2}
-                        value={userGrid[row]?.[col] || ''}
+                        value={revealAll ? (grid[row]?.[col] || '') : (userGrid[row]?.[col] || '')}
                         onChange={e => handleInput(row, col, e)}
                         onKeyDown={e => handleKeyDown(row, col, e)}
                         onClick={() => handleCellClick(row, col)}
@@ -831,7 +831,7 @@ const s = {
   grid: { display: 'grid', gap: '1px', background: '#0f172a', border: '2px solid #334155', borderRadius: '8px', overflow: 'hidden' },
   cell: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   cellNum: { position: 'absolute', top: '2px', left: '3px', fontSize: '15px', fontWeight: '900', color: '#1e40af', background: 'rgba(255,255,255,0.85)', borderRadius: '3px', padding: '1px 3px', lineHeight: 1, zIndex: 2, pointerEvents: 'none' },
-  cellInput: { width: '100%', height: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontWeight: '800', textTransform: 'uppercase', outline: 'none', cursor: 'pointer', padding: 0 },
+  cellInput: { width: '100%', height: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontWeight: '800', textTransform: 'uppercase', outline: 'none', cursor: 'pointer', padding: 0, WebkitTextFillColor: 'inherit', opacity: 1 },
   lbBox: { background: '#f1f5f9', borderRadius: '12px', padding: '0.75rem', margin: '0.75rem 0', textAlign: 'left', width: '100%' },
   lbTitle: { fontSize: '0.88rem', fontWeight: '800', color: '#1e3a5f', margin: '0 0 0.5rem' },
   lbRow: { display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 0', borderBottom: '1px solid #e2e8f0' },
