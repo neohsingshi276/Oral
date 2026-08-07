@@ -532,13 +532,23 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem' }}>
           <button
             style={{ ...s.startBtn, background: '#64748b', boxShadow: '0 4px 15px rgba(100,116,139,0.3)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
-            onClick={() => { setGameState('start'); setShowFinalLeaderboard(false); setShowLeaderboard(false); }}
+            onClick={() => {
+              if (initialShowFinal && onBack) {
+                onBack();
+              } else {
+                setGameState('start');
+                setShowFinalLeaderboard(false);
+                setShowLeaderboard(false);
+              }
+            }}
           >
             🔄 {language === 'bi' ? 'Retry' : 'Cuba Semula'}
           </button>
           <button
             style={{ ...s.startBtn, background: 'linear-gradient(135deg, #16a34a, #15803d)', boxShadow: '0 8px 25px rgba(22,163,74,0.4)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
-            onClick={onComplete}
+            onClick={() => {
+              if (onComplete) onComplete();
+            }}
           >
             🚀 {language === 'bi' ? 'Continue Adventure!' : 'Teruskan Pengembaraan!'}
           </button>

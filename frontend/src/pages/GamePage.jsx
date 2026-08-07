@@ -518,7 +518,7 @@ const GamePage = () => {
 
   const handleCloseCPModal = () => {
     setActiveCP(null);
-    setCpStep('video');
+    setCpStep('done');
   };
 
   const sendChat = async () => {
@@ -983,7 +983,13 @@ const GamePage = () => {
 
                 <button
                   style={{ width: '100%', padding: '1.1rem', background: `linear-gradient(135deg, ${hint.accent}, ${hint.accent}cc)`, color: '#fff', border: 'none', borderRadius: '16px', fontSize: '1.25rem', fontWeight: 900, cursor: 'pointer', boxShadow: `0 8px 24px ${hint.accent}44`, letterSpacing: '0.01em' }}
-                  onClick={() => { const cp = checkpointHint; setCheckpointHint(null); setActiveCP(cp); setCpStep('video'); }}
+                  onClick={() => {
+                    const cp = checkpointHint;
+                    setCheckpointHint(null);
+                    setActiveCP(cp);
+                    const isCompleted = progress.find(p => p.checkpoint_number === cp)?.completed;
+                    setCpStep(isCompleted ? 'done' : 'video');
+                  }}
                 >
                   {t('game.letsGo')} 🚀
                 </button>
