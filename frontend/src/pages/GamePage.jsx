@@ -710,8 +710,8 @@ const GamePage = () => {
 
       {/* Controls hint */}
       <div style={s.controls}>
-        <span>Tekan: <strong>W A S D</strong> atau <strong>Anak Panah</strong></span>
-        <span style={{ marginLeft: '1.5rem' }}>Masuk Checkpoint: <strong>Tekan E</strong></span>
+        <span>{t('game.controlsMove', 'Gerak: Tekan')} <strong>{t('game.controlsKeys', 'W A S D')}</strong> {t('game.controlsOr', 'atau')} <strong>{t('game.controlsArrows', 'Anak Panah')}</strong></span>
+        <span style={{ marginLeft: '1.5rem' }}>{t('game.controlsEnter', 'Masuk Checkpoint:')} <strong>{t('game.controlsPress', 'Tekan E')}</strong></span>
       </div>
 
       {/* Game Canvas */}
