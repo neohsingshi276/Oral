@@ -43,7 +43,7 @@ const JoinGamePage = () => {
       title: t('game.chatButton'),
       subtitle: '3 / 4',
       tabLabel: t('game.tabChat'),
-      rows: [{ icon: '💬', title: t('game.chatWithTeacher'), desc: t('game.chatButtonDesc'), bg: '#fff7ed' }],
+      rows: [{ icon: '💬', title: t('game.chatTitle'), desc: t('game.chatButtonDesc'), bg: '#fff7ed' }],
     },
     {
       key: 'save',

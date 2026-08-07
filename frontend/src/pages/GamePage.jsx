@@ -709,7 +709,7 @@ const GamePage = () => {
       {/* Controls hint */}
       <div style={s.controls}>
         <span>Tekan: <strong>W A S D</strong> atau <strong>Anak Panah</strong></span>
-        <span style={{ marginLeft: '1.5rem' }}>Masuk zon: <strong>Tekan E</strong></span>
+        <span style={{ marginLeft: '1.5rem' }}>Masuk Checkpoint: <strong>Tekan E</strong></span>
       </div>
 
       {/* Game Canvas */}
