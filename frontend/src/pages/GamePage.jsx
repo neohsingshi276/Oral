@@ -962,7 +962,7 @@ const GamePage = () => {
                   {hint.badge}
                 </div>
 
-                <h2 style={{ fontSize: '2.4rem', fontWeight: 900, color: '#1e3a5f', margin: '0 0 0.5rem', lineHeight: 1.2 }}>{hint.title}</h2>
+                <h2 style={{ fontSize: '1.65rem', fontWeight: 900, color: '#1e3a5f', margin: '0 0 0.5rem', lineHeight: 1.3 }}>{hint.title}</h2>
               </div>
 
               {/* ── Card body ── */}
