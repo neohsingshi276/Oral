@@ -7,6 +7,18 @@ const reverseExactTextTranslations = Object.fromEntries(
   Object.entries(exactTextTranslations).map(([bm, bi]) => [bi, bm])
 );
 
+// Force Checkpoint in both BM & EN for all variations
+reverseExactTextTranslations['Pusat Pemeriksaan'] = 'Checkpoint';
+reverseExactTextTranslations['Pusat Pemeriksaan 1'] = 'Checkpoint 1';
+reverseExactTextTranslations['Pusat Pemeriksaan 2'] = 'Checkpoint 2';
+reverseExactTextTranslations['Pusat Pemeriksaan 3'] = 'Checkpoint 3';
+reverseExactTextTranslations['Pusat Pemeriksaan 4'] = 'Checkpoint 4';
+reverseExactTextTranslations['Checkpoint'] = 'Checkpoint';
+reverseExactTextTranslations['Checkpoint 1'] = 'Checkpoint 1';
+reverseExactTextTranslations['Checkpoint 2'] = 'Checkpoint 2';
+reverseExactTextTranslations['Checkpoint 3'] = 'Checkpoint 3';
+reverseExactTextTranslations['Checkpoint 4'] = 'Checkpoint 4';
+
 const getNestedValue = (source, key) => {
   const keys = key.split('.');
   let value = source;
