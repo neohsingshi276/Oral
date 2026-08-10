@@ -595,7 +595,6 @@ const GamePage = () => {
         { color: '#2563eb', label: t('game.step1Blue') },
         { color: '#7B2FBE', label: t('game.step1Purple') },
         { color: '#dc2626', label: t('game.step1Red') },
-        { color: '#D4A843', label: t('game.step1Gold') },
       ]
     },
     { icon: '🔢', title: t('game.step2Title'), desc: t('game.step2Desc'), bg: '#f0fdf4', accent: '#16a34a' },
@@ -608,7 +607,6 @@ const GamePage = () => {
         { color: '#2563eb', label: t('game.step7Cp1') },
         { color: '#7B2FBE', label: t('game.step7Cp2') },
         { color: '#dc2626', label: t('game.step7Cp3') },
-        { color: '#D4A843', label: t('game.step7Cp4') },
       ]
     },
   ];

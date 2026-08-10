@@ -102,7 +102,7 @@ const submitQuiz = async (req, res) => {
       }
     }
 
-    const score = correct * 100 + Math.max(0, 50 - Math.floor((parseInt(time_taken, 10) || 0) / 10));
+    const score = correct * 1000 + Math.max(0, 500 - (parseInt(time_taken, 10) || 0));
 
     // FIX: Guard against duplicate submissions — only keep the best score
     const [existing] = await db.query(

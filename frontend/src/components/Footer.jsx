@@ -59,7 +59,7 @@ const Footer = () => {
 
 const styles = {
     footer: {
-        background: 'linear-gradient(135deg, #01306B, #0B4A8B)',
+        background: 'linear-gradient(135deg, #87CEEB, #60B5E0)',
         color: '#fff',
         padding: '2.5rem 1.5rem',
         textAlign: 'center',

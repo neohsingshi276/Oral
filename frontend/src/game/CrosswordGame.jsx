@@ -271,7 +271,8 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
         session_id: sessionId,
         words_correct: wordsCorrect,
         total_words: words.length,
-        time_taken: timerTotal - timeLeft
+        time_taken: timerTotal - timeLeft,
+        time_remaining: timeLeft
       });
       setScoreSubmitted(true);
       fetchLeaderboard();

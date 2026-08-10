@@ -448,7 +448,7 @@ const submitScore = async (req, res) => {
     if (playerRows.length === 0)
       return res.status(403).json({ error: 'Player does not belong to this session' });
 
-    const score = safeWordsCorrect * 100 + safeTimeRemaining;
+    const score = safeWordsCorrect * 1000 + Math.min(safeTimeRemaining, 999);
 
     const [existing] = await db.query(
       'SELECT id, score FROM crossword_scores WHERE player_id = ? AND session_id = ?',
