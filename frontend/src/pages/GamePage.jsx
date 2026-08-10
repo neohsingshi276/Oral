@@ -667,12 +667,39 @@ const GamePage = () => {
     const preventWheelZoom = (event) => {
       if (event.ctrlKey || event.metaKey) event.preventDefault();
     };
+    // Prevent pinch-to-zoom on touch devices (2+ finger gestures)
+    const preventTouchZoom = (event) => {
+      if (event.touches && event.touches.length > 1) {
+        event.preventDefault();
+      }
+    };
+    // Block iOS Safari gesture events (pinch/rotate)
+    const preventGesture = (event) => {
+      event.preventDefault();
+    };
 
     window.addEventListener('keydown', preventBrowserZoom, { capture: true });
     window.addEventListener('wheel', preventWheelZoom, { passive: false });
+    document.addEventListener('touchmove', preventTouchZoom, { passive: false });
+    document.addEventListener('gesturestart', preventGesture, { passive: false });
+    document.addEventListener('gesturechange', preventGesture, { passive: false });
+
+    // Ensure viewport meta prevents user scaling
+    let viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+    }
+
     return () => {
       window.removeEventListener('keydown', preventBrowserZoom, { capture: true });
       window.removeEventListener('wheel', preventWheelZoom);
+      document.removeEventListener('touchmove', preventTouchZoom);
+      document.removeEventListener('gesturestart', preventGesture);
+      document.removeEventListener('gesturechange', preventGesture);
+      // Restore viewport to allow zoom on other pages
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+      }
     };
   }, []);
 

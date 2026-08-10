@@ -509,6 +509,24 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.cameras.main.setZoom(2);
     this.cameras.main.roundPixels = true;
 
+    // ── Prevent zoom out ─────────────────────────────────────────────
+    // Disable mouse wheel zoom on the canvas so players can't zoom out
+    // and see outside the map boundaries.
+    const canvas = this.game.canvas;
+    if (canvas) {
+      canvas.style.touchAction = 'none'; // block pinch-to-zoom on mobile
+      canvas.addEventListener('wheel', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }, { passive: false });
+      // Block iOS Safari gesture zoom
+      canvas.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
+      canvas.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
+      canvas.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
+    }
+
     // ── Input ────────────────────────────────────────────────────────
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = {

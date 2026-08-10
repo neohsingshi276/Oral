@@ -183,8 +183,27 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
           if (scene) sceneRef.current = scene;
         });
 
+        // Store initial devicePixelRatio to detect browser zoom changes
+        const initialDPR = window.devicePixelRatio || 1;
+        const BASE_CAMERA_ZOOM = 2;
+
         const onResize = () => {
-          game.scale.resize(window.innerWidth - 32, window.innerHeight - 130);
+          const newW = window.innerWidth - 32;
+          const newH = window.innerHeight - 130;
+          game.scale.resize(newW, newH);
+
+          // Detect browser zoom ratio (menu zoom changes DPR)
+          const currentDPR = window.devicePixelRatio || 1;
+          const zoomRatio = currentDPR / initialDPR; // <1 = zoomed out, >1 = zoomed in
+
+          // Adjust camera zoom to counteract browser zoom:
+          // If browser zoomed to 25% (ratio=0.25), canvas is 4x bigger,
+          // so camera zoom needs to be 4x higher to show the same world area.
+          const scene = game.scene.getScene('PhaserGameScene');
+          if (scene && scene.cameras?.main) {
+            const compensatedZoom = BASE_CAMERA_ZOOM / zoomRatio;
+            scene.cameras.main.setZoom(compensatedZoom);
+          }
         };
         window.addEventListener('resize', onResize);
         window.addEventListener('beforeunload', savePosition);
