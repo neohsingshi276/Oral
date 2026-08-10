@@ -512,7 +512,11 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, mapWidthPx, mapHeightPx);
     this.cameras.main.startFollow(this.playerGraphic);
     this.cameras.main.centerOn(startX, startY);
-    this.cameras.main.setZoom(2);
+    // Dynamic zoom: always show ~1200px of world width regardless of browser zoom.
+    // 1200 ≈ what camera zoom 2 shows at 80% browser zoom on a 1920-wide screen.
+    const TARGET_WORLD_WIDTH = 1200;
+    const canvasW = this.cameras.main.width;
+    this.cameras.main.setZoom(Math.max(1, canvasW / TARGET_WORLD_WIDTH));
     this.cameras.main.roundPixels = true;
 
     // ── Prevent zoom out ─────────────────────────────────────────────
