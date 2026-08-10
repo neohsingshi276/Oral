@@ -3,6 +3,7 @@ import PhaserGameScene from './PhaserGameScene';
 import api from '../services/api';
 import { START_POS, resolveSpawnPosition, writeCachedPosition } from './gameConfig';
 import dentalImage from '../assets/dental.png';
+import CharacterPreview from '../game/CharacterPreview';
 
 const SAVE_INTERVAL = 5000;
 

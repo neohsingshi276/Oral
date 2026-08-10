@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { START_POS } from './gameConfig';
 import { CHECKPOINTS } from './gameConfig';
+import { createChibiCharacter } from './characterFactory';
 
 /**
  * PhaserGameScene
@@ -336,288 +337,41 @@ export default class PhaserGameScene extends Phaser.Scene {
       }
     };
 
-    const isGirl = this.selectedCharacter === 'girl';
 
-    const characterColors = isGirl
-      ? {
-        shirt: 0xec4899,
-        shirtBorder: 0x9d174d,
-        trousers: 0x7c3aed,
-        shoes: 0x4c1d95,
-        hair: 0x4a2c1b,
-        hairBorder: 0x2d160c,
-        backpack: 0xa855f7,
-        backpackBorder: 0x6b21a8,
-      }
-      : {
-        shirt: 0x38bdf8,
-        shirtBorder: 0x075985,
-        trousers: 0x334155,
-        shoes: 0x111827,
-        hair: 0x5b321f,
-        hairBorder: 0x2f1b12,
-        backpack: 0xf97316,
-        backpackBorder: 0x9a3412,
-      };
-
-    // ── Cute chibi player character ─────────────────────────────────────
-    this.playerGraphic = this.add.container(startX, startY);
-
-    // Soft shadow under the character
-    this.playerShadow = this.add.ellipse(
-      0,
-      25,
-      24,
-      9,
-      0x000000,
-      0.22
-    );
-
-    // Legs
-    this.legL = this.add.rectangle(
-      -5,
-      17,
-      7,
-      11,
-      characterColors.trousers
-    );
-    this.legL.setOrigin(0.5);
-
-    this.legR = this.add.rectangle(
-      5,
-      17,
-      7,
-      11,
-      characterColors.trousers
-    );
-    this.legR.setOrigin(0.5);
-
-    // Shoes
-    this.shoeL = this.add.ellipse(
-      -5,
-      23,
-      9,
-      5,
-      characterColors.shoes
-    );
-
-    this.shoeR = this.add.ellipse(
-      5,
-      23,
-      9,
-      5,
-      characterColors.shoes
-    );
-
-    // Body
-    this.bodyPart = this.add.rectangle(
-      0,
-      4,
-      22,
-      23,
-      characterColors.shirt
-    );
-
-    this.bodyPart.setStrokeStyle(
-      2,
-      characterColors.shirtBorder
-    );
-
-    // Shirt detail
-    this.shirtDetail = this.add.circle(0, 5, 3, 0xffffff);
-
-    // Arms
-    this.armL = this.add.rectangle(
-      -14,
-      4,
-      7,
-      18,
-      0xf6c28b
-    );
-    this.armL.setStrokeStyle(1.5, 0xc97c4b);
-
-    this.armR = this.add.rectangle(
-      14,
-      4,
-      7,
-      18,
-      0xf6c28b
-    );
-    this.armR.setStrokeStyle(1.5, 0xc97c4b);
-
-    // Hair behind head
-    this.hairBack = this.add.circle(
-      0,
-      -14,
-      13,
-      characterColors.hair
-    );
-
-    this.hairBack.setStrokeStyle(
-      2,
-      characterColors.hairBorder
-    );
-
-    this.girlHairLeft = null;
-    this.girlHairRight = null;
-    this.hairBow = null;
-
-    if (isGirl) {
-      this.girlHairLeft = this.add.ellipse(
-        -10,
-        -7,
-        8,
-        21,
-        characterColors.hair
-      );
-
-      this.girlHairRight = this.add.ellipse(
-        10,
-        -7,
-        8,
-        21,
-        characterColors.hair
-      );
-
-      this.girlHairLeft.setStrokeStyle(
-        1.5,
-        characterColors.hairBorder
-      );
-
-      this.girlHairRight.setStrokeStyle(
-        1.5,
-        characterColors.hairBorder
-      );
-
-      this.hairBow = this.add.text(
-        8,
-        -25,
-        '🎀',
-        {
-          fontSize: '9px',
-        }
-      );
-
-      this.hairBow.setOrigin(0.5);
-    }
-
-    // Face
-    this.headPart = this.add.circle(0, -12, 11, 0xf6c28b);
-    this.headPart.setStrokeStyle(1.8, 0xc97c4b);
-
-    // Hair fringe
-    this.hairFront = this.add.arc(
-      0,
-      -17,
-      10,
-      195,
-      345,
-      false,
-      characterColors.hair
-    );
-
-    // Cute large eyes
-    this.eyeL = this.add.circle(-4, -13, 2.1, 0x1e293b);
-    this.eyeR = this.add.circle(4, -13, 2.1, 0x1e293b);
-
-    // Eye highlights
-    this.eyeHighlightL = this.add.circle(-3.4, -13.7, 0.7, 0xffffff);
-    this.eyeHighlightR = this.add.circle(4.6, -13.7, 0.7, 0xffffff);
-
-    // Blush
-    this.blushL = this.add.ellipse(-7, -9, 4, 2, 0xfb7185, 0.6);
-    this.blushR = this.add.ellipse(7, -9, 4, 2, 0xfb7185, 0.6);
-
-    // Smile
-    this.mouth = this.add.arc(
-      0,
-      -9,
-      3,
-      20,
-      160,
-      false,
-      0x7c2d12
-    );
-    this.mouth.setStrokeStyle(1.2, 0x7c2d12);
-
-    // Small backpack
-    this.backpack = this.add.rectangle(
-      -11,
-      3,
-      7,
-      15,
-      characterColors.backpack
-    );
-
-    this.backpack.setStrokeStyle(
-      1.5,
-      characterColors.backpackBorder
-    );
-
-    this.backpack.setDepth(-1);
-
-    // Name label
-    const playerLabel = this.playerNickname.length > 24
-      ? `${this.playerNickname.slice(0, 23)}...`
-      : this.playerNickname;
-
-    this.nameText = this.add.text(0, -32, playerLabel, {
-      fontSize: '10px',
-      fontFamily: 'sans-serif',
-      fontStyle: 'bold',
-      color: '#ffffff',
-      align: 'center',
-      stroke: '#1e3a5f',
-      strokeThickness: 3,
+    const character = createChibiCharacter(this, {
+      x: startX,
+      y: startY,
+      character: this.selectedCharacter,
+      nickname: this.playerNickname,
+      showName: true,
     });
 
-    this.nameText.setOrigin(0.5, 1);
+    this.playerGraphic = character.playerGraphic;
 
-    const characterParts = [
-      this.playerShadow,
-      this.backpack,
-      this.legL,
-      this.legR,
-      this.shoeL,
-      this.shoeR,
-      this.armL,
-      this.armR,
-      this.bodyPart,
-      this.shirtDetail,
-      this.hairBack,
-    ];
-
-    if (this.girlHairLeft) {
-      characterParts.push(this.girlHairLeft);
-    }
-
-    if (this.girlHairRight) {
-      characterParts.push(this.girlHairRight);
-    }
-
-    characterParts.push(
-      this.headPart,
-      this.hairFront,
-      this.eyeL,
-      this.eyeR,
-      this.eyeHighlightL,
-      this.eyeHighlightR,
-      this.blushL,
-      this.blushR,
-      this.mouth
-    );
-
-    if (this.hairBow) {
-      characterParts.push(this.hairBow);
-    }
-
-    characterParts.push(this.nameText);
-
-    this.playerGraphic.add(characterParts);
-
-    this.playerGraphic.setDepth(1000);
-    this.playerGraphic.setScale(1.15);
-
+    this.playerShadow = character.playerShadow;
+    this.legL = character.legL;
+    this.legR = character.legR;
+    this.shoeL = character.shoeL;
+    this.shoeR = character.shoeR;
+    this.bodyPart = character.bodyPart;
+    this.shirtDetail = character.shirtDetail;
+    this.armL = character.armL;
+    this.armR = character.armR;
+    this.hairBack = character.hairBack;
+    this.girlHairLeft = character.girlHairLeft;
+    this.girlHairRight = character.girlHairRight;
+    this.hairBow = character.hairBow;
+    this.headPart = character.headPart;
+    this.hairFront = character.hairFront;
+    this.eyeL = character.eyeL;
+    this.eyeR = character.eyeR;
+    this.eyeHighlightL = character.eyeHighlightL;
+    this.eyeHighlightR = character.eyeHighlightR;
+    this.blushL = character.blushL;
+    this.blushR = character.blushR;
+    this.mouth = character.mouth;
+    this.backpack = character.backpack;
+    this.nameText = character.nameText;
 
     // Physics body for player (invisible rectangle — avoids null-texture bug
     // where physics.add.sprite(x, y, null) places the body at (0,0) instead

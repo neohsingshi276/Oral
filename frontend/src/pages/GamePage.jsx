@@ -12,6 +12,8 @@ import CrosswordGame from '../game/CrosswordGame';
 import CP3Game from '../game/Trolley';
 import LanguageToggle from '../components/LanguageToggle';
 import { useLanguage } from '../context/LanguageContext';
+import CharacterPreview from '../game/CharacterPreview';
+
 
 // ─── Web Audio chime — no audio files needed ──────────────────────────────────
 // Plays a cheerful rising 3-note fanfare using the browser's AudioContext.
@@ -739,7 +741,7 @@ const GamePage = () => {
                 }}
                 onClick={() => chooseCharacter('boy')}
               >
-                <div style={s.characterEmoji}>👦</div>
+                <CharacterPreview character="boy" />
 
                 <div
                   style={{
@@ -760,7 +762,8 @@ const GamePage = () => {
                 }}
                 onClick={() => chooseCharacter('girl')}
               >
-                <div style={s.characterEmoji}>👧</div>
+                <CharacterPreview character="girl" />
+
 
                 <div
                   style={{
@@ -1513,7 +1516,6 @@ const s = {
   characterSubtitle: { margin: '0 0 2rem', color: '#64748b', fontSize: '1rem', lineHeight: 1.5, },
   characterOptions: { display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap', },
   characterButton: { width: '190px', padding: '1.5rem', borderRadius: '20px', border: '4px solid', cursor: 'pointer', transition: 'transform 0.2s ease, box-shadow 0.2s ease', },
-  characterEmoji: { fontSize: '4.5rem', lineHeight: 1, marginBottom: '0.8rem', },
   characterName: { fontSize: '1.25rem', fontWeight: '900', },
 };
 
