@@ -152,7 +152,7 @@ const YouTubePlayer = ({ videoId, onVideoEnd, finishVideoText, videoDoneText }) 
       {/* Continue button — only shows when video ends */}
       {videoEnded ? (
         <button style={styles.continueBtn} onClick={onVideoEnd}>
-          ✅ {videoDoneText || t('game.videoDone', 'Video Selesai! Teruskan! →')}
+          ✅ {videoDoneText || t('game.videoDone', 'Video Selesai! Teruskan!')}
         </button>
       ) : (
         <button style={styles.lockedBtn} disabled>

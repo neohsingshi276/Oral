@@ -1392,7 +1392,7 @@ const GamePage = () => {
                       if (wasCP3) setShowCP3FinalLeaderboard(true);
                     }}
                   >
-                    {activeCP === 3 ? `🏆 ${language === 'bi' ? 'View Overall Leaderboard' : 'Lihat Papan Kedudukan Keseluruhan'}` : `${t('game.continueAdventure')} →`}
+                    {activeCP === 3 ? `🏆 ${language === 'bi' ? 'View Overall Leaderboard' : 'Lihat Papan Kedudukan Keseluruhan'}` : t('game.continueAdventure')}
                   </button>
                 </div>
               </div>
