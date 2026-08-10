@@ -363,8 +363,8 @@ const GamePage = () => {
     }
 
     if (completedCP === 3) {
-      // CP3 now shows the "done" card like CP1 and CP2
-      setCpStep('done');
+      setActiveCP(null);
+      setShowCP3FinalLeaderboard(true);
     } else {
       setCpStep('done');
     }
@@ -432,13 +432,9 @@ const GamePage = () => {
 
       const svgForDownload = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="990" viewBox="0 0 1400 990">${svgContent.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '')}</svg>`;
 
-      // Open in new tab with full-page layout
-      const win = window.open('', '_blank');
-      if (!win) {
-        alert('Please allow pop-ups to view your certificate.');
-        return;
-      }
-      win.document.write(`<!DOCTYPE html>
+      // Open certificate in current tab
+      window.document.open();
+      window.document.write(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -453,7 +449,7 @@ const GamePage = () => {
     .btn:hover { transform: translateY(-1px); }
     .btn-download { background: linear-gradient(135deg, #16a34a, #22c55e); color: #fff; box-shadow: 0 4px 16px rgba(22,163,74,0.4); }
     .btn-print { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; box-shadow: 0 4px 16px rgba(37,99,235,0.3); }
-    .btn-close { background: rgba(255,255,255,0.1); color: #e2e8f0; border: 1px solid rgba(255,255,255,0.2); }
+    .btn-home { background: linear-gradient(135deg, #d97706, #f59e0b); color: #fff; box-shadow: 0 4px 16px rgba(217,119,6,0.4); }
     .cert-wrap { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; padding: 2rem; }
     .cert-wrap svg { width: 100%; max-width: 1100px; height: auto; border-radius: 6px; box-shadow: 0 12px 48px rgba(0,0,0,0.5); }
     @media print {
@@ -475,7 +471,7 @@ const GamePage = () => {
     <h1>🎓 ${language === 'bm' ? 'Sijil Kembara Gigi Sihat' : 'Kembara Gigi Sihat Certificate'}</h1>
     <button class="btn btn-download" id="dlBtn">📥 ${language === 'bm' ? 'Muat Turun' : 'Download'}</button>
     <button class="btn btn-print" onclick="window.print()">🖨️ ${language === 'bm' ? 'Cetak' : 'Print'}</button>
-    <button class="btn btn-close" onclick="window.location.href='/';">🏠 ${language === 'bm' ? 'Kembali ke Halaman Utama' : 'Back to Home'}</button>
+    <button class="btn btn-home" onclick="localStorage.removeItem('player'); localStorage.removeItem('dq_selected_character'); localStorage.removeItem('tutorial_seen'); window.location.href='/';">🏠 ${language === 'bm' ? 'Kembali ke Laman Utama' : 'Go Back Home'}</button>
   </div>
   <div class="cert-wrap">
     ${svgContent}
@@ -496,13 +492,7 @@ const GamePage = () => {
   </script>
 </body>
 </html>`);
-      win.document.close();
-
-      // Clean up player session and redirect main window to Home page
-      localStorage.removeItem('player');
-      localStorage.removeItem('dq_selected_character');
-      localStorage.removeItem('tutorial_seen');
-      navigate('/');
+      window.document.close();
     } catch (err) {
       alert(err.response?.data?.error || 'Unable to load certificate. Please try again.');
     } finally {

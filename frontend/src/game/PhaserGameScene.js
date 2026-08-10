@@ -466,19 +466,30 @@ export default class PhaserGameScene extends Phaser.Scene {
 
       // Label
       const labelText = this.add.text(32, -8, cp.label, {
-        fontSize: '11px',
+        fontSize: '12px',
+        fontFamily: 'sans-serif',
+        fontStyle: 'bold',
+        color: '#FFE838',
+        stroke: '#000000',
+        strokeThickness: 4,
+        shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, stroke: true, fill: true },
+      });
+
+      // Press E hint — background pill for readability
+      const hintBg = this.add.rectangle(0, 44, 100, 20, 0x000000, 0.7);
+      hintBg.setStrokeStyle(1.5, 0xffd700);
+      hintBg.setOrigin(0.5, 0.5);
+      hintBg.setVisible(false);
+
+      // Press E hint text
+      const hintText = this.add.text(0, 44, this.pressEtoEnterText || 'Press E to enter', {
+        fontSize: '13px',
         fontFamily: 'sans-serif',
         fontStyle: 'bold',
         color: '#FFD700',
-      });
-
-      // Press E hint
-      const hintText = this.add.text(0, 42, this.pressEtoEnterText || 'Press E to enter', {
-        fontSize: '10px',
-        fontFamily: 'sans-serif',
-        fontStyle: 'bold',
-        color: '#ffffff',
         align: 'center',
+        stroke: '#000000',
+        strokeThickness: 3,
       });
       hintText.setOrigin(0.5, 0.5);
       hintText.setVisible(false);
@@ -489,7 +500,7 @@ export default class PhaserGameScene extends Phaser.Scene {
       });
       lockText.setVisible(false);
 
-      container.add([glow, circle, idText, labelText, hintText, lockText]);
+      container.add([glow, circle, idText, labelText, hintBg, hintText, lockText]);
       this.checkpointGraphics.push({
         cpDef: cp,
         container,
@@ -497,6 +508,7 @@ export default class PhaserGameScene extends Phaser.Scene {
         circle,
         idText,
         labelText,
+        hintBg,
         hintText,
         lockText,
       });
@@ -701,7 +713,7 @@ export default class PhaserGameScene extends Phaser.Scene {
         if (dist < cp.radius + 20) near = cp.id;
       });
 
-      this.checkpointGraphics.forEach(({ cpDef, glow, circle, idText, hintText, lockText }) => {
+      this.checkpointGraphics.forEach(({ cpDef, glow, circle, idText, hintBg, hintText, lockText }) => {
         const isCompleted = completedCPs.includes(cpDef.id);
         const isUnlocked = this.getIsCheckpointUnlocked
           ? this.getIsCheckpointUnlocked(cpDef.id)
@@ -720,6 +732,7 @@ export default class PhaserGameScene extends Phaser.Scene {
         }
 
         glow.setVisible(isNear && isUnlocked && !isCompleted);
+        hintBg.setVisible(isNear && isUnlocked && !isCompleted);
         hintText.setVisible(isNear && isUnlocked && !isCompleted);
         lockText.setVisible(!isUnlocked && !isCompleted);
       });

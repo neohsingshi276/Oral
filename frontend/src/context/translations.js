@@ -289,7 +289,7 @@ const bm = {
     cpHint1Title: 'Selamat Datang ke Checkpoint 1',
     cpHint1Clue: 'Tonton video dengan teliti. Kemudian, uji pengetahuan anda melalui kuiz pergigian.',
     cpHint2Title: 'Selamat Datang ke Checkpoint 2',
-    cpHint2Clue: 'Tonton video dengan teliti. Kemudian, lengkapkan teka silang kata.',
+    cpHint2Clue: 'Tonton video dengan teliti. Kemudian, selesaikan teka silang kata.',
     cpHint3Title: 'Selamat Datang ke Checkpoint 3',
     cpHint3Clue: 'Tonton video dengan teliti. Kemudian, sertai Permainan Tangkap Makanan dan tangkap makanan yang tidak menyebabkan karies gigi.',
     cpHint4Title: 'Checkpoint Akhir!',
@@ -1032,7 +1032,7 @@ const bi = {
     hintsRemainingTemplateSingular: '{n} hint left!',
     noHintsLeft: 'No more hints!',
     loadError: 'Failed to load crossword.',
-    crosswordCp2: 'Crossword - Checkpoint 2',
+    crosswordCp2: 'Checkpoint 2 - Crossword',
     continueToScoreboard: 'Continue to Leaderboard',
   },
   admin: {

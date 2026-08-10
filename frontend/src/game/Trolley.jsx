@@ -433,23 +433,9 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
         </p>
 
         {/* Buttons */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem' }}>
+        <div style={{ marginTop: '0.5rem' }}>
           <button
-            style={{ ...s.startBtn, background: '#64748b', boxShadow: '0 4px 15px rgba(100,116,139,0.3)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
-            onClick={() => {
-              if (initialShowFinal && onBack) {
-                onBack();
-              } else {
-                setGameState('start');
-                setShowFinalLeaderboard(false);
-                setShowLeaderboard(false);
-              }
-            }}
-          >
-            🔄 {language === 'bi' ? 'Retry' : 'Cuba Semula'}
-          </button>
-          <button
-            style={{ ...s.startBtn, background: 'linear-gradient(135deg, #16a34a, #15803d)', boxShadow: '0 8px 25px rgba(22,163,74,0.4)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
+            style={{ ...s.startBtn, width: '100%', background: 'linear-gradient(135deg, #16a34a, #15803d)', boxShadow: '0 8px 25px rgba(22,163,74,0.4)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
             onClick={() => {
               if (onComplete) onComplete();
             }}
@@ -597,12 +583,12 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
               <div style={{ background: '#fff1f2', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem', border: '2px solid #fecdd3' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>😭</div>
                 <h3 style={{ color: '#be123c', fontSize: '1.25rem', fontWeight: '900', margin: '0 0 0.4rem' }}>
-                  {language === 'bi' ? 'Not Passed Yet!' : 'Belum Lulus!'}
+                  {language === 'bi' ? 'Try Again!' : 'Cuba Semula!'}
                 </h3>
                 <p style={{ color: '#9f1239', fontSize: '0.92rem', fontWeight: '700', margin: 0 }}>
                   {language === 'bi'
-                    ? `Your score ${finalScore} — need at least ${minPassScore} points.`
-                    : `Skor kamu ${finalScore} — perlu sekurang-kurangnya ${minPassScore} mata.`}
+                    ? `Your score: ${finalScore} - need at least ${minPassScore} points to pass.`
+                    : `Skor anda: ${finalScore} - perlu sekurang-kurangnya ${minPassScore} mata untuk lulus.`}
                 </p>
               </div>
               <button
@@ -632,7 +618,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
                     if (onComplete) onComplete();
                   }}
                 >
-                  🚀 {language === 'bi' ? 'Continue' : 'Teruskan'}
+                  🚀 {language === 'bi' ? 'Continue Adventure!' : 'Teruskan Pengembaraan!'}
                 </button>
               </div>
             </div>
