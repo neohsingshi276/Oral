@@ -6,7 +6,11 @@ const getSessionQuestions = async (req, res) => {
   const { session_id } = req.params;
   try {
     const [settings] = await db.query('SELECT * FROM quiz_settings WHERE session_id = ?', [session_id]);
-    const cfg = settings[0] || { timer_seconds: 15, question_order: 'shuffle', question_count: 10, minimum_correct: 8, selected_questions: null };
+    const rawCfg = settings[0] || { timer_seconds: 15, question_order: 'shuffle', question_count: 10, minimum_correct: 8, selected_questions: null };
+    const cfg = {
+      ...rawCfg,
+      minimum_correct: (rawCfg.minimum_correct && parseInt(rawCfg.minimum_correct, 10) > 0) ? parseInt(rawCfg.minimum_correct, 10) : 8,
+    };
 
     let query = 'SELECT id, question, question_bi, question_type, image_url, options, options_bi, correct_answer FROM quiz_questions';
     let queryParams = [];
@@ -102,7 +106,9 @@ const submitQuiz = async (req, res) => {
       }
     }
 
-    const score = correct * 1000 + Math.max(0, 500 - (parseInt(time_taken, 10) || 0));
+    // 100 points per correct answer + time bonus (max 50 points)
+    const timeBonus = Math.max(0, Math.round(50 - (parseInt(time_taken, 10) || 0)));
+    const score = correct * 100 + timeBonus;
 
     // FIX: Guard against duplicate submissions — only keep the best score
     const [existing] = await db.query(
@@ -324,6 +330,7 @@ const getQuizSettings = async (req, res) => {
 
 const saveQuizSettings = async (req, res) => {
   const { session_id, timer_seconds, question_order, question_count, minimum_correct, selected_questions } = req.body;
+  const minCorrectVal = (minimum_correct && parseInt(minimum_correct, 10) > 0) ? parseInt(minimum_correct, 10) : 8;
   try {
     await db.query(
 `INSERT INTO quiz_settings (session_id, timer_seconds, question_order, question_count, minimum_correct, selected_questions)
@@ -331,10 +338,10 @@ VALUES (?,?,?,?,?,?)
 ON DUPLICATE KEY UPDATE
          timer_seconds=?, question_order=?, question_count=?, minimum_correct=?, selected_questions=?`,
       [
-        session_id, timer_seconds, question_order, question_count,
-        minimum_correct ?? 0, JSON.stringify(selected_questions || []),
-        timer_seconds, question_order, question_count,
-        minimum_correct ?? 0, JSON.stringify(selected_questions || [])
+        session_id, timer_seconds || 15, question_order || 'shuffle', question_count || 10,
+        minCorrectVal, JSON.stringify(selected_questions || []),
+        timer_seconds || 15, question_order || 'shuffle', question_count || 10,
+        minCorrectVal, JSON.stringify(selected_questions || [])
       ]
     );
     res.json({ message: 'Settings saved' });

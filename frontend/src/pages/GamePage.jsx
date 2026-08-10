@@ -1480,7 +1480,7 @@ const GamePage = () => {
 };
 
 const s = {
-  page: { height: '100vh', background: '#0f172a', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  page: { height: '125vh', width: '125vw', zoom: 0.8, background: '#0f172a', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
   loading: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.2rem', background: '#0f172a' },
   header: { width: '100%', background: '#1e3a5f', padding: '0.5rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', flexShrink: 0 },
   headerLeft: { display: 'flex', alignItems: 'center', gap: '1rem' },
