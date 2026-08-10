@@ -183,27 +183,32 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
           if (scene) sceneRef.current = scene;
         });
 
-        // Store initial devicePixelRatio to detect browser zoom changes
-        const initialDPR = window.devicePixelRatio || 1;
+        // Fixed reference: always show the game as if browser is at 80% zoom.
+        // At 80% browser zoom on a 1x screen, DPR ≈ 0.8, so effective
+        // camera zoom = BASE / (DPR * 0.8). We normalise against DPR=1 baseline.
         const BASE_CAMERA_ZOOM = 2;
+        const TARGET_BROWSER_ZOOM = 0.8; // always render as 80%
+
+        const applyCameraZoom = () => {
+          const scene = game.scene.getScene('PhaserGameScene');
+          if (!scene || !scene.cameras?.main) return;
+          const currentDPR = window.devicePixelRatio || 1;
+          // compensatedZoom makes the view identical regardless of browser zoom
+          const compensatedZoom = BASE_CAMERA_ZOOM / (currentDPR * TARGET_BROWSER_ZOOM);
+          scene.cameras.main.setZoom(compensatedZoom);
+        };
+
+        // Apply once the scene is ready
+        game.events.on('ready', () => {
+          // Small delay to let the scene create its camera
+          setTimeout(applyCameraZoom, 100);
+        });
 
         const onResize = () => {
           const newW = window.innerWidth - 32;
           const newH = window.innerHeight - 130;
           game.scale.resize(newW, newH);
-
-          // Detect browser zoom ratio (menu zoom changes DPR)
-          const currentDPR = window.devicePixelRatio || 1;
-          const zoomRatio = currentDPR / initialDPR; // <1 = zoomed out, >1 = zoomed in
-
-          // Adjust camera zoom to counteract browser zoom:
-          // If browser zoomed to 25% (ratio=0.25), canvas is 4x bigger,
-          // so camera zoom needs to be 4x higher to show the same world area.
-          const scene = game.scene.getScene('PhaserGameScene');
-          if (scene && scene.cameras?.main) {
-            const compensatedZoom = BASE_CAMERA_ZOOM / zoomRatio;
-            scene.cameras.main.setZoom(compensatedZoom);
-          }
+          applyCameraZoom();
         };
         window.addEventListener('resize', onResize);
         window.addEventListener('beforeunload', savePosition);
