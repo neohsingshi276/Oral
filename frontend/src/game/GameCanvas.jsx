@@ -183,32 +183,19 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
           if (scene) sceneRef.current = scene;
         });
 
-        // Fixed reference: always show the game as if browser is at 80% zoom.
-        // At 80% browser zoom on a 1x screen, DPR ≈ 0.8, so effective
-        // camera zoom = BASE / (DPR * 0.8). We normalise against DPR=1 baseline.
-        const BASE_CAMERA_ZOOM = 2;
-        const TARGET_BROWSER_ZOOM = 0.8; // always render as 80%
-
-        const applyCameraZoom = () => {
-          const scene = game.scene.getScene('PhaserGameScene');
-          if (!scene || !scene.cameras?.main) return;
-          const currentDPR = window.devicePixelRatio || 1;
-          // compensatedZoom makes the view identical regardless of browser zoom
-          const compensatedZoom = BASE_CAMERA_ZOOM / (currentDPR * TARGET_BROWSER_ZOOM);
-          scene.cameras.main.setZoom(compensatedZoom);
-        };
-
-        // Apply once the scene is ready
-        game.events.on('ready', () => {
-          // Small delay to let the scene create its camera
-          setTimeout(applyCameraZoom, 100);
-        });
+        // Target world width must match PhaserGameScene.js
+        const TARGET_WORLD_WIDTH = 1200;
 
         const onResize = () => {
           const newW = window.innerWidth - 32;
           const newH = window.innerHeight - 130;
           game.scale.resize(newW, newH);
-          applyCameraZoom();
+
+          // Keep camera zoom consistent: always show ~1200px of world width
+          const scene = game.scene.getScene('PhaserGameScene');
+          if (scene && scene.cameras?.main) {
+            scene.cameras.main.setZoom(Math.max(1, newW / TARGET_WORLD_WIDTH));
+          }
         };
         window.addEventListener('resize', onResize);
         window.addEventListener('beforeunload', savePosition);
