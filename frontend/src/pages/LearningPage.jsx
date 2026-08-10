@@ -103,9 +103,9 @@ const LearningPage = () => {
           </h2>
 
           <p style={styles.flipInstruction}>
-            {language === 'bi'
-              ? 'Click a card to reveal the fun fact!'
-              : 'Klik kad untuk melihat fakta menarik!'}
+            {t('learning.flipInstruction') || (language === 'bi'
+              ? 'Click each card to discover oral health care tips!'
+              : 'Klik setiap kad untuk mengetahui tip penjagaan kesihatan pergigian!')}
           </p>
 
           <div style={styles.factGrid}>

@@ -42,7 +42,8 @@ const bm = {
     oralTitle: 'Apakah Kesihatan Mulut?',
     oralOne: 'Kesihatan mulut bermakna menjaga mulut, gigi, dan gusi anda supaya sihat dan bersih! Mulut anda adalah pintu kepada badan anda - apabila mulut anda sihat, seluruh badan anda juga berasa lebih baik!',
     oralTwo: 'Gigi reput (juga dipanggil karies) dan penyakit gusi adalah masalah yang sangat biasa - tetapi berita baiknya ialah, ia hampir selalu boleh dicegah hanya dengan memberus gigi, menggunakan benang gigi, dan makan makanan yang betul!',
-    factsTitle: 'Tahukah Anda?',
+    factsTitle: 'Tip Penjagaan Kesihatan Pergigian',
+    flipInstruction: 'Klik setiap kad untuk mengetahui tip penjagaan kesihatan pergigian!',
     facts: [
       { title: 'Berus Gigi Dua Kali Sehari', text: 'Berus gigi dengan ubat gigi berfluorida sekurang-kurangnya 2 kali sehari.' },
       { title: 'Kumur Selepas Makan', text: 'Kumur dengan air selepas makan.' },
@@ -698,7 +699,8 @@ const bi = {
     oralTitle: 'What Is Oral Health?',
     oralOne: 'Oral health means keeping your mouth, teeth, and gums healthy and clean! Your mouth is the doorway to your body - when your mouth is healthy, your whole body feels better too!',
     oralTwo: 'Tooth decay (also called caries) and gum disease are very common problems - but the good news is that they can almost always be prevented by brushing, flossing, and eating the right foods!',
-    factsTitle: 'Did You Know?',
+    factsTitle: 'Oral Health Care Tips',
+    flipInstruction: 'Click each card to discover oral health care tips!',
     facts: [
       { title: 'Brush Twice Daily', text: 'Brush your teeth with fluoride toothpaste at least twice a day.' },
       { title: 'Rinse After Meals', text: 'Rinse your mouth with water after meals.' },
