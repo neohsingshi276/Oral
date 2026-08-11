@@ -8,23 +8,33 @@ import {
   PolarGrid, PolarAngleAxis, PolarRadiusAxis,
 } from 'recharts';
 
-// ─── Score engine (mirrors Analytics.jsx) ────────────────────────────────────
+// ─── Score engine (mirrors Analytics.jsx / getFinalLeaderboard in cp3.controller.js) ─
 const CP_WEIGHT = 100 / 3;
 
 const computeMarks = (players) => {
-  const maxCP3 = Math.max(1, ...players.map(p => p.cp3_score || 0));
   return players.map(p => {
-    const cp1Exact = (p.quiz_total > 0)
-      ? (p.quiz_correct / p.quiz_total) * CP_WEIGHT
-      : (p.quiz_score > 0 ? (p.quiz_score / Math.max(1, ...players.map(x => x.quiz_score || 0))) * CP_WEIGHT : 0);
-    const cp2Exact = p.cp2_completed ? CP_WEIGHT : 0;
-    const cp3Exact = p.cp3_score ? Math.min(CP_WEIGHT, (p.cp3_score / maxCP3) * CP_WEIGHT) : 0;
+    const cp1Total = p.quiz_total || 0;
+    const cp1Score = p.quiz_score || 0;
+    const cp1Pct = cp1Total > 0 ? Math.min(100, (cp1Score / (cp1Total * 100)) * 100) : 0;
+    const cp1Exact = (cp1Pct / 100) * CP_WEIGHT;
+
+    const cwTotal = p.cw_total || 0;
+    const cwCorrect = p.cw_correct || 0;
+    const cp2Pct = cwTotal > 0 ? Math.min(100, (cwCorrect / cwTotal) * 100) : 0;
+    const cp2Exact = (cp2Pct / 100) * CP_WEIGHT;
+
+    const passingScore = (p.cp3_target && p.cp3_target > 0) ? p.cp3_target : 1000;
+    const cp3Denom = 2 * passingScore;
+    const cp3Raw = p.cp3_score || 0;
+    const cp3Pct = cp3Raw > 0 ? Math.min(100, (cp3Raw / cp3Denom) * 100) : 0;
+    const cp3Exact = (cp3Pct / 100) * CP_WEIGHT;
+
     const totalExact = cp1Exact + cp2Exact + cp3Exact;
     return {
       ...p,
-      cp1_mark: Math.round(cp1Exact),
-      cp2_mark: Math.round(cp2Exact),
-      cp3_mark: Math.round(cp3Exact),
+      cp1_mark: Math.round(cp1Exact), cp1_pct: Math.round(cp1Pct * 10) / 10,
+      cp2_mark: Math.round(cp2Exact), cp2_pct: Math.round(cp2Pct * 10) / 10,
+      cp3_mark: Math.round(cp3Exact), cp3_pct: Math.round(cp3Pct * 10) / 10,
       total_mark: totalExact >= 99.5 ? 100 : Math.floor(totalExact),
     };
   });

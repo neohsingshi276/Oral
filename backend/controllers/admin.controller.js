@@ -78,6 +78,43 @@ const disambiguateNicknames = (rows) => {
   }
 };
 
+// ─── computePlayerMarks ───────────────────────────────────────────────────────
+// Single source of truth for CP1/CP2/CP3/total marks, mirroring the exact
+// formulas used in the live game and the in-game Overall Leaderboard
+// (see getFinalLeaderboard in cp3.controller.js):
+//   CP1 = (quiz marks earned / quiz marks obtainable) x 100   — includes the
+//         per-question speed bonus, same number the quiz result screen shows.
+//   CP2 = (crossword words correct / total words) x 100        — partial credit.
+//   CP3 = (raw food-catcher score / (2 x session passing score)) x 100, capped
+//         at 100 — reaching the passing score alone gives 50%, not full marks.
+const CP_WEIGHT = 100 / 3; // 33.333...
+const computePlayerMarks = (r) => {
+  const cp1Total = r.quiz_total || 0;
+  const cp1Score = r.quiz_score || 0;
+  const cp1Pct = cp1Total > 0 ? Math.min(100, (cp1Score / (cp1Total * 100)) * 100) : 0;
+  const cp1Exact = (cp1Pct / 100) * CP_WEIGHT;
+
+  const cwTotal = r.cw_total || 0;
+  const cwCorrect = r.cw_correct || 0;
+  const cp2Pct = cwTotal > 0 ? Math.min(100, (cwCorrect / cwTotal) * 100) : 0;
+  const cp2Exact = (cp2Pct / 100) * CP_WEIGHT;
+
+  const passingScore = (r.cp3_target && r.cp3_target > 0) ? r.cp3_target : 1000;
+  const cp3Denom = 2 * passingScore;
+  const cp3Raw = r.cp3_score || 0;
+  const cp3Pct = cp3Raw > 0 ? Math.min(100, (cp3Raw / cp3Denom) * 100) : 0;
+  const cp3Exact = (cp3Pct / 100) * CP_WEIGHT;
+
+  const totalExact = cp1Exact + cp2Exact + cp3Exact;
+
+  return {
+    cp1_mark: Math.round(cp1Exact), cp1_pct: Math.round(cp1Pct * 10) / 10,
+    cp2_mark: Math.round(cp2Exact), cp2_pct: Math.round(cp2Pct * 10) / 10,
+    cp3_mark: Math.round(cp3Exact), cp3_pct: Math.round(cp3Pct * 10) / 10,
+    total_mark: totalExact >= 99.5 ? 100 : Math.floor(totalExact),
+  };
+};
+
 // ─── downloadCSV ──────────────────────────────────────────────────────────────
 const downloadCSV = async (req, res) => {
   try {
@@ -98,38 +135,37 @@ const downloadCSV = async (req, res) => {
         MAX(qs.score)            as quiz_score,
         MAX(qs.correct_answers)  as quiz_correct,
         MAX(qs.total_questions)  as quiz_total,
-        MAX(cp3.score)           as cp3_score
+        MAX(cwbest.words_correct) as cw_correct,
+        MAX(cwbest.total_words)   as cw_total,
+        MAX(cp3.score)            as cp3_score,
+        MAX(cp3set.target_score)  as cp3_target
       FROM players p
       JOIN game_sessions s ON p.session_id = s.id
       LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
       LEFT JOIN quiz_scores qs          ON qs.player_id = p.id
       LEFT JOIN cp3_scores cp3          ON cp3.player_id = p.id
+      LEFT JOIN cp3_settings cp3set     ON cp3set.session_id = p.session_id
+      LEFT JOIN (
+        SELECT cs.player_id, cs.words_correct, cs.total_words
+        FROM crossword_scores cs
+        INNER JOIN (
+          SELECT player_id, MAX(score) AS best_score FROM crossword_scores GROUP BY player_id
+        ) best ON cs.player_id = best.player_id AND cs.score = best.best_score
+      ) cwbest ON cwbest.player_id = p.id
       WHERE 1=1 ${sessionFilter}
       GROUP BY p.id ORDER BY s.session_name, p.nickname
     `, sessionParams);
-
-    // ── Compute marks for each row (mirrors score engine in frontend) ──────────
-    const CP_WEIGHT = 100 / 3;
-    const allCp3Scores = rows.map(r => r.cp3_score || 0);
-    const maxCP3 = Math.max(1, ...allCp3Scores);
 
     // FIX: Disambiguate duplicate nicknames in the CSV so "Ali" becomes
     // "Ali #1" / "Ali #2" based on join order — same logic as getPlayers().
     disambiguateNicknames(rows);
 
     rows.forEach(r => {
-      const allQuizScores = rows.map(x => x.quiz_score || 0);
-      const maxQuiz = Math.max(1, ...allQuizScores);
-      const cp1Exact = (r.quiz_correct != null && r.quiz_correct > 0 && r.quiz_total > 0)
-        ? (r.quiz_correct / r.quiz_total) * CP_WEIGHT
-        : (r.quiz_score > 0 ? (r.quiz_score / maxQuiz) * CP_WEIGHT : 0);
-      const cp2Exact = r.cp2_completed ? CP_WEIGHT : 0;
-      const cp3Exact = r.cp3_score ? Math.min(CP_WEIGHT, (r.cp3_score / maxCP3) * CP_WEIGHT) : 0;
-      const totalExact = cp1Exact + cp2Exact + cp3Exact;
-      r._cp1_mark = Math.round(cp1Exact);
-      r._cp2_mark = Math.round(cp2Exact);
-      r._cp3_mark = Math.round(cp3Exact);
-      r._total_mark = totalExact >= 99.5 ? 100 : Math.floor(totalExact);
+      const marks = computePlayerMarks(r);
+      r._cp1_mark = marks.cp1_mark;
+      r._cp2_mark = marks.cp2_mark;
+      r._cp3_mark = marks.cp3_mark;
+      r._total_mark = marks.total_mark;
     });
 
     rows.sort((a, b) =>
@@ -236,7 +272,10 @@ const getAnalytics = async (req, res) => {
         MAX(qs.score)            as quiz_score,
         MAX(qs.correct_answers)  as quiz_correct,
         MAX(qs.total_questions)  as quiz_total,
-        MAX(cp3s.score)          as cp3_score
+        MAX(cwbest.words_correct) as cw_correct,
+        MAX(cwbest.total_words)   as cw_total,
+        MAX(cp3s.score)          as cp3_score,
+        MAX(cp3set.target_score) as cp3_target
       FROM players p
       JOIN game_sessions s ON p.session_id = s.id
       LEFT JOIN schools sch ON s.school_id = sch.id
@@ -244,6 +283,14 @@ const getAnalytics = async (req, res) => {
       LEFT JOIN checkpoint_attempts ca ON ca.player_id = p.id
       LEFT JOIN quiz_scores qs          ON qs.player_id = p.id
       LEFT JOIN cp3_scores cp3s         ON cp3s.player_id = p.id
+      LEFT JOIN cp3_settings cp3set     ON cp3set.session_id = p.session_id
+      LEFT JOIN (
+        SELECT cs.player_id, cs.words_correct, cs.total_words
+        FROM crossword_scores cs
+        INNER JOIN (
+          SELECT player_id, MAX(score) AS best_score FROM crossword_scores GROUP BY player_id
+        ) best ON cs.player_id = best.player_id AND cs.score = best.best_score
+      ) cwbest ON cwbest.player_id = p.id
       WHERE 1=1 ${sessionFilter}
       GROUP BY p.id ORDER BY p.joined_at DESC
     `, sessionParams);
