@@ -300,7 +300,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
               <div key={entry.player_id} style={{ ...s.lbRow, ...(entry.player_id === player.id ? s.lbRowMe : {}), background: i === 0 ? '#fef9ee' : i === 1 ? '#f8fafc' : i === 2 ? '#fff7ed' : '#fff' }}>
                 <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
                 <div style={s.lbName}>{entry.nickname}{entry.player_id === player.id && <span style={s.youBadge}>{t('game.you', 'Anda')}</span>}</div>
-                <div style={s.lbScore}>{entry.percentage}%</div>
+                <div style={s.lbScore}>{entry.score} {t('game.points', 'mata')}</div>
                 <div style={s.lbCorrect}>{entry.correct_answers}/{entry.total_questions} ✓</div>
               </div>
             ))}
