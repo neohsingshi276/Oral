@@ -26,6 +26,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
   const [startTime] = useState(Date.now());
   const timerRef = useRef(null);
   const answersRef = useRef([]);
+  const questionStartRef = useRef(Date.now()); // when the current question was first shown (for speed bonus)
 
   useEffect(() => {
     answersRef.current = answers;
@@ -69,7 +70,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
           const resolvedOptionsBi = (() => {
             try {
               if (q.options_bi) return typeof q.options_bi === 'string' ? JSON.parse(q.options_bi) : q.options_bi;
-            } catch {}
+            } catch { }
             return null;
           })();
           q = { ...q, _options_bi_raw: resolvedOptionsBi };
@@ -82,9 +83,9 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
             rightOrder.forEach((oldIdx, newIdx) => { rightDisplayMap[oldIdx] = newIdx; });
             const optsBiMatch = q._options_bi_raw && Array.isArray(q._options_bi_raw)
               ? opts.map((pair, i) => ({
-                  left: q._options_bi_raw[i]?.left || pair.left || pair,
-                  right: q._options_bi_raw[rightOrder[i]]?.right || opts[rightOrder[i]]?.right || opts[rightOrder[i]],
-                }))
+                left: q._options_bi_raw[i]?.left || pair.left || pair,
+                right: q._options_bi_raw[rightOrder[i]]?.right || opts[rightOrder[i]]?.right || opts[rightOrder[i]],
+              }))
               : null;
             const newOpts = opts.map((pair, i) => ({
               left: pair.left || pair,
@@ -122,6 +123,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     if (phase !== 'playing' || answered) return;
     const t = settings.timer_seconds || 15;
     setTimeLeft(t);
+    questionStartRef.current = Date.now(); // mark start of this question for speed bonus calc
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) { clearInterval(timerRef.current); handleTimeout(); return 0; }
@@ -137,11 +139,18 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     setAnswered(true);
   };
 
+  // Seconds elapsed since this question was shown, clamped to the time limit — used for the speed bonus
+  const getTimeUsed = () => {
+    const limit = settings.timer_seconds || 15;
+    const elapsed = Math.round((Date.now() - questionStartRef.current) / 1000);
+    return Math.max(0, Math.min(limit, elapsed));
+  };
+
   const handleTimeout = () => {
     if (answeredRef.current) return; // FIX: ref is immune to stale closure — state would be stale here
     const q = questions[currentQ];
     markAnswered();
-    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: [], timed_out: true }];
+    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: [], timed_out: true, time_used: getTimeUsed() }];
     answersRef.current = nextAnswers;
     setAnswers(nextAnswers);
     setTimeout(() => nextQuestion(nextAnswers), 2000);
@@ -153,7 +162,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     setSelected([idx]);
     markAnswered();
     const q = questions[currentQ];
-    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: getSubmittedIndexes(q, [idx]) }];
+    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: getSubmittedIndexes(q, [idx]), time_used: getTimeUsed() }];
     answersRef.current = nextAnswers;
     setAnswers(nextAnswers);
     setTimeout(() => nextQuestion(nextAnswers), 1800);
@@ -169,7 +178,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     clearInterval(timerRef.current);
     markAnswered();
     const q = questions[currentQ];
-    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: getSubmittedIndexes(q, selected) }];
+    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: getSubmittedIndexes(q, selected), time_used: getTimeUsed() }];
     answersRef.current = nextAnswers;
     setAnswers(nextAnswers);
     setTimeout(() => nextQuestion(nextAnswers), 1800);
@@ -196,7 +205,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     clearInterval(timerRef.current);
     markAnswered();
     const q = questions[currentQ];
-    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: getSubmittedMatches(q, matchLines) }];
+    const nextAnswers = [...answersRef.current, { question_id: q.id, selected_indexes: getSubmittedMatches(q, matchLines), time_used: getTimeUsed() }];
     answersRef.current = nextAnswers;
     setAnswers(nextAnswers);
     setTimeout(() => nextQuestion(nextAnswers), 2000);
@@ -273,8 +282,8 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
           <h2 style={s.scoreTitle}>
             {hasPassed ? t('game.quizDoneTitle') : t('game.notPassed', 'Belum Lulus!')}
           </h2>
-          <div style={s.scoreBig}>{result.score}</div>
-          <p style={s.scorePoints}>{t('game.points', 'mata')}</p>
+          <div style={s.scoreBig}>{result.percentage}%</div>
+          <p style={s.scorePoints}>{result.score} / {result.maxPossible ?? result.total * 100} {t('game.points', 'mata')}</p>
           <div style={s.scoreStats}>
             <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#16a34a' }}>{result.correct}</div><div style={s.scoreStatLabel}>{t('game.correct', 'Betul')}</div></div>
             <div style={s.scoreDivider} />
@@ -288,10 +297,10 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
           <h3 style={s.lbTitle}>🏆 {t('game.sessionScoreboard', 'Papan Kedudukan')}</h3>
           <div style={s.lbList}>
             {leaderboard.map((entry, i) => (
-              <div key={entry.id} style={{ ...s.lbRow, ...(entry.player_id === player.id ? s.lbRowMe : {}), background: i === 0 ? '#fef9ee' : i === 1 ? '#f8fafc' : i === 2 ? '#fff7ed' : '#fff' }}>
+              <div key={entry.player_id} style={{ ...s.lbRow, ...(entry.player_id === player.id ? s.lbRowMe : {}), background: i === 0 ? '#fef9ee' : i === 1 ? '#f8fafc' : i === 2 ? '#fff7ed' : '#fff' }}>
                 <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
                 <div style={s.lbName}>{entry.nickname}{entry.player_id === player.id && <span style={s.youBadge}>{t('game.you', 'Anda')}</span>}</div>
-                <div style={s.lbScore}>{entry.score} {t('game.points', 'mata')}</div>
+                <div style={s.lbScore}>{entry.percentage}%</div>
                 <div style={s.lbCorrect}>{entry.correct_answers}/{entry.total_questions} ✓</div>
               </div>
             ))}

@@ -86,37 +86,58 @@ const submitQuiz = async (req, res) => {
       };
     }
 
+    // Time limit per question (admin-configured) — needed for the speed bonus formula
+    const [settingsRows] = await db.query('SELECT timer_seconds FROM quiz_settings WHERE session_id = ?', [session_id]);
+    const timeLimit = (settingsRows[0]?.timer_seconds && parseInt(settingsRows[0].timer_seconds, 10) > 0)
+      ? parseInt(settingsRows[0].timer_seconds, 10)
+      : 15;
+
+    // Marking scheme (per question, max 100 marks):
+    //   Correct  -> 80 marks + speed bonus, where speed bonus = 20 * (timeLimit - timeUsed) / timeLimit
+    //   Wrong    -> 0 marks
     let correct = 0;
+    let rawScore = 0; // sum of marks actually earned
     for (const ans of answers) {
       const q = questionMap[ans.question_id];
       if (!q) continue;
       const { correct_answer: correctAnswer, question_type: type } = q;
 
+      let isRight = false;
       if (type === 'multiple_choice' || type === 'true_false') {
-        if (ans.selected_indexes[0] === correctAnswer[0]) correct++;
+        isRight = ans.selected_indexes[0] === correctAnswer[0];
       } else if (type === 'multi_select') {
         const sortedCorrect = [...correctAnswer].sort().join(',');
         const sortedAns = [...(ans.selected_indexes || [])].sort().join(',');
-        if (sortedCorrect === sortedAns) correct++;
+        isRight = sortedCorrect === sortedAns;
       } else if (type === 'match') {
-        const allMatch = correctAnswer.every(pair =>
+        isRight = correctAnswer.every(pair =>
           ans.selected_indexes.some(p => p[0] === pair[0] && p[1] === pair[1])
         );
-        if (allMatch) correct++;
       }
+
+      if (isRight) {
+        correct++;
+        const timeUsed = Math.min(Math.max(parseInt(ans.time_used, 10) || 0, 0), timeLimit);
+        const speedBonus = 20 * ((timeLimit - timeUsed) / timeLimit);
+        rawScore += 80 + speedBonus;
+      }
+      // Wrong / timed-out answers earn 0 marks
     }
 
-    // 100 points per correct answer + time bonus (max 50 points)
-    const timeBonus = Math.max(0, Math.round(50 - (parseInt(time_taken, 10) || 0)));
-    const score = correct * 100 + timeBonus;
+    const maxPossible = total * 100; // total mark that CAN be earned in this quiz session
+    const score = Math.round(rawScore); // final mark earned (stored as a whole number)
+    // Leaderboard ranking figure: final mark earned / total mark that can be earned * 100
+    const percentage = maxPossible > 0 ? Math.round((score / maxPossible) * 10000) / 100 : 0;
 
     // FIX: Guard against duplicate submissions — only keep the best score
     const [existing] = await db.query(
-      'SELECT id, score FROM quiz_scores WHERE player_id = ? AND session_id = ?',
+      'SELECT id, score, total_questions FROM quiz_scores WHERE player_id = ? AND session_id = ?',
       [player_id, session_id]
     );
     if (existing.length > 0) {
-      if (score > existing[0].score) {
+      const existingMax = (existing[0].total_questions || 0) * 100;
+      const existingPct = existingMax > 0 ? (existing[0].score / existingMax) * 100 : 0;
+      if (percentage > existingPct) {
         await db.query(
           'UPDATE quiz_scores SET score=?, correct_answers=?, total_questions=?, time_taken=? WHERE id=?',
           [score, correct, total, parseInt(time_taken, 10) || 0, existing[0].id]
@@ -129,7 +150,7 @@ const submitQuiz = async (req, res) => {
       );
     }
 
-    res.json({ score, correct, total });
+    res.json({ score, percentage, maxPossible, correct, total });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -140,11 +161,14 @@ const getLeaderboard = async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT s.player_id, s.score, s.correct_answers,
-             s.total_questions, s.time_taken, s.completed_at, p.nickname
+             s.total_questions, s.time_taken, s.completed_at, p.nickname,
+             CASE WHEN s.total_questions > 0
+                  THEN ROUND((s.score / (s.total_questions * 100)) * 100, 2)
+                  ELSE 0 END AS percentage
       FROM quiz_scores s
       JOIN players p ON s.player_id = p.id
       WHERE s.session_id = ?
-      ORDER BY s.score DESC
+      ORDER BY percentage DESC, s.score DESC
     `, [req.params.session_id]);
 
     const seen = {};
@@ -243,7 +267,7 @@ const addQuestion = async (req, res) => {
     return res.status(400).json({ error: 'Question text is required' });
   if (question.trim().length > 500)
     return res.status(400).json({ error: 'Question too long (max 500 characters)' });
-  if (!question_type || !['multiple_choice','true_false','multi_select','match'].includes(question_type))
+  if (!question_type || !['multiple_choice', 'true_false', 'multi_select', 'match'].includes(question_type))
     return res.status(400).json({ error: 'Invalid question type' });
 
   // Parse JSON strings from FormData
@@ -279,7 +303,7 @@ const updateQuestion = async (req, res) => {
     return res.status(400).json({ error: 'Question text is required' });
   if (question.trim().length > 500)
     return res.status(400).json({ error: 'Question too long (max 500 characters)' });
-  if (!question_type || !['multiple_choice','true_false','multi_select','match'].includes(question_type))
+  if (!question_type || !['multiple_choice', 'true_false', 'multi_select', 'match'].includes(question_type))
     return res.status(400).json({ error: 'Invalid question type' });
 
   // Parse JSON strings from FormData
@@ -333,7 +357,7 @@ const saveQuizSettings = async (req, res) => {
   const minCorrectVal = (minimum_correct && parseInt(minimum_correct, 10) > 0) ? parseInt(minimum_correct, 10) : 8;
   try {
     await db.query(
-`INSERT INTO quiz_settings (session_id, timer_seconds, question_order, question_count, minimum_correct, selected_questions)
+      `INSERT INTO quiz_settings (session_id, timer_seconds, question_order, question_count, minimum_correct, selected_questions)
 VALUES (?,?,?,?,?,?)
 ON DUPLICATE KEY UPDATE
          timer_seconds=?, question_order=?, question_count=?, minimum_correct=?, selected_questions=?`,
