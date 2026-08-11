@@ -126,12 +126,19 @@ const FOOD_FALL_SPEED = 2.5;
 const SPAWN_INTERVAL = 600;
 
 // Consecutive-correct-catch bonus marks (streak resets on any wrong food).
-// 3→+3, 5→+5, 7→+7, then +10 at 10 and every 5 catches after that (15, 20, 25, 30, ...)
+// The bonus is "sticky" per tier — once a streak reaches a tier, every catch
+// in that tier (not just the exact milestone catch) earns that tier's bonus,
+// until the next tier is reached:
+//   streak 1-2   -> +0
+//   streak 3-4   -> +3
+//   streak 5-6   -> +5
+//   streak 7-9   -> +7
+//   streak 10+   -> +10
 const getStreakBonus = (streak) => {
-  if (streak === 3) return 3;
-  if (streak === 5) return 5;
-  if (streak === 7) return 7;
-  if (streak >= 10 && (streak - 10) % 5 === 0) return 10;
+  if (streak >= 10) return 10;
+  if (streak >= 7) return 7;
+  if (streak >= 5) return 5;
+  if (streak >= 3) return 3;
   return 0;
 };
 
