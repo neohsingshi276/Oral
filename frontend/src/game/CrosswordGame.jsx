@@ -627,7 +627,11 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                 <div key={entry.player_id} style={s.lbRow}>
                   <span style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
                   <span style={s.lbName}>{entry.nickname}</span>
-                  <span style={{ ...s.lbScore, color: entry.completed ? '#16a34a' : '#e11d48' }}>{entry.completed ? `✅ ${t('game.done', 'Selesai')}` : `${entry.words_correct || 0}/${words.length}`}</span>
+                  <span style={{ ...s.lbScore, color: entry.completed ? '#16a34a' : '#e11d48' }}>
+                    {entry.completed
+                      ? `✅ ${entry.words_correct ?? words.length}/${entry.total_words ?? words.length}`
+                      : `${entry.words_correct || 0}/${entry.total_words || words.length}`}
+                  </span>
                 </div>
               )) : (
                 <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem', fontSize: '0.85rem' }}>{t('game.noScoreboardData', 'Tiada data papan kedudukan lagi.')}</p>

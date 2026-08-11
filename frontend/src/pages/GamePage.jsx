@@ -362,7 +362,12 @@ const GamePage = () => {
       setShowConfetti(true);
     }
 
-    setCpStep('done');
+    if (completedCP === 3) {
+      setActiveCP(null);
+      setShowCP3FinalLeaderboard(true);
+    } else {
+      setCpStep('done');
+    }
   };
 
   const viewCertificate = async () => {

@@ -380,12 +380,18 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
     } catch (err) { console.error(err); setShowLeaderboard(true); }
   };
 
+  const [loadingFinal, setLoadingFinal] = useState(false);
+
   const handleShowFinal = async () => {
+    setLoadingFinal(true);
     setShowLeaderboard(false);
     try {
       const res = await api.get(`/cp3/final/${player.session_id}`);
       setFinalLeaderboard(res.data.leaderboard || []);
     } catch (err) { console.error(err); }
+    finally {
+      setLoadingFinal(false);
+    }
     setShowFinalLeaderboard(true);
   };
 
@@ -394,6 +400,17 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
       handleShowFinal();
     }
   }, [initialShowFinal, player?.session_id]);
+
+  if (loadingFinal) return (
+    <div style={s.fullPage}>
+      <div style={s.startCard}>
+        <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>⏳</div>
+        <h2 style={{ ...s.title, fontSize: '1.6rem', color: '#1e3a5f' }}>
+          {language === 'bi' ? 'Loading Overall Leaderboard...' : 'Memuatkan Papan Kedudukan Keseluruhan...'}
+        </h2>
+      </div>
+    </div>
+  );
 
   // FINAL LEADERBOARD
   if (showFinalLeaderboard) return (
@@ -587,8 +604,8 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
                 </h3>
                 <p style={{ color: '#9f1239', fontSize: '0.92rem', fontWeight: '700', margin: 0 }}>
                   {language === 'bi'
-                    ? `Your score: ${finalScore} - need at least ${minPassScore} points to pass.`
-                    : `Skor anda: ${finalScore} - perlu sekurang-kurangnya ${minPassScore} mata untuk lulus.`}
+                    ? `Your score: ${finalScore} - need at least ${minPassScore} marks to pass.`
+                    : `Skor anda: ${finalScore} - perlu sekurang-kurangnya ${minPassScore} markah untuk lulus.`}
                 </p>
               </div>
               <button
@@ -618,7 +635,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
                     if (onComplete) onComplete();
                   }}
                 >
-                  🚀 {language === 'bi' ? 'Continue Adventure!' : 'Teruskan Pengembaraan!'}
+                  🏆 {language === 'bi' ? 'View Overall Leaderboard' : 'Lihat Papan Kedudukan Keseluruhan'}
                 </button>
               </div>
             </div>
