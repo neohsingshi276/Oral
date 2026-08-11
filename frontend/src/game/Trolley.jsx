@@ -571,7 +571,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
               <div key={entry.player_id} style={{ ...s.lbRow, ...(entry.player_id === player?.id ? s.lbRowMe : {}) }}>
                 <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
                 <div style={{ flex: 1, fontWeight: '600', color: '#1e3a5f' }}>{entry.nickname}{entry.player_id === player?.id && <span style={s.youBadge}>{t('game.you')}</span>}</div>
-                <div style={s.lbScore}>{entry.score} {t('game.points')}</div>
+                <div style={s.lbScore}>{entry.score} {language === 'bi' ? 'points' : 'markah'}</div>
               </div>
             ))}
             {leaderboard.length === 0 && <p style={{ textAlign: 'center', color: '#94a3b8', padding: '1rem' }}>{t('game.noScoresYet')}</p>}
