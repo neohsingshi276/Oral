@@ -84,7 +84,8 @@ const disambiguateNicknames = (rows) => {
 // (see getFinalLeaderboard in cp3.controller.js):
 //   CP1 = (quiz marks earned / quiz marks obtainable) x 100   — includes the
 //         per-question speed bonus, same number the quiz result screen shows.
-//   CP2 = (crossword words correct / total words) x 100        — partial credit.
+//   CP2 = (crossword base + speed bonus), already 0-100 — same final score the
+//         crossword's own result/leaderboard shows.
 //   CP3 = (raw food-catcher score / (2 x session passing score)) x 100, capped
 //         at 100 — reaching the passing score alone gives 50%, not full marks.
 const CP_WEIGHT = 100 / 3; // 33.333...
@@ -94,9 +95,7 @@ const computePlayerMarks = (r) => {
   const cp1Pct = cp1Total > 0 ? Math.min(100, (cp1Score / (cp1Total * 100)) * 100) : 0;
   const cp1Exact = (cp1Pct / 100) * CP_WEIGHT;
 
-  const cwTotal = r.cw_total || 0;
-  const cwCorrect = r.cw_correct || 0;
-  const cp2Pct = cwTotal > 0 ? Math.min(100, (cwCorrect / cwTotal) * 100) : 0;
+  const cp2Pct = Math.min(100, r.cw_score || 0);
   const cp2Exact = (cp2Pct / 100) * CP_WEIGHT;
 
   const passingScore = (r.cp3_target && r.cp3_target > 0) ? r.cp3_target : 1000;
@@ -137,6 +136,7 @@ const downloadCSV = async (req, res) => {
         MAX(qs.total_questions)  as quiz_total,
         MAX(cwbest.words_correct) as cw_correct,
         MAX(cwbest.total_words)   as cw_total,
+        MAX(cwbest.score)         as cw_score,
         MAX(cp3.score)            as cp3_score,
         MAX(cp3set.target_score)  as cp3_target
       FROM players p
@@ -146,7 +146,7 @@ const downloadCSV = async (req, res) => {
       LEFT JOIN cp3_scores cp3          ON cp3.player_id = p.id
       LEFT JOIN cp3_settings cp3set     ON cp3set.session_id = p.session_id
       LEFT JOIN (
-        SELECT cs.player_id, cs.words_correct, cs.total_words
+        SELECT cs.player_id, cs.words_correct, cs.total_words, cs.score
         FROM crossword_scores cs
         INNER JOIN (
           SELECT player_id, MAX(score) AS best_score FROM crossword_scores GROUP BY player_id
@@ -178,7 +178,7 @@ const downloadCSV = async (req, res) => {
       'CP1 Completed', 'CP1 Attempts',
       'CP2 Completed', 'CP2 Attempts',
       'CP3 Completed', 'CP3 Attempts',
-      'Quiz Score', 'Quiz Correct', 'Food Game Score',
+      'Quiz Score', 'Quiz Correct', 'Crossword Score', 'Food Game Score',
       'CP1 Mark (/33)', 'CP2 Mark (/33)', 'CP3 Mark (/33)', 'Overall Mark (/100)'
     ];
 
@@ -198,7 +198,7 @@ const downloadCSV = async (req, res) => {
         r.cp1_completed ? 'Yes' : 'No', r.cp1_attempts || 0,
         r.cp2_completed ? 'Yes' : 'No', r.cp2_attempts || 0,
         r.cp3_completed ? 'Yes' : 'No', r.cp3_attempts || 0,
-        r.quiz_score || 0, r.quiz_correct || 0, r.cp3_score || 0,
+        r.quiz_score || 0, r.quiz_correct || 0, r.cw_score || 0, r.cp3_score || 0,
         r._cp1_mark, r._cp2_mark, r._cp3_mark, r._total_mark
       ].map(csvEscape).join(','));
     });
@@ -274,6 +274,7 @@ const getAnalytics = async (req, res) => {
         MAX(qs.total_questions)  as quiz_total,
         MAX(cwbest.words_correct) as cw_correct,
         MAX(cwbest.total_words)   as cw_total,
+        MAX(cwbest.score)         as cw_score,
         MAX(cp3s.score)          as cp3_score,
         MAX(cp3set.target_score) as cp3_target
       FROM players p
@@ -285,7 +286,7 @@ const getAnalytics = async (req, res) => {
       LEFT JOIN cp3_scores cp3s         ON cp3s.player_id = p.id
       LEFT JOIN cp3_settings cp3set     ON cp3set.session_id = p.session_id
       LEFT JOIN (
-        SELECT cs.player_id, cs.words_correct, cs.total_words
+        SELECT cs.player_id, cs.words_correct, cs.total_words, cs.score
         FROM crossword_scores cs
         INNER JOIN (
           SELECT player_id, MAX(score) AS best_score FROM crossword_scores GROUP BY player_id

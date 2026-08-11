@@ -42,6 +42,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   const timerRef = useRef(null);
   const [showLB, setShowLB] = useState(false);
   const [lbData, setLbData] = useState([]);
+  const [finalScore, setFinalScore] = useState(null); // Base (accuracy) + Speed Bonus, out of 100
   const [settings, setSettings] = useState({ minimum_correct: DEFAULT_MIN_CORRECT });
   const [timerTotal, setTimerTotal] = useState(DEFAULT_TIMER);
   // Cache of the fully-built layout per language ({ bm: {...}, bi: {...} }),
@@ -86,6 +87,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     setReviewPhase('viewing');
     setShowLB(false);
     setLbData([]);
+    setFinalScore(null);
   };
 
   useEffect(() => {
@@ -266,7 +268,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   const submitScore = async (wordsCorrect) => {
     if (scoreSubmitted || !playerId || !sessionId) return;
     try {
-      await api.post('/crossword/submit', {
+      const res = await api.post('/crossword/submit', {
         player_id: playerId,
         session_id: sessionId,
         words_correct: wordsCorrect,
@@ -274,6 +276,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
         time_taken: timerTotal - timeLeft,
         time_remaining: timeLeft
       });
+      setFinalScore(res.data?.score ?? null); // Base + Speed Bonus, out of 100
       setScoreSubmitted(true);
       fetchLeaderboard();
     } catch (err) { console.error('Markah Serahan Ralat:', err); }
@@ -574,6 +577,11 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
             <h2 style={{ color: '#16a34a', fontSize: '1.5rem', fontWeight: '800', margin: '0.5rem 0' }}>{t('game.congratsTitle', 'Tahniah!')}</h2>
             <p style={{ color: '#64748b', margin: '0 0 0.5rem' }}>{t('game.allWordsDone', 'Anda telah berjaya menyelesaikan teka silang kata dengan semua jawapan yang betul!')}</p>
             <p style={{ color: '#2563eb', fontWeight: '700', margin: '0 0 1rem' }}>⏱️ {t('game.timeLeft', 'Masa berbaki:')} {formatTime(timeLeft)}</p>
+            {finalScore != null && (
+              <p style={{ color: '#16a34a', fontWeight: '800', fontSize: '1.1rem', margin: '0 0 1rem' }}>
+                🏅 {t('game.finalScore', 'Markah Akhir')}: {finalScore}/100
+              </p>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
               <button style={{ ...s.doneBtn, background: '#f59e0b' }} onClick={() => {
                 setReviewingAnswers(true);
@@ -595,6 +603,11 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
             <p style={{ color: '#64748b', margin: '0 0 1rem' }}>
               {t('game.youCompleted', 'Anda telah menjawab')} <strong style={{ color: '#2563eb' }}>{completed.length}/{words.length}</strong> {t('game.wordsCorrectly', 'perkataan dengan betul')} ({pct}%)
             </p>
+            {finalScore != null && (
+              <p style={{ color: passed ? '#16a34a' : '#e11d48', fontWeight: '800', fontSize: '1.1rem', margin: '0 0 1rem' }}>
+                🏅 {t('game.finalScore', 'Markah Akhir')}: {finalScore}/100
+              </p>
+            )}
             {minCorrect > 0 && !passed && (
               <p style={{ color: '#f59e0b', margin: '0 0 1rem', fontSize: '0.88rem', background: '#fef9ee', padding: '0.5rem', borderRadius: '8px' }}>
                 ⚠️ {t('game.needMinimum', 'Anda mesti menyelesaikan')} <strong>{minCorrect}</strong> {t('game.toPass', 'teka silang kata dengan betul untuk lulus.')}
@@ -623,21 +636,18 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
             <div style={{ fontSize: '3rem' }}>🏆</div>
             <h2 style={{ color: '#7c3aed', fontSize: '1.4rem', fontWeight: '800', margin: '0.5rem 0' }}>{t('game.scoreboard', 'Papan Kedudukan')}</h2>
             <div style={{ ...s.lbBox, margin: '0.5rem 0 1rem' }}>
-              {lbData.length > 0 ? lbData.map((entry, i) => {
-                const totalW = entry.total_words || words.length;
-                const isDone = entry.completed || (entry.words_correct > 0 && entry.words_correct >= totalW);
-                return (
-                  <div key={entry.player_id} style={s.lbRow}>
-                    <span style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
-                    <span style={s.lbName}>{entry.nickname}</span>
-                    <span style={{ ...s.lbScore, color: isDone ? '#16a34a' : (entry.words_correct > 0 ? '#d97706' : '#e11d48') }}>
-                      {isDone
-                        ? `✅ ${entry.words_correct ?? totalW}/${totalW}`
-                        : `${entry.words_correct || 0}/${totalW}`}
+              {lbData.length > 0 ? lbData.map((entry, i) => (
+                <div key={entry.player_id} style={s.lbRow}>
+                  <span style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
+                  <span style={s.lbName}>{entry.nickname}</span>
+                  <span style={{ ...s.lbScore, color: entry.completed ? '#16a34a' : '#e11d48' }}>
+                    {entry.score ?? 0}/100
+                    <span style={{ fontSize: '0.72rem', fontWeight: '600', opacity: 0.75, marginLeft: '0.35rem' }}>
+                      ({entry.words_correct ?? 0}/{entry.total_words ?? words.length})
                     </span>
-                  </div>
-                );
-              }) : (
+                  </span>
+                </div>
+              )) : (
                 <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem', fontSize: '0.85rem' }}>{t('game.noScoreboardData', 'Tiada data papan kedudukan lagi.')}</p>
               )}
             </div>

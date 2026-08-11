@@ -18,9 +18,7 @@ const computeMarks = (players) => {
     const cp1Pct = cp1Total > 0 ? Math.min(100, (cp1Score / (cp1Total * 100)) * 100) : 0;
     const cp1Exact = (cp1Pct / 100) * CP_WEIGHT;
 
-    const cwTotal = p.cw_total || 0;
-    const cwCorrect = p.cw_correct || 0;
-    const cp2Pct = cwTotal > 0 ? Math.min(100, (cwCorrect / cwTotal) * 100) : 0;
+    const cp2Pct = Math.min(100, p.cw_score || 0);
     const cp2Exact = (cp2Pct / 100) * CP_WEIGHT;
 
     const passingScore = (p.cp3_target && p.cp3_target > 0) ? p.cp3_target : 1000;

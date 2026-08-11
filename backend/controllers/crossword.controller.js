@@ -429,6 +429,12 @@ const getCrossword = async (req, res) => {
 };
 
 // ─── submitScore ──────────────────────────────────────────────────────────────
+// Marking scheme (matches the quiz/food-catcher games):
+//   Base Score  = (words_correct / total_words) x 80
+//   Speed Bonus = 20 x (1 - time_taken / time_limit), clamped to [0, 20]
+//   Final Score = Base + Speed Bonus, out of 100 (this IS the crossword's mark —
+//   no separate percentage conversion needed elsewhere, unlike the food-catcher
+//   game which stores raw uncapped points).
 const submitScore = async (req, res) => {
   const { player_id, session_id, words_correct, total_words, time_taken, time_remaining } = req.body;
 
@@ -448,7 +454,17 @@ const submitScore = async (req, res) => {
     if (playerRows.length === 0)
       return res.status(403).json({ error: 'Player does not belong to this session' });
 
-    const score = safeWordsCorrect * 1000 + Math.min(safeTimeRemaining, 999);
+    const [settingsRows] = await db.query(
+      'SELECT timer_seconds FROM crossword_settings WHERE session_id = ?', [session_id]
+    );
+    const timeLimit = (settingsRows[0]?.timer_seconds && parseInt(settingsRows[0].timer_seconds, 10) > 0)
+      ? parseInt(settingsRows[0].timer_seconds, 10)
+      : 300;
+
+    const base = safeTotalWords > 0 ? (safeWordsCorrect / safeTotalWords) * 80 : 0;
+    const timeUsed = Math.min(Math.max(safeTimeTaken, 0), timeLimit);
+    const speedBonus = 20 * (1 - (timeUsed / timeLimit));
+    const score = Math.round(Math.max(0, Math.min(100, base + speedBonus)));
 
     const [existing] = await db.query(
       'SELECT id, score FROM crossword_scores WHERE player_id = ? AND session_id = ?',

@@ -22,7 +22,8 @@ const escapeHtml = (value = '') => String(value)
 // (see getFinalLeaderboard in cp3.controller.js):
 //   CP1 = (quiz marks earned / quiz marks obtainable) x 100  — includes the
 //         per-question speed bonus, same number the quiz result screen shows.
-//   CP2 = (crossword words correct / total words) x 100       — partial credit.
+//   CP2 = (crossword base + speed bonus), already 0-100 — same final score the
+//         crossword's own result/leaderboard shows.
 //   CP3 = (raw food-catcher score / (2 x session passing score)) x 100, capped
 //         at 100 — reaching the passing score alone gives 50%, not full marks.
 const computeMarks = (players) => {
@@ -32,9 +33,7 @@ const computeMarks = (players) => {
     const cp1Pct = cp1Total > 0 ? Math.min(100, (cp1Score / (cp1Total * 100)) * 100) : 0;
     const cp1Exact = (cp1Pct / 100) * CP_WEIGHT;
 
-    const cwTotal = p.cw_total || 0;
-    const cwCorrect = p.cw_correct || 0;
-    const cp2Pct = cwTotal > 0 ? Math.min(100, (cwCorrect / cwTotal) * 100) : 0;
+    const cp2Pct = Math.min(100, p.cw_score || 0);
     const cp2Exact = (cp2Pct / 100) * CP_WEIGHT;
 
     const passingScore = (p.cp3_target && p.cp3_target > 0) ? p.cp3_target : 1000;

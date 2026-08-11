@@ -93,7 +93,7 @@ const getCrosswordLeaderboard = async (req, res) => {
       'SELECT id, nickname FROM players WHERE session_id = ?', [sessionId]
     );
     const [scores] = await db.query(`
-      SELECT player_id, MAX(words_correct) AS words_correct, MAX(total_words) AS total_words
+      SELECT player_id, MAX(words_correct) AS words_correct, MAX(total_words) AS total_words, MAX(score) AS score
       FROM crossword_scores
       WHERE session_id = ?
       GROUP BY player_id
@@ -106,22 +106,17 @@ const getCrosswordLeaderboard = async (req, res) => {
     const scoreMap = Object.fromEntries(scores.map(s => [s.player_id, s]));
     const doneSet = new Set(done.map(d => d.player_id));
     const leaderboard = players
-      .map(p => {
-        const wc = scoreMap[p.id]?.words_correct || 0;
-        const tw = scoreMap[p.id]?.total_words || 0;
-        const isCompleted = doneSet.has(p.id) || (wc > 0 && tw > 0 && wc >= tw);
-        return {
-          player_id: p.id,
-          nickname: p.nickname,
-          words_correct: wc,
-          total_words: tw,
-          completed: isCompleted,
-          score: wc,
-        };
-      })
+      .map(p => ({
+        player_id: p.id,
+        nickname: p.nickname,
+        words_correct: scoreMap[p.id]?.words_correct || 0,
+        total_words: scoreMap[p.id]?.total_words || 0,
+        completed: doneSet.has(p.id),
+        score: scoreMap[p.id]?.score || 0, // Final Score /100 = Base (accuracy) + Speed Bonus
+      }))
       .sort((a, b) => {
-        if (b.words_correct !== a.words_correct) return b.words_correct - a.words_correct;
         if (b.completed !== a.completed) return Number(b.completed) - Number(a.completed);
+        if (b.score !== a.score) return b.score - a.score;
         return a.nickname.localeCompare(b.nickname);
       });
 
@@ -168,7 +163,7 @@ const getFinalLeaderboard = async (req, res) => {
     // from different rows (e.g. attempt 1: 3/5, attempt 2: 5/8 → MAX gives 5 and 8 → 5<8 → incomplete).
     // Instead, pick the row with the highest score for each player.
     const [crosswordScores] = await db.query(`
-      SELECT cs.player_id, cs.words_correct, cs.total_words
+      SELECT cs.player_id, cs.words_correct, cs.total_words, cs.score
       FROM crossword_scores cs
       INNER JOIN (
         SELECT player_id, MAX(score) AS best_score
@@ -216,10 +211,11 @@ const getFinalLeaderboard = async (req, res) => {
       const cp1Exact = (cp1Pct / 100) * CP_WEIGHT;
       const cp1Mark = Math.round(cp1Exact); // rounded for display
 
-      // CP2: partial credit — based on words solved
+      // CP2: uses the SAME final score as the crossword's own result —
+      // (words correct / total words) x 80 + speed bonus — already 0-100.
       const cwCorrect = cw?.words_correct || 0;
       const cwTotal = cw?.total_words || 0;
-      const cp2Pct = cwTotal > 0 ? Math.min(100, (cwCorrect / cwTotal) * 100) : 0;
+      const cp2Pct = Math.min(100, cw?.score || 0);
       const cp2Exact = (cp2Pct / 100) * CP_WEIGHT;
       const cp2Mark = Math.round(cp2Exact);
 
