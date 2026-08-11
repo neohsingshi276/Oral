@@ -299,13 +299,14 @@ export function createChibiCharacter(scene, {
             -32,
             playerLabel,
             {
-                fontSize: '10px',
+                fontSize: '13px',
                 fontFamily: 'sans-serif',
                 fontStyle: 'bold',
-                color: '#ffffff',
+                color: '#FFE838',
                 align: 'center',
-                stroke: '#1e3a5f',
-                strokeThickness: 3,
+                stroke: '#000000',
+                strokeThickness: 4,
+                shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, stroke: true, fill: true },
             }
         );
 
