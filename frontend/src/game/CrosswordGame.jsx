@@ -623,17 +623,21 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
             <div style={{ fontSize: '3rem' }}>🏆</div>
             <h2 style={{ color: '#7c3aed', fontSize: '1.4rem', fontWeight: '800', margin: '0.5rem 0' }}>{t('game.scoreboard', 'Papan Kedudukan')}</h2>
             <div style={{ ...s.lbBox, margin: '0.5rem 0 1rem' }}>
-              {lbData.length > 0 ? lbData.map((entry, i) => (
-                <div key={entry.player_id} style={s.lbRow}>
-                  <span style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
-                  <span style={s.lbName}>{entry.nickname}</span>
-                  <span style={{ ...s.lbScore, color: entry.completed ? '#16a34a' : '#e11d48' }}>
-                    {entry.completed
-                      ? `✅ ${entry.words_correct ?? words.length}/${entry.total_words ?? words.length}`
-                      : `${entry.words_correct || 0}/${entry.total_words || words.length}`}
-                  </span>
-                </div>
-              )) : (
+              {lbData.length > 0 ? lbData.map((entry, i) => {
+                const totalW = entry.total_words || words.length;
+                const isDone = entry.completed || (entry.words_correct > 0 && entry.words_correct >= totalW);
+                return (
+                  <div key={entry.player_id} style={s.lbRow}>
+                    <span style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
+                    <span style={s.lbName}>{entry.nickname}</span>
+                    <span style={{ ...s.lbScore, color: isDone ? '#16a34a' : (entry.words_correct > 0 ? '#d97706' : '#e11d48') }}>
+                      {isDone
+                        ? `✅ ${entry.words_correct ?? totalW}/${totalW}`
+                        : `${entry.words_correct || 0}/${totalW}`}
+                    </span>
+                  </div>
+                );
+              }) : (
                 <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem', fontSize: '0.85rem' }}>{t('game.noScoreboardData', 'Tiada data papan kedudukan lagi.')}</p>
               )}
             </div>

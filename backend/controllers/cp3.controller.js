@@ -106,17 +106,22 @@ const getCrosswordLeaderboard = async (req, res) => {
     const scoreMap = Object.fromEntries(scores.map(s => [s.player_id, s]));
     const doneSet = new Set(done.map(d => d.player_id));
     const leaderboard = players
-      .map(p => ({
-        player_id: p.id,
-        nickname: p.nickname,
-        words_correct: scoreMap[p.id]?.words_correct || 0,
-        total_words: scoreMap[p.id]?.total_words || 0,
-        completed: doneSet.has(p.id),
-        score: scoreMap[p.id]?.words_correct || 0,
-      }))
+      .map(p => {
+        const wc = scoreMap[p.id]?.words_correct || 0;
+        const tw = scoreMap[p.id]?.total_words || 0;
+        const isCompleted = doneSet.has(p.id) || (wc > 0 && tw > 0 && wc >= tw);
+        return {
+          player_id: p.id,
+          nickname: p.nickname,
+          words_correct: wc,
+          total_words: tw,
+          completed: isCompleted,
+          score: wc,
+        };
+      })
       .sort((a, b) => {
-        if (b.completed !== a.completed) return Number(b.completed) - Number(a.completed);
         if (b.words_correct !== a.words_correct) return b.words_correct - a.words_correct;
+        if (b.completed !== a.completed) return Number(b.completed) - Number(a.completed);
         return a.nickname.localeCompare(b.nickname);
       });
 
