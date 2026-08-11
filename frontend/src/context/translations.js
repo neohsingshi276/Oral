@@ -1320,6 +1320,8 @@ const flattenTextPairs = (from, to, pairs = {}) => {
 
 export const exactTextTranslations = {
   ...flattenTextPairs(bm, bi),
+  'Kembali ke Halaman Utama': 'Back to Home',
+  'Kembali ke Laman Utama': 'Back to Home',
   'Utama': 'Home',
   'Pembelajaran': 'Learning',
   'Tahukah Anda?': 'Did You Know?',

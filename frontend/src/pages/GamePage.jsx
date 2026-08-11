@@ -466,7 +466,7 @@ const GamePage = () => {
     <h1>🎓 ${language === 'bm' ? 'Sijil Kembara Gigi Sihat' : 'Kembara Gigi Sihat Certificate'}</h1>
     <button class="btn btn-download" id="dlBtn">📥 ${language === 'bm' ? 'Muat Turun' : 'Download'}</button>
     <button class="btn btn-print" onclick="window.print()">🖨️ ${language === 'bm' ? 'Cetak' : 'Print'}</button>
-    <button class="btn btn-home" onclick="localStorage.removeItem('player'); localStorage.removeItem('dq_selected_character'); localStorage.removeItem('tutorial_seen'); window.location.href='/';">🏠 ${language === 'bm' ? 'Kembali ke Laman Utama' : 'Go Back Home'}</button>
+    <button class="btn btn-home" onclick="localStorage.removeItem('player'); localStorage.removeItem('dq_selected_character'); localStorage.removeItem('tutorial_seen'); window.location.href='/';">🏠 ${language === 'bm' ? 'Kembali ke Halaman Utama' : 'Back to Home'}</button>
   </div>
   <div class="cert-wrap">
     ${svgContent}
