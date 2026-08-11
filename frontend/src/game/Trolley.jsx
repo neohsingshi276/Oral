@@ -125,6 +125,16 @@ const TROLLEY_ACCELERATION = 0.22;
 const FOOD_FALL_SPEED = 2.5;
 const SPAWN_INTERVAL = 600;
 
+// Consecutive-correct-catch bonus marks (streak resets on any wrong food).
+// 3→+3, 5→+5, 7→+7, then +10 at 10 and every 5 catches after that (15, 20, 25, 30, ...)
+const getStreakBonus = (streak) => {
+  if (streak === 3) return 3;
+  if (streak === 5) return 5;
+  if (streak === 7) return 7;
+  if (streak >= 10 && (streak - 10) % 5 === 0) return 10;
+  return 0;
+};
+
 const GOOD_FOODS = [
   { image: '/assets/foods/good/peanut.png', nameBm: 'Kacang Tanah', nameBi: 'Peanut', points: 100, color: '#D2A679' },
   { image: '/assets/foods/good/egg.png', nameBm: 'Telur', nameBi: 'Egg', points: 100, color: '#FFEFD5' },
@@ -196,8 +206,8 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
   const animationFrameRef = useRef(null);
   const lastSpawnRef = useRef(0);
   const trolleyVelocity = useRef(0);
-  const lastComboTime = useRef(0);
   const scoreRef = useRef(0);
+  const streakRef = useRef(0); // consecutive correct catches (resets on any wrong food)
   const trolleyPosRef = useRef(50);
 
   // Keep refs in sync
@@ -228,6 +238,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
     setFallingItems([]);
     setParticles([]);
     setCombo(0);
+    streakRef.current = 0;
     trolleyVelocity.current = 0;
     startBgMusic(isMutedRef.current);
   };
@@ -298,19 +309,29 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
             const trolleyLeft = trolleyPosRef.current - 5;
             const trolleyRight = trolleyPosRef.current + 5;
             if (item.x >= trolleyLeft && item.x <= trolleyRight) {
-              setScore(s => {
-                const ns = Math.max(0, s + item.points);
-                scoreRef.current = ns;
-                return ns;
-              });
-              // Play sound based on food type
-              if (item.points > 0) playGoodFoodSound(isMutedRef.current);
-              else playBadFoodSound(isMutedRef.current);
-              createParticles(item.x, trolleyY, item.points > 0);
-              const now = Date.now();
-              if (item.points > 0 && now - lastComboTime.current < 2000) setCombo(c => c + 1);
-              else setCombo(item.points > 0 ? 1 : 0);
-              lastComboTime.current = now;
+              const isGood = item.points > 0;
+              if (isGood) {
+                const newStreak = streakRef.current + 1;
+                streakRef.current = newStreak;
+                const bonus = getStreakBonus(newStreak);
+                setScore(s => {
+                  const ns = s + item.points + bonus;
+                  scoreRef.current = ns;
+                  return ns;
+                });
+                setCombo(newStreak);
+                playGoodFoodSound(isMutedRef.current);
+              } else {
+                streakRef.current = 0;
+                setCombo(0);
+                setScore(s => {
+                  const ns = s + item.points; // item.points is already -70
+                  scoreRef.current = ns;
+                  return ns;
+                });
+                playBadFoodSound(isMutedRef.current);
+              }
+              createParticles(item.x, trolleyY, isGood);
               return { ...item, caught: true };
             }
           }
@@ -469,7 +490,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
     <div style={s.fullPage}>
       <style>{animStyles}</style>
       <div style={{ ...s.startCard, maxWidth: '780px', maxHeight: '92vh', overflowY: 'auto', padding: '1.5rem 2rem' }}>
-        
+
         {/* Title & Badge */}
         <h1 style={{ ...s.title, fontSize: '2.2rem', marginBottom: '0.4rem' }}>
           🛒 {language === 'bi' ? 'Food Catcher Game' : 'Permainan Tangkap Makanan'}
@@ -496,7 +517,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
 
         {/* 2-Column Food Grid Cards: Good vs Bad */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '1.25rem', textAlign: 'left' }}>
-          
+
           {/* GOOD FOODS — Non-Cariogenic */}
           <div style={{ background: '#f0fdf4', borderRadius: '18px', padding: '1.1rem 1.25rem', border: '2px solid #86efac', boxShadow: '0 4px 12px rgba(22,163,74,0.06)' }}>
             <div style={{ fontWeight: '900', fontSize: '0.92rem', color: '#15803d', marginBottom: '0.15rem' }}>
@@ -539,6 +560,12 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
               ? `You must score at least ${targetScore || 1000} points to pass!`
               : `Anda mesti mendapat sekurang-kurangnya ${targetScore || 1000} mata untuk lulus!`}
           </span>
+          <br />
+          <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#c2410c' }}>
+            {language === 'bi'
+              ? `To get maximum marks, score ${2 * (targetScore || 1000)} points or more (2 × ${targetScore || 1000}).`
+              : `Untuk markah penuh, dapatkan ${2 * (targetScore || 1000)} mata atau lebih (2 × ${targetScore || 1000}).`}
+          </span>
         </div>
 
         {/* Action Buttons: Kembali & Mula Permainan */}
@@ -565,6 +592,8 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
   if (showLeaderboard) {
     const minPassScore = targetScore || 1000;
     const hasPassed = finalScore >= minPassScore;
+    // Final Score = (S / 2P) x 100, clamped to 0-100
+    const normalizedFinal = Math.max(0, Math.min(100, Math.round((finalScore / (2 * minPassScore)) * 100)));
     return (
       <div style={s.fullPage}>
         <style>{animStyles}</style>
@@ -573,13 +602,16 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
           <h2 style={{ ...s.lbTitle, fontSize: '2rem', marginBottom: '0.75rem' }}>
             {language === 'bi' ? 'Food Catcher Game' : 'Permainan Tangkap Makanan'}
           </h2>
-          
+
           {/* Your Score Section */}
           <div style={s.yourScore}>
             <div style={{ color: '#fff', fontSize: '1.35rem', fontWeight: '800', marginBottom: '0.3rem', textTransform: 'none' }}>
               {language === 'bi' ? 'Your Score' : 'Skor Anda'}
             </div>
             <div style={{ color: '#FFD700', fontSize: '3.6rem', fontWeight: '900', lineHeight: 1 }}>{finalScore}</div>
+            <div style={{ color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '700', marginTop: '0.4rem' }}>
+              {language === 'bi' ? 'Final Mark' : 'Markah Akhir'}: {normalizedFinal}/100
+            </div>
           </div>
 
           {/* Leaderboard Table */}

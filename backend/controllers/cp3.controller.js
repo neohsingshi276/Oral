@@ -18,13 +18,13 @@ const getSettings = async (req, res) => {
 // FIX: Added player-session ownership check (same pattern as quiz/crossword)
 // and score clamping to prevent arbitrary values being submitted.
 const saveScore = async (req, res) => {
-  const player_id  = parseInt(req.body.player_id, 10);
+  const player_id = parseInt(req.body.player_id, 10);
   const session_id = parseInt(req.body.session_id, 10);
-  const rawScore   = parseInt(req.body.score, 10);
+  const rawScore = parseInt(req.body.score, 10);
 
-  if (!player_id  || player_id  <= 0) return res.status(400).json({ error: 'Invalid player_id' });
+  if (!player_id || player_id <= 0) return res.status(400).json({ error: 'Invalid player_id' });
   if (!session_id || session_id <= 0) return res.status(400).json({ error: 'Invalid session_id' });
-  if (isNaN(rawScore))                return res.status(400).json({ error: 'Score must be a number' });
+  if (isNaN(rawScore)) return res.status(400).json({ error: 'Score must be a number' });
 
   // Clamp score to a sane range — prevents spoofed giant scores
   const score = Math.max(0, Math.min(999999, rawScore));
@@ -108,7 +108,7 @@ const getCrosswordLeaderboard = async (req, res) => {
     const leaderboard = players
       .map(p => ({
         player_id: p.id,
-        nickname:  p.nickname,
+        nickname: p.nickname,
         words_correct: scoreMap[p.id]?.words_correct || 0,
         total_words: scoreMap[p.id]?.total_words || 0,
         completed: doneSet.has(p.id),
@@ -181,58 +181,61 @@ const getFinalLeaderboard = async (req, res) => {
     );
 
     const adminTarget = cp3Settings[0]?.target_score || 0;
-    // CP3 denominator: admin sets target_score in session settings.
-    // If not set, we fall back to 2000 — this is calibrated for a 60-second game
-    // where a perfect run (all good foods, no bad foods, combos) yields ~2000 pts.
-    // IMPORTANT: admins should always configure target_score to match their session
-    // duration so the mark accurately reflects actual performance.
-    const cp3Denom = adminTarget > 0 ? adminTarget : 2000;
+    // CP3 denominator: admin sets a PASSING score (P) in session settings.
+    // Full marks require DOUBLE the passing score (2P) — reaching P alone is
+    // only the passing threshold (50% of the CP3 component), matching the
+    // "Final Score = (S / 2P) x 100" formula. Falls back to P=1000 (2P=2000)
+    // when the admin hasn't configured a target — calibrated for a 60-second
+    // game where a perfect run (all good foods, no bad foods, streak bonuses)
+    // yields roughly 2000 pts.
+    const passingScore = adminTarget > 0 ? adminTarget : 1000;
+    const cp3Denom = 2 * passingScore;
 
-    const quizMap      = Object.fromEntries(quizScores.map(s     => [s.player_id, s]));
+    const quizMap = Object.fromEntries(quizScores.map(s => [s.player_id, s]));
     const crosswordMap = Object.fromEntries(crosswordScores.map(s => [s.player_id, s]));
-    const cp3Map       = Object.fromEntries(cp3Scores.map(s       => [s.player_id, s]));
+    const cp3Map = Object.fromEntries(cp3Scores.map(s => [s.player_id, s]));
 
     const leaderboard = players.map(player => {
       const quiz = quizMap[player.id];
-      const cw   = crosswordMap[player.id];
-      const cp3  = cp3Map[player.id];
+      const cw = crosswordMap[player.id];
+      const cp3 = cp3Map[player.id];
 
       // CP1: absolute — based on how many they got right
       const cp1Correct = quiz?.correct || 0;
-      const cp1Total   = quiz?.total   || 0;
-      const cp1Exact   = cp1Total > 0 ? (cp1Correct / cp1Total) * CP_WEIGHT : 0;
-      const cp1Mark    = Math.round(cp1Exact); // rounded for display
+      const cp1Total = quiz?.total || 0;
+      const cp1Exact = cp1Total > 0 ? (cp1Correct / cp1Total) * CP_WEIGHT : 0;
+      const cp1Mark = Math.round(cp1Exact); // rounded for display
 
       // CP2: partial credit — based on words solved
       const cwCorrect = cw?.words_correct || 0;
-      const cwTotal   = cw?.total_words   || 0;
-      const cp2Exact  = cwTotal > 0 ? (cwCorrect / cwTotal) * CP_WEIGHT : 0;
-      const cp2Mark   = Math.round(cp2Exact);
+      const cwTotal = cw?.total_words || 0;
+      const cp2Exact = cwTotal > 0 ? (cwCorrect / cwTotal) * CP_WEIGHT : 0;
+      const cp2Mark = Math.round(cp2Exact);
 
       // CP3: based on target or session max, capped at 33.33
-      const cp3Raw   = cp3?.score || 0;
+      const cp3Raw = cp3?.score || 0;
       const cp3Exact = cp3Raw > 0 ? Math.min(CP_WEIGHT, (cp3Raw / Math.max(1, cp3Denom)) * CP_WEIGHT) : 0;
-      const cp3Mark  = Math.round(cp3Exact);
+      const cp3Mark = Math.round(cp3Exact);
 
       // Total: sum exact values, then round properly
       // >= 99.5 → 100, otherwise floor
       const totalExact = cp1Exact + cp2Exact + cp3Exact;
-      const totalMark  = totalExact >= 99.5 ? 100 : Math.floor(totalExact);
+      const totalMark = totalExact >= 99.5 ? 100 : Math.floor(totalExact);
 
       return {
-        player_id:     player.id,
-        nickname:      player.nickname,
-        cp1_correct:   cp1Correct,
-        cp1_total:     cp1Total,
-        cp1_mark:      cp1Mark,
-        cp2_words:     cwCorrect,
-        cp2_total:     cwTotal,
+        player_id: player.id,
+        nickname: player.nickname,
+        cp1_correct: cp1Correct,
+        cp1_total: cp1Total,
+        cp1_mark: cp1Mark,
+        cp2_words: cwCorrect,
+        cp2_total: cwTotal,
         cp2_completed: cwCorrect > 0 && cwTotal > 0 && cwCorrect >= cwTotal,
-        cp2_mark:      cp2Mark,
-        cp3_raw:       cp3Raw,
-        cp3_target:    cp3Denom,
-        cp3_mark:      cp3Mark,
-        total_mark:    totalMark,
+        cp2_mark: cp2Mark,
+        cp3_raw: cp3Raw,
+        cp3_target: cp3Denom,
+        cp3_mark: cp3Mark,
+        total_mark: totalMark,
       };
     }).sort((a, b) => b.total_mark - a.total_mark);
 
