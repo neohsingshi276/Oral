@@ -153,7 +153,8 @@ const getFinalLeaderboard = async (req, res) => {
     const [quizScores] = await db.query(`
       SELECT player_id,
              MAX(correct_answers) as correct,
-             MAX(total_questions) as total
+             MAX(total_questions) as total,
+             MAX(score) as quiz_score
       FROM quiz_scores WHERE session_id = ? GROUP BY player_id
     `, [sessionId]);
 
@@ -200,21 +201,27 @@ const getFinalLeaderboard = async (req, res) => {
       const cw = crosswordMap[player.id];
       const cp3 = cp3Map[player.id];
 
-      // CP1: absolute — based on how many they got right
+      // CP1: uses the SAME percentage as the quiz's own result screen —
+      // (marks earned / marks obtainable) x 100 — which already factors in
+      // the per-question speed bonus, not just raw accuracy.
       const cp1Correct = quiz?.correct || 0;
       const cp1Total = quiz?.total || 0;
-      const cp1Exact = cp1Total > 0 ? (cp1Correct / cp1Total) * CP_WEIGHT : 0;
+      const cp1Score = quiz?.quiz_score || 0;
+      const cp1Pct = cp1Total > 0 ? Math.min(100, (cp1Score / (cp1Total * 100)) * 100) : 0;
+      const cp1Exact = (cp1Pct / 100) * CP_WEIGHT;
       const cp1Mark = Math.round(cp1Exact); // rounded for display
 
       // CP2: partial credit — based on words solved
       const cwCorrect = cw?.words_correct || 0;
       const cwTotal = cw?.total_words || 0;
-      const cp2Exact = cwTotal > 0 ? (cwCorrect / cwTotal) * CP_WEIGHT : 0;
+      const cp2Pct = cwTotal > 0 ? Math.min(100, (cwCorrect / cwTotal) * 100) : 0;
+      const cp2Exact = (cp2Pct / 100) * CP_WEIGHT;
       const cp2Mark = Math.round(cp2Exact);
 
       // CP3: based on target or session max, capped at 33.33
       const cp3Raw = cp3?.score || 0;
-      const cp3Exact = cp3Raw > 0 ? Math.min(CP_WEIGHT, (cp3Raw / Math.max(1, cp3Denom)) * CP_WEIGHT) : 0;
+      const cp3Pct = cp3Raw > 0 ? Math.min(100, (cp3Raw / Math.max(1, cp3Denom)) * 100) : 0;
+      const cp3Exact = (cp3Pct / 100) * CP_WEIGHT;
       const cp3Mark = Math.round(cp3Exact);
 
       // Total: sum exact values, then round properly
@@ -228,13 +235,16 @@ const getFinalLeaderboard = async (req, res) => {
         cp1_correct: cp1Correct,
         cp1_total: cp1Total,
         cp1_mark: cp1Mark,
+        cp1_pct: Math.round(cp1Pct * 10) / 10, // exact %, e.g. 97.2
         cp2_words: cwCorrect,
         cp2_total: cwTotal,
         cp2_completed: cwCorrect > 0 && cwTotal > 0 && cwCorrect >= cwTotal,
         cp2_mark: cp2Mark,
+        cp2_pct: Math.round(cp2Pct * 10) / 10,
         cp3_raw: cp3Raw,
         cp3_target: cp3Denom,
         cp3_mark: cp3Mark,
+        cp3_pct: Math.round(cp3Pct * 10) / 10, // exact %, e.g. 78.5
         total_mark: totalMark,
       };
     }).sort((a, b) => b.total_mark - a.total_mark);
