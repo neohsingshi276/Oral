@@ -2148,7 +2148,8 @@ export const exactTextTranslations = {
   'Keluarkan pentadbir': 'Remove admin',
   'Tindakan ini tidak boleh dibatalkan!': 'This action cannot be undone!',
   // Punam Added Until Here
-
+  'Semua Bahasa': 'All Languages',
+  'Bahasa Video': 'Video Language',
   // 6/5 Punam Added
   // ManageCrossword.jsx
   'Bahasa pembayang': 'Clue Language',

@@ -11,9 +11,6 @@ import Reduce from '../assets/Reduce.png';
 import Smoking from '../assets/Smoking.png';
 import Check from '../assets/Check.png';
 
-const pickLang = (obj, field, lang) =>
-  (lang === 'bi' && obj[`${field}_bi`]) ? obj[`${field}_bi`] : obj[field];
-
 const VIDEO_CARD_MIN_WIDTH = 200;
 const VIDEO_GRID_GAP = 16;
 
@@ -28,14 +25,33 @@ const LearningPage = () => {
   const videoGridRef = useRef(null);
 
   useEffect(() => {
-    api.get('/videos')
+    setSelected(null);
+    setShowAllVideos(false);
+
+    api.get('/videos', {
+      params: {
+        language
+      }
+    })
       .then(res => {
-        setVideos(res.data.videos);
-        if (res.data.videos.length > 0) setSelected(res.data.videos[0]);
+        const loadedVideos = res.data.videos || [];
+
+        setVideos(loadedVideos);
+
+        if (loadedVideos.length > 0) {
+          setSelected(loadedVideos[0]);
+        }
       })
-      .catch(err => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
+      .catch(err => {
+        console.error(err);
+        setVideos([]);
+        setSelected(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+
+  }, [language]);
 
   useEffect(() => {
     // Must re-run once loading finishes — on first mount the loading
@@ -199,13 +215,13 @@ const LearningPage = () => {
               <iframe
                 style={styles.iframe}
                 src={getEmbedUrl(selected.youtube_url)}
-                title={pickLang(selected, "title", language)}
+                title={selected.title}
                 frameBorder="0"
                 allowFullScreen
               />
               <div style={styles.playerInfo}>
-                <h3 style={styles.playerTitle} data-no-translate="true">{pickLang(selected, "title", language)}</h3>
-                <p style={styles.playerDesc} data-no-translate="true">{pickLang(selected, "description", language)}</p>
+                <h3 style={styles.playerTitle} data-no-translate="true">{selected.title}</h3>
+                <p style={styles.playerDesc} data-no-translate="true">{selected.description}</p>
               </div>
             </div>
           )}
@@ -221,7 +237,7 @@ const LearningPage = () => {
                 <div style={styles.videoThumb}>
                   <img
                     src={`https://img.youtube.com/vi/${getEmbedUrl(video.youtube_url).split('/embed/')[1]}/hqdefault.jpg`}
-                    alt={pickLang(video, "title", language)}
+                    alt={video.title}
                     style={styles.thumbImg}
                     onError={e => { e.target.style.display = 'none'; }}
                   />
@@ -229,8 +245,8 @@ const LearningPage = () => {
                 </div>
                 <div style={styles.videoMeta}>
                   <span style={styles.videoNum}>{t('learning.videoLabel')} {index + 1}</span>
-                  <p style={styles.videoCardTitle} data-no-translate="true">{pickLang(video, "title", language)}</p>
-                  <p style={styles.videoCardDesc} data-no-translate="true">{(pickLang(video, "description", language) || "")?.slice(0, 70)}...</p>
+                  <p style={styles.videoCardTitle} data-no-translate="true">{video.title}</p>
+                  <p style={styles.videoCardDesc} data-no-translate="true">{(video.description || "").slice(0, 70)}...</p>
                 </div>
               </div>
             ))}

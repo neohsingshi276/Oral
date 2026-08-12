@@ -4,7 +4,6 @@ const { logActivity } = require('./activity.controller');
 // ============================================
 
 const db = require('../db');
-const { translateBmToBi, translateBiToBm } = require('../services/translate.service');
 
 const parseOrderNum = (value) => {
   if (value === '' || value === null || value === undefined) return null;
@@ -13,12 +12,20 @@ const parseOrderNum = (value) => {
   return n;
 };
 
-const getNextOrderNum = async () => {
+const getNextOrderNum = async (language) => {
   const [rows] = await db.query(
-    'SELECT COALESCE(MAX(order_num), 0) + 1 AS next_order FROM learning_videos WHERE order_num >= 1'
+    `SELECT COALESCE(MAX(order_num), 0) + 1 AS next_order
+     FROM learning_videos
+     WHERE order_num >= 1
+     AND language = ?`,
+    [language]
   );
+
   const next = rows[0]?.next_order;
-  return Number.isInteger(next) && next >= 1 ? next : 1;
+
+  return Number.isInteger(next) && next >= 1
+    ? next
+    : Number(next) || 1;
 };
 
 // I replace this part...
@@ -26,21 +33,37 @@ const getAllVideos = async (req, res) => {
   try {
     const search = (req.query.search || '').trim();
     const order = req.query.order === 'desc' ? 'DESC' : 'ASC';
+    const language = req.query.language;
 
     let sql = `
-      SELECT * FROM learning_videos
+      SELECT *
+      FROM learning_videos
       WHERE (
         title LIKE ?
         OR COALESCE(description, '') LIKE ?
       )
-      ORDER BY CAST(order_num AS UNSIGNED) ${order}, id ${order}
     `;
+
+    const params = [];
 
     const searchTerm = `%${search}%`;
 
-    const [rows] = await db.query(sql, [searchTerm, searchTerm]);
+    params.push(searchTerm, searchTerm);
+
+    if (language === 'bm' || language === 'bi') {
+      sql += ` AND language = ?`;
+      params.push(language);
+    }
+
+    sql += `
+      ORDER BY CAST(order_num AS UNSIGNED) ${order},
+      id ${order}
+    `;
+
+    const [rows] = await db.query(sql, params);
 
     res.json({ videos: rows });
+
   } catch (err) {
     console.error('Get videos error:', err.message);
     res.status(500).json({ error: 'Server error' });
@@ -61,37 +84,15 @@ const getVideoById = async (req, res) => {
   }
 };
 
-const resolveVideoTranslations = async ({ title, description, body }) => {
-  const sourceLanguage = body.source_language === 'bi' ? 'bi' : 'bm';
-  const manualTitle = (body.title_translation || body.title_bi || body.title_bm || '').trim();
-  const manualDescription = (body.description_translation || body.description_bi || body.description_bm || '').trim();
-  const sourceDescription = description?.trim() || '';
-
-  if (sourceLanguage === 'bi') {
-    return {
-      titleBm: manualTitle || await translateBiToBm(title.trim()),
-      descriptionBm: manualDescription || await translateBiToBm(sourceDescription),
-      titleBi: title.trim(),
-      descriptionBi: sourceDescription,
-    };
-  }
-
-  return {
-    titleBm: title.trim(),
-    descriptionBm: sourceDescription,
-    titleBi: manualTitle || await translateBmToBi(title.trim()),
-    descriptionBi: manualDescription || await translateBmToBi(sourceDescription),
-  };
-};
-
 const addVideo = async (req, res) => {
-  const { title, description, youtube_url, order_num } = req.body;
+  const { title, description, youtube_url, order_num, language } = req.body;
   if (!title || !youtube_url) {
     return res.status(400).json({ error: 'Title and YouTube URL are required' });
   }
+  if (!['bm', 'bi'].includes(language)) { return res.status(400).json({ error: 'Language must be BM or English' }); }
   if (title.length > 150) return res.status(400).json({ error: 'Title too long (max 150 characters)' });
   if (description && description.length > 500) return res.status(400).json({ error: 'Description too long (max 500 characters)' });
-  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w-]{11}/;
+  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|shorts\/)|youtu\.be\/)[\w-]{11}/;
   if (!youtubeRegex.test(youtube_url)) {
     return res.status(400).json({ error: 'Invalid YouTube URL. Use a youtube.com or youtu.be link.' });
   }
@@ -100,13 +101,20 @@ const addVideo = async (req, res) => {
     return res.status(400).json({ error: 'Order number must be 1 or greater' });
   }
 
-  const { titleBm, descriptionBm, titleBi, descriptionBi } = await resolveVideoTranslations({ title, description, body: req.body });
 
   try {
-    const finalOrder = parsedOrder ?? (await getNextOrderNum());
+    const finalOrder = parsedOrder ?? (await getNextOrderNum(language));
     const [result] = await db.query(
-      'INSERT INTO learning_videos (title, description, youtube_url, order_num, title_bi, description_bi) VALUES (?, ?, ?, ?, ?, ?)',
-      [titleBm, descriptionBm, youtube_url.trim(), finalOrder, titleBi, descriptionBi]
+      `INSERT INTO learning_videos
+       (title, description, youtube_url, order_num, language)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        title.trim(),
+        description?.trim() || '',
+        youtube_url.trim(),
+        finalOrder,
+        language
+      ]
     );
     await logActivity(req.admin.id, 'Added learning video', `Video: ${title.trim()}`);
     res.status(201).json({ message: 'Video added', videoId: result.insertId });
@@ -117,35 +125,69 @@ const addVideo = async (req, res) => {
 };
 
 const updateVideo = async (req, res) => {
-  const { title, description, youtube_url, order_num } = req.body;
-  if (!title || !youtube_url) return res.status(400).json({ error: 'Title and YouTube URL are required' });
-  if (title.length > 150) return res.status(400).json({ error: 'Title too long (max 150 characters)' });
-  if (description && description.length > 500) return res.status(400).json({ error: 'Description too long (max 500 characters)' });
-  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w-]{11}/;
-  if (!youtubeRegex.test(youtube_url)) {
-    return res.status(400).json({ error: 'Invalid YouTube URL. Use a youtube.com or youtu.be link.' });
-  }
-  const parsedOrder = parseOrderNum(order_num);
-  if (parsedOrder === null) {
+  const {
+    title,
+    description,
+    youtube_url,
+    order_num,
+    language
+  } = req.body;
+
+  if (!title || !youtube_url) {
     return res.status(400).json({
-      error: order_num === '' || order_num === null || order_num === undefined
-        ? 'Order number is required when updating a video'
-        : 'Order number must be 1 or greater',
+      error: 'Title and YouTube URL are required'
     });
   }
 
-  const { titleBm, descriptionBm, titleBi, descriptionBi } = await resolveVideoTranslations({ title, description, body: req.body });
+  if (!['bm', 'bi'].includes(language)) {
+    return res.status(400).json({
+      error: 'Language must be BM or English'
+    });
+  }
+
+  const parsedOrder = parseOrderNum(order_num);
+
+  if (parsedOrder === null) {
+    return res.status(400).json({
+      error: 'Order number must be 1 or greater'
+    });
+  }
 
   try {
+
     await db.query(
-      'UPDATE learning_videos SET title=?, description=?, youtube_url=?, order_num=?, title_bi=?, description_bi=? WHERE id=?',
-      [titleBm, descriptionBm, youtube_url.trim(), parsedOrder, titleBi, descriptionBi, req.params.id]
+      `UPDATE learning_videos
+       SET title = ?,
+           description = ?,
+           youtube_url = ?,
+           order_num = ?,
+           language = ?
+       WHERE id = ?`,
+      [
+        title.trim(),
+        description?.trim() || '',
+        youtube_url.trim(),
+        parsedOrder,
+        language,
+        req.params.id
+      ]
     );
-    await logActivity(req.admin.id, 'Updated learning video', `Video ID: ${req.params.id}`);
-    res.json({ message: 'Video updated' });
+
+    await logActivity(
+      req.admin.id,
+      'Updated learning video',
+      `Video ID: ${req.params.id}`
+    );
+
+    res.json({
+      message: 'Video updated'
+    });
+
   } catch (err) {
     console.error('Update video error:', err.message);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({
+      error: 'Server error'
+    });
   }
 };
 

@@ -90,6 +90,10 @@ CREATE TABLE IF NOT EXISTS learning_videos (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
+ALTER TABLE learning_videos
+ADD COLUMN language VARCHAR(10) NOT NULL DEFAULT 'bm';
+
 -- ── Facts (Did You Know?) ─────────────────────────────────────
 CREATE TABLE IF NOT EXISTS facts (
   id INT AUTO_INCREMENT PRIMARY KEY,
