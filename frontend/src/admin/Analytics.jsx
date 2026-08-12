@@ -112,11 +112,11 @@ const Analytics = ({ setActive }) => {
     className: p.class_name || '-',
     session: p.session_name || '-',
     nickname: p.display_nickname || p.nickname,
-    cp1: Math.round((p.cp1_mark || 0) / 33 * 100),
+    cp1: Math.round(p.cp1_pct || 0),
     cp1Attempts: p.cp1_attempts || 0,
-    cp2: Math.round((p.cp2_mark || 0) / 33 * 100),
+    cp2: Math.round(p.cp2_pct || 0),
     cp2Attempts: p.cp2_attempts || 0,
-    cp3: Math.round((p.cp3_mark || 0) / 33 * 100),
+    cp3: Math.round(p.cp3_pct || 0),
     cp3Attempts: p.cp3_attempts || 0,
     total: p.total_mark || 0,
     completed: p.cp3_completed ? t('admin.completed') : t('admin.inProgress'),
@@ -230,11 +230,19 @@ const Analytics = ({ setActive }) => {
     ? Math.round(displayPlayers.reduce((s, p) => s + p.cp3_mark, 0) / displayPlayers.length) : 0;
   const avgTotal = displayPlayers.length
     ? Math.round(displayPlayers.reduce((s, p) => s + p.total_mark, 0) / displayPlayers.length) : 0;
+  // Precise /100 averages — computed directly from each player's exact percentage,
+  // not by re-expanding an already-rounded /33 mark (avoids double-rounding drift).
+  const avgCP1Pct = displayPlayers.length
+    ? Math.round(displayPlayers.reduce((s, p) => s + (p.cp1_pct || 0), 0) / displayPlayers.length) : 0;
+  const avgCP2Pct = displayPlayers.length
+    ? Math.round(displayPlayers.reduce((s, p) => s + (p.cp2_pct || 0), 0) / displayPlayers.length) : 0;
+  const avgCP3Pct = displayPlayers.length
+    ? Math.round(displayPlayers.reduce((s, p) => s + (p.cp3_pct || 0), 0) / displayPlayers.length) : 0;
 
   const completionData = [
-    { name: t('admin.cp1Quiz'), completed: filteredCP1, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP1 / displayPlayers.length) * 100) : 0, avgMark: avgCP1Mark },
-    { name: t('admin.cp2Crossword'), completed: filteredCP2, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP2 / displayPlayers.length) * 100) : 0, avgMark: avgCP2Mark },
-    { name: t('admin.cp3FoodGame'), completed: filteredCP3, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP3 / displayPlayers.length) * 100) : 0, avgMark: avgCP3Mark },
+    { name: t('admin.cp1Quiz'), completed: filteredCP1, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP1 / displayPlayers.length) * 100) : 0, avgMark: avgCP1Mark, avgPct: avgCP1Pct },
+    { name: t('admin.cp2Crossword'), completed: filteredCP2, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP2 / displayPlayers.length) * 100) : 0, avgMark: avgCP2Mark, avgPct: avgCP2Pct },
+    { name: t('admin.cp3FoodGame'), completed: filteredCP3, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP3 / displayPlayers.length) * 100) : 0, avgMark: avgCP3Mark, avgPct: avgCP3Pct },
   ];
 
   const attemptData = [
@@ -370,9 +378,9 @@ const Analytics = ({ setActive }) => {
         {[
           { label: 'Jumlah Pemain', value: displayPlayers.length, icon: '👥', color: '#eff6ff', accent: '#2563eb' },
           { label: 'Jumlah Sesi', value: selectedSession === 'all' ? (data?.total_sessions || 0) : 1, icon: '🎮', color: '#f0fdf4', accent: '#16a34a' },
-          { label: 'Purata Markah CP1', value: displayPlayers.length ? `${Math.round(avgCP1Mark / 33 * 100)}/100` : '—', icon: '❓', color: '#fdf4ff', accent: '#9333ea' },
-          { label: 'Purata Markah CP2', value: displayPlayers.length ? `${Math.round(avgCP2Mark / 33 * 100)}/100` : '—', icon: '🧩', color: '#fff7ed', accent: '#ea580c' },
-          { label: 'Purata Markah CP3', value: displayPlayers.length ? `${Math.round(avgCP3Mark / 33 * 100)}/100` : '—', icon: '🎮', color: '#f0fdfa', accent: '#0d9488' },
+          { label: 'Purata Markah CP1', value: displayPlayers.length ? `${avgCP1Pct}/100` : '—', icon: '❓', color: '#fdf4ff', accent: '#9333ea' },
+          { label: 'Purata Markah CP2', value: displayPlayers.length ? `${avgCP2Pct}/100` : '—', icon: '🧩', color: '#fff7ed', accent: '#ea580c' },
+          { label: 'Purata Markah CP3', value: displayPlayers.length ? `${avgCP3Pct}/100` : '—', icon: '🎮', color: '#f0fdfa', accent: '#0d9488' },
           { label: 'Purata Jumlah', value: displayPlayers.length ? `${avgTotal}/100` : '—', icon: '🏆', color: '#fefce8', accent: '#ca8a04' },
         ].map((stat, i) => (
           <div key={i} style={{ ...s.statCard, background: stat.color }}>
@@ -426,8 +434,8 @@ const Analytics = ({ setActive }) => {
             <h3 style={s.cardTitle}>📋 Purata Markah setiap Checkpoint (jumlah /100)</h3>
             <div style={s.markOverview}>
               {completionData.map((cp, i) => {
-                const pct = (cp.avgMark / 33) * 100;
-                const scaledMark = Math.round(pct);
+                const pct = cp.avgPct;
+                const scaledMark = pct;
                 const col = pct >= 66 ? '#16a34a' : pct >= 33 ? '#f59e0b' : '#e11d48';
                 return (
                   <div key={i} style={s.markCard}>
@@ -486,7 +494,7 @@ const Analytics = ({ setActive }) => {
                 <div style={s.cpBar}><div style={{ ...s.cpBarFill, width: `${cp.rate}%`, background: COLORS[i] }} /></div>
                 <div style={s.cpRate}>{cp.rate}% ({cp.completed}/{cp.total})</div>
                 <div style={{ ...s.avgMarkBadge, background: markColor(cp.avgMark, 33).bg, color: markColor(cp.avgMark, 33).color }}>
-                  purata {Math.round(cp.avgMark / 33 * 100)}/100
+                  purata {cp.avgPct}/100
                 </div>
               </div>
             ))}
