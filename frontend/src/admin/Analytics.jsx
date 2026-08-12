@@ -656,9 +656,12 @@ const Analytics = ({ setActive }) => {
                         )}
                       </td>
                       <td style={s.td}>
-                        <span style={p.cp2_pct >= 100 ? s.badgeGreen : p.cp2_pct > 0 ? s.badgeYellow : s.badgeGray}>
-                          {p.cp2_pct >= 100 ? `✅ ${Math.round(p.cp2_pct)}/100` : p.cp2_pct > 0 ? `⚠️ ${Math.round(p.cp2_pct)}/100` : '❌ 0/100'}
-                        </span>
+                        <span style={{ fontWeight: '700', color: '#7c3aed' }}>{Math.round(p.cp2_pct)}/100</span>
+                        {p.cw_total != null && (
+                          <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
+                            ({p.cw_correct || 0}/{p.cw_total || '?'} perkataan)
+                          </span>
+                        )}
                       </td>
                       <td style={s.td}>
                         <span style={{ fontWeight: '700', color: '#0d9488' }}>{Math.round(p.cp3_pct)}/100</span>
@@ -709,9 +712,7 @@ const Analytics = ({ setActive }) => {
                         </span>
                       </td>
                       <td style={s.td}>
-                        <span style={p.cp2_pct >= 100 ? s.badgeGreen : p.cp2_pct > 0 ? s.badgeYellow : s.badgeGray}>
-                          {p.cp2_pct >= 100 ? `✅ ${Math.round(p.cp2_pct)}/100` : p.cp2_pct > 0 ? `⚠️ ${Math.round(p.cp2_pct)}/100` : '❌ 0/100'}
-                        </span>
+                        <span style={{ fontWeight: '700', color: '#7c3aed' }}>{Math.round(p.cp2_pct)}/100</span>
                         {p.cp2_total > 0 && (
                           <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                             ({p.cp2_words}/{p.cp2_total} perkataan)

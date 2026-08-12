@@ -115,7 +115,6 @@ const getCrosswordLeaderboard = async (req, res) => {
         score: scoreMap[p.id]?.score || 0, // Final Score /100 = Base (accuracy) + Speed Bonus
       }))
       .sort((a, b) => {
-        if (b.completed !== a.completed) return Number(b.completed) - Number(a.completed);
         if (b.score !== a.score) return b.score - a.score;
         return a.nickname.localeCompare(b.nickname);
       });

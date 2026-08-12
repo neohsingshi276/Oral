@@ -640,7 +640,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                 <div key={entry.player_id} style={s.lbRow}>
                   <span style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
                   <span style={s.lbName}>{entry.nickname}</span>
-                  <span style={{ ...s.lbScore, color: entry.completed ? '#16a34a' : '#e11d48' }}>
+                  <span style={{ ...s.lbScore, color: (entry.score ?? 0) >= 50 ? '#16a34a' : '#e11d48' }}>
                     {entry.score ?? 0}/100
                     <span style={{ fontSize: '0.72rem', fontWeight: '600', opacity: 0.75, marginLeft: '0.35rem' }}>
                       ({entry.words_correct ?? 0}/{entry.total_words ?? words.length})
