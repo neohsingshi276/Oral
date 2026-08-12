@@ -224,10 +224,10 @@ const getFinalLeaderboard = async (req, res) => {
       const cp3Exact = (cp3Pct / 100) * CP_WEIGHT;
       const cp3Mark = Math.round(cp3Exact);
 
-      // Total: sum exact values, then round properly
-      // >= 99.5 → 100, otherwise floor
+      // Total: sum exact values, then round to the nearest whole mark
+      // (standard round-half-up, e.g. 96.66 -> 97, 96.4 -> 96)
       const totalExact = cp1Exact + cp2Exact + cp3Exact;
-      const totalMark = totalExact >= 99.5 ? 100 : Math.floor(totalExact);
+      const totalMark = Math.round(totalExact);
 
       return {
         player_id: player.id,

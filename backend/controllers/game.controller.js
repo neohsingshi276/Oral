@@ -292,46 +292,45 @@ const getCertificate = async (req, res) => {
       [player_id, session_id]
     );
 
-    // ── CP1 score: quiz ──────────────────────────────────────────────────
+    // ── CP1 score: quiz — same percentage as the quiz's own result screen
+    //    (marks earned / marks obtainable) x 100, speed bonus included.
     const [quizRows] = await db.query(
-      'SELECT score, correct_answers, total_questions FROM quiz_scores WHERE player_id = ? AND session_id = ? ORDER BY id DESC LIMIT 1',
+      'SELECT score, total_questions FROM quiz_scores WHERE player_id = ? AND session_id = ? ORDER BY id DESC LIMIT 1',
       [player_id, session_id]
     );
     const quiz = quizRows[0] || {};
-    let cp1Exact = 0;
-    if (quiz.total_questions > 0 && quiz.correct_answers != null) {
-      cp1Exact = (quiz.correct_answers / quiz.total_questions) * CP_WEIGHT;
-    } else if (quiz.score > 0) {
-      // Fallback: normalize against max quiz score in session
-      const [[{ maxQuiz }]] = await db.query(
-        'SELECT COALESCE(MAX(score), 1) as maxQuiz FROM quiz_scores WHERE session_id = ?',
-        [session_id]
-      );
-      cp1Exact = (quiz.score / Math.max(1, maxQuiz)) * CP_WEIGHT;
-    }
+    const cp1Pct = (quiz.total_questions > 0)
+      ? Math.min(100, ((quiz.score || 0) / (quiz.total_questions * 100)) * 100)
+      : 0;
+    const cp1Exact = (cp1Pct / 100) * CP_WEIGHT;
 
-    // ── CP2 score: crossword (full marks if completed) ───────────────────
-    const cp2Done = progress.find(p => p.checkpoint_number === 2)?.completed;
-    const cp2Exact = cp2Done ? CP_WEIGHT : 0;
+    // ── CP2 score: crossword — same final score as the crossword's own result
+    //    (base accuracy + speed bonus), already 0-100.
+    const [cwRows] = await db.query(
+      'SELECT score FROM crossword_scores WHERE player_id = ? AND session_id = ? ORDER BY score DESC LIMIT 1',
+      [player_id, session_id]
+    );
+    const cp2Pct = Math.min(100, cwRows[0]?.score || 0);
+    const cp2Exact = (cp2Pct / 100) * CP_WEIGHT;
 
-    // ── CP3 score: food game ─────────────────────────────────────────────
+    // ── CP3 score: food game — (raw score / (2 x session passing score)) x 100
+    const [cp3SettingsRows] = await db.query(
+      'SELECT target_score FROM cp3_settings WHERE session_id = ?', [session_id]
+    );
+    const passingScore = (cp3SettingsRows[0]?.target_score && cp3SettingsRows[0].target_score > 0)
+      ? cp3SettingsRows[0].target_score
+      : 1000;
     const [cp3Rows] = await db.query(
       'SELECT score FROM cp3_scores WHERE player_id = ? AND session_id = ? ORDER BY id DESC LIMIT 1',
       [player_id, session_id]
     );
     const cp3Raw = cp3Rows[0]?.score || 0;
-    let cp3Exact = 0;
-    if (cp3Raw > 0) {
-      const [[{ maxCP3 }]] = await db.query(
-        'SELECT COALESCE(MAX(score), 1) as maxCP3 FROM cp3_scores WHERE session_id = ?',
-        [session_id]
-      );
-      cp3Exact = Math.min(CP_WEIGHT, (cp3Raw / Math.max(1, maxCP3)) * CP_WEIGHT);
-    }
+    const cp3Pct = cp3Raw > 0 ? Math.min(100, (cp3Raw / (2 * passingScore)) * 100) : 0;
+    const cp3Exact = (cp3Pct / 100) * CP_WEIGHT;
 
     // ── Overall score ────────────────────────────────────────────────────
     const totalExact = cp1Exact + cp2Exact + cp3Exact;
-    const score = totalExact >= 99.5 ? 100 : Math.floor(totalExact);
+    const score = Math.round(totalExact);
 
     const completedCount = progress.filter(p => p.completed).length;
     const completedAtValues = progress

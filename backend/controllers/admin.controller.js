@@ -110,7 +110,7 @@ const computePlayerMarks = (r) => {
     cp1_mark: Math.round(cp1Exact), cp1_pct: Math.round(cp1Pct * 10) / 10,
     cp2_mark: Math.round(cp2Exact), cp2_pct: Math.round(cp2Pct * 10) / 10,
     cp3_mark: Math.round(cp3Exact), cp3_pct: Math.round(cp3Pct * 10) / 10,
-    total_mark: totalExact >= 99.5 ? 100 : Math.floor(totalExact),
+    total_mark: Math.round(totalExact),
   };
 };
 
