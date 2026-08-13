@@ -27,7 +27,7 @@ const CharacterPreview = ({ character }) => {
                         nickname: '',
                         showName: false,
                     });
-                    previewCharacter.playerGraphic.setScale(2.3);
+                    previewCharacter.playerGraphic.setScale(1.7);
                 },
             },
 

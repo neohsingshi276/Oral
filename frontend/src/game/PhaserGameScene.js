@@ -355,6 +355,23 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.shoeL = character.shoeL;
     this.shoeR = character.shoeR;
     this.bodyPart = character.bodyPart;
+    this.sockL = character.sockL;
+    this.sockR = character.sockR;
+
+    this.sleeveL = character.sleeveL;
+    this.sleeveR = character.sleeveR;
+
+    this.handL = character.handL;
+    this.handR = character.handR;
+
+    this.collarL = character.collarL;
+    this.collarR = character.collarR;
+
+    this.shirtButton2 = character.shirtButton2;
+    this.bottomPart = character.bottomPart;
+    this.strapL = character.strapL;
+    this.strapR = character.strapR;
+    this.shortsLine = character.shortsLine;
     this.shirtDetail = character.shirtDetail;
     this.armL = character.armL;
     this.armR = character.armR;
@@ -801,7 +818,56 @@ export default class PhaserGameScene extends Phaser.Scene {
   }
 
   updatePlayerOpacity() {
-    const parts = [
+    const isBehindUpperObject =
+      this.treeCollisions &&
+      this.treeCollisions.size > 0;
+
+    // Everything below the head disappears
+    const hideParts = [
+      this.playerShadow,
+
+      this.bodyPart,
+      this.bottomPart,
+
+      this.strapL,
+      this.strapR,
+      this.shortsLine,
+
+      this.sleeveL,
+      this.sleeveR,
+
+      this.armL,
+      this.armR,
+
+      this.handL,
+      this.handR,
+
+      this.collarL,
+      this.collarR,
+
+      this.shirtDetail,
+      this.shirtButton2,
+
+      this.legL,
+      this.legR,
+
+      this.sockL,
+      this.sockR,
+
+      this.shoeL,
+      this.shoeR,
+
+      this.backpack,
+    ];
+
+    hideParts.forEach(part => {
+      if (part) {
+        part.setAlpha(isBehindUpperObject ? 0.2 : 1);
+      }
+    });
+
+    // Head + hair + face ALWAYS visible
+    const alwaysVisibleParts = [
       this.headPart,
       this.hairBack,
       this.hairFront,
@@ -815,53 +881,12 @@ export default class PhaserGameScene extends Phaser.Scene {
       this.blushL,
       this.blushR,
       this.mouth,
-      this.bodyPart,
-      this.shirtDetail,
-      this.armL,
-      this.armR,
-      this.legL,
-      this.legR,
-      this.shoeL,
-      this.shoeR,
-      this.backpack,
     ];
 
-    parts.forEach(part => {
+    alwaysVisibleParts.forEach(part => {
       if (part) {
         part.setAlpha(1);
       }
-    });
-
-    if (!this.treeCollisions || this.treeCollisions.size === 0) {
-      return;
-    }
-
-    parts.forEach(part => {
-      if (!part) return;
-
-      const partBounds = part.getBounds();
-
-      this.matter.world.localWorld.bodies.forEach(body => {
-        if (body.label !== 'tree') return;
-        if (!this.treeCollisions.has(body.id)) return;
-
-        const treeBounds = {
-          left: body.bounds.min.x,
-          right: body.bounds.max.x,
-          top: body.bounds.min.y,
-          bottom: body.bounds.max.y,
-        };
-
-        const isOverlapping =
-          partBounds.right > treeBounds.left &&
-          partBounds.left < treeBounds.right &&
-          partBounds.bottom > treeBounds.top &&
-          partBounds.top < treeBounds.bottom;
-
-        if (isOverlapping) {
-          part.setAlpha(0.45);
-        }
-      });
     });
   }
 
