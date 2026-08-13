@@ -26,7 +26,7 @@ const bm = {
     statTwoValue: '3 Checkpoint',
     statTwoLabel: 'Pengembaraan Menanti!',
     cards: [
-      { title: 'Video Pendidikan', text: 'Tonton video pendidikan yang menarik di setiap checkpoint..' },
+      { title: 'Video Pendidikan', text: 'Tonton video pendidikan yang menarik di setiap checkpoint.' },
       { title: 'Aktiviti Pendidikan', text: 'Selesaikan aktiviti pendidikan yang menyeronokkan sepanjang pengembaraan anda.' },
       { title: 'Sijil Pencapaian', text: 'Selesaikan ketiga-tiga checkpoint untuk mendapatkan sijil anda.' },
     ],
