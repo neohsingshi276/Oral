@@ -892,17 +892,17 @@ const GamePage = () => {
 
                 {/* Arrow indicators for Step 1 */}
                 {page.arrows && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem' }}>
                     {page.arrows.map((arrow, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', background: '#fff', borderRadius: '13px', padding: '0.6rem 0.9rem', border: `1.5px solid ${arrow.color}33`, boxShadow: `0 2px 6px ${arrow.color}10` }}>
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#fff', borderRadius: '14px', padding: '0.6rem 1rem', border: `1.5px solid ${arrow.color}33`, boxShadow: `0 2px 6px ${arrow.color}10` }}>
                         {arrow.img ? (
-                          <img src={arrow.img} alt={arrow.label} style={{ width: '44px', height: '44px', objectFit: 'contain', flexShrink: 0 }} />
+                          <img src={arrow.img} alt={arrow.label} style={{ width: '68px', height: '68px', objectFit: 'contain', flexShrink: 0 }} />
                         ) : (
-                          <div style={{ width: '36px', height: '36px', borderRadius: '9px', background: arrow.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 900 }}>➔</span>
+                          <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: arrow.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 900 }}>➔</span>
                           </div>
                         )}
-                        <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1e293b' }}>{arrow.label}</span>
+                        <span style={{ fontSize: '1.08rem', fontWeight: 700, color: '#1e293b' }}>{arrow.label}</span>
                       </div>
                     ))}
                   </div>
