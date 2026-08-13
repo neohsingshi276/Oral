@@ -85,8 +85,8 @@ const HomePage = () => {
           align-items: center;
           justify-content: space-between;
           gap: 4rem;
-          min-height: 80vh;
-          margin-top: 2rem;
+          min-height: 75vh;
+          margin-top: 0;
         }
 
         .hero-content {
@@ -96,6 +96,7 @@ const HomePage = () => {
           flex-direction: column;
           gap: 1.5rem;
           animation: slideUp 0.8s ease-out forwards;
+          transform: translateY(-35px);
         }
 
         @keyframes slideUp {
@@ -136,12 +137,24 @@ const HomePage = () => {
           background-clip: text;
         }
 
+        .hero-description {
+          max-width: 520px;
+        }
+
+        .hero-sub {
+          font-size: 1.5rem;
+          color: #01306B;
+          line-height: 1.5;
+          font-weight: 600;
+          margin: 0 0 1.5rem 0;
+        }
+
         .hero-subtitle {
-          font-size: 1.10rem;
+          font-size: 1.1rem;
           color: #475569;
           line-height: 1.7;
           font-weight: 400;
-          max-width: 500px;
+          margin: 0;
         }
 
         .hero-actions {
@@ -471,10 +484,15 @@ const HomePage = () => {
                 <span className="text-gradient">Gigi Sihat</span>
               </h1>
 
-              <p className="hero-subtitle">
-                <i>{t('home.sub')}</i> <br />
-                {t('home.subtitle')}
-              </p>
+              <div className="hero-description">
+                <p className="hero-sub">
+                  <i>{t('home.sub')}</i>
+                </p>
+
+                <p className="hero-subtitle">
+                  {t('home.subtitle')}
+                </p>
+              </div>
 
               <div className="hero-actions">
                 <Link to="/join" className="btn btn-primary">

@@ -79,20 +79,20 @@ export const CHECKPOINTS = [
 
 // Concluding video — shown after all 3 checkpoints are done, before the congrats screen
 export const CONCLUDING_VIDEO_IDS = {
-  bm: 'hYig94ALazM',
-  bi: '2Gs2o_YEcYk',
+  bm: 'VMsyEQEaTAA',
+  bi: 'tCgOIAbxGhY',
 };
 
 // Video IDs keyed by language ('bm' = Bahasa Melayu, 'bi' = Bahasa Inggeris)
 export const CHECKPOINT_VIDEO_IDS = {
   bm: {
-    1: 'LqyiRPbXwsw',
-    2: 'qec7yX56Rjk',
-    3: 'z_KdORV4TSs',
+    1: '7YrApDoBF_g',
+    2: 'Qe510xQYCfc',
+    3: 'VlinuhHNon8',
   },
   bi: {
-    1: 'phXLxdkYmfU',
-    2: 'eQ9drrprp6s',
-    3: 'cZo2-fxh89w',
+    1: 'twb7z8VZ0VQ',
+    2: '8R9MPt58aT8',
+    3: '1bpTz684PjA',
   },
 };
