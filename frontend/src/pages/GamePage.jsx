@@ -2,6 +2,9 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import cp1Photo from '../assets/cp1.jpg';
 import cp2Photo from '../assets/cp2-crossword.png';
 import cp3Photo from '../assets/cp3.jpg';
+import c1Img from '../assets/C1.png';
+import c2Img from '../assets/C2.png';
+import c3Img from '../assets/C3.png';
 import { useParams, useNavigate } from 'react-router-dom';
 import GameCanvas from '../game/GameCanvas';
 import { CHECKPOINT_VIDEO_IDS, CONCLUDING_VIDEO_IDS } from '../game/gameConfig';
@@ -584,9 +587,9 @@ const GamePage = () => {
   const mapTutorialPages = [
     {
       icon: '➡️', title: t('game.step1Title'), desc: t('game.step1Desc'), bg: '#eff6ff', accent: '#2563eb', arrows: [
-        { color: '#2563eb', label: t('game.step1Blue') },
-        { color: '#7B2FBE', label: t('game.step1Purple') },
-        { color: '#dc2626', label: t('game.step1Red') },
+        { color: '#2563eb', label: t('game.step1Blue'), img: c1Img },
+        { color: '#7B2FBE', label: t('game.step1Purple'), img: c2Img },
+        { color: '#dc2626', label: t('game.step1Red'), img: c3Img },
       ]
     },
     { icon: '🔢', title: t('game.step2Title'), desc: t('game.step2Desc'), bg: '#f0fdf4', accent: '#16a34a' },
@@ -891,10 +894,14 @@ const GamePage = () => {
                 {page.arrows && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1rem' }}>
                     {page.arrows.map((arrow, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', background: '#fff', borderRadius: '13px', padding: '0.7rem 1rem', border: `1.5px solid ${arrow.color}33`, boxShadow: `0 2px 6px ${arrow.color}10` }}>
-                        <div style={{ width: '36px', height: '36px', borderRadius: '9px', background: arrow.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 900 }}>➔</span>
-                        </div>
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', background: '#fff', borderRadius: '13px', padding: '0.6rem 0.9rem', border: `1.5px solid ${arrow.color}33`, boxShadow: `0 2px 6px ${arrow.color}10` }}>
+                        {arrow.img ? (
+                          <img src={arrow.img} alt={arrow.label} style={{ width: '44px', height: '44px', objectFit: 'contain', flexShrink: 0 }} />
+                        ) : (
+                          <div style={{ width: '36px', height: '36px', borderRadius: '9px', background: arrow.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 900 }}>➔</span>
+                          </div>
+                        )}
                         <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1e293b' }}>{arrow.label}</span>
                       </div>
                     ))}
