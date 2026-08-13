@@ -898,8 +898,8 @@ const GamePage = () => {
 
                 {/* Description row — mascot + text side by side for non-arrow steps */}
                 {page.desc && !isArrowStep && currentMascot && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '80px minmax(0, 1fr)', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                    <img src={currentMascot} alt="" aria-hidden="true" style={{ width: '80px', height: '80px', objectFit: 'contain', filter: 'drop-shadow(0 6px 10px rgba(15,23,42,0.18))', borderRadius: '14px' }} />
+                  <div style={{ display: 'grid', gridTemplateColumns: '110px minmax(0, 1fr)', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                    <img src={currentMascot} alt="" aria-hidden="true" style={{ width: '110px', height: '110px', objectFit: 'contain', filter: 'drop-shadow(0 6px 10px rgba(15,23,42,0.18))', borderRadius: '14px' }} />
                     <div style={{ background: page.bg, borderRadius: '16px', padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.45rem', textAlign: 'left', border: `1.5px solid ${page.accent || '#e2e8f0'}33` }}>
                       {page.desc.split(/(?<=[.!])\s+/).map((sentence, idx) => (
                         <p key={idx} style={{ margin: 0, color: '#1e293b', fontSize: '1.05rem', lineHeight: 1.4, fontWeight: 800 }}>{sentence}</p>
@@ -941,23 +941,15 @@ const GamePage = () => {
                   </div>
                 )}
 
-                {/* Checkpoint list for Step 4 — with mascot */}
+                {/* Checkpoint list for Step 4 */}
                 {page.checkpoints && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1rem' }}>
-                    {currentMascot && (
-                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.25rem' }}>
-                        <img src={currentMascot} alt="" aria-hidden="true" style={{ width: '76px', height: '76px', objectFit: 'contain', filter: 'drop-shadow(0 6px 10px rgba(15,23,42,0.18))', borderRadius: '14px' }} />
+                    {page.checkpoints.map((cp, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', background: '#fff', borderRadius: '13px', padding: '0.7rem 1rem', border: `1.5px solid ${cp.color}33`, boxShadow: `0 2px 6px ${cp.color}10` }}>
+                        <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: cp.color, flexShrink: 0, boxShadow: `0 2px 6px ${cp.color}44` }} />
+                        <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#1e293b' }}>Checkpoint {i + 1}: <span style={{ color: cp.color }}>{cp.label}</span></span>
                       </div>
-                    )}
-                    {page.checkpoints.map((cp, i) => {
-                      const cpMascots = [playquizImg, puzzleeImg, trolleyImg];
-                      return (
-                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '48px minmax(0, 1fr)', alignItems: 'center', gap: '0.7rem', background: '#fff', borderRadius: '14px', padding: '0.55rem 0.85rem', border: `1.5px solid ${cp.color}33`, boxShadow: `0 3px 8px ${cp.color}12` }}>
-                          <img src={cpMascots[i]} alt="" style={{ width: '44px', height: '44px', objectFit: 'contain', borderRadius: '10px', filter: 'drop-shadow(0 3px 5px rgba(15,23,42,0.14))' }} />
-                          <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#1e293b' }}>Checkpoint {i + 1}: <span style={{ color: cp.color }}>{cp.label}</span></span>
-                        </div>
-                      );
-                    })}
+                    ))}
                   </div>
                 )}
 
