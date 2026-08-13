@@ -845,27 +845,39 @@ const GamePage = () => {
 
         return (
           <div style={{ ...s.overlay, overflowY: 'auto', padding: '1rem' }}>
-            <div style={{ ...s.doneCard, maxWidth: '560px', width: '100%', maxHeight: '88vh', overflowY: 'auto', padding: 0, overflow: 'hidden', position: 'relative', margin: 'auto', borderRadius: '22px', boxShadow: '0 20px 50px rgba(0,0,0,0.4)' }}>
+            <div style={{ ...s.doneCard, maxWidth: '540px', width: '100%', maxHeight: '88vh', overflowY: 'auto', padding: 0, overflow: 'hidden', position: 'relative', margin: 'auto', borderRadius: '24px', boxShadow: '0 25px 60px rgba(0,0,0,0.45)', border: '2px solid rgba(255,255,255,0.4)' }}>
 
-              {/* ── Colored top banner ── */}
-              <div style={{ background: page.bg, padding: '1.25rem 1.5rem 1rem', textAlign: 'center', borderBottom: `3px solid ${page.accent || '#e2e8f0'}` }}>
+              {/* ── Illustrated playful top banner ── */}
+              <div style={{ background: 'linear-gradient(180deg, #dbeafe 0%, #eff6ff 100%)', padding: '1.4rem 1.5rem 1.1rem', textAlign: 'center', borderBottom: `3px solid ${page.accent || '#93c5fd'}`, position: 'relative', overflow: 'hidden' }}>
+
+                {/* Background subtle visual glow */}
+                <div style={{ position: 'absolute', top: '-20px', left: '-20px', right: '-20px', bottom: 0, opacity: 0.12, pointerEvents: 'none', background: 'radial-gradient(circle at 20% 20%, #3b82f6 0%, transparent 50%), radial-gradient(circle at 80% 30%, #8b5cf6 0%, transparent 50%)' }} />
 
                 {/* Step counter pill */}
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)', borderRadius: '999px', padding: '0.3rem 0.95rem', marginBottom: '0.6rem', fontSize: '0.95rem', fontWeight: 800, color: accentColor, border: `1.5px solid ${accentColor}44`, boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: '#ffffff', borderRadius: '999px', padding: '0.35rem 1rem', marginBottom: '0.75rem', fontSize: '0.95rem', fontWeight: 800, color: accentColor, border: `2px solid ${accentColor}33`, boxShadow: '0 4px 12px rgba(0,0,0,0.06)', position: 'relative', zIndex: 1 }}>
                   <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: accentColor, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 900 }}>{stepNum}</span>
                   <span>{language === 'bi' ? `Step ${stepNum} of ${totalSteps}` : `Langkah ${stepNum} daripada ${totalSteps}`}</span>
                 </div>
 
-                {/* Big icon / badge */}
+                {/* Big 3D Icon Badge */}
                 {page.badge ? (
-                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '52px', height: '52px', borderRadius: '15px', background: page.accent, color: '#fff', fontWeight: 900, fontSize: '1.3rem', marginBottom: '0.4rem', boxShadow: `0 6px 18px ${page.accent}44` }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '58px', height: '58px', borderRadius: '18px', background: page.accent, color: '#fff', fontWeight: 900, fontSize: '1.4rem', marginBottom: '0.5rem', boxShadow: `0 8px 24px ${page.accent}55`, border: '3px solid #fff', position: 'relative', zIndex: 1 }}>
                     {page.badge}
                   </div>
                 ) : (
-                  <div style={{ fontSize: '3.6rem', lineHeight: 1, marginBottom: '0.5rem' }}>{page.icon}</div>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '70px', height: '70px', borderRadius: '22px', background: '#ffffff', boxShadow: `0 10px 25px ${accentColor}33`, marginBottom: '0.6rem', border: `3px solid ${accentColor}44`, position: 'relative', zIndex: 1 }}>
+                    <span style={{ fontSize: '3.2rem', lineHeight: 1 }}>{page.icon}</span>
+                  </div>
                 )}
 
-                <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#1e3a5f', margin: 0, lineHeight: 1.2 }}>{page.title}</h2>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#1e3a5f', margin: '0 0 0.4rem', lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.5px', textShadow: '0 1px 2px rgba(0,0,0,0.05)', position: 'relative', zIndex: 1 }}>{page.title}</h2>
+
+                {/* Decorative divider line with dot */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', margin: '0.2rem auto 0', maxWidth: '200px', opacity: 0.75 }}>
+                  <div style={{ flex: 1, height: '2px', background: accentColor }} />
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: accentColor }} />
+                  <div style={{ flex: 1, height: '2px', background: accentColor }} />
+                </div>
               </div>
 
               {/* ── Card body ── */}
@@ -873,51 +885,93 @@ const GamePage = () => {
 
                 {/* Photo slot — only renders when a photo URL is set */}
                 {currentPhoto && (
-                  <div style={{ width: '100%', height: '140px', borderRadius: '14px', overflow: 'hidden', marginBottom: '1rem' }}>
+                  <div style={{ width: '100%', height: '140px', borderRadius: '16px', overflow: 'hidden', marginBottom: '1rem', boxShadow: '0 4px 14px rgba(0,0,0,0.1)' }}>
                     <img src={currentPhoto} alt="Step photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 )}
 
-                {/* Description row — each sentence on its own line */}
+                {/* Description card box — each sentence on its own line */}
                 {page.desc && (
-                  <div style={{ background: page.bg, borderRadius: '15px', padding: '1rem 1.15rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'left', marginBottom: '1rem', border: `1.5px solid ${page.accent || '#e2e8f0'}33` }}>
+                  <div style={{ background: '#f0f9ff', borderRadius: '16px', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.45rem', textAlign: 'left', marginBottom: '1rem', border: '2px solid #bae6fd', boxShadow: '0 2px 8px rgba(186,230,253,0.3)' }}>
                     {page.desc.split(/(?<=[.!])\s+/).map((sentence, idx) => (
-                      <p key={idx} style={{ margin: 0, color: '#1e293b', fontSize: '1.15rem', lineHeight: 1.5, fontWeight: 700 }}>{sentence}</p>
+                      <p key={idx} style={{ margin: 0, color: '#0369a1', fontSize: '1.12rem', lineHeight: 1.5, fontWeight: 700 }}>{sentence}</p>
                     ))}
                   </div>
                 )}
 
                 {/* Arrow indicators for Step 1 */}
                 {page.arrows && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1rem' }}>
-                    {page.arrows.map((arrow, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', background: '#fff', borderRadius: '13px', padding: '0.7rem 1rem', border: `1.5px solid ${arrow.color}33`, boxShadow: `0 2px 6px ${arrow.color}10` }}>
-                        <div style={{ width: '36px', height: '36px', borderRadius: '9px', background: arrow.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 900 }}>➔</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem' }}>
+                    {page.arrows.map((arrow, i) => {
+                      const gradient = i === 0
+                        ? 'linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%)'
+                        : i === 1
+                        ? 'linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)'
+                        : 'linear-gradient(135deg, #b91c1c 0%, #ef4444 100%)';
+                      return (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: gradient, borderRadius: '16px', padding: '0.8rem 1.1rem', color: '#fff', boxShadow: '0 4px 14px rgba(0,0,0,0.12)', border: '1px solid rgba(255,255,255,0.25)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(255,255,255,0.22)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 900, border: '1.5px solid rgba(255,255,255,0.4)', flexShrink: 0 }}>
+                              ➔
+                            </div>
+                            <div style={{ textAlign: 'left' }}>
+                              <span style={{ fontSize: '1.08rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>{arrow.label}</span>
+                            </div>
+                          </div>
+                          <div style={{ background: '#fff', color: arrow.color, width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.95rem', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', flexShrink: 0 }}>
+                            📍
+                          </div>
                         </div>
-                        <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1e293b' }}>{arrow.label}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
                 {/* Checkpoint list for Step 4 */}
                 {page.checkpoints && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1rem' }}>
-                    {page.checkpoints.map((cp, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', background: '#fff', borderRadius: '13px', padding: '0.7rem 1rem', border: `1.5px solid ${cp.color}33`, boxShadow: `0 2px 6px ${cp.color}10` }}>
-                        <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: cp.color, flexShrink: 0, boxShadow: `0 2px 6px ${cp.color}44` }} />
-                        <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#1e293b' }}>Checkpoint {i + 1}: <span style={{ color: cp.color }}>{cp.label}</span></span>
-                      </div>
-                    ))}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem' }}>
+                    {page.checkpoints.map((cp, i) => {
+                      const gradient = i === 0
+                        ? 'linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%)'
+                        : i === 1
+                        ? 'linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%)'
+                        : 'linear-gradient(135deg, #b91c1c 0%, #ef4444 100%)';
+                      const cpIcon = i === 0 ? '📝' : i === 1 ? '🧩' : '🍎';
+                      return (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: gradient, borderRadius: '16px', padding: '0.8rem 1.1rem', color: '#fff', boxShadow: '0 4px 14px rgba(0,0,0,0.12)', border: '1px solid rgba(255,255,255,0.25)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(255,255,255,0.22)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0, border: '1.5px solid rgba(255,255,255,0.4)' }}>
+                              {cpIcon}
+                            </div>
+                            <div style={{ textAlign: 'left' }}>
+                              <span style={{ fontSize: '1.08rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>Checkpoint {i + 1}</span>
+                              <span style={{ fontSize: '0.95rem', opacity: 0.95, fontWeight: 700 }}>{cp.label}</span>
+                            </div>
+                          </div>
+                          <div style={{ background: '#fff', color: '#1e293b', padding: '0.25rem 0.6rem', borderRadius: '999px', fontWeight: 800, fontSize: '0.85rem', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', flexShrink: 0 }}>
+                            CP {i + 1}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
                 {page.note && (
-                  <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '13px', padding: '0.85rem 1rem', color: '#15803d', fontSize: '1.05rem', fontWeight: 700, marginBottom: '1rem' }}>
+                  <div style={{ background: '#f0fdf4', border: '2px solid #86efac', borderRadius: '16px', padding: '0.85rem 1rem', color: '#15803d', fontSize: '1.05rem', fontWeight: 700, marginBottom: '1rem', boxShadow: '0 2px 8px rgba(134,239,172,0.3)' }}>
                     🏆 {page.note}
                   </div>
                 )}
+
+                {/* Child-friendly tip bubble */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'linear-gradient(135deg, #fffbebfb, #fef3c7)', border: '2px dashed #fcd34d', borderRadius: '16px', padding: '0.75rem 1rem', marginBottom: '1rem', textAlign: 'left' }}>
+                  <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>💡</span>
+                  <span style={{ fontSize: '0.92rem', color: '#92400e', fontWeight: 700, lineHeight: 1.4 }}>
+                    {language === 'bi'
+                      ? 'Tip: Pay attention to the colours of each arrow. It will guide you to the right place!'
+                      : 'Petunjuk: Perhatikan warna setiap anak panah. Ia akan membimbing anda ke tempat yang betul!'}
+                  </span>
+                </div>
 
                 {/* Dot progress */}
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', margin: '0 0 1rem' }}>
