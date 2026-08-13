@@ -6,6 +6,7 @@ import c1Img from '../assets/C1.png';
 import c2Img from '../assets/C2.png';
 import c3Img from '../assets/C3.png';
 import forestImg from '../assets/forest.png';
+import timerImg from '../assets/timer.png';
 import { useParams, useNavigate } from 'react-router-dom';
 import GameCanvas from '../game/GameCanvas';
 import { CHECKPOINT_VIDEO_IDS, CONCLUDING_VIDEO_IDS } from '../game/gameConfig';
@@ -909,9 +910,12 @@ const GamePage = () => {
                         <span style={{ fontSize: '1.02rem', fontWeight: 850, color: '#1e293b', lineHeight: 1.3, textAlign: 'left' }}>{arrow.label}</span>
                       </div>
                     ))}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#fff9db', border: '1.5px solid #facc15', borderRadius: '14px', padding: '0.75rem 0.9rem', color: '#854d0e', fontSize: '0.92rem', fontWeight: 800, textAlign: 'left' }}>
-                      <span style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#facc15', color: '#1e293b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '1.1rem' }}>!</span>
-                      <span>{page.desc}</span>
+                    <div style={{ display: 'grid', gridTemplateColumns: '62px minmax(0, 1fr)', alignItems: 'center', gap: '0.75rem', marginTop: '0.1rem' }}>
+                      <img src={timerImg} alt="" aria-hidden="true" style={{ width: '62px', height: '62px', objectFit: 'contain', filter: 'drop-shadow(0 6px 8px rgba(15,23,42,0.16))' }} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', background: '#f8fdff', border: '1.5px solid #bae6fd', borderRadius: '14px', padding: '0.65rem 0.8rem', color: '#1e3a5f', fontSize: '0.88rem', fontWeight: 800, textAlign: 'left', boxShadow: '0 4px 12px rgba(14,165,233,0.1)' }}>
+                        <span style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#fff7cc', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '1.05rem' }}>💡</span>
+                        <span>{page.desc}</span>
+                      </div>
                     </div>
                   </div>
                 )}
