@@ -73,7 +73,7 @@ export const resolveSpawnPosition = (apiRow, playerId) => {
 export const CHECKPOINTS = [
   { id: 1, x: 3056, y: 4928, radius: 60, color: 0x7B2FBE, label: 'Checkpoint 1' },
   { id: 2, x: 2800, y: 2928, radius: 60, color: 0xCC3380, label: 'Checkpoint 2' },
-  { id: 3, x: 2880, y: 688, radius: 60, color: 0xE85D04, label: 'Checkpoint 3' },
+  { id: 3, x: 2720, y: 688, radius: 60, color: 0xE85D04, label: 'Checkpoint 3' },
   { id: '🏆', x: 2320, y: 448, radius: 60, color: 0xD4A843, label: 'Penamat / Finish Point' },
 ];
 
