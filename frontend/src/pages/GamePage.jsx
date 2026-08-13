@@ -947,8 +947,8 @@ const GamePage = () => {
                     {page.checkpoints.map((cp, i) => {
                       const cpMascots = [playquizImg, puzzleeImg, trolleyImg];
                       return (
-                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '48px minmax(0, 1fr)', alignItems: 'center', gap: '0.7rem', background: '#fff', borderRadius: '14px', padding: '0.55rem 0.85rem', border: `1.5px solid ${cp.color}33`, boxShadow: `0 3px 8px ${cp.color}12` }}>
-                          <img src={cpMascots[i]} alt="" style={{ width: '44px', height: '44px', objectFit: 'contain', borderRadius: '10px', filter: 'drop-shadow(0 3px 5px rgba(15,23,42,0.14))' }} />
+                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '72px minmax(0, 1fr)', alignItems: 'center', gap: '0.7rem', background: '#fff', borderRadius: '14px', padding: '0.55rem 0.85rem', border: `1.5px solid ${cp.color}33`, boxShadow: `0 3px 8px ${cp.color}12` }}>
+                          <img src={cpMascots[i]} alt="" style={{ width: '68px', height: '68px', objectFit: 'contain', borderRadius: '10px', filter: 'drop-shadow(0 3px 5px rgba(15,23,42,0.14))' }} />
                           <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#1e293b' }}>Checkpoint {i + 1}: <span style={{ color: cp.color }}>{cp.label}</span></span>
                         </div>
                       );
