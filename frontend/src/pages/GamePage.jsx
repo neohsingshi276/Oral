@@ -1328,7 +1328,7 @@ const GamePage = () => {
                   <div style={{ textAlign: 'left', background: '#f8fafc', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
                     {(() => {
                       const settingsObj = activeCP === 1 ? quizSettings : activeCP === 2 ? crosswordSettings : null;
-                      const minCorrect = settingsObj?.minimum_correct ?? (activeCP === 1 ? 8 : 8);
+                      const minCorrect = (settingsObj?.minimum_correct !== undefined && settingsObj?.minimum_correct !== null) ? Number(settingsObj.minimum_correct) : 8;
                       const totalItems = activeCP === 1 ? (settingsObj?.question_count || 10) : (settingsObj?.word_count || 8);
                       const rawInstructions = activeCP === 1 ? t('game.cp1Instructions') : activeCP === 2 ? t('game.cp2Instructions') : t('game.cp3Instructions');
                       const instructions = Array.isArray(rawInstructions) ? rawInstructions : [];

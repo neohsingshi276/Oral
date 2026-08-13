@@ -9,7 +9,7 @@ const getSessionQuestions = async (req, res) => {
     const rawCfg = settings[0] || { timer_seconds: 15, question_order: 'shuffle', question_count: 10, minimum_correct: 8, selected_questions: null };
     const cfg = {
       ...rawCfg,
-      minimum_correct: (rawCfg.minimum_correct && parseInt(rawCfg.minimum_correct, 10) > 0) ? parseInt(rawCfg.minimum_correct, 10) : 8,
+      minimum_correct: (rawCfg.minimum_correct !== undefined && rawCfg.minimum_correct !== null && !isNaN(Number(rawCfg.minimum_correct))) ? Number(rawCfg.minimum_correct) : 8,
     };
 
     let query = 'SELECT id, question, question_bi, question_type, image_url, options, options_bi, correct_answer FROM quiz_questions';
@@ -354,7 +354,7 @@ const getQuizSettings = async (req, res) => {
 
 const saveQuizSettings = async (req, res) => {
   const { session_id, timer_seconds, question_order, question_count, minimum_correct, selected_questions } = req.body;
-  const minCorrectVal = (minimum_correct && parseInt(minimum_correct, 10) > 0) ? parseInt(minimum_correct, 10) : 8;
+  const minCorrectVal = (minimum_correct !== undefined && minimum_correct !== null && !isNaN(Number(minimum_correct))) ? Number(minimum_correct) : 8;
   try {
     await db.query(
       `INSERT INTO quiz_settings (session_id, timer_seconds, question_order, question_count, minimum_correct, selected_questions)

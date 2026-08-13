@@ -271,7 +271,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
   );
 
   if (phase === 'result') {
-    const minToPass = (settings?.minimum_correct && Number(settings.minimum_correct) > 0) ? Number(settings.minimum_correct) : 8;
+    const minToPass = (settings?.minimum_correct !== undefined && settings?.minimum_correct !== null && !isNaN(Number(settings.minimum_correct))) ? Number(settings.minimum_correct) : 8;
     const hasPassed = result.correct >= minToPass;
 
     return (
