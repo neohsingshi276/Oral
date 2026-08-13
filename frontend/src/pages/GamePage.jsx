@@ -841,6 +841,7 @@ const GamePage = () => {
         const accentColor = page.accent || '#2563eb';
         const stepNum = tutorialPage + 1;
         const totalSteps = mapTutorialPages.length;
+        const isArrowStep = Boolean(page.arrows);
 
         // === PHOTO TEMPLATES — add a photo URL per tutorial step ===
         const tutorialPhotos = [null, null, null, null, null, null, null];
@@ -848,13 +849,23 @@ const GamePage = () => {
 
         return (
           <div style={{ ...s.overlay, overflowY: 'auto', padding: '1rem' }}>
-            <div style={{ ...s.doneCard, maxWidth: '560px', width: '100%', maxHeight: '88vh', overflowY: 'auto', padding: 0, overflow: 'hidden', position: 'relative', margin: 'auto', borderRadius: '22px', boxShadow: '0 20px 50px rgba(0,0,0,0.4)' }}>
+            <div style={{ ...s.doneCard, maxWidth: '590px', width: '100%', maxHeight: '88vh', overflowY: 'auto', padding: 0, overflow: 'hidden', position: 'relative', margin: 'auto', borderRadius: '24px', boxShadow: '0 22px 56px rgba(0,0,0,0.42)', border: '3px solid rgba(255,255,255,0.75)' }}>
 
               {/* ── Colored top banner ── */}
-              <div style={{ background: page.bg, padding: '1.25rem 1.5rem 1rem', textAlign: 'center', borderBottom: `3px solid ${page.accent || '#e2e8f0'}` }}>
+              <div style={{ background: isArrowStep ? 'linear-gradient(180deg, #dff5ff 0%, #effcff 44%, #e4f8d3 100%)' : page.bg, padding: '1.15rem 1.5rem 1.2rem', textAlign: 'center', borderBottom: `3px solid ${page.accent || '#e2e8f0'}`, position: 'relative', overflow: 'hidden', minHeight: isArrowStep ? '178px' : 'auto' }}>
+
+                {isArrowStep && (
+                  <>
+                    <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '50px', background: 'linear-gradient(180deg, rgba(99,180,92,0), rgba(99,180,92,0.24))' }} />
+                    <div style={{ position: 'absolute', left: '-18px', bottom: '14px', width: '96px', height: '76px', borderRadius: '52% 48% 10px 10px', background: '#43a047', boxShadow: '30px -10px 0 #6fbd45, 56px 8px 0 #2f8f42', opacity: 0.9 }} />
+                    <div style={{ position: 'absolute', right: '-14px', bottom: '18px', width: '88px', height: '58px', borderRadius: '48% 52% 12px 12px', background: '#78be5f', boxShadow: '-38px 10px 0 #4da94e', opacity: 0.92 }} />
+                    <div style={{ position: 'absolute', top: '18px', left: '26px', width: '80px', height: '26px', borderRadius: '999px', background: 'rgba(255,255,255,0.82)', boxShadow: '42px 4px 0 -7px rgba(255,255,255,0.82)' }} />
+                    <div style={{ position: 'absolute', top: '24px', right: '38px', width: '74px', height: '24px', borderRadius: '999px', background: 'rgba(255,255,255,0.78)', boxShadow: '-34px 7px 0 -8px rgba(255,255,255,0.78)' }} />
+                  </>
+                )}
 
                 {/* Step counter pill */}
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)', borderRadius: '999px', padding: '0.3rem 0.95rem', marginBottom: '0.6rem', fontSize: '0.95rem', fontWeight: 800, color: accentColor, border: `1.5px solid ${accentColor}44`, boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)', borderRadius: '999px', padding: '0.32rem 0.95rem', marginBottom: '0.65rem', fontSize: '0.95rem', fontWeight: 800, color: accentColor, border: `1.5px solid ${accentColor}44`, boxShadow: '0 4px 12px rgba(15,23,42,0.12)', position: 'relative', zIndex: 1 }}>
                   <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: accentColor, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 900 }}>{stepNum}</span>
                   <span>{language === 'bi' ? `Step ${stepNum} of ${totalSteps}` : `Langkah ${stepNum} daripada ${totalSteps}`}</span>
                 </div>
@@ -865,14 +876,14 @@ const GamePage = () => {
                     {page.badge}
                   </div>
                 ) : (
-                  <div style={{ fontSize: '3.6rem', lineHeight: 1, marginBottom: '0.5rem' }}>{page.icon}</div>
+                  <div style={isArrowStep ? { width: '74px', height: '74px', borderRadius: '20px', background: `linear-gradient(135deg, ${accentColor}, #38bdf8)`, margin: '0 auto 0.65rem', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', lineHeight: 1, boxShadow: `0 12px 28px ${accentColor}44`, border: '3px solid rgba(255,255,255,0.88)', position: 'relative', zIndex: 1 } : { fontSize: '3.6rem', lineHeight: 1, marginBottom: '0.5rem' }}>{page.icon}</div>
                 )}
 
-                <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#1e3a5f', margin: 0, lineHeight: 1.2 }}>{page.title}</h2>
+                <h2 style={{ fontSize: isArrowStep ? '2rem' : '1.8rem', fontWeight: 900, color: '#1e3a5f', margin: 0, lineHeight: 1.2, textTransform: isArrowStep ? 'uppercase' : 'none', position: 'relative', zIndex: 1 }}>{page.title}</h2>
               </div>
 
               {/* ── Card body ── */}
-              <div style={{ padding: '1rem 1.4rem 1.1rem' }}>
+              <div style={{ padding: '1rem 1.4rem 1.1rem', background: isArrowStep ? 'linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)' : '#fff' }}>
 
                 {/* Photo slot — only renders when a photo URL is set */}
                 {currentPhoto && (
@@ -883,28 +894,36 @@ const GamePage = () => {
 
                 {/* Description row — each sentence on its own line */}
                 {page.desc && (
-                  <div style={{ background: page.bg, borderRadius: '15px', padding: '1rem 1.15rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'left', marginBottom: '1rem', border: `1.5px solid ${page.accent || '#e2e8f0'}33` }}>
+                  <div style={{ background: isArrowStep ? '#eef8ff' : page.bg, borderRadius: '16px', padding: isArrowStep ? '0.85rem 1rem' : '1rem 1.15rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'left', marginBottom: '1rem', border: `1.5px solid ${page.accent || '#e2e8f0'}33`, boxShadow: isArrowStep ? '0 5px 14px rgba(37,99,235,0.1)' : 'none' }}>
                     {page.desc.split(/(?<=[.!])\s+/).map((sentence, idx) => (
-                      <p key={idx} style={{ margin: 0, color: '#1e293b', fontSize: '1.15rem', lineHeight: 1.5, fontWeight: 700 }}>{sentence}</p>
+                      <p key={idx} style={{ margin: 0, color: '#1e293b', fontSize: '1.1rem', lineHeight: 1.45, fontWeight: 800 }}>{sentence}</p>
                     ))}
                   </div>
                 )}
 
                 {/* Arrow indicators for Step 1 */}
                 {page.arrows && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '0.85rem' }}>
                     {page.arrows.map((arrow, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#fff', borderRadius: '14px', padding: '0.6rem 1rem', border: `1.5px solid ${arrow.color}33`, boxShadow: `0 2px 6px ${arrow.color}10` }}>
+                      <div key={i} style={{ display: 'grid', gridTemplateColumns: 'minmax(58px, 78px) 58px minmax(0, 1fr)', alignItems: 'center', gap: '0.65rem', background: '#fff', borderRadius: '16px', padding: '0.55rem 0.75rem', border: `2px solid ${arrow.color}30`, boxShadow: `0 6px 16px ${arrow.color}16`, overflow: 'hidden' }}>
+                        <div style={{ minHeight: '58px', borderRadius: '13px', background: `linear-gradient(135deg, ${arrow.color}, ${arrow.color}cc)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.55rem', fontWeight: 900, boxShadow: 'inset 0 -8px 18px rgba(0,0,0,0.12)' }}>
+                          <span style={{ marginRight: '0.15rem' }}>&#8594;</span>
+                          <span style={{ width: '22px', borderTop: '3px dotted rgba(255,255,255,0.85)' }} />
+                        </div>
                         {arrow.img ? (
-                          <img src={arrow.img} alt={arrow.label} style={{ width: '68px', height: '68px', objectFit: 'contain', flexShrink: 0 }} />
+                          <img src={arrow.img} alt={arrow.label} style={{ width: '58px', height: '58px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 5px 6px rgba(15,23,42,0.16))' }} />
                         ) : (
                           <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: arrow.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <span style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 900 }}>➔</span>
                           </div>
                         )}
-                        <span style={{ fontSize: '1.08rem', fontWeight: 700, color: '#1e293b' }}>{arrow.label}</span>
+                        <span style={{ fontSize: '1.02rem', fontWeight: 850, color: '#1e293b', lineHeight: 1.3, textAlign: 'left' }}>{arrow.label}</span>
                       </div>
                     ))}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#fff9db', border: '1.5px solid #facc15', borderRadius: '14px', padding: '0.75rem 0.9rem', color: '#854d0e', fontSize: '0.92rem', fontWeight: 800, textAlign: 'left' }}>
+                      <span style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#facc15', color: '#1e293b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '1.1rem' }}>!</span>
+                      <span>{page.desc}</span>
+                    </div>
                   </div>
                 )}
 
