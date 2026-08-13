@@ -882,7 +882,6 @@ const GamePage = () => {
                 {/* Description row — only when desc is non-empty */}
                 {page.desc && (
                   <div style={{ background: page.bg, borderRadius: '16px', padding: '1.4rem 1.5rem', display: 'flex', alignItems: 'flex-start', gap: '1.1rem', textAlign: 'left', marginBottom: '1.5rem', border: `1.5px solid ${page.accent || '#e2e8f0'}33` }}>
-                    <span style={{ fontSize: '2.5rem', width: '56px', textAlign: 'center', flexShrink: 0, lineHeight: 1, marginTop: '2px' }}>{page.icon}</span>
                     <p style={{ margin: 0, color: '#1e293b', fontSize: '1.2rem', lineHeight: 1.65, fontWeight: 700 }}>{page.desc}</p>
                   </div>
                 )}
