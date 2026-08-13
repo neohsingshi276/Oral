@@ -944,12 +944,15 @@ const GamePage = () => {
                 {/* Checkpoint list for Step 4 */}
                 {page.checkpoints && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1rem' }}>
-                    {page.checkpoints.map((cp, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', background: '#fff', borderRadius: '13px', padding: '0.7rem 1rem', border: `1.5px solid ${cp.color}33`, boxShadow: `0 2px 6px ${cp.color}10` }}>
-                        <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: cp.color, flexShrink: 0, boxShadow: `0 2px 6px ${cp.color}44` }} />
-                        <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#1e293b' }}>Checkpoint {i + 1}: <span style={{ color: cp.color }}>{cp.label}</span></span>
-                      </div>
-                    ))}
+                    {page.checkpoints.map((cp, i) => {
+                      const cpMascots = [playquizImg, puzzleeImg, trolleyImg];
+                      return (
+                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '48px minmax(0, 1fr)', alignItems: 'center', gap: '0.7rem', background: '#fff', borderRadius: '14px', padding: '0.55rem 0.85rem', border: `1.5px solid ${cp.color}33`, boxShadow: `0 3px 8px ${cp.color}12` }}>
+                          <img src={cpMascots[i]} alt="" style={{ width: '44px', height: '44px', objectFit: 'contain', borderRadius: '10px', filter: 'drop-shadow(0 3px 5px rgba(15,23,42,0.14))' }} />
+                          <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#1e293b' }}>Checkpoint {i + 1}: <span style={{ color: cp.color }}>{cp.label}</span></span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
