@@ -591,9 +591,6 @@ const GamePage = () => {
     },
     { icon: '🔢', title: t('game.step2Title'), desc: t('game.step2Desc'), bg: '#f0fdf4', accent: '#16a34a' },
     { icon: '🎬', title: t('game.step3Title'), desc: t('game.step3Desc'), bg: '#eff6ff', accent: '#2563eb' },
-    { icon: '✅', title: t('game.step4Title'), desc: t('game.step4Desc'), bg: '#f0fdf4', accent: '#16a34a' },
-    { icon: '🔄', title: t('game.step5Title'), desc: t('game.step5Desc'), bg: '#fff7ed', accent: '#ea580c' },
-    { icon: '🏆', title: t('game.step6Title'), desc: t('game.step6Desc'), bg: '#fdf4ff', accent: '#7c3aed' },
     {
       icon: '🦷', title: t('game.step7Title'), desc: '', bg: '#f8fafc', accent: '#1e3a5f', checkpoints: [
         { color: '#2563eb', label: t('game.step7Cp1') },
@@ -601,6 +598,9 @@ const GamePage = () => {
         { color: '#dc2626', label: t('game.step7Cp3') },
       ]
     },
+    { icon: '✅', title: t('game.step4Title'), desc: t('game.step4Desc'), bg: '#f0fdf4', accent: '#16a34a' },
+    { icon: '🔄', title: t('game.step5Title'), desc: t('game.step5Desc'), bg: '#fff7ed', accent: '#ea580c' },
+    { icon: '🏆', title: t('game.step6Title'), desc: t('game.step6Desc'), bg: '#fdf4ff', accent: '#7c3aed' },
   ];
 
   const checkpointHints = {
@@ -949,10 +949,10 @@ const GamePage = () => {
                     <div style={{ marginTop: '0.75rem', color: '#94a3b8', fontSize: '0.95rem', fontWeight: 700, textAlign: 'center' }}>⏱ {t('game.autoNext4')}</div>
                   </>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: '0.75rem' }}>
-                    <button style={{ padding: '1rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1rem', fontWeight: 800, cursor: 'pointer' }} onClick={() => { localStorage.removeItem('player'); navigate('/'); }}>🏠 {t('nav.home')}</button>
-                    <button style={{ padding: '1rem', background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1rem', fontWeight: 800, cursor: 'pointer' }} onClick={() => setTutorialPage(0)}>↺ {t('game.restart')}</button>
-                    <button style={{ padding: '1rem', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.1rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 6px 20px rgba(22,163,74,0.4)' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}>🚀 {t('game.playGame')}</button>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.4fr 1.4fr', gap: '0.5rem' }}>
+                    <button style={{ padding: '0.85rem 0.4rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '0.92rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }} onClick={() => { localStorage.removeItem('player'); navigate('/'); }}>🏠 {t('game.home')}</button>
+                    <button style={{ padding: '0.85rem 0.4rem', background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '0.92rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }} onClick={() => setTutorialPage(0)}>↺ {t('game.restart')}</button>
+                    <button style={{ padding: '0.85rem 0.4rem', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '0.92rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 6px 20px rgba(22,163,74,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}>🚀 {t('game.playGame')}</button>
                   </div>
                 )}
               </div>
@@ -1101,6 +1101,12 @@ const GamePage = () => {
                 <div>
                   <strong style={tut.title}>{t('game.step3Title')}</strong>
                   <p style={tut.desc}>{t('game.step3Desc')}</p>
+                </div>
+              </div>
+              <div style={tut.row('#f8fafc')}>
+                <span style={tut.icon}>🦷</span>
+                <div>
+                  <strong style={tut.title}>{t('game.step7Title')}</strong>
                 </div>
               </div>
               <div style={tut.row('#f0fdf4')}>
