@@ -5,6 +5,7 @@ import cp3Photo from '../assets/cp3.jpg';
 import c1Img from '../assets/C1.png';
 import c2Img from '../assets/C2.png';
 import c3Img from '../assets/C3.png';
+import forestImg from '../assets/forest.png';
 import { useParams, useNavigate } from 'react-router-dom';
 import GameCanvas from '../game/GameCanvas';
 import { CHECKPOINT_VIDEO_IDS, CONCLUDING_VIDEO_IDS } from '../game/gameConfig';
@@ -852,17 +853,9 @@ const GamePage = () => {
             <div style={{ ...s.doneCard, maxWidth: '590px', width: '100%', maxHeight: '88vh', overflowY: 'auto', padding: 0, overflow: 'hidden', position: 'relative', margin: 'auto', borderRadius: '24px', boxShadow: '0 22px 56px rgba(0,0,0,0.42)', border: '3px solid rgba(255,255,255,0.75)' }}>
 
               {/* ── Colored top banner ── */}
-              <div style={{ background: isArrowStep ? 'linear-gradient(180deg, #dff5ff 0%, #effcff 44%, #e4f8d3 100%)' : page.bg, padding: '1.15rem 1.5rem 1.2rem', textAlign: 'center', borderBottom: `3px solid ${page.accent || '#e2e8f0'}`, position: 'relative', overflow: 'hidden', minHeight: isArrowStep ? '178px' : 'auto' }}>
+              <div style={{ backgroundImage: `linear-gradient(180deg, rgba(224,246,255,0.28), rgba(255,255,255,0.06)), url(${forestImg})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '1.15rem 1.5rem 1.2rem', textAlign: 'center', borderBottom: `3px solid ${page.accent || '#e2e8f0'}`, position: 'relative', overflow: 'hidden', minHeight: '178px' }}>
 
-                {isArrowStep && (
-                  <>
-                    <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '50px', background: 'linear-gradient(180deg, rgba(99,180,92,0), rgba(99,180,92,0.24))' }} />
-                    <div style={{ position: 'absolute', left: '-18px', bottom: '14px', width: '96px', height: '76px', borderRadius: '52% 48% 10px 10px', background: '#43a047', boxShadow: '30px -10px 0 #6fbd45, 56px 8px 0 #2f8f42', opacity: 0.9 }} />
-                    <div style={{ position: 'absolute', right: '-14px', bottom: '18px', width: '88px', height: '58px', borderRadius: '48% 52% 12px 12px', background: '#78be5f', boxShadow: '-38px 10px 0 #4da94e', opacity: 0.92 }} />
-                    <div style={{ position: 'absolute', top: '18px', left: '26px', width: '80px', height: '26px', borderRadius: '999px', background: 'rgba(255,255,255,0.82)', boxShadow: '42px 4px 0 -7px rgba(255,255,255,0.82)' }} />
-                    <div style={{ position: 'absolute', top: '24px', right: '38px', width: '74px', height: '24px', borderRadius: '999px', background: 'rgba(255,255,255,0.78)', boxShadow: '-34px 7px 0 -8px rgba(255,255,255,0.78)' }} />
-                  </>
-                )}
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.12) 46%, rgba(255,255,255,0.24))' }} />
 
                 {/* Step counter pill */}
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)', borderRadius: '999px', padding: '0.32rem 0.95rem', marginBottom: '0.65rem', fontSize: '0.95rem', fontWeight: 800, color: accentColor, border: `1.5px solid ${accentColor}44`, boxShadow: '0 4px 12px rgba(15,23,42,0.12)', position: 'relative', zIndex: 1 }}>
@@ -905,11 +898,7 @@ const GamePage = () => {
                 {page.arrows && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '0.85rem' }}>
                     {page.arrows.map((arrow, i) => (
-                      <div key={i} style={{ display: 'grid', gridTemplateColumns: 'minmax(58px, 78px) 58px minmax(0, 1fr)', alignItems: 'center', gap: '0.65rem', background: '#fff', borderRadius: '16px', padding: '0.55rem 0.75rem', border: `2px solid ${arrow.color}30`, boxShadow: `0 6px 16px ${arrow.color}16`, overflow: 'hidden' }}>
-                        <div style={{ minHeight: '58px', borderRadius: '13px', background: `linear-gradient(135deg, ${arrow.color}, ${arrow.color}cc)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.55rem', fontWeight: 900, boxShadow: 'inset 0 -8px 18px rgba(0,0,0,0.12)' }}>
-                          <span style={{ marginRight: '0.15rem' }}>&#8594;</span>
-                          <span style={{ width: '22px', borderTop: '3px dotted rgba(255,255,255,0.85)' }} />
-                        </div>
+                      <div key={i} style={{ display: 'grid', gridTemplateColumns: '68px minmax(0, 1fr)', alignItems: 'center', gap: '0.85rem', background: '#fff', borderRadius: '16px', padding: '0.6rem 0.85rem', border: `2px solid ${arrow.color}30`, boxShadow: `0 6px 16px ${arrow.color}16`, overflow: 'hidden' }}>
                         {arrow.img ? (
                           <img src={arrow.img} alt={arrow.label} style={{ width: '58px', height: '58px', objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 5px 6px rgba(15,23,42,0.16))' }} />
                         ) : (
