@@ -853,7 +853,7 @@ const GamePage = () => {
             <div style={{ ...s.doneCard, maxWidth: '590px', width: '100%', maxHeight: '88vh', overflowY: 'auto', padding: 0, overflow: 'hidden', position: 'relative', margin: 'auto', borderRadius: '24px', boxShadow: '0 22px 56px rgba(0,0,0,0.42)', border: '3px solid rgba(255,255,255,0.75)' }}>
 
               {/* ── Colored top banner ── */}
-              <div style={{ backgroundImage: `linear-gradient(180deg, rgba(224,246,255,0.28), rgba(255,255,255,0.06)), url(${forestImg})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '1.15rem 1.5rem 1.2rem', textAlign: 'center', borderBottom: `3px solid ${page.accent || '#e2e8f0'}`, position: 'relative', overflow: 'hidden', minHeight: '178px' }}>
+              <div style={{ backgroundImage: `linear-gradient(180deg, rgba(224,246,255,0.28), rgba(255,255,255,0.06)), url(${forestImg})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '0.9rem 1.5rem 1rem', textAlign: 'center', borderBottom: `3px solid ${page.accent || '#e2e8f0'}`, position: 'relative', overflow: 'hidden', minHeight: '154px' }}>
 
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.12) 46%, rgba(255,255,255,0.24))' }} />
 
@@ -869,14 +869,14 @@ const GamePage = () => {
                     {page.badge}
                   </div>
                 ) : (
-                  <div style={isArrowStep ? { width: '74px', height: '74px', borderRadius: '20px', background: `linear-gradient(135deg, ${accentColor}, #38bdf8)`, margin: '0 auto 0.65rem', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', lineHeight: 1, boxShadow: `0 12px 28px ${accentColor}44`, border: '3px solid rgba(255,255,255,0.88)', position: 'relative', zIndex: 1 } : { fontSize: '3.6rem', lineHeight: 1, marginBottom: '0.5rem' }}>{page.icon}</div>
+                  <div style={isArrowStep ? { width: '62px', height: '62px', borderRadius: '18px', background: `linear-gradient(135deg, ${accentColor}, #38bdf8)`, margin: '0 auto 0.5rem', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.55rem', lineHeight: 1, boxShadow: `0 12px 28px ${accentColor}44`, border: '3px solid rgba(255,255,255,0.88)', position: 'relative', zIndex: 1 } : { fontSize: '3.2rem', lineHeight: 1, marginBottom: '0.45rem' }}>{page.icon}</div>
                 )}
 
-                <h2 style={{ fontSize: isArrowStep ? '2rem' : '1.8rem', fontWeight: 900, color: '#1e3a5f', margin: 0, lineHeight: 1.2, textTransform: isArrowStep ? 'uppercase' : 'none', position: 'relative', zIndex: 1 }}>{page.title}</h2>
+                <h2 style={{ fontSize: isArrowStep ? '1.85rem' : '1.7rem', fontWeight: 900, color: '#1e3a5f', margin: 0, lineHeight: 1.15, textTransform: isArrowStep ? 'uppercase' : 'none', position: 'relative', zIndex: 1 }}>{page.title}</h2>
               </div>
 
               {/* ── Card body ── */}
-              <div style={{ padding: '1rem 1.4rem 1.1rem', background: isArrowStep ? 'linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)' : '#fff' }}>
+              <div style={{ padding: '0.85rem 1.4rem 0', background: isArrowStep ? 'linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)' : '#fff', maxHeight: 'calc(88vh - 154px)', overflowY: 'auto' }}>
 
                 {/* Photo slot — only renders when a photo URL is set */}
                 {currentPhoto && (
@@ -934,6 +934,7 @@ const GamePage = () => {
                   </div>
                 )}
 
+                <div style={{ position: 'sticky', bottom: 0, margin: '0 -1.4rem', padding: '0.75rem 1.4rem 1.1rem', background: isArrowStep ? 'linear-gradient(180deg, rgba(248,251,255,0.92), #f8fbff 28%)' : 'linear-gradient(180deg, rgba(255,255,255,0.92), #fff 28%)', boxShadow: '0 -10px 18px rgba(15,23,42,0.06)' }}>
                 {/* Dot progress */}
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', margin: '0 0 1rem' }}>
                   {mapTutorialPages.map((item, i) => (
@@ -970,6 +971,7 @@ const GamePage = () => {
                     <button style={{ padding: '0.85rem 0.4rem', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '0.92rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 14px rgba(22,163,74,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}>🚀 {t('game.playGame')}</button>
                   </div>
                 )}
+                </div>
               </div>
             </div>
           </div>
