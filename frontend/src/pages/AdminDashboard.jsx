@@ -18,6 +18,8 @@ import AdminFAQ from '../admin/AdminFAQ';
 import CompareAnalytics from '../admin/CompareAnalytics';
 import LanguageToggle from '../components/LanguageToggle';
 
+const HIDDEN_ADMIN_SECTIONS = ['facts'];
+
 const AdminDashboard = () => {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
@@ -43,7 +45,10 @@ const AdminDashboard = () => {
     { key: 'activity', icon: '📋', label: 'Log Aktiviti', roles: ['main_admin'] },
   ];
 
-  const MENU = ALL_MENU.filter(item => item.roles.includes(admin?.role || 'admin'));
+  const MENU = ALL_MENU.filter(item =>
+    item.roles.includes(admin?.role || 'admin') &&
+    !HIDDEN_ADMIN_SECTIONS.includes(item.key)
+  );
 
   const handleLogout = () => { logout(); navigate('/'); };
 
@@ -123,7 +128,7 @@ const AdminDashboard = () => {
         {/* Decorative top bar */}
         <div style={styles.sidebarAccent}></div>
         <div style={styles.sidebarTop}>
-          <div style={styles.logo}>🦷 DentalQuest</div>
+          <div style={styles.logo}>🦷 Kembara Gigi Sihat</div>
           <div style={styles.adminInfo}>
             <div style={styles.adminAvatar}>{admin?.name?.[0]?.toUpperCase()}</div>
             <div>
@@ -196,7 +201,10 @@ const Overview = ({ admin, setActive, menu }) => {
 
   // Filter cards to only show items the user has access to
   const menuKeys = menu.map(m => m.key);
-  const cards = allCards.filter(c => menuKeys.includes(c.key));
+  const cards = allCards.filter(c =>
+    menuKeys.includes(c.key) &&
+    !HIDDEN_ADMIN_SECTIONS.includes(c.key)
+  );
 
   return (
     <div>

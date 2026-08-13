@@ -145,7 +145,7 @@ const Analytics = ({ setActive }) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'dentalquest_report.xls';
+    link.download = 'kembara_gigi_sihat_report.xls';
     document.body.appendChild(link);
     link.click();
     link.remove();

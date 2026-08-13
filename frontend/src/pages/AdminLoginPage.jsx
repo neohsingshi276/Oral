@@ -65,7 +65,7 @@ const AdminLoginPage = () => {
         {/* Logo section */}
         <div style={s.logoSection}>
           <div style={s.logoIcon}>🦷</div>
-          <h1 style={s.title}>DentalQuest</h1>
+          <h1 style={s.title}>Kembara Gigi Sihat</h1>
           <p style={s.subtitle}>{t('admin.portalTitle') || 'Portal Pentadbir & Guru'}</p>
         </div>
 

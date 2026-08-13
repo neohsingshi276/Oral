@@ -835,7 +835,7 @@ const bi = {
     avoidThese: 'Avoid These!',
     startGame: 'START GAME!',
     finalLeaderboard: 'Final Leaderboard!',
-    finishDentalQuest: 'Finish DentalQuest!',
+    finishDentalQuest: 'Finish Kembara Gigi Sihat!',
     yourScoreLower: 'Your score',
     needAtLeast: 'need at least',
     foodCatcher: 'Food Catcher!',
@@ -963,7 +963,7 @@ const bi = {
     scoreLabel: 'Score',
     ofFun: 'of fun!',
     retryTrolley: '🔄 Retry',
-    finishGame: '🎉 Finish DentalQuest!',
+    finishGame: '🎉 Finish Kembara Gigi Sihat!',
     leaderboardTitle: 'Food Catcher!',
     cpBreakdown: 'CP1 Quiz + CP2 Crossword + CP3 Food Game (33.33%% each)',
     loadingGame: 'Loading Kembara Gigi Sihat...',
@@ -1150,8 +1150,8 @@ const bi = {
     downloadCsv: 'Download CSV',
     downloadExcel: 'Download Excel',
     printablePdfReport: 'Printable PDF Report',
-    dentalQuestReport: 'DentalQuest Report',
-    dentalQuestPerformanceReport: 'DentalQuest Performance Report',
+    dentalQuestReport: 'Kembara Gigi Sihat Report',
+    dentalQuestPerformanceReport: 'Kembara Gigi Sihat Performance Report',
     printOrSavePdf: 'Print or Save as PDF',
     generated: 'Generated',
     noPlayerDataReport: 'No player data is available for this report.',
@@ -1286,7 +1286,7 @@ const bi = {
     invalidDefault: 'This invitation link is invalid or has expired.',
     goToLogin: 'Go to Login',
     setupTitle: 'Set Up Your Account 🎉',
-    setupSubtitle: 'You have been invited to join DentalQuest. Complete your profile below.',
+    setupSubtitle: 'You have been invited to join Kembara Gigi Sihat. Complete your profile below.',
     fullName: 'Your Full Name',
     namePlaceholder: 'e.g. Teacher Ahmad',
     password: 'Password',
@@ -1437,7 +1437,7 @@ export const exactTextTranslations = {
   'Kata laluan anda telah berjaya ditetapkan semula. Anda boleh log masuk dengan kata laluan baru anda sekarang.': 'Your password has been reset successfully. You can now log in with your new password.',
   'Pergi ke Log Masuk': 'Go to Login',
   'Sediakan Akaun Anda': 'Set Up Your Account',
-  'Anda telah dijemput untuk menyertai DentalQuest. Lengkapkan profil anda di bawah.': 'You have been invited to join DentalQuest. Complete your profile below.',
+  'Anda telah dijemput untuk menyertai Kembara Gigi Sihat. Lengkapkan profil anda di bawah.': 'You have been invited to join Kembara Gigi Sihat. Complete your profile below.',
   'Nama Penuh Anda': 'Your Full Name',
   'Sahkan Kata Laluan': 'Confirm Password',
   'Ulang kata laluan': 'Repeat password',
@@ -1814,7 +1814,7 @@ export const exactTextTranslations = {
 
   // ManageCrossword fixed strings (corrected from English→English)
   // template strings
-  'Peringatan Sesi 3 Bulan — DentalQuest': '3-Month Session Reminder — DentalQuest',
+  'Peringatan Sesi 3 Bulan — Kembara Gigi Sihat': '3-Month Session Reminder — Kembara Gigi Sihat',
   'cth. Peringatan Sesi 3 Bulan': 'e.g. 3-Month Session Reminder',
 
   // CrosswordGame clue strings
@@ -2108,7 +2108,7 @@ export const exactTextTranslations = {
   'soalan': 'questions',
 
 
-  'Pusat panduan dan soalan lazim untuk membantu pentadbir memahami sistem DentalQuest.': 'FAQ hub and guide to help admins understand the DentalQuest system.',
+  'Pusat panduan dan soalan lazim untuk membantu pentadbir memahami sistem Kembara Gigi Sihat.': 'FAQ hub and guide to help admins understand the Kembara Gigi Sihat system.',
   'Rujukan ringkas untuk pentadbir baharu.': 'Quick reference for new admins.',
   'Soalan Menunggu Jawapan': 'Pending Questions',
   'Ditanya oleh:': 'Asked by:',
@@ -2232,7 +2232,7 @@ export const exactTextTranslations = {
   'Gagal memuatkan kuiz. Sila cuba lagi.': 'Failed to load quiz. Please try again.',
 
   // EmailReminders template subjects
-  'Selamat Datang ke DentalQuest!': 'Welcome to DentalQuest!',
+  'Selamat Datang ke Kembara Gigi Sihat!': 'Welcome to Kembara Gigi Sihat!',
   'Laporan Isu Teknikal': 'Technical Issue Report',
 
   // AdminDashboard admin role welcome text

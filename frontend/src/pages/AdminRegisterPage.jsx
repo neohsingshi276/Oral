@@ -43,7 +43,7 @@ const AdminRegisterPage = () => {
       <LanguageToggle style={s.langToggle} />
       <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`}</style>
       <div style={s.card}>
-        <div style={s.logo}>🦷 DentalQuest</div>
+        <div style={s.logo}>🦷 Kembara Gigi Sihat</div>
 
         {phase === 'loading' && (
           <div style={{textAlign:'center', padding:'2rem'}}>

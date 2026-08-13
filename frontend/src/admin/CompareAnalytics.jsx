@@ -423,7 +423,7 @@ const CompareAnalytics = () => {
         th,td{border:1px solid #cbd5e1;padding:8px;font-size:12px;vertical-align:top}
         .a{background:#eff6ff}.b{background:#fff1f2}.section{background:#f8fafc;font-weight:700;color:#1e3a5f}
       </style></head><body>
-      <h1>DentalQuest Comparison Report</h1>
+      <h1>Kembara Gigi Sihat Comparison Report</h1>
       <table>
         <tr><th></th><th class="a">A</th><th class="b">B</th></tr>
         <tr><td class="section">Comparison</td><td>${escapeCell(labelA)}</td><td>${escapeCell(labelB)}</td></tr>

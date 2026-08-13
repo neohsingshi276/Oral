@@ -158,7 +158,7 @@ const AdminFAQ = () => {
                 <div>
                     <h2 style={styles.title}>❓ FAQ Sistem</h2>
                     <p style={styles.subtitle}>
-                        Pusat panduan dan soalan lazim untuk membantu pentadbir memahami sistem DentalQuest.
+                        Pusat panduan dan soalan lazim untuk membantu pentadbir memahami sistem Kembara Gigi Sihat.
                     </p>
                 </div>
                 <div style={styles.heroIcon}>🦷</div>

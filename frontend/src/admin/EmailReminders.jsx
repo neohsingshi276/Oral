@@ -36,18 +36,18 @@ const COPY = {
     templates: {
       reminder3: {
         label: 'Peringatan 3 Bulan',
-        subject: 'Peringatan Sesi 3 Bulan — DentalQuest',
-        message: 'Guru yang dihormati,\n\nIni adalah peringatan bahawa sudah kira-kira 3 bulan sejak sesi DentalQuest yang terakhir. Sila jadualkan sesi permainan baru untuk pelajar anda bagi mengukuhkan pengetahuan dan amalan kesihatan mulut mereka.\n\nSila log masuk ke portal pentadbir DentalQuest untuk mencipta sesi baru dan kongsi kod permainan dengan pelajar anda.\n\nTerima kasih atas sokongan berterusan anda!\n\nSalam hormat,\nPasukan Penyelidik DentalQuest',
+        subject: 'Peringatan Sesi 3 Bulan — Kembara Gigi Sihat',
+        message: 'Guru yang dihormati,\n\nIni adalah peringatan bahawa sudah kira-kira 3 bulan sejak sesi Kembara Gigi Sihat yang terakhir. Sila jadualkan sesi permainan baru untuk pelajar anda bagi mengukuhkan pengetahuan dan amalan kesihatan mulut mereka.\n\nSila log masuk ke portal pentadbir Kembara Gigi Sihat untuk mencipta sesi baru dan kongsi kod permainan dengan pelajar anda.\n\nTerima kasih atas sokongan berterusan anda!\n\nSalam hormat,\nPasukan Penyelidik Kembara Gigi Sihat',
       },
       firstSession: {
         label: 'Sesi Pertama',
-        subject: 'Selamat Datang ke DentalQuest!',
-        message: 'Guru yang dihormati,\n\nSelamat datang ke DentalQuest! Sila log masuk ke portal pentadbir untuk mencipta sesi permainan pertama anda dan kongsi kod 4 digit dengan pelajar anda.\n\nJika anda memerlukan sebarang bantuan, jangan teragak-agak untuk menghubungi kami.\n\nSalam hormat,\nPasukan Penyelidik DentalQuest',
+        subject: 'Selamat Datang ke Kembara Gigi Sihat!',
+        message: 'Guru yang dihormati,\n\nSelamat datang ke Kembara Gigi Sihat! Sila log masuk ke portal pentadbir untuk mencipta sesi permainan pertama anda dan kongsi kod 4 digit dengan pelajar anda.\n\nJika anda memerlukan sebarang bantuan, jangan teragak-agak untuk menghubungi kami.\n\nSalam hormat,\nPasukan Penyelidik Kembara Gigi Sihat',
       },
       tech: {
         label: 'Isu Teknikal',
         subject: 'Laporan Isu Teknikal',
-        message: 'Pentadbir yang dihormati,\n\nSaya ingin melaporkan isu teknikal dengan DentalQuest.\n\nPenerangan isu:\n[Sila terangkan isu di sini]\n\nLangkah untuk menghasilkan semula:\n1. \n2. \n3. \n\nTingkah laku yang dijangka:\n[Apa yang sepatutnya berlaku]\n\nTingkah laku sebenar:\n[Apa yang sebenarnya berlaku]\n\nTerima kasih atas bantuan anda.\n\nSalam hormat,',
+        message: 'Pentadbir yang dihormati,\n\nSaya ingin melaporkan isu teknikal dengan Kembara Gigi Sihat.\n\nPenerangan isu:\n[Sila terangkan isu di sini]\n\nLangkah untuk menghasilkan semula:\n1. \n2. \n3. \n\nTingkah laku yang dijangka:\n[Apa yang sepatutnya berlaku]\n\nTingkah laku sebenar:\n[Apa yang sebenarnya berlaku]\n\nTerima kasih atas bantuan anda.\n\nSalam hormat,',
       },
     },
   },
@@ -84,18 +84,18 @@ const COPY = {
     templates: {
       reminder3: {
         label: '3-Month Reminder',
-        subject: '3-Month Session Reminder — DentalQuest',
-        message: 'Dear Teacher,\n\nThis is a reminder that it has been about 3 months since the last DentalQuest session. Please schedule a new game session for your students to reinforce their oral health knowledge and habits.\n\nPlease log in to the DentalQuest admin portal to create a new session and share the game code with your students.\n\nThank you for your continued support!\n\nBest regards,\nThe DentalQuest Research Team',
+        subject: '3-Month Session Reminder — Kembara Gigi Sihat',
+        message: 'Dear Teacher,\n\nThis is a reminder that it has been about 3 months since the last Kembara Gigi Sihat session. Please schedule a new game session for your students to reinforce their oral health knowledge and habits.\n\nPlease log in to the Kembara Gigi Sihat admin portal to create a new session and share the game code with your students.\n\nThank you for your continued support!\n\nBest regards,\nThe Kembara Gigi Sihat Research Team',
       },
       firstSession: {
         label: 'First Session',
-        subject: 'Welcome to DentalQuest!',
-        message: 'Dear Teacher,\n\nWelcome to DentalQuest! Please log in to the admin portal to create your first game session and share the 4-digit code with your students.\n\nIf you need any help, please feel free to contact us.\n\nBest regards,\nThe DentalQuest Research Team',
+        subject: 'Welcome to Kembara Gigi Sihat!',
+        message: 'Dear Teacher,\n\nWelcome to Kembara Gigi Sihat! Please log in to the admin portal to create your first game session and share the 4-digit code with your students.\n\nIf you need any help, please feel free to contact us.\n\nBest regards,\nThe Kembara Gigi Sihat Research Team',
       },
       tech: {
         label: 'Technical Issue',
         subject: 'Technical Issue Report',
-        message: 'Dear Admin,\n\nI would like to report a technical issue with DentalQuest.\n\nIssue description:\n[Please describe the issue here]\n\nSteps to reproduce:\n1. \n2. \n3. \n\nExpected behavior:\n[What should have happened]\n\nActual behavior:\n[What actually happened]\n\nThank you for your help.\n\nBest regards,',
+        message: 'Dear Admin,\n\nI would like to report a technical issue with Kembara Gigi Sihat.\n\nIssue description:\n[Please describe the issue here]\n\nSteps to reproduce:\n1. \n2. \n3. \n\nExpected behavior:\n[What should have happened]\n\nActual behavior:\n[What actually happened]\n\nThank you for your help.\n\nBest regards,',
       },
     },
   },
