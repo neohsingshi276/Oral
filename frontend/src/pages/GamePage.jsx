@@ -7,6 +7,10 @@ import c2Img from '../assets/C2.png';
 import c3Img from '../assets/C3.png';
 import forestImg from '../assets/forest.png';
 import timerImg from '../assets/timer.png';
+import brushImg from '../assets/Brush.png';
+import flossImg from '../assets/Floss.png';
+import checkImg from '../assets/Check.png';
+import dentalImg from '../assets/dental.png';
 import { useParams, useNavigate } from 'react-router-dom';
 import GameCanvas from '../game/GameCanvas';
 import { CHECKPOINT_VIDEO_IDS, CONCLUDING_VIDEO_IDS } from '../game/gameConfig';
@@ -848,6 +852,8 @@ const GamePage = () => {
         // === PHOTO TEMPLATES — add a photo URL per tutorial step ===
         const tutorialPhotos = [null, null, null, null, null, null, null];
         const currentPhoto = tutorialPhotos[tutorialPage] || null;
+        const tutorialMascots = [null, checkImg, timerImg, dentalImg, brushImg, flossImg, checkImg];
+        const currentMascot = tutorialMascots[tutorialPage] || null;
 
         return (
           <div style={{ ...s.overlay, overflowY: 'auto', padding: '1rem' }}>
