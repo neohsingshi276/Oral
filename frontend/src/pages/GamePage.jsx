@@ -845,57 +845,57 @@ const GamePage = () => {
 
         return (
           <div style={{ ...s.overlay, overflowY: 'auto', padding: '1rem' }}>
-            <div style={{ ...s.doneCard, maxWidth: '520px', width: '100%', maxHeight: '85vh', overflowY: 'auto', padding: 0, overflow: 'hidden', position: 'relative', margin: 'auto', borderRadius: '20px', boxShadow: '0 20px 50px rgba(0,0,0,0.4)' }}>
+            <div style={{ ...s.doneCard, maxWidth: '560px', width: '100%', maxHeight: '88vh', overflowY: 'auto', padding: 0, overflow: 'hidden', position: 'relative', margin: 'auto', borderRadius: '22px', boxShadow: '0 20px 50px rgba(0,0,0,0.4)' }}>
 
               {/* ── Colored top banner ── */}
-              <div style={{ background: page.bg, padding: '1rem 1.25rem 0.8rem', textAlign: 'center', borderBottom: `3px solid ${page.accent || '#e2e8f0'}` }}>
+              <div style={{ background: page.bg, padding: '1.25rem 1.5rem 1rem', textAlign: 'center', borderBottom: `3px solid ${page.accent || '#e2e8f0'}` }}>
 
                 {/* Step counter pill */}
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)', borderRadius: '999px', padding: '0.25rem 0.8rem', marginBottom: '0.5rem', fontSize: '0.88rem', fontWeight: 800, color: accentColor, border: `1.5px solid ${accentColor}44`, boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>
-                  <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: accentColor, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 900 }}>{stepNum}</span>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)', borderRadius: '999px', padding: '0.3rem 0.95rem', marginBottom: '0.6rem', fontSize: '0.95rem', fontWeight: 800, color: accentColor, border: `1.5px solid ${accentColor}44`, boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>
+                  <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: accentColor, color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 900 }}>{stepNum}</span>
                   <span>{language === 'bi' ? `Step ${stepNum} of ${totalSteps}` : `Langkah ${stepNum} daripada ${totalSteps}`}</span>
                 </div>
 
                 {/* Big icon / badge */}
                 {page.badge ? (
-                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', borderRadius: '14px', background: page.accent, color: '#fff', fontWeight: 900, fontSize: '1.2rem', marginBottom: '0.35rem', boxShadow: `0 6px 18px ${page.accent}44` }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '52px', height: '52px', borderRadius: '15px', background: page.accent, color: '#fff', fontWeight: 900, fontSize: '1.3rem', marginBottom: '0.4rem', boxShadow: `0 6px 18px ${page.accent}44` }}>
                     {page.badge}
                   </div>
                 ) : (
-                  <div style={{ fontSize: '3rem', lineHeight: 1, marginBottom: '0.4rem' }}>{page.icon}</div>
+                  <div style={{ fontSize: '3.6rem', lineHeight: 1, marginBottom: '0.5rem' }}>{page.icon}</div>
                 )}
 
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e3a5f', margin: 0, lineHeight: 1.2 }}>{page.title}</h2>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#1e3a5f', margin: 0, lineHeight: 1.2 }}>{page.title}</h2>
               </div>
 
               {/* ── Card body ── */}
-              <div style={{ padding: '0.85rem 1.25rem 1rem' }}>
+              <div style={{ padding: '1rem 1.4rem 1.1rem' }}>
 
                 {/* Photo slot — only renders when a photo URL is set */}
                 {currentPhoto && (
-                  <div style={{ width: '100%', height: '130px', borderRadius: '14px', overflow: 'hidden', marginBottom: '0.9rem' }}>
+                  <div style={{ width: '100%', height: '140px', borderRadius: '14px', overflow: 'hidden', marginBottom: '1rem' }}>
                     <img src={currentPhoto} alt="Step photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 )}
 
                 {/* Description row — each sentence on its own line */}
                 {page.desc && (
-                  <div style={{ background: page.bg, borderRadius: '14px', padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', textAlign: 'left', marginBottom: '0.9rem', border: `1.5px solid ${page.accent || '#e2e8f0'}33` }}>
+                  <div style={{ background: page.bg, borderRadius: '15px', padding: '1rem 1.15rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'left', marginBottom: '1rem', border: `1.5px solid ${page.accent || '#e2e8f0'}33` }}>
                     {page.desc.split(/(?<=[.!])\s+/).map((sentence, idx) => (
-                      <p key={idx} style={{ margin: 0, color: '#1e293b', fontSize: '1rem', lineHeight: 1.45, fontWeight: 700 }}>{sentence}</p>
+                      <p key={idx} style={{ margin: 0, color: '#1e293b', fontSize: '1.15rem', lineHeight: 1.5, fontWeight: 700 }}>{sentence}</p>
                     ))}
                   </div>
                 )}
 
                 {/* Arrow indicators for Step 1 */}
                 {page.arrows && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.9rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1rem' }}>
                     {page.arrows.map((arrow, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#fff', borderRadius: '12px', padding: '0.6rem 0.9rem', border: `1.5px solid ${arrow.color}33`, boxShadow: `0 2px 6px ${arrow.color}10` }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: arrow.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 900 }}>➔</span>
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', background: '#fff', borderRadius: '13px', padding: '0.7rem 1rem', border: `1.5px solid ${arrow.color}33`, boxShadow: `0 2px 6px ${arrow.color}10` }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '9px', background: arrow.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <span style={{ color: '#fff', fontSize: '1.2rem', fontWeight: 900 }}>➔</span>
                         </div>
-                        <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1e293b' }}>{arrow.label}</span>
+                        <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1e293b' }}>{arrow.label}</span>
                       </div>
                     ))}
                   </div>
@@ -903,31 +903,31 @@ const GamePage = () => {
 
                 {/* Checkpoint list for Step 4 */}
                 {page.checkpoints && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.9rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1rem' }}>
                     {page.checkpoints.map((cp, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#fff', borderRadius: '12px', padding: '0.6rem 0.9rem', border: `1.5px solid ${cp.color}33`, boxShadow: `0 2px 6px ${cp.color}10` }}>
-                        <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: cp.color, flexShrink: 0, boxShadow: `0 2px 6px ${cp.color}44` }} />
-                        <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1e293b' }}>Checkpoint {i + 1}: <span style={{ color: cp.color }}>{cp.label}</span></span>
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', background: '#fff', borderRadius: '13px', padding: '0.7rem 1rem', border: `1.5px solid ${cp.color}33`, boxShadow: `0 2px 6px ${cp.color}10` }}>
+                        <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: cp.color, flexShrink: 0, boxShadow: `0 2px 6px ${cp.color}44` }} />
+                        <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#1e293b' }}>Checkpoint {i + 1}: <span style={{ color: cp.color }}>{cp.label}</span></span>
                       </div>
                     ))}
                   </div>
                 )}
 
                 {page.note && (
-                  <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '12px', padding: '0.75rem 0.9rem', color: '#15803d', fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.9rem' }}>
+                  <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '13px', padding: '0.85rem 1rem', color: '#15803d', fontSize: '1.05rem', fontWeight: 700, marginBottom: '1rem' }}>
                     🏆 {page.note}
                   </div>
                 )}
 
                 {/* Dot progress */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '0.35rem', margin: '0 0 0.85rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', margin: '0 0 1rem' }}>
                   {mapTutorialPages.map((item, i) => (
                     <button
                       key={item.title}
                       type="button"
                       aria-label={`Go to step ${i + 1}`}
                       onClick={() => setTutorialPage(i)}
-                      style={{ height: '8px', width: i === tutorialPage ? '24px' : '8px', borderRadius: '999px', border: 'none', cursor: 'pointer', background: i === tutorialPage ? (page.accent || '#2563eb') : '#cbd5e1', transition: 'all 0.2s' }}
+                      style={{ height: '9px', width: i === tutorialPage ? '26px' : '9px', borderRadius: '999px', border: 'none', cursor: 'pointer', background: i === tutorialPage ? (page.accent || '#2563eb') : '#cbd5e1', transition: 'all 0.2s' }}
                     />
                   ))}
                 </div>
@@ -935,24 +935,24 @@ const GamePage = () => {
                 {/* Navigation buttons */}
                 {!isLast ? (
                   <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '0.6rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '0.75rem' }}>
                       <button
-                        style={{ padding: '0.75rem 1rem', background: tutorialPage === 0 ? '#e2e8f0' : '#64748b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '0.98rem', fontWeight: 800, cursor: tutorialPage === 0 ? 'default' : 'pointer', opacity: tutorialPage === 0 ? 0.5 : 1 }}
+                        style={{ padding: '0.85rem 1.25rem', background: tutorialPage === 0 ? '#e2e8f0' : '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.05rem', fontWeight: 800, cursor: tutorialPage === 0 ? 'default' : 'pointer', opacity: tutorialPage === 0 ? 0.5 : 1 }}
                         disabled={tutorialPage === 0}
                         onClick={() => setTutorialPage(p => Math.max(p - 1, 0))}
                       >← {t('game.back')}</button>
                       <button
-                        style={{ padding: '0.75rem 1rem', background: `linear-gradient(135deg, ${page.accent || '#2563eb'}, ${page.accent || '#2563eb'}cc)`, color: '#fff', border: 'none', borderRadius: '12px', fontSize: '0.98rem', fontWeight: 900, cursor: 'pointer', boxShadow: `0 4px 14px ${page.accent || '#2563eb'}33` }}
+                        style={{ padding: '0.85rem 1.25rem', background: `linear-gradient(135deg, ${page.accent || '#2563eb'}, ${page.accent || '#2563eb'}cc)`, color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.05rem', fontWeight: 900, cursor: 'pointer', boxShadow: `0 4px 14px ${page.accent || '#2563eb'}33` }}
                         onClick={() => setTutorialPage(p => Math.min(p + 1, mapTutorialPages.length - 1))}
                       >{t('game.next')} →</button>
                     </div>
-                    <div style={{ marginTop: '0.5rem', color: '#94a3b8', fontSize: '0.85rem', fontWeight: 700, textAlign: 'center' }}>⏱ {t('game.autoNext4')}</div>
+                    <div style={{ marginTop: '0.65rem', color: '#94a3b8', fontSize: '0.9rem', fontWeight: 700, textAlign: 'center' }}>⏱ {t('game.autoNext4')}</div>
                   </>
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.4fr 1.4fr', gap: '0.5rem' }}>
-                    <button style={{ padding: '0.75rem 0.35rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '0.88rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} onClick={() => { localStorage.removeItem('player'); navigate('/'); }}>🏠 {t('game.home')}</button>
-                    <button style={{ padding: '0.75rem 0.35rem', background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '0.88rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} onClick={() => setTutorialPage(0)}>↺ {t('game.restart')}</button>
-                    <button style={{ padding: '0.75rem 0.35rem', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '0.88rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 14px rgba(22,163,74,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}>🚀 {t('game.playGame')}</button>
+                    <button style={{ padding: '0.85rem 0.4rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '0.92rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} onClick={() => { localStorage.removeItem('player'); navigate('/'); }}>🏠 {t('game.home')}</button>
+                    <button style={{ padding: '0.85rem 0.4rem', background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '0.92rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} onClick={() => setTutorialPage(0)}>↺ {t('game.restart')}</button>
+                    <button style={{ padding: '0.85rem 0.4rem', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '0.92rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 14px rgba(22,163,74,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}>🚀 {t('game.playGame')}</button>
                   </div>
                 )}
               </div>
