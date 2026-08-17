@@ -7,12 +7,12 @@ import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import heroImage from "../assets/child.jpeg";
-import stephaniePhoto from '../assets/stephanie.png';
-import ruhayaPhoto from '../assets/ruhaya.png';
-import norkhafizahPhoto from '../assets/norkhafizah.png';
-import punamPhoto from '../assets/punam.png';
-import neohPhoto from '../assets/neoh.png';
-import suziPhoto from '../assets/suzi.png';
+import stephaniePhoto from '../assets/STEPHANIE.jpeg';
+import ruhayaPhoto from '../assets/DR. RUHAYA.jpeg';
+import norkhafizahPhoto from '../assets/ASSOCIATE PROFESSOR DR. NORKHAFIZAH.jpeg';
+import punamPhoto from '../assets/Punam.jpg';
+import neohPhoto from '../assets/Neoh.jpeg';
+import suziPhoto from '../assets/Suzi.png';
 import { useLanguage } from "../context/LanguageContext";
 
 const HomePage = () => {
