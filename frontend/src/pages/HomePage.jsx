@@ -717,7 +717,7 @@ const HomePage = () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center top;
+          object-position: center center;
           border-radius: 50%;
           border: 4px solid #ffffff;
           box-sizing: border-box;
