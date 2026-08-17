@@ -476,7 +476,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   };
 
   const getCellBg = (row, col) => {
-    if (!grid[row]?.[col]) return '#1e293b';
+    if (!grid[row]?.[col]) return '#334155';
     if (revealAll && userGrid[row]?.[col]) return '#bbf7d0';
     if (selectedCell?.row === row && selectedCell?.col === col) return '#FFD700';
     if (checked && userGrid[row]?.[col] && userGrid[row][col] === grid[row][col]) return '#bbf7d0';
@@ -494,9 +494,16 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     return '#1e293b';
   };
 
-  const getWordNum = (row, col) => {
-    const idx = words.findIndex(w => w.start_row === row && w.start_col === col);
-    return idx >= 0 ? idx + 1 : null;
+  const getWordNums = (row, col) => {
+    const nums = words
+      .map((w, idx) => ({ w, num: idx + 1 }))
+      .filter(item =>
+        item.w.start_row === row &&
+        item.w.start_col === col
+      )
+      .map(item => item.num);
+
+    return nums.length > 0 ? nums : [];
   };
 
   const sidePanelWidth = Math.floor(Math.max(330, Math.min(390, viewport.width * 0.21)));
@@ -579,7 +586,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
             <p style={{ color: '#2563eb', fontWeight: '700', margin: '0 0 1rem' }}>⏱️ {t('game.timeLeft', 'Masa berbaki:')} {formatTime(timeLeft)}</p>
             {finalScore != null && (
               <p style={{ color: '#16a34a', fontWeight: '800', fontSize: '1.1rem', margin: '0 0 1rem' }}>
-                🏅 {t('game.finalScore', 'Markah Akhir')}: {finalScore}/100
+                🏅 {language === 'bi' ? 'Your Score' : 'Skor Anda'}: {finalScore}%
               </p>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
@@ -601,16 +608,28 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
               {timeLeft === 0 ? t('game.timesUp', 'Masa Tamat!') : t('game.giveUp', 'Menyerah Kalah')}
             </h2>
             <p style={{ color: '#64748b', margin: '0 0 1rem' }}>
-              {t('game.youCompleted', 'Anda telah menjawab')} <strong style={{ color: '#2563eb' }}>{completed.length}/{words.length}</strong> {t('game.wordsCorrectly', 'perkataan dengan betul')} ({pct}%)
+              {t('game.youCompleted', 'Anda telah menjawab')} <strong style={{ color: '#2563eb' }}>{completed.length}/{words.length}</strong> {t('game.wordsCorrectly', 'perkataan dengan betul')}
             </p>
-            {finalScore != null && (
-              <p style={{ color: passed ? '#16a34a' : '#e11d48', fontWeight: '800', fontSize: '1.1rem', margin: '0 0 1rem' }}>
-                🏅 {t('game.finalScore', 'Markah Akhir')}: {finalScore}/100
+
+            {timeLeft > 0 && passed && finalScore != null && (
+              <p
+                style={{
+                  color: '#16a34a',
+                  fontWeight: '800',
+                  fontSize: '1.1rem',
+                  margin: '0 0 1rem'
+                }}
+              >
+                🏅 {language === 'bi' ? 'Your Score' : 'Skor Anda'}: {finalScore}%
               </p>
             )}
+
             {minCorrect > 0 && !passed && (
               <p style={{ color: '#f59e0b', margin: '0 0 1rem', fontSize: '0.88rem', background: '#fef9ee', padding: '0.5rem', borderRadius: '8px' }}>
-                ⚠️ {t('game.needMinimum', 'Anda mesti menyelesaikan')} <strong>{minCorrect}</strong> {t('game.toPass', 'teka silang kata dengan betul untuk lulus.')}
+                ⚠️ {language === 'bi'
+                  ? <>You must answer at least <strong>{minCorrect}</strong> words correctly to pass.</>
+                  : <>Anda mesti menjawab sekurang-kurangnya <strong>{minCorrect}</strong> perkataan dengan betul untuk lulus.</>
+                }
               </p>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem', width: '100%' }}>
@@ -640,10 +659,23 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                 <div key={entry.player_id} style={s.lbRow}>
                   <span style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
                   <span style={s.lbName}>{entry.nickname}</span>
-                  <span style={{ ...s.lbScore, color: (entry.score ?? 0) >= 50 ? '#16a34a' : '#e11d48' }}>
-                    {entry.score ?? 0}/100
-                    <span style={{ fontSize: '0.72rem', fontWeight: '600', opacity: 0.75, marginLeft: '0.35rem' }}>
-                      ({entry.words_correct ?? 0}/{entry.total_words ?? words.length})
+                  <span
+                    style={{
+                      ...s.lbScore,
+                      color: (entry.score ?? 0) >= 50 ? '#16a34a' : '#e11d48'
+                    }}
+                  >
+                    {entry.score ?? 0}%
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: '600',
+                        opacity: 0.75,
+                        marginLeft: '0.35rem'
+                      }}
+                    >
+                      ({entry.words_correct ?? 0}/{entry.total_words || words.length})
+                      {(entry.words_correct ?? 0) === (entry.total_words || words.length) ? ' √' : ''}
                     </span>
                   </span>
                 </div>
@@ -768,10 +800,14 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
             {Array(gridSize).fill(null).map((_, row) =>
               Array(gridSize).fill(null).map((_, col) => {
                 const active = !!grid[row]?.[col];
-                const num = getWordNum(row, col);
+                const nums = getWordNums(row, col);
                 return (
                   <div key={`${row}-${col}`} style={{ ...s.cell, width: `${cellSize}px`, height: `${cellSize}px`, background: getCellBg(row, col), cursor: active ? 'pointer' : 'default', border: active ? '2px solid #334155' : '1px solid #0f172a' }} onClick={() => active && handleCellClick(row, col)}>
-                    {num && <div style={s.cellNum}>{num}</div>}
+                    {nums.length > 0 && (
+                      <div style={s.cellNum}>
+                        {nums.join('/')}
+                      </div>
+                    )}
                     {active && (
                       <input
                         ref={el => inputRefs.current[`${row}-${col}`] = el}
@@ -846,7 +882,7 @@ const s = {
   gridSection: { display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflowX: 'hidden', overflowY: 'auto', padding: 0, maxHeight: '100%' },
   grid: { display: 'grid', gap: '1px', background: '#0f172a', border: '2px solid #334155', borderRadius: '8px', overflow: 'hidden' },
   cell: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  cellNum: { position: 'absolute', top: '2px', left: '3px', fontSize: '15px', fontWeight: '900', color: '#1e40af', background: 'rgba(255,255,255,0.85)', borderRadius: '3px', padding: '1px 3px', lineHeight: 1, zIndex: 2, pointerEvents: 'none' },
+  cellNum: { position: 'absolute', top: '2px', left: '3px', fontSize: '14px', fontWeight: '900', color: '#1e40af', background: 'rgba(255,255,255,0.85)', borderRadius: '3px', padding: '1px 3px', lineHeight: 1, zIndex: 2, pointerEvents: 'none' },
   cellInput: { width: '100%', height: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontWeight: '800', textTransform: 'uppercase', outline: 'none', cursor: 'pointer', padding: 0, WebkitTextFillColor: 'inherit', opacity: 1 },
   lbBox: { background: '#f1f5f9', borderRadius: '12px', padding: '0.75rem', margin: '0.75rem 0', textAlign: 'left', width: '100%' },
   lbTitle: { fontSize: '0.88rem', fontWeight: '800', color: '#1e3a5f', margin: '0 0 0.5rem' },

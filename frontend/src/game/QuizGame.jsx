@@ -253,7 +253,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     return ca.includes(idx);
   };
 
-  const OPTION_COLORS = ['#e21b3c', '#1368ce', '#26890c', '#ffa602', '#9c27b0', '#00bcd4'];
+  const QUESTION_COLORS = ['#7c3aed', '#2563eb', '#0891b2', '#d97706', '#9333ea', '#4f46e5'];
   const OPTION_ICONS = ['▲', '◆', '●', '★', '■', '✦'];
 
   if (phase === 'loading') return (
@@ -280,10 +280,14 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
         <div style={s.scoreCard}>
           <div style={s.scoreTrophy}>{hasPassed ? (result.correct === result.total ? '🏆' : '⭐') : '💪'}</div>
           <h2 style={s.scoreTitle}>
-            {hasPassed ? t('game.quizDoneTitle') : t('game.notPassed', 'Belum Lulus!')}
+            {hasPassed ? t('game.quizDoneTitle') : t('game.notPassed', 'Cuba Semula!')}
           </h2>
-          <div style={s.scoreBig}>{result.percentage}%</div>
-          <p style={s.scorePoints}>{result.score} / {result.maxPossible ?? result.total * 100} {t('game.points', 'mata')}</p>
+          <div style={s.scoreDisplay}>
+            <span style={s.scoreLabel}>
+              {language === 'bi' ? 'Your Score:' : 'Skor Anda:'}
+            </span>
+            <span style={s.scoreBig}>{result.percentage}%</span>
+          </div>
           <div style={s.scoreStats}>
             <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#16a34a' }}>{result.correct}</div><div style={s.scoreStatLabel}>{t('game.correct', 'Betul')}</div></div>
             <div style={s.scoreDivider} />
@@ -300,7 +304,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
               <div key={entry.player_id} style={{ ...s.lbRow, ...(entry.player_id === player.id ? s.lbRowMe : {}), background: i === 0 ? '#fef9ee' : i === 1 ? '#f8fafc' : i === 2 ? '#fff7ed' : '#fff' }}>
                 <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
                 <div style={s.lbName}>{entry.nickname}{entry.player_id === player.id && <span style={s.youBadge}>{t('game.you', 'Anda')}</span>}</div>
-                <div style={s.lbScore}>{entry.score} {t('game.points', 'mata')}</div>
+                <div style={s.lbScore}>{entry.percentage}%</div>
                 <div style={s.lbCorrect}>{entry.correct_answers}/{entry.total_questions} ✓</div>
               </div>
             ))}
@@ -316,17 +320,25 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
             <div style={s.failBox}>
               <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>😢</div>
               <h3 style={{ color: '#e11d48', fontWeight: '800', margin: '0 0 0.5rem' }}>
-                {t('game.notPassed', 'Belum Lulus!')}
+                {t('game.notPassed', 'Cuba Semula!')}
               </h3>
               <p style={{ color: '#64748b', margin: '0 0 1rem', fontSize: '0.95rem' }}>
                 {language === 'bi' ? (
-                  <>You need to answer at least <strong>{minToPass} questions</strong> correctly to pass. You got <strong>{result.correct}/{result.total}</strong>.</>
+                  <>
+                    You answered <strong>{result.correct}/{result.total}</strong> questions correctly.
+                    <br />
+                    You need to answer at least <strong>{minToPass} questions</strong> correctly to pass.
+                  </>
                 ) : (
-                  <>Anda perlu menjawab sekurang-kurangnya <strong>{minToPass} soalan</strong> dengan betul untuk lulus. Anda betulkan <strong>{result.correct}/{result.total}</strong>.</>
+                  <>
+                    Anda menjawab <strong>{result.correct}/{result.total}</strong> soalan dengan betul.
+                    <br />
+                    Anda perlu menjawab sekurang-kurangnya <strong>{minToPass} soalan</strong> dengan betul untuk lulus.
+                  </>
                 )}
               </p>
               <button style={s.retryBtn} onClick={onRetry}>
-                🔄 {t('game.retryQuiz', 'Cuba Semula Kuiz')}
+                🔄 {t('game.retryQuiz', 'Cuba Semula')}
               </button>
             </div>
           </div>
@@ -371,7 +383,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
       {(q.question_type === 'multiple_choice' || q.question_type === 'true_false') && (
         <div style={{ ...s.optGrid, gridTemplateColumns: opts.length <= 2 ? '1fr 1fr' : opts.length <= 4 ? '1fr 1fr' : 'repeat(3, 1fr)' }}>
           {opts.map((opt, idx) => {
-            let bg = OPTION_COLORS[idx % OPTION_COLORS.length];
+            let bg = QUESTION_COLORS[currentQ % QUESTION_COLORS.length];
             if (answered) {
               if (isCorrect(q, idx)) bg = '#16a34a';
               else if (selected.includes(idx)) bg = '#e11d48';
@@ -394,7 +406,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
         <>
           <div style={{ ...s.optGrid, gridTemplateColumns: opts.length <= 4 ? '1fr 1fr' : 'repeat(3, 1fr)' }}>
             {opts.map((opt, idx) => {
-              let bg = OPTION_COLORS[idx % OPTION_COLORS.length];
+              let bg = QUESTION_COLORS[currentQ % QUESTION_COLORS.length];
               if (answered) {
                 if (isCorrect(q, idx)) bg = '#16a34a';
                 else if (selected.includes(idx)) bg = '#e11d48';
@@ -426,7 +438,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
             <div style={s.matchCol}>
               <p style={s.matchColTitle}>{t('game.questions', 'Soalan')}</p>
               {opts.map((pair, idx) => (
-                <button key={idx} style={{ ...s.matchBtn, ...s.matchLeft, background: leftSelected === idx ? '#1e3a5f' : matchLines.find(l => l[0] === idx) ? '#2563eb' : '#e2e8f0', color: leftSelected === idx || matchLines.find(l => l[0] === idx) ? '#fff' : '#1e293b' }} onClick={() => handleMatchLeft(idx)} disabled={answered}>
+                <button key={idx} style={{ ...s.matchBtn, ...s.matchLeft, background: leftSelected === idx || matchLines.find(l => l[0] === idx) ? QUESTION_COLORS[currentQ % QUESTION_COLORS.length] : '#e2e8f0', color: leftSelected === idx || matchLines.find(l => l[0] === idx) ? '#fff' : '#1e293b' }} onClick={() => handleMatchLeft(idx)} disabled={answered}>
                   {pair.left || pair}
                   {matchLines.find(l => l[0] === idx) && <span style={s.matchConnected}> →{matchLines.find(l => l[0] === idx)[1] + 1}</span>}
                 </button>
@@ -443,7 +455,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
                   const myPair = matchLines.find(l => l[1] === idx);
                   if (correctPair && myPair && correctPair[0] === myPair[0]) bg = '#16a34a';
                   else if (isLinked) bg = '#e11d48';
-                } else if (isLinked) bg = '#7c3aed';
+                } else if (isLinked) bg = QUESTION_COLORS[currentQ % QUESTION_COLORS.length];
                 return (
                   <button key={idx} style={{ ...s.matchBtn, ...s.matchRight, background: bg, color: isLinked || answered ? '#fff' : '#1e293b' }} onClick={() => handleMatchRight(idx)} disabled={answered || leftSelected === null}>
                     {pair.right || pair}
@@ -489,27 +501,27 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
 const s = {
   center: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem' },
   spinner: { width: '40px', height: '40px', border: '4px solid #e2e8f0', borderTop: '4px solid #2563eb', borderRadius: '50%', animation: 'spin 0.8s linear infinite' },
-  quizWrap: { display: 'flex', flexDirection: 'column', gap: '0.75rem' },
-  quizHeader: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
-  qCounter: { fontSize: '0.82rem', fontWeight: '700', color: '#64748b', whiteSpace: 'nowrap' },
-  timerBarWrap: { flex: 1, height: '10px', background: '#e2e8f0', borderRadius: '5px', overflow: 'hidden' },
-  timerBarFill: { height: '100%', borderRadius: '5px' },
-  timerNum: { fontSize: '1rem', fontWeight: '800', minWidth: '32px', textAlign: 'right' },
-  questionBox: { background: '#1e3a5f', borderRadius: '14px', padding: '1.25rem', textAlign: 'center' },
   questionImg: { width: '100%', maxHeight: '160px', objectFit: 'contain', borderRadius: '8px', marginBottom: '0.75rem' },
-  questionText: { color: '#fff', fontSize: '1.05rem', fontWeight: '600', margin: 0, lineHeight: 1.5 },
-  multiHint: { color: '#93c5fd', fontSize: '0.78rem', margin: '0.5rem 0 0', fontStyle: 'italic' },
-  optGrid: { display: 'grid', gap: '0.6rem' },
-  optBtn: { display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.9rem 1rem', borderRadius: '10px', border: '3px solid transparent', color: '#fff', cursor: 'pointer', fontWeight: '700', fontSize: '0.9rem', textAlign: 'left', transition: 'opacity 0.2s, transform 0.1s', minHeight: '56px' },
-  optIcon: { fontSize: '1.1rem', flexShrink: 0 },
-  optText: { flex: 1, lineHeight: 1.3 },
-  optCheck: { fontSize: '1.1rem', flexShrink: 0 },
+  quizWrap: { display: 'flex', flexDirection: 'column', gap: '1.3rem', width: '100%', maxWidth: '1400px', margin: '2rem auto 0', boxSizing: 'border-box' },
+  quizHeader: { display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' },
+  qCounter: { fontSize: '1.1rem', fontWeight: '800', color: '#64748b', whiteSpace: 'nowrap' },
+  timerBarWrap: { flex: 1, height: '14px', background: '#e2e8f0', borderRadius: '7px', overflow: 'hidden' },
+  timerBarFill: { height: '100%', borderRadius: '7px' },
+  timerNum: { fontSize: '1.2rem', fontWeight: '800', minWidth: '45px', textAlign: 'right' },
+  questionBox: { background: '#1e3a5f', borderRadius: '18px', padding: '1.5rem 2.5rem', textAlign: 'center', width: '100%', boxSizing: 'border-box', minHeight: '95px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' },
+  questionText: { color: '#fff', fontSize: '1.8rem', fontWeight: '700', margin: 0, lineHeight: 1.5 },
+  multiHint: { color: '#93c5fd', fontSize: '1.05rem', margin: '0.7rem 0 0', fontStyle: 'italic' },
+  optGrid: { display: 'grid', gap: '1rem', width: '100%' },
+  optBtn: { display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.5rem 1.8rem', borderRadius: '14px', border: '3px solid transparent', color: '#fff', cursor: 'pointer', fontWeight: '700', fontSize: '1.45rem', textAlign: 'left', transition: 'opacity 0.2s, transform 0.1s', minHeight: '100px', width: '100%', boxSizing: 'border-box' },
+  optIcon: { fontSize: '1.5rem', flexShrink: 0 },
+  optText: { flex: 1, lineHeight: 1.4 },
+  optCheck: { fontSize: '1.5rem', flexShrink: 0 },
   submitBtn: { width: '100%', padding: '0.85rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '1rem', fontWeight: '700', cursor: 'pointer' },
   answerFeedback: { padding: '0.75rem 1rem', borderRadius: '10px', fontSize: '0.9rem', fontWeight: '600', color: '#1e293b', textAlign: 'center' },
   matchWrap: { display: 'flex', gap: '0.5rem', alignItems: 'flex-start' },
   matchCol: { flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' },
   matchColTitle: { fontSize: '0.78rem', fontWeight: '700', color: '#64748b', textAlign: 'center', margin: '0 0 0.25rem' },
-  matchBtn: { padding: '0.65rem 0.75rem', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '0.82rem', lineHeight: 1.3, textAlign: 'center', transition: 'background 0.2s' },
+  matchBtn: { padding: '1.2rem 1.2rem', minHeight: '70px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '1.1rem', lineHeight: 1.4, textAlign: 'center', transition: 'background 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   matchLeft: {},
   matchRight: {},
   matchArrow: { fontSize: '1.5rem', color: '#94a3b8', paddingTop: '2rem', flexShrink: 0 },
@@ -519,7 +531,9 @@ const s = {
   scoreCard: { background: 'linear-gradient(135deg, #1e3a5f, #2563eb)', borderRadius: '16px', padding: '2rem', textAlign: 'center' },
   scoreTrophy: { fontSize: '3.5rem', marginBottom: '0.5rem' },
   scoreTitle: { color: '#fff', fontSize: '1.3rem', fontWeight: '800', margin: '0 0 0.5rem' },
-  scoreBig: { color: '#FFD700', fontSize: '4rem', fontWeight: '900', lineHeight: 1 },
+  scoreDisplay: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', marginBottom: '1.5rem' },
+  scoreLabel: { color: '#FFD700', fontSize: '2rem', fontWeight: '900', lineHeight: 1 },
+  scoreBig: { color: '#FFD700', fontSize: '2rem', fontWeight: '900', lineHeight: 1 },
   scorePoints: { color: '#93c5fd', fontSize: '0.9rem', margin: '0 0 1.5rem' },
   scoreStats: { display: 'flex', justifyContent: 'center', background: 'rgba(255,255,255,0.1)', borderRadius: '12px', overflow: 'hidden' },
   scoreStat: { flex: 1, padding: '0.75rem' },

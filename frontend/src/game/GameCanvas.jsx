@@ -64,15 +64,30 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
   // so it always has the latest progress every Phaser frame without re-creating the callback.
   // CP1 is always unlocked. CP2 requires CP1 completed. CP3 requires CP2 completed.
   // CP4 requires CP3 completed (it's a virtual "finish" checkpoint with no game activity).
-  const getIsCheckpointUnlocked = useCallback((cpId) => {
-    if (cpId === 1) return true;
-    const prev = progressRef.current.find(p => p.checkpoint_number === cpId - 1);
-    // FIX: MySQL BOOLEAN returns 0/1 (numbers), not true/false.
-    // `1 === true` is false in JS, so use !! to coerce correctly.
-    const unlocked = !!prev?.completed;
-    return unlocked;
-  }, []); // empty deps intentional — reads the ref directly
 
+  const getIsCheckpointUnlocked = useCallback((cpId) => {
+    // Checkpoint 1 is always unlocked
+    if (cpId === 1) return true;
+
+    // 🏆 Finish Point:
+    // unlock only after Checkpoint 3 is completed
+    if (cpId === '🏆') {
+      const cp3 = progressRef.current.find(
+        p => Number(p.checkpoint_number) === 3
+      );
+
+      return !!cp3?.completed;
+    }
+
+    // Normal checkpoints:
+    // CP2 requires CP1
+    // CP3 requires CP2
+    const prev = progressRef.current.find(
+      p => Number(p.checkpoint_number) === Number(cpId) - 1
+    );
+
+    return !!prev?.completed;
+  }, []);
   // Wrapped onCheckpointReached: after a CP is entered (and completed upstream),
   // trigger a background progress refresh so the next CP unlocks immediately.
   const handleCheckpointReached = useCallback(async (cpId) => {

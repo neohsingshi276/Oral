@@ -26,7 +26,7 @@ import CP3Game from '../game/Trolley';
 import LanguageToggle from '../components/LanguageToggle';
 import { useLanguage } from '../context/LanguageContext';
 import CharacterPreview from '../game/CharacterPreview';
-
+import checkpointImage from '../assets/CheckpointImage.png';
 
 // ─── Web Audio chime — no audio files needed ──────────────────────────────────
 // Plays a cheerful rising 3-note fanfare using the browser's AudioContext.
@@ -326,17 +326,24 @@ const GamePage = () => {
     // Removing the duplicate check here — it caused false rejections due
     // to stale progress state, keeping CP2/CP3 locked even after completion.
     console.log(`[CP] handleCheckpointReached CP${cpId}`, JSON.stringify(progressStateRef.current));
-    // CP4 is special — direct to concluding video modal (leaderboard is shown at CP3)
-    if (cpId === 4) {
+    // 🏆 Finish Point — direct to concluding video
+    if (cpId === '🏆') {
       setAllDone(true);
       setConcludingVideoWatched(false);
+
       if (!reduceMotion) {
         playSuccessChime();
-        setTimeout(() => { playSuccessChime(); }, 600);
+
+        setTimeout(() => {
+          playSuccessChime();
+        }, 600);
+
         setShowConfetti(true);
       }
+
       return;
     }
+
 
     const chatConfig = getPlayerChatConfig();
     try {
@@ -429,16 +436,15 @@ const GamePage = () => {
   <text x="700" y="195" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" fill="rgba(255,255,255,0.75)" letter-spacing="8">${language === 'bm' ? 'SIJIL PENCAPAIAN' : 'CERTIFICATE OF ACHIEVEMENT'}</text>
   <line x1="400" y1="270" x2="1000" y2="270" stroke="#D4A843" stroke-width="1" opacity="0.5"/>
   <circle cx="700" cy="270" r="4" fill="#D4A843"/><circle cx="400" cy="270" r="2.5" fill="#D4A843"/><circle cx="1000" cy="270" r="2.5" fill="#D4A843"/>
-  <text x="700" y="320" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="22" fill="#64748b" font-style="italic">${language === 'bm' ? '~ Sijil ini dengan sukacitanya dianugerahkan kepada ~' : '~ This certificate is proudly presented to ~'}</text>
+  <text x="700" y="320" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="28" fill="#64748b" font-style="italic">${language === 'bm' ? '~ Sijil ini dengan sukacitanya dianugerahkan kepada ~' : '~ This certificate is proudly presented to ~'}</text>
   <text x="700" y="${330 + nameFontSize}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="${nameFontSize}" font-weight="bold" fill="#1e293b">${displayName}</text>
   <line x1="250" y1="${345 + nameFontSize}" x2="1150" y2="${345 + nameFontSize}" stroke="#D4A843" stroke-width="2"/>
-  <text x="700" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#475569">${language === 'bm' ? 'kerana berjaya menyelesaikan' : 'for successfully completing'}</text>
-  <text x="700" y="530" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="bold" fill="#1e3a5f">Kembara Gigi Sihat</text>
-  <text x="700" y="575" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="17" fill="#64748b" font-style="italic">${language === 'bm' ? 'Permainan Video Interaktif Pendidikan Kesihatan Pergigian' : 'An Interactive Oral Health Education Video Game'}</text>
+  <text x="700" y="490" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#475569">${language === 'bm' ? 'kerana berjaya menyelesaikan' : 'for successfully completing'}</text>
+  <text x="700" y="530" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#1e3a5f">Kembara Gigi Sihat</text>
+  <text x="700" y="575" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="23" fill="#64748b" font-style="italic">${language === 'bm' ? 'Permainan Video Interaktif Pendidikan Kesihatan Pergigian' : 'An Interactive Oral Health Education Video Game'}</text>
   <line x1="400" y1="620" x2="1000" y2="620" stroke="#D4A843" stroke-width="1" opacity="0.5"/>
   <circle cx="700" cy="620" r="3" fill="#D4A843"/>
-  <text x="700" y="700" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#475569">${language === 'bm' ? 'Sesi' : 'Session'}: ${escapeXml(cert.session_name || '-')}</text>
-  <text x="700" y="740" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#475569">${language === 'bm' ? 'Tarikh' : 'Date'}: ${escapeXml(dateStr)}</text>
+  <text x="700" y="720" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#475569">${language === 'bm' ? 'Tarikh' : 'Date'}: ${escapeXml(dateStr)}</text>
   <line x1="400" y1="790" x2="1000" y2="790" stroke="#D4A843" stroke-width="1" opacity="0.5"/>
   <circle cx="700" cy="790" r="3" fill="#D4A843"/>
 </svg>`;
@@ -605,7 +611,7 @@ const GamePage = () => {
     { icon: '🔢', title: t('game.step2Title'), desc: t('game.step2Desc'), bg: '#f0fdf4', accent: '#16a34a' },
     { icon: '🎬', title: t('game.step3Title'), desc: t('game.step3Desc'), bg: '#eff6ff', accent: '#2563eb' },
     {
-      icon: '🦷', title: t('game.step7Title'), desc: '', bg: '#f8fafc', accent: '#1e3a5f', checkpoints: [
+      icon: checkpointImage, title: t('game.step7Title'), desc: '', bg: '#f8fafc', accent: '#1e3a5f', checkpoints: [
         { color: '#2563eb', label: t('game.step7Cp1') },
         { color: '#7B2FBE', label: t('game.step7Cp2') },
         { color: '#dc2626', label: t('game.step7Cp3') },
@@ -772,15 +778,6 @@ const GamePage = () => {
                 onClick={() => chooseCharacter('boy')}
               >
                 <CharacterPreview character="boy" />
-
-                <div
-                  style={{
-                    ...s.characterName,
-                    color: '#075985',
-                  }}
-                >
-                  {t('game.boy')}
-                </div>
               </button>
 
               <button
@@ -793,16 +790,6 @@ const GamePage = () => {
                 onClick={() => chooseCharacter('girl')}
               >
                 <CharacterPreview character="girl" />
-
-
-                <div
-                  style={{
-                    ...s.characterName,
-                    color: '#9d174d',
-                  }}
-                >
-                  {t('game.girl')}
-                </div>
               </button>
             </div>
           </div>
@@ -856,7 +843,7 @@ const GamePage = () => {
         // === PHOTO TEMPLATES — add a photo URL per tutorial step ===
         const tutorialPhotos = [null, null, null, null, null, null, null];
         const currentPhoto = tutorialPhotos[tutorialPage] || null;
-        const tutorialMascots = [null, checkImg, timerImg, dentalImg, playquizImg, flossImg, leaderboardImg];
+        const tutorialMascots = [null, null, null, dentalImg, null, null, null];
         const currentMascot = tutorialMascots[tutorialPage] || null;
 
         return (
@@ -876,14 +863,74 @@ const GamePage = () => {
 
                 {/* Big icon / badge */}
                 {page.badge ? (
-                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '52px', height: '52px', borderRadius: '15px', background: page.accent, color: '#fff', fontWeight: 900, fontSize: '1.3rem', marginBottom: '0.4rem', boxShadow: `0 6px 18px ${page.accent}44` }}>
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '52px',
+                      height: '52px',
+                      borderRadius: '15px',
+                      background: page.accent,
+                      color: '#fff',
+                      fontWeight: 900,
+                      fontSize: '1.3rem',
+                      marginBottom: '0.4rem',
+                      boxShadow: `0 6px 18px ${page.accent}44`,
+                    }}
+                  >
                     {page.badge}
                   </div>
+                ) : page.icon === checkpointImage ? (
+                  <img
+                    src={checkpointImage}
+                    alt=""
+                    aria-hidden="true"
+                    style={{
+                      width: '72px',
+                      height: '72px',
+                      objectFit: 'contain',
+                      margin: '0 auto 0.5rem',
+                      display: 'block',
+                      position: 'relative',
+                      zIndex: 1,
+                      transform: 'scale(2.3)',
+                      filter: 'drop-shadow(0 6px 10px rgba(15,23,42,0.18))',
+                    }}
+                  />
                 ) : (
-                  <div style={isArrowStep ? { width: '62px', height: '62px', borderRadius: '18px', background: `linear-gradient(135deg, ${accentColor}, #38bdf8)`, margin: '0 auto 0.5rem', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.55rem', lineHeight: 1, boxShadow: `0 12px 28px ${accentColor}44`, border: '3px solid rgba(255,255,255,0.88)', position: 'relative', zIndex: 1 } : { fontSize: '3.2rem', lineHeight: 1, marginBottom: '0.45rem' }}>{page.icon}</div>
+                  <div
+                    style={
+                      isArrowStep
+                        ? {
+                          width: '62px',
+                          height: '62px',
+                          borderRadius: '18px',
+                          background: `linear-gradient(135deg, ${accentColor}, #38bdf8)`,
+                          margin: '0 auto 0.5rem',
+                          color: '#fff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '2.55rem',
+                          lineHeight: 1,
+                          boxShadow: `0 12px 28px ${accentColor}44`,
+                          border: '3px solid rgba(255,255,255,0.88)',
+                          position: 'relative',
+                          zIndex: 1,
+                        }
+                        : {
+                          fontSize: '3.2rem',
+                          lineHeight: 1,
+                          marginBottom: '0.45rem',
+                        }
+                    }
+                  >
+                    {page.icon}
+                  </div>
                 )}
 
-                <h2 style={{ fontSize: isArrowStep ? '1.85rem' : '1.7rem', fontWeight: 900, color: '#1e3a5f', margin: 0, lineHeight: 1.15, textTransform: isArrowStep ? 'uppercase' : 'none', position: 'relative', zIndex: 1 }}>{page.title}</h2>
+                <h2 style={{ fontSize: isArrowStep ? '1.85rem' : '1.7rem', fontWeight: 900, color: '#1e3a5f', margin: 0, lineHeight: 1.15, position: 'relative', zIndex: 1 }}>{page.title}</h2>
               </div>
 
               {/* ── Card body ── */}
@@ -931,28 +978,45 @@ const GamePage = () => {
                         <span style={{ fontSize: '1.02rem', fontWeight: 850, color: '#1e293b', lineHeight: 1.3, textAlign: 'left' }}>{arrow.label}</span>
                       </div>
                     ))}
-                    <div style={{ display: 'grid', gridTemplateColumns: '62px minmax(0, 1fr)', alignItems: 'center', gap: '0.75rem', marginTop: '0.1rem' }}>
-                      <img src={timerImg} alt="" aria-hidden="true" style={{ width: '62px', height: '62px', objectFit: 'contain', filter: 'drop-shadow(0 6px 8px rgba(15,23,42,0.16))' }} />
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', background: '#f8fdff', border: '1.5px solid #bae6fd', borderRadius: '14px', padding: '0.65rem 0.8rem', color: '#1e3a5f', fontSize: '0.88rem', fontWeight: 800, textAlign: 'left', boxShadow: '0 4px 12px rgba(14,165,233,0.1)' }}>
-                        <span style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#fff7cc', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '1.05rem' }}>💡</span>
-                        <span>{page.desc}</span>
-                      </div>
-                    </div>
                   </div>
                 )}
 
                 {/* Checkpoint list for Step 4 */}
                 {page.checkpoints && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1rem' }}>
-                    {page.checkpoints.map((cp, i) => {
-                      const cpMascots = [playquizImg, puzzleeImg, trolleyImg];
-                      return (
-                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '72px minmax(0, 1fr)', alignItems: 'center', gap: '0.7rem', background: '#fff', borderRadius: '14px', padding: '0.55rem 0.85rem', border: `1.5px solid ${cp.color}33`, boxShadow: `0 3px 8px ${cp.color}12` }}>
-                          <img src={cpMascots[i]} alt="" style={{ width: '68px', height: '68px', objectFit: 'contain', borderRadius: '10px', filter: 'drop-shadow(0 3px 5px rgba(15,23,42,0.14))' }} />
-                          <span style={{ fontSize: '1.02rem', fontWeight: 800, color: '#1e293b' }}>Checkpoint {i + 1}: <span style={{ color: cp.color }}>{cp.label}</span></span>
-                        </div>
-                      );
-                    })}
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.7rem',
+                      marginBottom: '1rem',
+                    }}
+                  >
+                    {page.checkpoints.map((cp, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          background: '#fff',
+                          borderRadius: '14px',
+                          padding: '0.9rem 1.1rem',
+                          border: `1.5px solid ${cp.color}33`,
+                          boxShadow: `0 3px 8px ${cp.color}12`,
+                          textAlign: 'left',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '1.05rem',
+                            fontWeight: 800,
+                            color: '#1e293b',
+                          }}
+                        >
+                          Checkpoint {i + 1}:{' '}
+                          <span style={{ color: cp.color }}>
+                            {cp.label}
+                          </span>
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -963,42 +1027,42 @@ const GamePage = () => {
                 )}
 
                 <div style={{ position: 'sticky', bottom: 0, margin: '0 -1.4rem', padding: '0.75rem 1.4rem 1.1rem', background: isArrowStep ? 'linear-gradient(180deg, rgba(248,251,255,0.92), #f8fbff 28%)' : 'linear-gradient(180deg, rgba(255,255,255,0.92), #fff 28%)', boxShadow: '0 -10px 18px rgba(15,23,42,0.06)' }}>
-                {/* Dot progress */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', margin: '0 0 1rem' }}>
-                  {mapTutorialPages.map((item, i) => (
-                    <button
-                      key={item.title}
-                      type="button"
-                      aria-label={`Go to step ${i + 1}`}
-                      onClick={() => setTutorialPage(i)}
-                      style={{ height: '9px', width: i === tutorialPage ? '26px' : '9px', borderRadius: '999px', border: 'none', cursor: 'pointer', background: i === tutorialPage ? (page.accent || '#2563eb') : '#cbd5e1', transition: 'all 0.2s' }}
-                    />
-                  ))}
-                </div>
-
-                {/* Navigation buttons */}
-                {!isLast ? (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '0.75rem' }}>
+                  {/* Dot progress */}
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', margin: '0 0 1rem' }}>
+                    {mapTutorialPages.map((item, i) => (
                       <button
-                        style={{ padding: '0.85rem 1.25rem', background: tutorialPage === 0 ? '#e2e8f0' : '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.05rem', fontWeight: 800, cursor: tutorialPage === 0 ? 'default' : 'pointer', opacity: tutorialPage === 0 ? 0.5 : 1 }}
-                        disabled={tutorialPage === 0}
-                        onClick={() => setTutorialPage(p => Math.max(p - 1, 0))}
-                      >← {t('game.back')}</button>
-                      <button
-                        style={{ padding: '0.85rem 1.25rem', background: `linear-gradient(135deg, ${page.accent || '#2563eb'}, ${page.accent || '#2563eb'}cc)`, color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.05rem', fontWeight: 900, cursor: 'pointer', boxShadow: `0 4px 14px ${page.accent || '#2563eb'}33` }}
-                        onClick={() => setTutorialPage(p => Math.min(p + 1, mapTutorialPages.length - 1))}
-                      >{t('game.next')} →</button>
-                    </div>
-                    <div style={{ marginTop: '0.65rem', color: '#94a3b8', fontSize: '0.9rem', fontWeight: 700, textAlign: 'center' }}>⏱ {t('game.autoNext4')}</div>
-                  </>
-                ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.4fr 1.4fr', gap: '0.5rem' }}>
-                    <button style={{ padding: '0.85rem 0.4rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '0.92rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} onClick={() => { localStorage.removeItem('player'); navigate('/'); }}>🏠 {t('game.home')}</button>
-                    <button style={{ padding: '0.85rem 0.4rem', background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '0.92rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} onClick={() => setTutorialPage(0)}>↺ {t('game.restart')}</button>
-                    <button style={{ padding: '0.85rem 0.4rem', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '0.92rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 14px rgba(22,163,74,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}>🚀 {t('game.playGame')}</button>
+                        key={item.title}
+                        type="button"
+                        aria-label={`Go to step ${i + 1}`}
+                        onClick={() => setTutorialPage(i)}
+                        style={{ height: '9px', width: i === tutorialPage ? '26px' : '9px', borderRadius: '999px', border: 'none', cursor: 'pointer', background: i === tutorialPage ? (page.accent || '#2563eb') : '#cbd5e1', transition: 'all 0.2s' }}
+                      />
+                    ))}
                   </div>
-                )}
+
+                  {/* Navigation buttons */}
+                  {!isLast ? (
+                    <>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '0.75rem' }}>
+                        <button
+                          style={{ padding: '0.85rem 1.25rem', background: tutorialPage === 0 ? '#e2e8f0' : '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.05rem', fontWeight: 800, cursor: tutorialPage === 0 ? 'default' : 'pointer', opacity: tutorialPage === 0 ? 0.5 : 1 }}
+                          disabled={tutorialPage === 0}
+                          onClick={() => setTutorialPage(p => Math.max(p - 1, 0))}
+                        >← {t('game.back')}</button>
+                        <button
+                          style={{ padding: '0.85rem 1.25rem', background: `linear-gradient(135deg, ${page.accent || '#2563eb'}, ${page.accent || '#2563eb'}cc)`, color: '#fff', border: 'none', borderRadius: '14px', fontSize: '1.05rem', fontWeight: 900, cursor: 'pointer', boxShadow: `0 4px 14px ${page.accent || '#2563eb'}33` }}
+                          onClick={() => setTutorialPage(p => Math.min(p + 1, mapTutorialPages.length - 1))}
+                        >{t('game.next')} →</button>
+                      </div>
+                      <div style={{ marginTop: '0.65rem', color: '#94a3b8', fontSize: '0.9rem', fontWeight: 700, textAlign: 'center' }}>⏱ {t('game.autoNext4')}</div>
+                    </>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.4fr 1.4fr', gap: '0.5rem' }}>
+                      <button style={{ padding: '0.85rem 0.4rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '0.92rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} onClick={() => { localStorage.removeItem('player'); navigate('/'); }}>🏠 {t('game.home')}</button>
+                      <button style={{ padding: '0.85rem 0.4rem', background: '#1e3a5f', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '0.92rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} onClick={() => setTutorialPage(0)}>↺ {t('game.restart')}</button>
+                      <button style={{ padding: '0.85rem 0.4rem', background: 'linear-gradient(135deg, #16a34a, #22c55e)', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '0.92rem', fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 14px rgba(22,163,74,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }} onClick={() => { setShowTutorial(false); localStorage.setItem('tutorial_seen', '1'); }}>🚀 {t('game.playGame')}</button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1384,7 +1448,18 @@ const GamePage = () => {
                     })()}
                   </div>
                   <button
-                    style={{ ...s.continueBtn, background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', fontSize: '1.1rem', padding: '1rem 2rem', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                    style={{
+                      ...s.continueBtn,
+                      background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                      fontSize: '1.1rem',
+                      padding: '1rem 2rem',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      margin: '0 auto',
+                    }}
                     onClick={() => setCpStep('activity')}
                   >
                     🚀 {activeCP === 1 ? t('game.cp1StartBtn') : activeCP === 2 ? t('game.cp2StartBtn') : t('game.cp3StartBtn')}
@@ -1564,7 +1639,7 @@ const s = {
   fullQuizHeader: { background: '#1e3a5f', padding: '1rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 },
   fullQuizTitle: { color: '#FFD700', fontWeight: '800', fontSize: '1.1rem' },
   fullQuizPlayer: { color: '#94a3b8', fontSize: '0.9rem' },
-  fullQuizBody: { flex: 1, overflowY: 'auto', padding: '2rem', maxWidth: '800px', margin: '0 auto', width: '100%', boxSizing: 'border-box' },
+  fullQuizBody: { flex: 1, overflowY: 'auto', padding: '2rem 4rem', maxWidth: '1500px', margin: '0 auto', width: '100%', boxSizing: 'border-box' },
   chatBox: { position: 'fixed', bottom: '1rem', right: '1rem', width: '320px', background: '#fff', borderRadius: '16px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)', zIndex: 9998, display: 'flex', flexDirection: 'column', maxHeight: '420px' },
   chatHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: '#1e3a5f', borderRadius: '16px 16px 0 0', color: '#fff', fontWeight: '600', fontSize: '0.9rem' },
   chatClose: { background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '1rem' },
@@ -1583,7 +1658,7 @@ const s = {
   characterTitle: { margin: '0 0 0.5rem', color: '#1e3a5f', fontSize: '2rem', fontWeight: '900', },
   characterSubtitle: { margin: '0 0 2rem', color: '#64748b', fontSize: '1rem', lineHeight: 1.5, },
   characterOptions: { display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap', },
-  characterButton: { width: '190px', padding: '1.5rem', borderRadius: '20px', border: '4px solid', cursor: 'pointer', transition: 'transform 0.2s ease, box-shadow 0.2s ease', },
+  characterButton: { width: '190px', height: '210px', padding: '1rem', borderRadius: '20px', border: '4px solid', cursor: 'pointer', transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', },
   characterName: { fontSize: '1.25rem', fontWeight: '900', },
 };
 

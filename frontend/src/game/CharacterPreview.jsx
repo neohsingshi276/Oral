@@ -21,13 +21,13 @@ const CharacterPreview = ({ character }) => {
             scene: {
                 create() {
                     const previewCharacter = createChibiCharacter(this, {
-                        x: 70,
-                        y: 66,
+                        x: 80,
+                        y: 80,
                         character,
                         nickname: '',
                         showName: false,
                     });
-                    previewCharacter.playerGraphic.setScale(1.7);
+                    previewCharacter.playerGraphic.setScale(2.0);
                 },
             },
 
@@ -53,7 +53,7 @@ const CharacterPreview = ({ character }) => {
             style={{
                 width: '160px',
                 height: '160px',
-                margin: '0 auto 0.8rem',
+                margin: '0 auto',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',

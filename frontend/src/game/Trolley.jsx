@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
+import LanguageToggle from '../components/LanguageToggle';
 
 // ─── Web Audio Sound System ────────────────────────────────────────────────────
 // All sounds are synthesized via the Web Audio API — no audio files required.
@@ -444,15 +445,32 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
   if (showFinalLeaderboard) return (
     <div style={s.fullPage}>
       <style>{animStyles}</style>
-      <div style={{ ...s.lbCard, maxHeight: '92vh', overflowY: 'auto' }}>
+      <div
+        style={{
+          ...s.lbCard,
+          maxHeight: '92vh',
+          overflowY: 'auto',
+          position: 'relative'
+        }}
+      >
+        <LanguageToggle
+          compact
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            zIndex: 2
+          }}
+        />
+
         <div style={{ fontSize: '4rem', textAlign: 'center' }}>🏆</div>
         <h2 style={{ ...s.lbTitle, fontSize: '1.8rem', marginBottom: '0.4rem' }}>
           {language === 'bi' ? 'Overall Leaderboard' : 'Papan Kedudukan Keseluruhan'}
         </h2>
         <p style={{ textAlign: 'center', color: '#475569', marginBottom: '1.25rem', fontSize: '0.9rem', fontWeight: '700' }}>
           {language === 'bi'
-            ? 'Dental Quiz + Crossword Puzzle + Food Catcher Game Score'
-            : 'Skor Kuiz Pergigian + Teka Silang Kata + Permainan Tangkap Makanan'}
+            ? 'Your overall score is the average of your scores from all three checkpoints (Dental Quiz, Crossword Puzzle and Food Catcher Game).'
+            : 'Skor keseluruhan anda ialah purata skor daripada ketiga-tiga checkpoint (Kuiz Pergigian, Teka Silang Kata dan Permainan Tangkap Makanan).'}
         </p>
 
         <div style={s.lbList}>
@@ -462,19 +480,21 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: '700', color: '#1e3a5f', marginBottom: '0.25rem' }}>{entry.nickname}{entry.player_id === player?.id && <span style={s.youBadge}>{t('game.you')}</span>}</div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', gap: '0.75rem' }}>
-                  <span>CP1: {entry.cp1_pct ?? Math.round(entry.cp1_mark / 33 * 100)}/100</span>
-                  <span>CP2: {entry.cp2_pct ?? Math.round(entry.cp2_mark / 33 * 100)}/100</span>
-                  <span>CP3: {entry.cp3_pct ?? Math.round(entry.cp3_mark / 33 * 100)}/100</span>
+                  <span>CP1: {entry.cp1_pct ?? Math.round(entry.cp1_mark / 33 * 100)}%</span>
+                  <span>CP2: {entry.cp2_pct ?? Math.round(entry.cp2_mark / 33 * 100)}%</span>
+                  <span>CP3: {entry.cp3_pct ?? Math.round(entry.cp3_mark / 33 * 100)}%</span>
                 </div>
               </div>
-              <div style={{ ...s.lbScore, fontSize: '1.2rem' }}>{entry.total_mark}<span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>/100</span></div>
+              <div style={{ ...s.lbScore, fontSize: '1.2rem' }}>{entry.total_mark}%</div>
             </div>
           ))}
         </div>
 
         {/* Text before buttons */}
         <p style={{ textAlign: 'center', color: '#d97706', fontWeight: 800, fontSize: '0.95rem', margin: '1.25rem 0 0.85rem' }}>
-          ✨ {language === 'bi' ? 'Follow the gold arrows to the Finish Point!' : 'Jom ikut anak panah emas ke Penamat!'}
+          ✨ {language === 'bi'
+            ? 'Follow the yellow arrow to the Finish Point!'
+            : 'Jom ikut anak panah kuning ke Penamat!'}
         </p>
 
         {/* Buttons */}
@@ -527,10 +547,10 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
 
           {/* GOOD FOODS — Non-Cariogenic */}
           <div style={{ background: '#f0fdf4', borderRadius: '18px', padding: '1.1rem 1.25rem', border: '2px solid #86efac', boxShadow: '0 4px 12px rgba(22,163,74,0.06)' }}>
-            <div style={{ fontWeight: '900', fontSize: '0.92rem', color: '#15803d', marginBottom: '0.15rem' }}>
+            <div style={{ fontWeight: '900', fontSize: '0.86rem', color: '#15803d', marginBottom: '0.15rem' }}>
               ✅ {language === 'bi' ? 'Catch NON-CARIOGENIC food (+100)' : 'Tangkap makanan BUKAN KARIOGENIK (+100)'}
             </div>
-            <div style={{ fontSize: '0.78rem', fontStyle: 'italic', fontWeight: 600, color: '#166534', marginBottom: '0.65rem' }}>
+            <div style={{ fontSize: '0.68rem', fontStyle: 'italic', fontWeight: 600, color: '#166534', marginBottom: '0.65rem' }}>
               {language === 'bi' ? '(do not cause dental caries)' : '(tidak menyebabkan karies gigi)'}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.65rem 0.4rem', justifyContent: 'items-center', alignContent: 'start' }}>
@@ -544,10 +564,10 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
 
           {/* BAD FOODS — Cariogenic */}
           <div style={{ background: '#fff1f2', borderRadius: '18px', padding: '1.1rem 1.25rem', border: '2px solid #fca5a5', boxShadow: '0 4px 12px rgba(225,29,72,0.06)' }}>
-            <div style={{ fontWeight: '900', fontSize: '0.92rem', color: '#be123c', marginBottom: '0.15rem' }}>
+            <div style={{ fontWeight: '900', fontSize: '0.88rem', color: '#be123c', marginBottom: '0.15rem' }}>
               ❌ {language === 'bi' ? 'Avoid CARIOGENIC food (-70)' : 'Elakkan makanan KARIOGENIK (-70)'}
             </div>
-            <div style={{ fontSize: '0.78rem', fontStyle: 'italic', fontWeight: 600, color: '#9f1239', marginBottom: '0.65rem' }}>
+            <div style={{ fontSize: '0.68rem', fontStyle: 'italic', fontWeight: 600, color: '#9f1239', marginBottom: '0.65rem' }}>
               {language === 'bi' ? '(cause dental caries)' : '(menyebabkan karies gigi)'}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.65rem 0.4rem', justifyContent: 'items-center', alignContent: 'start' }}>
@@ -564,30 +584,30 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
         <div style={{ background: '#fff7ed', border: '2px dashed #f97316', borderRadius: '12px', padding: '0.75rem 1rem', marginBottom: '1.25rem', textAlign: 'center' }}>
           <span style={{ fontSize: '0.92rem', fontWeight: '900', color: '#c2410c' }}>
             🎯 {language === 'bi'
-              ? `You must score at least ${targetScore || 1000} points to pass!`
-              : `Anda mesti mendapat sekurang-kurangnya ${targetScore || 1000} mata untuk lulus!`}
+              ? `Get at least ${targetScore || 1000} points to pass!`
+              : `Dapatkan sekurang-kurangnya ${targetScore || 1000} mata untuk lulus!`}
           </span>
           <br />
           <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#c2410c' }}>
             {language === 'bi'
-              ? `To get maximum marks, score ${2 * (targetScore || 1000)} points or more (2 × ${targetScore || 1000}).`
-              : `Untuk markah penuh, dapatkan ${2 * (targetScore || 1000)} mata atau lebih (2 × ${targetScore || 1000}).`}
+              ? `Aim for ${2 * (targetScore || 1000)} points or more to get the maximum score!`
+              : `Cuba dapatkan ${2 * (targetScore || 1000)} mata atau lebih untuk mencapai skor maksimum!`}
           </span>
         </div>
 
-        {/* Action Buttons: Kembali & Mula Permainan */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+        {/* Start Game Button */}
+        <div style={{ width: '100%' }}>
           <button
-            style={{ ...s.startBtn, background: '#64748b', boxShadow: '0 4px 15px rgba(100,116,139,0.3)', fontSize: '1.15rem', fontWeight: '900', padding: '0.9rem' }}
-            onClick={() => onBack ? onBack() : window.history.back()}
-          >
-            ← {language === 'bi' ? 'Back' : 'Kembali'}
-          </button>
-          <button
-            style={{ ...s.startBtn, fontSize: '1.15rem', fontWeight: '900', padding: '0.9rem' }}
+            style={{
+              ...s.startBtn,
+              width: '100%',
+              fontSize: '1.15rem',
+              fontWeight: '900',
+              padding: '0.9rem'
+            }}
             onClick={startGame}
           >
-            🎮 {language === 'bi' ? 'START GAME!' : 'MULA PERMAINAN!'}
+            🎮 {language === 'bi' ? 'Start Food Catcher Game!' : 'Mula Permainan Tangkap Makanan!'}
           </button>
         </div>
 
@@ -612,12 +632,11 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
 
           {/* Your Score Section */}
           <div style={s.yourScore}>
-            <div style={{ color: '#fff', fontSize: '1.35rem', fontWeight: '800', marginBottom: '0.3rem', textTransform: 'none' }}>
-              {language === 'bi' ? 'Your Score' : 'Skor Anda'}
+            <div style={{ color: '#FFD700', fontSize: '3.6rem', fontWeight: '900', lineHeight: 1 }}>
+              {finalScore} {language === 'bi' ? 'points' : 'mata'}
             </div>
-            <div style={{ color: '#FFD700', fontSize: '3.6rem', fontWeight: '900', lineHeight: 1 }}>{finalScore}</div>
             <div style={{ color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '700', marginTop: '0.4rem' }}>
-              {language === 'bi' ? 'Final Mark' : 'Markah Akhir'}: {normalizedFinal}/100
+              {language === 'bi' ? 'Your Score' : 'Skor Anda'}: {normalizedFinal}%
             </div>
           </div>
 
@@ -627,7 +646,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
               <div key={entry.player_id} style={{ ...s.lbRow, ...(entry.player_id === player?.id ? s.lbRowMe : {}) }}>
                 <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
                 <div style={{ flex: 1, fontWeight: '600', color: '#1e3a5f' }}>{entry.nickname}{entry.player_id === player?.id && <span style={s.youBadge}>{t('game.you')}</span>}</div>
-                <div style={s.lbScore}>{entry.score} {t('game.points')}</div>
+                <div style={s.lbScore}> {Math.max(0, Math.min(100, Math.round((entry.score / (2 * (targetScore || 1000))) * 100)))}% </div>
               </div>
             ))}
             {leaderboard.length === 0 && <p style={{ textAlign: 'center', color: '#94a3b8', padding: '1rem' }}>{t('game.noScoresYet')}</p>}
@@ -637,14 +656,24 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
           {!hasPassed ? (
             <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
               <div style={{ background: '#fff1f2', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem', border: '2px solid #fecdd3' }}>
-                <div style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>😭</div>
+                <div style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>😢</div>
                 <h3 style={{ color: '#be123c', fontSize: '1.25rem', fontWeight: '900', margin: '0 0 0.4rem' }}>
                   {language === 'bi' ? 'Try Again!' : 'Cuba Semula!'}
                 </h3>
-                <p style={{ color: '#9f1239', fontSize: '0.92rem', fontWeight: '700', margin: 0 }}>
-                  {language === 'bi'
-                    ? `Your score: ${finalScore} - need at least ${minPassScore} marks to pass.`
-                    : `Skor anda: ${finalScore} - perlu sekurang-kurangnya ${minPassScore} markah untuk lulus.`}
+                <p style={{ color: '#9f1239', fontSize: '0.92rem', fontWeight: '700', margin: 0, lineHeight: 1.5 }}>
+                  {language === 'bi' ? (
+                    <>
+                      You got <strong>{finalScore}</strong> points.
+                      <br />
+                      You need to get at least <strong>{minPassScore}</strong> points to pass.
+                    </>
+                  ) : (
+                    <>
+                      Anda mendapat <strong>{finalScore}</strong> mata.
+                      <br />
+                      Anda perlu mendapat sekurang-kurangnya <strong>{minPassScore}</strong> mata untuk lulus.
+                    </>
+                  )}
                 </p>
               </div>
               <button
