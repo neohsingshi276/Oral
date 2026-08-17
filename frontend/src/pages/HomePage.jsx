@@ -12,7 +12,7 @@ import ruhayaPhoto from '../assets/DR. RUHAYA.jpeg';
 import norkhafizahPhoto from '../assets/ASSOCIATE PROFESSOR DR. NORKHAFIZAH.jpeg';
 import punamPhoto from '../assets/Punam.jpg';
 import neohPhoto from '../assets/Neoh.jpeg';
-import suziPhoto from '../assets/Suzi.png';
+import suziPhoto from '../assets/Suzi.jpg';
 import { useLanguage } from "../context/LanguageContext";
 
 const HomePage = () => {
