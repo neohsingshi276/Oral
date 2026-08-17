@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import heroImage from "../assets/child.jpeg";
+import heroImage from "../assets/child.png";
 import stephaniePhoto from '../assets/STEPHANIE.jpeg';
 import ruhayaPhoto from '../assets/DR. RUHAYA.jpeg';
 import norkhafizahPhoto from '../assets/ASSOCIATE PROFESSOR DR. NORKHAFIZAH.jpeg';
