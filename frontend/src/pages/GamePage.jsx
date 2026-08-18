@@ -206,7 +206,17 @@ const GamePage = () => {
   const [crosswordSettings, setCrosswordSettings] = useState(null);
   const [showCP4Leaderboard, setShowCP4Leaderboard] = useState(false);
   const [cp4LeaderboardData, setCp4LeaderboardData] = useState([]);
-  const [showCP3FinalLeaderboard, setShowCP3FinalLeaderboard] = useState(false);
+  const [showCP3FinalLeaderboard, setShowCP3FinalLeaderboardRaw] = useState(() => {
+    return sessionStorage.getItem('dq_showFinalLB') === '1';
+  });
+  const setShowCP3FinalLeaderboard = (val) => {
+    setShowCP3FinalLeaderboardRaw(val);
+    if (val) {
+      sessionStorage.setItem('dq_showFinalLB', '1');
+    } else {
+      sessionStorage.removeItem('dq_showFinalLB');
+    }
+  };
 
   useEffect(() => {
     if (!player?.session_id) return;
