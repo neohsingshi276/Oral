@@ -883,7 +883,7 @@ const s = {
   lbCard: { background: '#fff', borderRadius: '24px', padding: '2rem', maxWidth: '600px', width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', maxHeight: '90vh', overflowY: 'auto' },
   lbTitle: { fontSize: '1.8rem', fontWeight: '900', textAlign: 'center', color: '#FF6B35', margin: '0.5rem 0 1rem', textShadow: '2px 2px 0 #FFE66D' },
   yourScore: { background: 'linear-gradient(135deg,#1e3a5f,#2563eb)', borderRadius: '16px', padding: '1.25rem', textAlign: 'center', marginBottom: '1.5rem' },
-  lbList: { display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' },
+  lbList: { display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem', maxHeight: '50vh', overflowY: 'auto' },
   lbRow: { display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '12px', border: '1px solid #f1f5f9' },
   lbRowMe: { border: '2px solid #2563eb', background: '#eff6ff' },
   lbRank: { width: '36px', textAlign: 'center', fontSize: '1.1rem', flexShrink: 0 },

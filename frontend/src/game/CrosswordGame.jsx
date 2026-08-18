@@ -884,7 +884,7 @@ const s = {
   cell: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   cellNum: { position: 'absolute', top: '2px', left: '3px', fontSize: '14px', fontWeight: '900', color: '#1e40af', background: 'rgba(255,255,255,0.85)', borderRadius: '3px', padding: '1px 3px', lineHeight: 1, zIndex: 2, pointerEvents: 'none' },
   cellInput: { width: '100%', height: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontWeight: '800', textTransform: 'uppercase', outline: 'none', cursor: 'pointer', padding: 0, WebkitTextFillColor: 'inherit', opacity: 1 },
-  lbBox: { background: '#f1f5f9', borderRadius: '12px', padding: '0.75rem', margin: '0.75rem 0', textAlign: 'left', width: '100%' },
+  lbBox: { background: '#f1f5f9', borderRadius: '12px', padding: '0.75rem', margin: '0.75rem 0', textAlign: 'left', width: '100%', maxHeight: '50vh', overflowY: 'auto' },
   lbTitle: { fontSize: '0.88rem', fontWeight: '800', color: '#1e3a5f', margin: '0 0 0.5rem' },
   lbRow: { display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 0', borderBottom: '1px solid #e2e8f0' },
   lbRank: { fontSize: '1rem', minWidth: '24px' },

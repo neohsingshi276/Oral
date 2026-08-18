@@ -542,7 +542,7 @@ const s = {
   scoreDivider: { width: '1px', background: 'rgba(255,255,255,0.2)' },
   lbCard: { background: '#fff', borderRadius: '16px', padding: '1.25rem', border: '1px solid #e2e8f0' },
   lbTitle: { fontSize: '1rem', fontWeight: '800', color: '#1e3a5f', margin: '0 0 1rem' },
-  lbList: { display: 'flex', flexDirection: 'column', gap: '0.5rem' },
+  lbList: { display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '50vh', overflowY: 'auto' },
   lbRow: { display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.75rem', borderRadius: '10px' },
   lbRowMe: { border: '2px solid #2563eb' },
   lbRank: { width: '32px', textAlign: 'center', fontSize: '1rem', flexShrink: 0 },
