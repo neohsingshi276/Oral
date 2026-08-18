@@ -16,7 +16,13 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
 
   // Loading state
   const [ready, setReady] = useState(false);
+  const readyRef = useRef(false);
   const [loadPct, setLoadPct] = useState(0);
+  // FIX: If the Phaser chunk or boot sequence fails (e.g. a stale cached
+  // chunk hash after a new deploy), the loading screen used to hang at 0%
+  // forever with no feedback. Track failure explicitly so we can show a
+  // real error + retry instead of an infinite spinner.
+  const [loadError, setLoadError] = useState(false);
 
   // Keep latest progress in a ref so the scene can read it every frame
   // without needing Phaser to restart when React re-renders.
@@ -131,6 +137,13 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
 
     let cancelled = false;
 
+    // FIX: Safety net in case boot stalls somewhere we didn't anticipate
+    // (e.g. create() throwing before onLoadComplete fires). Without this,
+    // any unexpected hang leaves the player on an infinite spinner.
+    const stallTimer = setTimeout(() => {
+      if (!cancelled && !readyRef.current) setLoadError(true);
+    }, 20000);
+
     api.get(`/game/position/${player.id}`, playerAuthConfig())
       .then(res => {
         if (cancelled) return;
@@ -156,7 +169,6 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
       }
       import('phaser').then(({ default: Phaser }) => {
         if (cancelled || !containerRef.current) return;
-
         const viewW = window.innerWidth - 32;
         const viewH = window.innerHeight - 130;
 
@@ -170,7 +182,7 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
           pressEtoEnterText,
           onNearCheckpoint: () => { },
           onLoadProgress: (pct) => setLoadPct(Math.round(pct * 100)),
-          onLoadComplete: () => setReady(true),
+          onLoadComplete: () => { readyRef.current = true; setReady(true); },
         };
 
         const game = new Phaser.Game({
@@ -223,11 +235,18 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
         }, SAVE_INTERVAL);
 
         game._oralCleanup = { onResize, saveInterval, savePosition };
+      }).catch((err) => {
+        // FIX: A failed dynamic import (e.g. stale chunk hash after a
+        // redeploy, or a network blip) used to leave the player staring
+        // at an infinite "0%" loading bar. Surface a real error instead.
+        console.error('Failed to load Phaser game module:', err);
+        if (!cancelled) setLoadError(true);
       });
     }
 
     return () => {
       console.log('Cleanup skipped to preserve Phaser state');
+      clearTimeout(stallTimer);
     };
   }, []);
 
@@ -252,26 +271,51 @@ const GameCanvas = ({ player, progress, onCheckpointReached, externalGameRef, vi
           gap: 16,
           minHeight: 300,
         }}>
-          <img src={dentalImage} style={{ width: 120, animation: 'spin 1.2s linear infinite' }} />
-          <div style={{ color: '#FFD700', fontWeight: 'bold', fontSize: 18 }}>
-            {loadingText || 'Loading...'}
-          </div>
-          <div style={{
-            width: 220, height: 10,
-            background: '#0f1a2e',
-            borderRadius: 5,
-            overflow: 'hidden',
-            border: '1px solid #2563eb',
-          }}>
-            <div style={{
-              height: '100%',
-              width: `${loadPct}%`,
-              background: 'linear-gradient(90deg, #2563eb, #7B2FBE)',
-              borderRadius: 5,
-              transition: 'width 0.2s ease',
-            }} />
-          </div>
-          <div style={{ color: '#94a3b8', fontSize: 13 }}>{loadPct}%</div>
+          {loadError ? (
+            <>
+              <div style={{ fontSize: 40 }}>⚠️</div>
+              <div style={{ color: '#FFD700', fontWeight: 'bold', fontSize: 18, textAlign: 'center', padding: '0 1rem' }}>
+                Game failed to load
+              </div>
+              <div style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: '0 1.5rem', maxWidth: 320 }}>
+                This can happen after an update. Reloading the page usually fixes it.
+              </div>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                style={{
+                  marginTop: 8, padding: '0.6rem 1.5rem', borderRadius: 10,
+                  border: 'none', background: '#2563eb', color: '#fff',
+                  fontWeight: 700, fontSize: 14, cursor: 'pointer',
+                }}
+              >
+                🔄 Reload
+              </button>
+            </>
+          ) : (
+            <>
+              <img src={dentalImage} style={{ width: 120, animation: 'spin 1.2s linear infinite' }} />
+              <div style={{ color: '#FFD700', fontWeight: 'bold', fontSize: 18 }}>
+                {loadingText || 'Loading...'}
+              </div>
+              <div style={{
+                width: 220, height: 10,
+                background: '#0f1a2e',
+                borderRadius: 5,
+                overflow: 'hidden',
+                border: '1px solid #2563eb',
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${loadPct}%`,
+                  background: 'linear-gradient(90deg, #2563eb, #7B2FBE)',
+                  borderRadius: 5,
+                  transition: 'width 0.2s ease',
+                }} />
+              </div>
+              <div style={{ color: '#94a3b8', fontSize: 13 }}>{loadPct}%</div>
+            </>
+          )}
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         </div>
       )}

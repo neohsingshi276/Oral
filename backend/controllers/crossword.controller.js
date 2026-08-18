@@ -421,7 +421,17 @@ const getCrossword = async (req, res) => {
     }
 
     const layout = generateCrosswordLayout(selected);
-    res.json({ ...layout, settings: cfg, language });
+    // FIX: If fewer crossword words exist in the database than the admin's
+    // configured word_count, the puzzle silently shrinks (e.g. asked for 10,
+    // only 6 available) with no indication anywhere — so a student who gets
+    // every word right ends up with a "suspicious" 100% on what looks like
+    // a smaller quiz than intended. Surface it so this is visible/debuggable
+    // instead of a silent mismatch.
+    const requestedCount = cfg.word_count || 8;
+    if (forcedIds.length === 0 && selected.length < requestedCount) {
+      console.warn(`[crossword] session ${sessionId}: requested ${requestedCount} words but only ${selected.length} available in crossword_data for language "${language}"`);
+    }
+    res.json({ ...layout, settings: cfg, language, requestedWordCount: requestedCount });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -472,7 +482,13 @@ const submitScore = async (req, res) => {
     );
 
     if (existing.length > 0) {
-      if (score > existing[0].score) {
+      // FIX: existing[0].score can be corrupted leftover data from an old,
+      // uncapped version of this formula (e.g. 800, 10052). A legitimate
+      // new score is always <= 100, so it could never beat a corrupted
+      // value and the bad row would be stuck forever. Treat any stored
+      // score above the valid 0-100 range as invalid and always replace it.
+      const existingIsInvalid = existing[0].score > 100 || existing[0].score < 0;
+      if (score > existing[0].score || existingIsInvalid) {
         await db.query(
           'UPDATE crossword_scores SET score=?, words_correct=?, total_words=?, time_taken=? WHERE id=?',
           [score, safeWordsCorrect, safeTotalWords, safeTimeTaken, existing[0].id]
@@ -500,12 +516,12 @@ const getLeaderboard = async (req, res) => {
 
   try {
     const [rows] = await db.query(`
-      SELECT s.player_id, s.score, s.words_correct,
+      SELECT s.player_id, LEAST(GREATEST(s.score, 0), 100) AS score, s.words_correct,
              s.total_words, s.time_taken, s.completed_at, p.nickname
       FROM crossword_scores s
       JOIN players p ON s.player_id = p.id
       WHERE s.session_id = ?
-      ORDER BY s.score DESC
+      ORDER BY score DESC
     `, [sessionId]);
 
     const seen = {};

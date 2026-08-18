@@ -326,6 +326,23 @@ const GamePage = () => {
         const prog = res.data.progress || [];
         setProgress(prog);
 
+        // FIX: sessionStorage's activeCP/cpStep can drift from the backend's
+        // real progress (e.g. a refresh mid-completion, or a session reset).
+        // If we're about to resume into an activity for a checkpoint whose
+        // predecessor isn't actually marked completed server-side, that
+        // activity will always dead-end on submit ("Complete the previous
+        // checkpoint first"). Catch that here and send the player back to
+        // the map instead of letting them play through it first.
+        const savedActiveCP = sessionStorage.getItem('dq_activeCP');
+        if (savedActiveCP) {
+          const cpNum = JSON.parse(savedActiveCP);
+          const prevCompleted = cpNum <= 1 || !!prog.find(cp => cp.checkpoint_number === cpNum - 1)?.completed;
+          if (!prevCompleted) {
+            setActiveCP(null);
+            setCpStep('video');
+          }
+        }
+
         const allCompleted = prog.every(cp => cp.completed);
         if (allCompleted && prog.length === 3) {
           // Don't auto-trigger allDone — player must walk to CP4
@@ -404,6 +421,15 @@ const GamePage = () => {
     } catch (err) {
       console.error('Failed to save checkpoint completion:', err);
       alert(err.response?.data?.error || 'Unable to save checkpoint progress. Please try again.');
+      // FIX: A 409 here means our local activeCP got out of sync with the
+      // backend's real progress (its predecessor checkpoint isn't actually
+      // marked completed). Re-sync instead of leaving the player stuck on
+      // a dead-end activity screen they can never successfully submit.
+      if (err.response?.status === 409) {
+        await fetchProgress(player.id);
+        setActiveCP(null);
+        setCpStep('video');
+      }
       return;
     }
 

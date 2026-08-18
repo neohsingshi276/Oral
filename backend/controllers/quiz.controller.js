@@ -163,7 +163,7 @@ const getLeaderboard = async (req, res) => {
       SELECT s.player_id, s.score, s.correct_answers,
              s.total_questions, s.time_taken, s.completed_at, p.nickname,
              CASE WHEN s.total_questions > 0
-                  THEN ROUND((s.score / (s.total_questions * 100)) * 100, 2)
+                  THEN LEAST(100, GREATEST(0, ROUND((s.score / (s.total_questions * 100)) * 100, 2)))
                   ELSE 0 END AS percentage
       FROM quiz_scores s
       JOIN players p ON s.player_id = p.id
