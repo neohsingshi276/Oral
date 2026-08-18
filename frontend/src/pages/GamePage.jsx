@@ -148,8 +148,28 @@ const GamePage = () => {
   const navigate = useNavigate();
   const [player, setPlayer] = useState(null);
   const [progress, setProgress] = useState([]);
-  const [activeCP, setActiveCP] = useState(null);
-  const [cpStep, setCpStep] = useState('video');
+  const [activeCP, setActiveCPRaw] = useState(() => {
+    const saved = sessionStorage.getItem('dq_activeCP');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [cpStep, setCpStepRaw] = useState(() => {
+    return sessionStorage.getItem('dq_cpStep') || 'video';
+  });
+
+  // Wrap setters to persist to sessionStorage
+  const setActiveCP = (val) => {
+    setActiveCPRaw(val);
+    if (val === null) {
+      sessionStorage.removeItem('dq_activeCP');
+      sessionStorage.removeItem('dq_cpStep');
+    } else {
+      sessionStorage.setItem('dq_activeCP', JSON.stringify(val));
+    }
+  };
+  const setCpStep = (val) => {
+    setCpStepRaw(val);
+    sessionStorage.setItem('dq_cpStep', val);
+  };
   const [showChat, setShowChat] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
