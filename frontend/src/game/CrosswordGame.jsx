@@ -546,6 +546,16 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     if (!scoreSubmitted) submitScore(completed.length);
   };
 
+  const handleDone = () => {
+    if (cwStorageKey) sessionStorage.removeItem(cwStorageKey);
+    onComplete();
+  };
+
+  const handleRetry = () => {
+    if (cwStorageKey) sessionStorage.removeItem(cwStorageKey);
+    onRetry();
+  };
+
   const isCellInWord = (row, col) => {
     if (!selectedWord) return false;
     return selectedWord.direction === 'across'
@@ -609,15 +619,8 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     <div style={s.fullPage}><div style={s.center}><p style={{ color: '#e11d48' }}>❌ {t('game.loadError', 'Gagal memuatkan crossword.')}</p></div></div>
   );
 
-  const handleDone = () => {
-    if (cwStorageKey) sessionStorage.removeItem(cwStorageKey);
-    onComplete();
-  };
-
-  const handleRetry = () => {
-    if (cwStorageKey) sessionStorage.removeItem(cwStorageKey);
-    onRetry();
-  };
+  const acrossWords = words.filter(w => w.direction === 'across');
+  const downWords = words.filter(w => w.direction === 'down');
 
   return (
     <div style={s.fullPage}>
