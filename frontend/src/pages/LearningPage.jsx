@@ -3,7 +3,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
-import chero from '../assets/chero.png';
+import chero from '../assets/child.png';
 import Brush from '../assets/Brush.png';
 import Rinse from '../assets/Rinse.png';
 import Floss from '../assets/Floss.png';

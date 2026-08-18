@@ -121,8 +121,8 @@ const stopBgMusic = () => {
 };
 
 const DEFAULT_DURATION = 60;
-const TROLLEY_SPEED = 1.1;
-const TROLLEY_ACCELERATION = 0.22;
+const TROLLEY_SPEED = 0.75;
+const TROLLEY_ACCELERATION = 0.16;
 const FOOD_FALL_SPEED = 2.5;
 const SPAWN_INTERVAL = 600;
 
@@ -217,6 +217,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
   const scoreRef = useRef(0);
   const streakRef = useRef(0); // consecutive correct catches (resets on any wrong food)
   const trolleyPosRef = useRef(50);
+  const caughtIdsRef = useRef(new Set()); // tracks caught item IDs to prevent double-scoring
 
   // Keep refs in sync
   useEffect(() => { scoreRef.current = score; }, [score]);
@@ -248,6 +249,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
     setCombo(0);
     streakRef.current = 0;
     trolleyVelocity.current = 0;
+    caughtIdsRef.current = new Set();
     startBgMusic(isMutedRef.current);
   };
 
@@ -313,10 +315,12 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
         const trolleyY = gameAreaHeight - 120;
         return prev.map(item => {
           const newY = item.y + FOOD_FALL_SPEED * deltaTime;
-          if (newY >= trolleyY && newY <= trolleyY + 30 && !item.caught) {
+          if (newY >= trolleyY && newY <= trolleyY + 30 && !item.caught && !caughtIdsRef.current.has(item.id)) {
             const trolleyLeft = trolleyPosRef.current - 5;
             const trolleyRight = trolleyPosRef.current + 5;
             if (item.x >= trolleyLeft && item.x <= trolleyRight) {
+              // Mark as caught immediately in ref to prevent double-scoring across frames
+              caughtIdsRef.current.add(item.id);
               const isGood = item.points > 0;
               if (isGood) {
                 const newStreak = streakRef.current + 1;
