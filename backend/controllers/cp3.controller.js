@@ -74,7 +74,7 @@ const getLeaderboard = async (req, res) => {
       JOIN players p ON c.player_id = p.id
       WHERE c.session_id = ?
       GROUP BY c.player_id, p.nickname
-      ORDER BY score DESC LIMIT 20
+      ORDER BY score DESC
     `, [sessionId]);
     res.json({ leaderboard: rows });
   } catch (err) {

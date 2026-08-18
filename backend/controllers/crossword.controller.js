@@ -517,7 +517,7 @@ const getLeaderboard = async (req, res) => {
       }
     }
 
-    res.json({ leaderboard: leaderboard.slice(0, 20) });
+    res.json({ leaderboard });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
