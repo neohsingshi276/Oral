@@ -745,10 +745,9 @@ const GamePage = () => {
   if (!player) return <div style={s.loading}>{t('game.loading')}</div>;
 
   const showFullQuiz = activeCP === 1 && cpStep === 'activity';
-  const showFullCrossword = activeCP === 2 && cpStep === 'activity';
   const showFullCP3 = activeCP === 3 && cpStep === 'activity';
-  const showModal = activeCP && !showFullQuiz && !showFullCrossword && !showFullCP3;
-  const isWorldPaused = showTutorial || !!checkpointHint || !!allDone || !!showModal || !!showFullQuiz || !!showFullCrossword || !!showFullCP3;
+  const showModal = activeCP && !showFullQuiz && !showFullCP3;
+  const isWorldPaused = showTutorial || !!checkpointHint || !!allDone || !!showModal || !!showFullQuiz || !!showFullCP3;
 
   return (
     <div style={s.page}>
@@ -1399,22 +1398,6 @@ const GamePage = () => {
         </div>
       )}
 
-      {/* Full Screen Crossword — CP2 */}
-      {showFullCrossword && (
-        <CrosswordGame
-          key={crosswordKey}
-          onComplete={handleActivityDone}
-          onRetry={() => {
-            // Force student to re-watch the video before retrying crossword
-            api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }, getPlayerChatConfig()).catch(console.error);
-            setCrosswordKey(prev => prev + 1);
-            setCpStep('video');
-          }}
-          playerId={player.id}
-          sessionId={player.session_id}
-        />
-      )}
-
       {/* Full Screen CP3 — Food Game */}
       {showFullCP3 && (
         <CP3Game player={player} onComplete={handleActivityDone} onBack={() => { setShowFullCP3(false); setCpStep('instructions'); }} />
@@ -1513,6 +1496,21 @@ const GamePage = () => {
                   </button>
                 </div>
               </div>
+            )}
+
+            {cpStep === 'activity' && activeCP === 2 && (
+              <CrosswordGame
+                key={crosswordKey}
+                onComplete={handleActivityDone}
+                onRetry={() => {
+                  // Force student to re-watch the video before retrying crossword
+                  api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }, getPlayerChatConfig()).catch(console.error);
+                  setCrosswordKey(prev => prev + 1);
+                  setCpStep('video');
+                }}
+                playerId={player.id}
+                sessionId={player.session_id}
+              />
             )}
 
             {cpStep === 'done' && (
