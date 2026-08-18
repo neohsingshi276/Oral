@@ -259,7 +259,15 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     setTimeout(() => nextQuestion(nextAnswers), 2000);
   };
 
+  // FIX: extra client-side guard — if a click and a timeout both manage to
+  // schedule a nextQuestion() call for the same question (a narrow timing
+  // race around clearInterval), this stops the second one from pushing a
+  // duplicate answer and advancing twice. Belt-and-suspenders alongside the
+  // server-side dedupe in submitQuiz.
+  const lastAdvancedQRef = useRef(-1);
   const nextQuestion = (submittedAnswers = answersRef.current) => {
+    if (lastAdvancedQRef.current === currentQ) return;
+    lastAdvancedQRef.current = currentQ;
     answeredRef.current = false; // FIX: reset ref before state so next render is correct
     setSelected([]);
     setMatchLines([]);

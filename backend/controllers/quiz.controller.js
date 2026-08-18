@@ -68,8 +68,21 @@ const submitQuiz = async (req, res) => {
     const [playerRows] = await db.query('SELECT id FROM players WHERE id = ? AND session_id = ?', [player_id, session_id]);
     if (playerRows.length === 0) return res.status(403).json({ error: 'Player does not belong to this session' });
 
-    const total = answers.length;
-    const questionIds = answers.map(a => a.question_id).filter(id => Number.isInteger(id));
+    // FIX: Never trust the raw client-submitted array length for scoring or
+    // for the displayed "x/y" total — a stray client-side duplicate (e.g. a
+    // timeout and a click both registering an answer for the same question
+    // in a rare race) would silently inflate both the score and the total
+    // in lockstep (seen as "10/11" on the leaderboard for a 10-question
+    // quiz). Dedupe by question_id, keeping the first submission for each.
+    const seenQuestionIds = new Set();
+    const dedupedAnswers = [];
+    for (const ans of answers) {
+      if (!Number.isInteger(ans?.question_id) || seenQuestionIds.has(ans.question_id)) continue;
+      seenQuestionIds.add(ans.question_id);
+      dedupedAnswers.push(ans);
+    }
+
+    const questionIds = dedupedAnswers.map(a => a.question_id);
     if (questionIds.length === 0) return res.status(400).json({ error: 'Invalid question IDs' });
 
     const placeholders = questionIds.map(() => '?').join(',');
@@ -86,6 +99,10 @@ const submitQuiz = async (req, res) => {
       };
     }
 
+    // total is now the count of deduped answers that actually matched a
+    // real question in this quiz — not a raw, unvalidated client count.
+    const total = dedupedAnswers.filter(a => questionMap[a.question_id]).length;
+
     // Time limit per question (admin-configured) — needed for the speed bonus formula
     const [settingsRows] = await db.query('SELECT timer_seconds FROM quiz_settings WHERE session_id = ?', [session_id]);
     const timeLimit = (settingsRows[0]?.timer_seconds && parseInt(settingsRows[0].timer_seconds, 10) > 0)
@@ -97,7 +114,7 @@ const submitQuiz = async (req, res) => {
     //   Wrong    -> 0 marks
     let correct = 0;
     let rawScore = 0; // sum of marks actually earned
-    for (const ans of answers) {
+    for (const ans of dedupedAnswers) {
       const q = questionMap[ans.question_id];
       if (!q) continue;
       const { correct_answer: correctAnswer, question_type: type } = q;
