@@ -90,7 +90,85 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     setFinalScore(null);
   };
 
+  const cwStorageKey = sessionId && playerId ? `dq_cw_progress_${playerId}_${sessionId}` : null;
+
+  // Persist crossword state whenever it changes
   useEffect(() => {
+    if (!cwStorageKey || phase !== 'playing' || words.length === 0) return;
+    try {
+      sessionStorage.setItem(cwStorageKey, JSON.stringify({
+        words,
+        gridSize,
+        grid,
+        userGrid,
+        completed,
+        settings,
+        timerTotal,
+        timeLeft,
+        hintsUsed,
+        hintedCells: Array.from(hintedCells),
+        showCongrats,
+        isGameOver,
+        revealAll,
+        scoreSubmitted,
+        showLB,
+        lbData,
+        finalScore,
+        reviewingAnswers,
+        reviewPhase,
+        puzzleCache,
+        wordIds: wordIdsRef.current,
+        language,
+      }));
+    } catch (e) {
+      console.warn('Failed to save crossword progress to sessionStorage:', e);
+    }
+  }, [
+    cwStorageKey, phase, words, gridSize, grid, userGrid, completed, settings,
+    timerTotal, timeLeft, hintsUsed, hintedCells, showCongrats, isGameOver,
+    revealAll, scoreSubmitted, showLB, lbData, finalScore, reviewingAnswers,
+    reviewPhase, puzzleCache, language
+  ]);
+
+  useEffect(() => {
+    // Check if we have saved crossword progress in sessionStorage
+    if (cwStorageKey) {
+      const saved = sessionStorage.getItem(cwStorageKey);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.words && parsed.words.length > 0) {
+            setWords(parsed.words);
+            setGridSize(parsed.gridSize || 12);
+            setGrid(parsed.grid || []);
+            setUserGrid(parsed.userGrid || []);
+            setCompleted(parsed.completed || []);
+            setSettings(parsed.settings || { minimum_correct: DEFAULT_MIN_CORRECT });
+            setTimerTotal(parsed.timerTotal || DEFAULT_TIMER);
+            setTimeLeft(parsed.timeLeft || DEFAULT_TIMER);
+            setHintsUsed(parsed.hintsUsed || 0);
+            setHintedCells(new Set(parsed.hintedCells || []));
+            setShowCongrats(parsed.showCongrats || false);
+            setIsGameOver(parsed.isGameOver || false);
+            setRevealAll(parsed.revealAll || false);
+            setScoreSubmitted(parsed.scoreSubmitted || false);
+            setShowLB(parsed.showLB || false);
+            setLbData(parsed.lbData || []);
+            setFinalScore(parsed.finalScore ?? null);
+            setReviewingAnswers(parsed.reviewingAnswers || false);
+            setReviewPhase(parsed.reviewPhase || 'viewing');
+            setPuzzleCache(parsed.puzzleCache || {});
+            wordIdsRef.current = parsed.wordIds || parsed.words.map(x => x.id);
+            prevLanguageRef.current = parsed.language || language;
+            setPhase('playing');
+            return;
+          }
+        } catch (e) {
+          sessionStorage.removeItem(cwStorageKey);
+        }
+      }
+    }
+
     resetPuzzleState();
     setPhase('loading');
     setPuzzleCache({});
@@ -119,7 +197,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       })
       .catch(() => setPhase('error'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId]);
+  }, [sessionId, cwStorageKey]);
 
   // Handle language toggles mid-game: swap to that language's layout
   // (fetching + caching it the first time it's needed, reusing the same
@@ -639,7 +717,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
               {passed ? (
                 <button style={{ ...s.doneBtn, background: '#7c3aed' }} onClick={openCrosswordLeaderboard}>{t('game.seeScoreboard', 'Lihat Papan Kedudukan 🏆 & Teruskan')}</button>
               ) : (
-                <button style={{ ...s.doneBtn, background: '#e11d48' }} onClick={onRetry}>
+                <button style={{ ...s.doneBtn, background: '#e11d48' }} onClick={handleRetry}>
                   🔄 {t('game.retry', 'Cuba Semula')}
                 </button>
               )}
@@ -683,7 +761,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                 <p style={{ color: '#94a3b8', textAlign: 'center', padding: '1rem', fontSize: '0.85rem' }}>{t('game.noScoreboardData', 'Tiada data papan kedudukan lagi.')}</p>
               )}
             </div>
-            <button style={s.doneBtn} onClick={passed ? onComplete : onRetry}>
+            <button style={s.doneBtn} onClick={passed ? handleDone : handleRetry}>
               {passed ? t('game.continueAdventureMap', 'Teruskan Pengembaraan! 🗺️') : `🔄 ${t('game.retry', 'Cuba Semula')}`}
             </button>
           </div>
@@ -697,7 +775,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
             <span style={{ color: '#16a34a', fontWeight: '700', fontSize: '0.95rem' }}>👁️ {t('game.checkYourAnswers', 'Semua jawapan ditunjukkan')}</span>
             <button
               style={{ ...s.doneBtn, width: 'auto', padding: '0.7rem 2rem', background: passed ? '#7c3aed' : '#e11d48', fontSize: '0.95rem', borderRadius: '12px', boxShadow: passed ? '0 4px 15px rgba(124,58,237,0.4)' : '0 4px 15px rgba(225,29,72,0.35)' }}
-              onClick={passed ? openCrosswordLeaderboard : onRetry}
+              onClick={passed ? openCrosswordLeaderboard : handleRetry}
             >
               {passed ? t('game.continueToScoreboard', 'Teruskan ke Papan Kedudukan') : `🔄 ${t('game.retry', 'Cuba Semula')}`}
             </button>

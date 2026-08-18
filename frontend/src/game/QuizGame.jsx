@@ -23,14 +23,36 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
   const [result, setResult] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [totalScore, setTotalScore] = useState(0);
-  const [startTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(Date.now());
   const timerRef = useRef(null);
   const answersRef = useRef([]);
   const questionStartRef = useRef(Date.now()); // when the current question was first shown (for speed bonus)
 
+  const quizStorageKey = player?.session_id && player?.id ? `dq_quiz_progress_${player.id}_${player.session_id}` : null;
+
   useEffect(() => {
     answersRef.current = answers;
   }, [answers]);
+
+  // Persist quiz progress whenever state changes
+  useEffect(() => {
+    if (!quizStorageKey || phase === 'loading' || questions.length === 0) return;
+    try {
+      sessionStorage.setItem(quizStorageKey, JSON.stringify({
+        questions,
+        settings,
+        currentQ,
+        answers,
+        startTime,
+        phase,
+        result,
+        leaderboard,
+        totalScore,
+      }));
+    } catch (e) {
+      console.warn('Failed to save quiz progress to sessionStorage:', e);
+    }
+  }, [quizStorageKey, questions, settings, currentQ, answers, startTime, phase, result, leaderboard, totalScore]);
 
   // Shuffle helper (Fisher-Yates)
   const shuffleArray = (arr) => {
@@ -62,6 +84,32 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     ]);
 
   useEffect(() => {
+    // Check if we have saved progress in sessionStorage for this player & session
+    if (quizStorageKey) {
+      const saved = sessionStorage.getItem(quizStorageKey);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.questions && parsed.questions.length > 0) {
+            setQuestions(parsed.questions);
+            setSettings(parsed.settings || {});
+            setCurrentQ(parsed.currentQ || 0);
+            setAnswers(parsed.answers || []);
+            answersRef.current = parsed.answers || [];
+            if (parsed.startTime) setStartTime(parsed.startTime);
+            if (parsed.result) setResult(parsed.result);
+            if (parsed.leaderboard) setLeaderboard(parsed.leaderboard);
+            if (parsed.totalScore) setTotalScore(parsed.totalScore);
+            setPhase(parsed.phase || 'playing');
+            setTimeLeft(parsed.settings?.timer_seconds || 15);
+            return;
+          }
+        } catch (e) {
+          sessionStorage.removeItem(quizStorageKey);
+        }
+      }
+    }
+
     api.get(`/quiz/session/${player.session_id}`)
       .then(res => {
         // Shuffle options for each question so answers appear in different positions
@@ -116,7 +164,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
         setPhase('playing');
       })
       .catch(() => setPhase('error'));
-  }, [player.session_id]);
+  }, [player.session_id, quizStorageKey]);
 
 
   useEffect(() => {
@@ -270,6 +318,16 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
     </div>
   );
 
+  const handleDone = () => {
+    if (quizStorageKey) sessionStorage.removeItem(quizStorageKey);
+    onQuizComplete();
+  };
+
+  const handleRetry = () => {
+    if (quizStorageKey) sessionStorage.removeItem(quizStorageKey);
+    onRetry();
+  };
+
   if (phase === 'result') {
     const minToPass = (settings?.minimum_correct !== undefined && settings?.minimum_correct !== null && !isNaN(Number(settings.minimum_correct))) ? Number(settings.minimum_correct) : 8;
     const hasPassed = result.correct >= minToPass;
@@ -312,7 +370,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
           </div>
         </div>
         {hasPassed ? (
-          <button style={s.doneBtn} onClick={onQuizComplete}>
+          <button style={s.doneBtn} onClick={handleDone}>
             {t('game.continueAdventureMap', 'Teruskan Pengembaraan! 🗺️')}
           </button>
         ) : (
@@ -337,7 +395,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
                   </>
                 )}
               </p>
-              <button style={s.retryBtn} onClick={onRetry}>
+              <button style={s.retryBtn} onClick={handleRetry}>
                 🔄 {t('game.retryQuiz', 'Cuba Semula')}
               </button>
             </div>
