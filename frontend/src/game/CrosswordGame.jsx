@@ -609,8 +609,15 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
     <div style={s.fullPage}><div style={s.center}><p style={{ color: '#e11d48' }}>❌ {t('game.loadError', 'Gagal memuatkan crossword.')}</p></div></div>
   );
 
-  const acrossWords = words.filter(w => w.direction === 'across');
-  const downWords = words.filter(w => w.direction === 'down');
+  const handleDone = () => {
+    if (cwStorageKey) sessionStorage.removeItem(cwStorageKey);
+    onComplete();
+  };
+
+  const handleRetry = () => {
+    if (cwStorageKey) sessionStorage.removeItem(cwStorageKey);
+    onRetry();
+  };
 
   return (
     <div style={s.fullPage}>
