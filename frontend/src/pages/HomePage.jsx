@@ -1177,6 +1177,7 @@ const HomePage = () => {
                             src={stephaniePhoto}
                             alt="Dr. Stephanie Oung Ker Yue"
                             className="credit-photo"
+                            style={{ objectPosition: 'center top' }}
                           />
                         </div>
 
@@ -1209,6 +1210,7 @@ const HomePage = () => {
                             src={ruhayaPhoto}
                             alt="Dr. Ruhaya binti Hasan"
                             className="credit-photo"
+                            style={{ objectPosition: 'center top' }}
                           />
                         </div>
 
@@ -1241,6 +1243,7 @@ const HomePage = () => {
                             src={norkhafizahPhoto}
                             alt="Associate Professor Dr. Norkhafizah binti Saddki"
                             className="credit-photo"
+                            style={{ objectPosition: 'center top' }}
                           />
                         </div>
 
