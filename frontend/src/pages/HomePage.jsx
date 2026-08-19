@@ -659,7 +659,7 @@ const HomePage = () => {
 
         .credits-grid.one {
           grid-template-columns: minmax(0, 360px);
-          justify-content: center;
+          justify-content: start;
         }
 
         .credit-person {
