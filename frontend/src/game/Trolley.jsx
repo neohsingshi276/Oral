@@ -520,7 +520,19 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
   if (gameState === 'start') return (
     <div style={s.fullPage}>
       <style>{animStyles}</style>
-      <div style={{ ...s.startCard, maxWidth: '780px', maxHeight: '92vh', overflowY: 'auto', padding: '1.5rem 2rem' }}>
+      <div style={{ ...s.startCard, maxWidth: '780px', maxHeight: '92vh', overflowY: 'auto', padding: '1.5rem 2rem', position: 'relative' }}>
+        <LanguageToggle
+          compact
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            zIndex: 2,
+            background: '#f8fafc',
+            border: '2px solid #e2e8f0',
+            borderRadius: '10px'
+          }}
+        />
 
         {/* Title & Badge */}
         <h1 style={{ ...s.title, fontSize: '2.2rem', marginBottom: '0.4rem' }}>
@@ -628,7 +640,19 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
     return (
       <div style={s.fullPage}>
         <style>{animStyles}</style>
-        <div style={{ ...s.lbCard, maxHeight: '92vh', overflowY: 'auto' }}>
+        <div style={{ ...s.lbCard, maxHeight: '92vh', overflowY: 'auto', position: 'relative' }}>
+          <LanguageToggle
+            compact
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              zIndex: 2,
+              background: '#f8fafc',
+              border: '2px solid #e2e8f0',
+              borderRadius: '10px'
+            }}
+          />
           <div style={{ fontSize: '3.5rem', textAlign: 'center', marginBottom: '0.2rem' }}>🎯</div>
           <h2 style={{ ...s.lbTitle, fontSize: '2rem', marginBottom: '0.75rem' }}>
             {language === 'bi' ? 'Food Catcher Game' : 'Permainan Tangkap Makanan'}
@@ -798,6 +822,20 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
             </div>
 
           </div>
+
+          <LanguageToggle
+            compact
+            style={{
+              background: '#fff',
+              border: '2px solid #e2e8f0',
+              borderRadius: '10px',
+              height: '42px',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '0 4px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+            }}
+          />
 
           <button
             style={s.muteBtn}
