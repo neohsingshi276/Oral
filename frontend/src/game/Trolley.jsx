@@ -124,7 +124,7 @@ const DEFAULT_DURATION = 60;
 const TROLLEY_SPEED = 0.75;
 const TROLLEY_ACCELERATION = 0.16;
 const FOOD_FALL_SPEED = 2.5;
-const SPAWN_INTERVAL = 600;
+const SPAWN_INTERVAL = 750;
 
 // Consecutive-correct-catch bonus marks (streak resets on any wrong food).
 // The bonus is "sticky" per tier — once a streak reaches a tier, every catch
