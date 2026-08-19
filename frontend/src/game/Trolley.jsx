@@ -550,11 +550,11 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '1.25rem', textAlign: 'left' }}>
 
           {/* GOOD FOODS — Non-Cariogenic */}
-          <div style={{ background: '#f0fdf4', borderRadius: '18px', padding: '1.1rem 1.25rem', border: '2px solid #86efac', boxShadow: '0 4px 12px rgba(22,163,74,0.06)' }}>
-            <div style={{ fontWeight: '900', fontSize: '0.76rem', lineHeight: 1.25, color: '#15803d', marginBottom: '0.15rem', minHeight: '2.5em', display: 'flex', alignItems: 'center' }}>
+          <div style={{ background: '#f0fdf4', borderRadius: '18px', padding: '1.1rem 1.1rem', border: '2px solid #86efac', boxShadow: '0 4px 12px rgba(22,163,74,0.06)' }}>
+            <div style={{ fontWeight: '900', fontSize: '0.67rem', lineHeight: 1.3, color: '#15803d', marginBottom: '0.15rem', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
               ✅ {language === 'bi' ? 'Catch NON-CARIOGENIC food (+100)' : 'Tangkap makanan BUKAN KARIOGENIK (+100)'}
             </div>
-            <div style={{ fontSize: '0.68rem', fontStyle: 'italic', fontWeight: 600, color: '#166534', marginBottom: '0.65rem' }}>
+            <div style={{ fontSize: '0.66rem', fontStyle: 'italic', fontWeight: 600, color: '#166534', marginBottom: '0.65rem', whiteSpace: 'nowrap' }}>
               {language === 'bi' ? '(do not cause dental caries)' : '(tidak menyebabkan karies gigi)'}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.65rem 0.4rem', justifyContent: 'items-center', alignContent: 'start' }}>
@@ -567,11 +567,11 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
           </div>
 
           {/* BAD FOODS — Cariogenic */}
-          <div style={{ background: '#fff1f2', borderRadius: '18px', padding: '1.1rem 1.25rem', border: '2px solid #fca5a5', boxShadow: '0 4px 12px rgba(225,29,72,0.06)' }}>
-            <div style={{ fontWeight: '900', fontSize: '0.76rem', lineHeight: 1.25, color: '#be123c', marginBottom: '0.15rem', minHeight: '2.5em', display: 'flex', alignItems: 'center' }}>
+          <div style={{ background: '#fff1f2', borderRadius: '18px', padding: '1.1rem 1.1rem', border: '2px solid #fca5a5', boxShadow: '0 4px 12px rgba(225,29,72,0.06)' }}>
+            <div style={{ fontWeight: '900', fontSize: '0.67rem', lineHeight: 1.3, color: '#be123c', marginBottom: '0.15rem', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
               ❌ {language === 'bi' ? 'Avoid CARIOGENIC food (-70)' : 'Elakkan makanan KARIOGENIK (-70)'}
             </div>
-            <div style={{ fontSize: '0.68rem', fontStyle: 'italic', fontWeight: 600, color: '#9f1239', marginBottom: '0.65rem' }}>
+            <div style={{ fontSize: '0.66rem', fontStyle: 'italic', fontWeight: 600, color: '#9f1239', marginBottom: '0.65rem', whiteSpace: 'nowrap' }}>
               {language === 'bi' ? '(cause dental caries)' : '(menyebabkan karies gigi)'}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.65rem 0.4rem', justifyContent: 'items-center', alignContent: 'start' }}>
