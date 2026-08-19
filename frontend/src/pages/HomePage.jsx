@@ -1128,21 +1128,11 @@ const HomePage = () => {
                 {/* Heading */}
                 <div className="credits-header">
 
-                  <span className="credits-eyebrow">
-                    {language === 'bm' ? 'Pasukan Kami' : 'Our Team'}
-                  </span>
-
                   <h2 className="credits-title">
                     {language === 'bm'
-                      ? 'Kredit'
-                      : 'Credits'}
+                      ? 'Pasukan Kami'
+                      : 'Our Team'}
                   </h2>
-
-                  <p className="credits-subtitle">
-                    {language === 'bm'
-                      ? 'Kembara Gigi Sihat dibangunkan melalui kerjasama pakar pendidikan pergigian, pembangun web dan penasihat pembangunan.'
-                      : 'Kembara Gigi Sihat was developed through the collaboration of dental education experts, web developers and a web development advisor.'}
-                  </p>
 
                 </div>
 
@@ -1180,10 +1170,6 @@ const HomePage = () => {
                           />
                         </div>
 
-                        <span className="credit-badge">
-                          🦷 {language === 'bm' ? 'Pakar Pergigian' : 'Dental Expert'}
-                        </span>
-
                         <h4 className="credit-name">
                           Dr. Stephanie Oung Ker Yue
                         </h4>
@@ -1211,10 +1197,6 @@ const HomePage = () => {
                             className="credit-photo"
                           />
                         </div>
-
-                        <span className="credit-badge">
-                          🦷 {language === 'bm' ? 'Pakar Pergigian' : 'Dental Expert'}
-                        </span>
 
                         <h4 className="credit-name">
                           Dr. Ruhaya binti Hasan
@@ -1244,13 +1226,12 @@ const HomePage = () => {
                           />
                         </div>
 
-                        <span className="credit-badge">
-                          🦷 {language === 'bm' ? 'Pakar Pergigian' : 'Dental Expert'}
-                        </span>
-
                         <h4 className="credit-name">
-                          Associate Professor Dr. Norkhafizah binti Saddki
+                          {language === 'bm'
+                            ? 'Profesor Madya Dr. Norkhafizah binti Saddki'
+                            : 'Associate Professor Dr. Norkhafizah binti Saddki'}
                         </h4>
+
 
                         <p className="credit-school">
                           {language === 'bm'
@@ -1299,10 +1280,6 @@ const HomePage = () => {
                           />
                         </div>
 
-                        <span className="credit-badge">
-                          💻 {language === 'bm' ? 'Pembangun Web' : 'Web Developer'}
-                        </span>
-
                         <h4 className="credit-name">
                           Punam Kunpichai A/L Samli
                         </h4>
@@ -1330,10 +1307,6 @@ const HomePage = () => {
                             className="credit-photo"
                           />
                         </div>
-
-                        <span className="credit-badge">
-                          💻 {language === 'bm' ? 'Pembangun Web' : 'Web Developer'}
-                        </span>
 
                         <h4 className="credit-name">
                           Neoh Sing Shi
@@ -1386,10 +1359,6 @@ const HomePage = () => {
                           />
                         </div>
 
-                        <span className="credit-badge">
-                          🎓 {language === 'bm' ? 'Penasihat' : 'Advisor'}
-                        </span>
-
                         <h4 className="credit-name">
                           Dr. Suzi Iryanti binti Fadilah
                         </h4>
@@ -1427,13 +1396,13 @@ const HomePage = () => {
 
               <p>
                 {language === "bm"
-                  ? "Sila lengkapkan Kembara Gigi Sihat sebelum meneruskan ke Zon Pembelajaran."
+                  ? "Sila selesaikan Kembara Gigi Sihat sebelum meneruskan perjalanan ke Zon Pembelajaran."
                   : "Complete Kembara Gigi Sihat before proceeding to the Learning Zone."}
               </p>
 
               <p className="learning-popup-question">
                 {language === "bm"
-                  ? "Adakah anda telah melengkapkan Kembara Gigi Sihat?"
+                  ? "Adakah anda telah selesaikan Kembara Gigi Sihat?"
                   : "Have you completed Kembara Gigi Sihat?"}
               </p>
 

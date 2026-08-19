@@ -54,13 +54,13 @@ const Navbar = () => {
 
             <p style={styles.popupText}>
               {language === 'bm'
-                ? 'Sila lengkapkan Kembara Gigi Sihat sebelum meneruskan ke Zon Pembelajaran.'
+                ? 'Sila selesaikan Kembara Gigi Sihat sebelum meneruskan perjalanan ke Zon Pembelajaran.'
                 : 'Complete Kembara Gigi Sihat before proceeding to the Learning Zone.'}
             </p>
 
             <p style={styles.popupQuestion}>
               {language === 'bm'
-                ? 'Adakah anda telah melengkapkan Kembara Gigi Sihat?'
+                ? 'Adakah anda telah selesaikan Kembara Gigi Sihat?'
                 : 'Have you completed Kembara Gigi Sihat?'}
             </p>
 
