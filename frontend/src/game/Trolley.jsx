@@ -551,7 +551,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
 
           {/* GOOD FOODS — Non-Cariogenic */}
           <div style={{ background: '#f0fdf4', borderRadius: '18px', padding: '1.1rem 1.25rem', border: '2px solid #86efac', boxShadow: '0 4px 12px rgba(22,163,74,0.06)' }}>
-            <div style={{ fontWeight: '900', fontSize: '0.86rem', color: '#15803d', marginBottom: '0.15rem' }}>
+            <div style={{ fontWeight: '900', fontSize: '0.76rem', lineHeight: 1.25, color: '#15803d', marginBottom: '0.15rem', minHeight: '2.5em', display: 'flex', alignItems: 'center' }}>
               ✅ {language === 'bi' ? 'Catch NON-CARIOGENIC food (+100)' : 'Tangkap makanan BUKAN KARIOGENIK (+100)'}
             </div>
             <div style={{ fontSize: '0.68rem', fontStyle: 'italic', fontWeight: 600, color: '#166534', marginBottom: '0.65rem' }}>
@@ -568,7 +568,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
 
           {/* BAD FOODS — Cariogenic */}
           <div style={{ background: '#fff1f2', borderRadius: '18px', padding: '1.1rem 1.25rem', border: '2px solid #fca5a5', boxShadow: '0 4px 12px rgba(225,29,72,0.06)' }}>
-            <div style={{ fontWeight: '900', fontSize: '0.88rem', color: '#be123c', marginBottom: '0.15rem' }}>
+            <div style={{ fontWeight: '900', fontSize: '0.76rem', lineHeight: 1.25, color: '#be123c', marginBottom: '0.15rem', minHeight: '2.5em', display: 'flex', alignItems: 'center' }}>
               ❌ {language === 'bi' ? 'Avoid CARIOGENIC food (-70)' : 'Elakkan makanan KARIOGENIK (-70)'}
             </div>
             <div style={{ fontSize: '0.68rem', fontStyle: 'italic', fontWeight: 600, color: '#9f1239', marginBottom: '0.65rem' }}>
