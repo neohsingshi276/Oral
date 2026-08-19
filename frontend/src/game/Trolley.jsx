@@ -337,7 +337,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
                 streakRef.current = 0;
                 setCombo(0);
                 setScore(s => {
-                  const ns = s + item.points; // item.points is already -70
+                  const ns = Math.max(0, s + item.points); // item.points is -70; minimum score is 0
                   scoreRef.current = ns;
                   return ns;
                 });
