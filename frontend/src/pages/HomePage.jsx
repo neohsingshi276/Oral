@@ -659,7 +659,7 @@ const HomePage = () => {
 
         .credits-grid.one {
           grid-template-columns: minmax(0, 360px);
-          justify-content: start;
+          justify-content: center;
         }
 
         .credit-person {
@@ -1382,6 +1382,7 @@ const HomePage = () => {
                             src={suziPhoto}
                             alt="Dr. Suzi Iryanti binti Fadilah"
                             className="credit-photo"
+                            style={{ objectPosition: 'center top' }}
                           />
                         </div>
 
