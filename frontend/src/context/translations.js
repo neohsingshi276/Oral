@@ -234,7 +234,7 @@ const bm = {
     foodGame: 'Permainan Tangkap Makanan',
     tutorialWelcome: 'Selamat Datang ke Kembara Gigi Sihat!',
     tutorialRead: 'Baca arahan sebelum bermain',
-    moveCharacter: 'Gerakkan Avatae',
+    moveCharacter: 'Gerakkan Avatar',
     moveDesc: 'Tekan',
     moveDescEnd: 'untuk bergerak',
     enterCheckpoint: 'Masuk Checkpoint',
