@@ -744,9 +744,12 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
             <h2 style={{ color: '#7c3aed', fontSize: '1.4rem', fontWeight: '800', margin: '0.5rem 0' }}>{t('game.scoreboard', 'Papan Kedudukan')}</h2>
             <div style={{ ...s.lbBox, margin: '0.5rem 0 1rem' }}>
               {lbData.length > 0 ? lbData.map((entry, i) => (
-                <div key={entry.player_id} style={s.lbRow}>
+                <div key={entry.player_id} style={{ ...s.lbRow, ...(entry.player_id === playerId ? s.lbRowMe : {}) }}>
                   <span style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
-                  <span style={s.lbName}>{entry.nickname}</span>
+                  <span style={s.lbName}>
+                    {entry.nickname}
+                    {entry.player_id === playerId && <span style={s.youBadge}>{t('game.you', 'Anda')}</span>}
+                  </span>
                   <span
                     style={{
                       ...s.lbScore,
@@ -975,9 +978,11 @@ const s = {
   lbBox: { background: '#f1f5f9', borderRadius: '12px', padding: '0.75rem', margin: '0.75rem 0', textAlign: 'left', width: '100%', maxHeight: '50vh', overflowY: 'auto' },
   lbTitle: { fontSize: '0.88rem', fontWeight: '800', color: '#1e3a5f', margin: '0 0 0.5rem' },
   lbRow: { display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 0', borderBottom: '1px solid #e2e8f0' },
+  lbRowMe: { border: '2px solid #2563eb', borderRadius: '8px', padding: '0.3rem 0.4rem', background: '#eff6ff' },
   lbRank: { fontSize: '1rem', minWidth: '24px' },
   lbName: { flex: 1, fontSize: '0.82rem', fontWeight: '600', color: '#334155' },
   lbScore: { fontSize: '0.82rem', fontWeight: '700', color: '#2563eb' },
+  youBadge: { background: '#2563eb', color: '#fff', fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '6px', fontWeight: '700', marginLeft: '0.4rem' },
   reviewBar: { position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, background: 'linear-gradient(to top, rgba(15,23,42,0.98), rgba(15,23,42,0.9))', backdropFilter: 'blur(10px)', borderTop: '2px solid #334155', padding: '1rem 1.5rem', animation: 'slideIn 0.4s ease' },
   reviewBarInner: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', maxWidth: '900px', margin: '0 auto', flexWrap: 'wrap' },
 };
