@@ -72,7 +72,7 @@ const AdminLoginPage = () => {
         {/* Divider */}
         <div style={s.divider}>
           <div style={s.dividerLine}></div>
-          <span style={s.dividerText}>{t('admin.loginContinue') || 'Log masuk untuk meneruskan'}</span>
+          <span style={s.dividerText}>{t('admin.loginContinue') || 'Log masuk'}</span>
           <div style={s.dividerLine}></div>
         </div>
 
@@ -147,12 +147,6 @@ const AdminLoginPage = () => {
           </div>
         </form>
 
-        {/* Bottom decoration */}
-        <div style={s.bottomDeco}>
-          <span>🌺</span>
-          <span style={s.bottomText}>{t('admin.platformTitle') || 'Platform Pendidikan Kesihatan Pergigian'}</span>
-          <span>🌺</span>
-        </div>
       </div>
     </div>
   );

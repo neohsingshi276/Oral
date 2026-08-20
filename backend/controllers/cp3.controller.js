@@ -112,7 +112,7 @@ const getCrosswordLeaderboard = async (req, res) => {
         words_correct: scoreMap[p.id]?.words_correct || 0,
         total_words: scoreMap[p.id]?.total_words || 0,
         completed: doneSet.has(p.id),
-        score: scoreMap[p.id]?.score || 0, // Final Score /100 = Base (accuracy) + Speed Bonus
+        score: Math.round(Math.min(100, Math.max(0, scoreMap[p.id]?.score || 0)) * 10) / 10, // Final Score /100 = Base (accuracy) + Speed Bonus
       }))
       .sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
@@ -224,10 +224,9 @@ const getFinalLeaderboard = async (req, res) => {
       const cp3Exact = (cp3Pct / 100) * CP_WEIGHT;
       const cp3Mark = Math.round(cp3Exact);
 
-      // Total: sum exact values, then round to the nearest whole mark
-      // (standard round-half-up, e.g. 96.66 -> 97, 96.4 -> 96)
+      // Total: sum exact values, rounded to 1 decimal place
       const totalExact = cp1Exact + cp2Exact + cp3Exact;
-      const totalMark = Math.round(totalExact);
+      const totalMark = Math.round(totalExact * 10) / 10;
 
       return {
         player_id: player.id,

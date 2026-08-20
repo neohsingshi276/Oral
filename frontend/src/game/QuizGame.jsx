@@ -352,7 +352,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
             <span style={s.scoreLabel}>
               {language === 'bi' ? 'Your Score:' : 'Skor Anda:'}
             </span>
-            <span style={s.scoreBig}>{result.percentage}%</span>
+            <span style={s.scoreBig}>{Number(result.percentage ?? 0).toFixed(1)}%</span>
           </div>
           <div style={s.scoreStats}>
             <div style={s.scoreStat}><div style={{ ...s.scoreStatVal, color: '#16a34a' }}>{result.correct}</div><div style={s.scoreStatLabel}>{t('game.correct', 'Betul')}</div></div>
@@ -370,7 +370,7 @@ const QuizGame = ({ player, onQuizComplete, onRetry }) => {
               <div key={entry.player_id} style={{ ...s.lbRow, ...(entry.player_id === player.id ? s.lbRowMe : {}), background: i === 0 ? '#fef9ee' : i === 1 ? '#f8fafc' : i === 2 ? '#fff7ed' : '#fff' }}>
                 <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
                 <div style={s.lbName}>{entry.nickname}{entry.player_id === player.id && <span style={s.youBadge}>{t('game.you', 'Anda')}</span>}</div>
-                <div style={s.lbScore}>{entry.percentage}%</div>
+                <div style={s.lbScore}>{Number(entry.percentage ?? 0).toFixed(1)}%</div>
                 <div style={s.lbCorrect}>{entry.correct_answers}/{entry.total_questions} ✓</div>
               </div>
             ))}

@@ -474,7 +474,7 @@ const submitScore = async (req, res) => {
     const base = safeTotalWords > 0 ? (safeWordsCorrect / safeTotalWords) * 80 : 0;
     const timeUsed = Math.min(Math.max(safeTimeTaken, 0), timeLimit);
     const speedBonus = 20 * (1 - (timeUsed / timeLimit));
-    const score = Math.round(Math.max(0, Math.min(100, base + speedBonus)));
+    const score = Math.round(Math.max(0, Math.min(100, base + speedBonus)) * 10) / 10;
 
     const [existing] = await db.query(
       'SELECT id, score FROM crossword_scores WHERE player_id = ? AND session_id = ?',
@@ -516,7 +516,7 @@ const getLeaderboard = async (req, res) => {
 
   try {
     const [rows] = await db.query(`
-      SELECT s.player_id, LEAST(GREATEST(s.score, 0), 100) AS score, s.words_correct,
+      SELECT s.player_id, ROUND(LEAST(GREATEST(s.score, 0), 100), 1) AS score, s.words_correct,
              s.total_words, s.time_taken, s.completed_at, p.nickname
       FROM crossword_scores s
       JOIN players p ON s.player_id = p.id

@@ -144,7 +144,7 @@ const submitQuiz = async (req, res) => {
     const maxPossible = total * 100; // total mark that CAN be earned in this quiz session
     const score = Math.round(rawScore); // final mark earned (stored as a whole number)
     // Leaderboard ranking figure: final mark earned / total mark that can be earned * 100
-    const percentage = maxPossible > 0 ? Math.round((score / maxPossible) * 10000) / 100 : 0;
+    const percentage = maxPossible > 0 ? Math.round((score / maxPossible) * 1000) / 10 : 0;
 
     // FIX: Guard against duplicate submissions — only keep the best score
     const [existing] = await db.query(
@@ -180,7 +180,7 @@ const getLeaderboard = async (req, res) => {
       SELECT s.player_id, s.score, s.correct_answers,
              s.total_questions, s.time_taken, s.completed_at, p.nickname,
              CASE WHEN s.total_questions > 0
-                  THEN LEAST(100, GREATEST(0, ROUND((s.score / (s.total_questions * 100)) * 100, 2)))
+                  THEN LEAST(100, GREATEST(0, ROUND((s.score / (s.total_questions * 100)) * 100, 1)))
                   ELSE 0 END AS percentage
       FROM quiz_scores s
       JOIN players p ON s.player_id = p.id

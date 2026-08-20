@@ -189,7 +189,7 @@ const BAD_FOODS = [
   { image: '/assets/foods/bad/tanghulu.png', nameBm: 'Buah Bersalut Gula', nameBi: 'Candied Fruit Skewer', points: -70, color: '#FF6B6B' },
 ];
 
-const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
+const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false, onRetry }) => {
   const { t, language } = useLanguage();
   const getFoodName = (food) => language === 'bi' ? food.nameBi : food.nameBm;
   const [gameState, setGameState] = useState('start');
@@ -484,12 +484,12 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: '700', color: '#1e3a5f', marginBottom: '0.25rem' }}>{entry.nickname}{entry.player_id === player?.id && <span style={s.youBadge}>{t('game.you')}</span>}</div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', gap: '0.75rem' }}>
-                  <span>CP1: {entry.cp1_pct ?? Math.round(entry.cp1_mark / 33 * 100)}%</span>
-                  <span>CP2: {entry.cp2_pct ?? Math.round(entry.cp2_mark / 33 * 100)}%</span>
-                  <span>CP3: {entry.cp3_pct ?? Math.round(entry.cp3_mark / 33 * 100)}%</span>
+                  <span>CP1: {Number(entry.cp1_pct ?? (entry.cp1_mark / 33 * 100)).toFixed(1)}%</span>
+                  <span>CP2: {Number(entry.cp2_pct ?? (entry.cp2_mark / 33 * 100)).toFixed(1)}%</span>
+                  <span>CP3: {Number(entry.cp3_pct ?? (entry.cp3_mark / 33 * 100)).toFixed(1)}%</span>
                 </div>
               </div>
-              <div style={{ ...s.lbScore, fontSize: '1.2rem' }}>{entry.total_mark}%</div>
+              <div style={{ ...s.lbScore, fontSize: '1.2rem' }}>{Number(entry.total_mark ?? 0).toFixed(1)}%</div>
             </div>
           ))}
         </div>
@@ -636,7 +636,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
     const minPassScore = targetScore || 1000;
     const hasPassed = finalScore >= minPassScore;
     // Final Score = (S / 2P) x 100, clamped to 0-100
-    const normalizedFinal = Math.max(0, Math.min(100, Math.round((finalScore / (2 * minPassScore)) * 100)));
+    const normalizedFinal = Math.max(0, Math.min(100, (finalScore / (2 * minPassScore)) * 100));
     return (
       <div style={s.fullPage}>
         <style>{animStyles}</style>
@@ -664,7 +664,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
               {finalScore} {language === 'bi' ? 'points' : 'mata'}
             </div>
             <div style={{ color: '#cbd5e1', fontSize: '0.85rem', fontWeight: '700', marginTop: '0.4rem' }}>
-              {language === 'bi' ? 'Your Score' : 'Skor Anda'}: {normalizedFinal}%
+              {language === 'bi' ? 'Your Score' : 'Skor Anda'}: {Number(normalizedFinal).toFixed(1)}%
             </div>
           </div>
 
@@ -674,7 +674,7 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
               <div key={entry.player_id} style={{ ...s.lbRow, ...(entry.player_id === player?.id ? s.lbRowMe : {}) }}>
                 <div style={s.lbRank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</div>
                 <div style={{ flex: 1, fontWeight: '600', color: '#1e3a5f' }}>{entry.nickname}{entry.player_id === player?.id && <span style={s.youBadge}>{t('game.you')}</span>}</div>
-                <div style={s.lbScore}> {Math.max(0, Math.min(100, Math.round((entry.score / (2 * (targetScore || 1000))) * 100)))}% </div>
+                <div style={s.lbScore}> {Number(Math.max(0, Math.min(100, (entry.score / (2 * (targetScore || 1000))) * 100))).toFixed(1)}% </div>
               </div>
             ))}
             {leaderboard.length === 0 && <p style={{ textAlign: 'center', color: '#94a3b8', padding: '1rem' }}>{t('game.noScoresYet')}</p>}
@@ -706,7 +706,15 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
               </div>
               <button
                 style={{ ...s.startBtn, background: 'linear-gradient(135deg,#e11d48,#be123c)', boxShadow: '0 8px 25px rgba(225,29,72,0.4)', fontSize: '1.15rem', fontWeight: '900', padding: '0.95rem' }}
-                onClick={() => { setGameState('start'); setShowLeaderboard(false); setShowFinalLeaderboard(false); }}
+                onClick={() => {
+                  if (onRetry) {
+                    onRetry();
+                  } else {
+                    setGameState('start');
+                    setShowLeaderboard(false);
+                    setShowFinalLeaderboard(false);
+                  }
+                }}
               >
                 🔄 {language === 'bi' ? 'Retry' : 'Cuba Semula'}
               </button>
@@ -721,7 +729,15 @@ const CP3Game = ({ player, onComplete, onBack, initialShowFinal = false }) => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem' }}>
                 <button
                   style={{ ...s.startBtn, background: '#64748b', boxShadow: '0 4px 15px rgba(100,116,139,0.3)', fontSize: '1.05rem', fontWeight: '900', padding: '0.9rem' }}
-                  onClick={() => { setGameState('start'); setShowLeaderboard(false); setShowFinalLeaderboard(false); }}
+                  onClick={() => {
+                    if (onRetry) {
+                      onRetry();
+                    } else {
+                      setGameState('start');
+                      setShowLeaderboard(false);
+                      setShowFinalLeaderboard(false);
+                    }
+                  }}
                 >
                   🔄 {language === 'bi' ? 'Retry' : 'Cuba Semula'}
                 </button>

@@ -674,7 +674,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
             <p style={{ color: '#2563eb', fontWeight: '700', margin: '0 0 1rem' }}>⏱️ {t('game.timeLeft', 'Masa berbaki:')} {formatTime(timeLeft)}</p>
             {finalScore != null && (
               <p style={{ color: '#16a34a', fontWeight: '800', fontSize: '1.1rem', margin: '0 0 1rem' }}>
-                🏅 {language === 'bi' ? 'Your Score' : 'Skor Anda'}: {finalScore}%
+                🏅 {language === 'bi' ? 'Your Score' : 'Skor Anda'}: {Number(finalScore).toFixed(1)}%
               </p>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
@@ -708,7 +708,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                   margin: '0 0 1rem'
                 }}
               >
-                🏅 {language === 'bi' ? 'Your Score' : 'Skor Anda'}: {finalScore}%
+                🏅 {language === 'bi' ? 'Your Score' : 'Skor Anda'}: {Number(finalScore).toFixed(1)}%
               </p>
             )}
 
@@ -756,7 +756,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                       color: (entry.score ?? 0) >= 50 ? '#16a34a' : '#e11d48'
                     }}
                   >
-                    {entry.score ?? 0}%
+                    {Number(entry.score ?? 0).toFixed(1)}%
                     <span
                       style={{
                         fontSize: '0.72rem',
@@ -765,8 +765,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
                         marginLeft: '0.35rem'
                       }}
                     >
-                      ({entry.words_correct ?? 0}/{entry.total_words || words.length})
-                      {(entry.words_correct ?? 0) === (entry.total_words || words.length) ? ' √' : ''}
+                      ({entry.words_correct ?? 0}/{entry.total_words || words.length}) ✓
                     </span>
                   </span>
                 </div>

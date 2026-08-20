@@ -383,13 +383,45 @@ export default class PhaserGameScene extends Phaser.Scene {
     this.hairFront = character.hairFront;
     this.eyeL = character.eyeL;
     this.eyeR = character.eyeR;
+
     this.eyeHighlightL = character.eyeHighlightL;
     this.eyeHighlightR = character.eyeHighlightR;
+
+    this.eyeSmallHighlightL = character.eyeSmallHighlightL;
+    this.eyeSmallHighlightR = character.eyeSmallHighlightR;
+
     this.blushL = character.blushL;
     this.blushR = character.blushR;
+
+    this.nose = character.nose;
     this.mouth = character.mouth;
+
     this.backpack = character.backpack;
     this.nameText = character.nameText;
+
+    // ─────────────────────────────────────────────
+    // CHARACTER TYPE
+    // ─────────────────────────────────────────────
+
+    this.isSchoolCharacter =
+      this.selectedCharacter === 'schoolBoy' ||
+      this.selectedCharacter === 'schoolGirl';
+
+    // Original boy/girl:
+    // leg = 17
+    // shoe = 23
+    //
+    // School boy/girl:
+    // leg = 18
+    // shoe = 25.5
+
+    this.baseLegY = this.isSchoolCharacter ? 18 : 17;
+    this.baseShoeY = this.isSchoolCharacter ? 25.5 : 23;
+
+    // School characters were created slightly larger
+    this.baseCharacterScale = this.isSchoolCharacter
+      ? 1.25
+      : 1.15;
 
     // Physics body for player (invisible rectangle — avoids null-texture bug
     // where physics.add.sprite(x, y, null) places the body at (0,0) instead
@@ -658,53 +690,89 @@ export default class PhaserGameScene extends Phaser.Scene {
         const bounce = Math.abs(Math.sin(this.walkFrame)) * 1.5;
 
         // Legs
-        this.legL.y = 17 + legOffset;
-        this.legR.y = 17 - legOffset;
+        this.legL.y = this.baseLegY + legOffset;
+        this.legR.y = this.baseLegY - legOffset;
 
         // Shoes follow legs
-        this.shoeL.y = 23 + legOffset;
-        this.shoeR.y = 23 - legOffset;
+        this.shoeL.y = this.baseShoeY + legOffset;
+        this.shoeR.y = this.baseShoeY - legOffset;
+
+        // School socks follow the legs too
+        if (this.sockL) {
+          this.sockL.y = 21 + legOffset;
+        }
+
+        if (this.sockR) {
+          this.sockR.y = 21 - legOffset;
+        }
 
         // Arms swing
-        this.armL.angle = armOffset;
-        this.armR.angle = -armOffset;
+        if (this.isSchoolCharacter) {
+          // Keep school uniform arms neat and close to body
+          this.armL.angle = 0;
+          this.armR.angle = 0;
+
+          if (this.sleeveL) this.sleeveL.angle = 0;
+          if (this.sleeveR) this.sleeveR.angle = 0;
+
+          if (this.handL) this.handL.angle = 0;
+          if (this.handR) this.handR.angle = 0;
+        } else {
+          // Original casual characters
+          this.armL.angle = armOffset;
+          this.armR.angle = -armOffset;
+        }
 
         // Small cute body bounce
-        const baseScale = 1.15;
+        const baseScale = this.baseCharacterScale;
 
         this.playerGraphic.setScale(
           this.facingDirection * (baseScale + bounce * 0.006),
           baseScale - bounce * 0.01
         );
 
-        this.nameText.setScale(
-          this.facingDirection,
-          1
-        );
+        if (this.nameText) {
+          this.nameText.setScale(
+            this.facingDirection,
+            1
+          );
+        }
 
         // Shadow becomes slightly smaller while bouncing
         this.playerShadow.scaleX = 1 - bounce * 0.04;
       } else {
-        this.legL.y = 17;
-        this.legR.y = 17;
 
-        this.shoeL.y = 23;
-        this.shoeR.y = 23;
+        this.legL.y = this.baseLegY;
+        this.legR.y = this.baseLegY;
+
+        this.shoeL.y = this.baseShoeY;
+        this.shoeR.y = this.baseShoeY;
+
+        // Reset socks for school characters
+        if (this.sockL) {
+          this.sockL.y = 21;
+        }
+
+        if (this.sockR) {
+          this.sockR.y = 21;
+        }
 
         this.armL.angle = 0;
         this.armR.angle = 0;
 
-        const baseScale = 1.15;
+        const baseScale = this.baseCharacterScale;
 
         this.playerGraphic.setScale(
           this.facingDirection * baseScale,
           baseScale
         );
 
-        this.nameText.setScale(
-          this.facingDirection,
-          1
-        );
+        if (this.nameText) {
+          this.nameText.setScale(
+            this.facingDirection,
+            1
+          );
+        }
         this.playerShadow.setScale(1);
       }
 
@@ -822,13 +890,21 @@ export default class PhaserGameScene extends Phaser.Scene {
       this.treeCollisions &&
       this.treeCollisions.size > 0;
 
-    // Everything below the head disappears
+    // ─────────────────────────────────────────────
+    // BODY PARTS
+    // These become almost invisible behind trees /
+    // upper collision objects.
+    // Works for ALL 4 characters.
+    // ─────────────────────────────────────────────
+
     const hideParts = [
       this.playerShadow,
 
+      // Main body
       this.bodyPart,
       this.bottomPart,
 
+      // School uniform
       this.strapL,
       this.strapR,
       this.shortsLine,
@@ -836,51 +912,76 @@ export default class PhaserGameScene extends Phaser.Scene {
       this.sleeveL,
       this.sleeveR,
 
-      this.armL,
-      this.armR,
-
-      this.handL,
-      this.handR,
-
       this.collarL,
       this.collarR,
 
       this.shirtDetail,
       this.shirtButton2,
 
+      // Arms
+      this.armL,
+      this.armR,
+
+      this.handL,
+      this.handR,
+
+      // Legs
       this.legL,
       this.legR,
 
+      // School socks
       this.sockL,
       this.sockR,
 
+      // Shoes
       this.shoeL,
       this.shoeR,
 
+      // Casual backpack
       this.backpack,
     ];
 
     hideParts.forEach(part => {
       if (part) {
-        part.setAlpha(isBehindUpperObject ? 0.2 : 1);
+        part.setAlpha(
+          isBehindUpperObject ? 0.2 : 1
+        );
       }
     });
 
-    // Head + hair + face ALWAYS visible
+    // ─────────────────────────────────────────────
+    // HEAD
+    // Head stays completely visible.
+    // ─────────────────────────────────────────────
+
     const alwaysVisibleParts = [
       this.headPart,
+
+      // Hair
       this.hairBack,
       this.hairFront,
       this.girlHairLeft,
       this.girlHairRight,
       this.hairBow,
+
+      // Eyes
       this.eyeL,
       this.eyeR,
+
       this.eyeHighlightL,
       this.eyeHighlightR,
+
+      this.eyeSmallHighlightL,
+      this.eyeSmallHighlightR,
+
+      // Face
       this.blushL,
       this.blushR,
+      this.nose,
       this.mouth,
+
+      // Keep nickname visible
+      this.nameText,
     ];
 
     alwaysVisibleParts.forEach(part => {

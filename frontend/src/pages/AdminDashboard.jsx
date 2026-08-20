@@ -26,13 +26,12 @@ const AdminDashboard = () => {
   const [active, setActive] = useState('overview');
   const [showProfile, setShowProfile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const ALL_MENU = [
     { key: 'overview', icon: '📊', label: 'Gambaran Keseluruhan', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'sessions', icon: '🎮', label: 'Sesi Permainan', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'students', icon: '👥', label: 'Pemain', roles: ['main_admin', 'admin', 'teacher'] },
-    { key: 'chat', icon: '💬', label: 'Sembang Pemain', roles: ['main_admin', 'admin', 'teacher'] },
-    { key: 'staffchat', icon: '🏢', label: 'Sembang Staf', roles: ['main_admin', 'admin', 'teacher'] },
+    { key: 'chat', icon: '💬', label: 'Interaksi dengan Pemain', roles: ['main_admin', 'admin', 'teacher'] },
+    { key: 'staffchat', icon: '🏢', label: 'Interaksi dengan Staf', roles: ['main_admin', 'admin', 'teacher'] },
     { key: 'videos', icon: '📹', label: 'Video Pembelajaran', roles: ['main_admin', 'admin'] },
     { key: 'facts', icon: '💡', label: 'Tahukah Anda?', roles: ['main_admin', 'admin'] },
     { key: 'quiz', icon: '❓', label: 'Soalan Kuiz', roles: ['main_admin', 'admin'] },
@@ -190,12 +189,12 @@ const Overview = ({ admin, setActive, menu }) => {
     { icon: '📈', label: 'Analitik', desc: 'Lihat markah dan muat turun laporan', key: 'analytics', color: '#f0fdfa', accent: '#0d9488' },
     { icon: '❓', label: 'Soalan Kuiz', desc: 'Urus soalan kuiz', key: 'quiz', color: '#FEF9EE', accent: '#D4A843' },
     { icon: '🧩', label: 'Teka Silang Kata', desc: 'Urus perkataan teka silang kata', key: 'crossword', color: '#f5f3ff', accent: '#7c3aed' },
-    { icon: '💬', label: 'Sembang Pemain', desc: 'Balas mesej pelajar', key: 'chat', color: '#f0f9ff', accent: '#0284c7' },
-    { icon: '🏢', label: 'Sembang Staf', desc: 'Berbual dengan pentadbir lain', key: 'staffchat', color: '#FFF7ED', accent: '#B45309' },
+    { icon: '💬', label: 'Interaksi dengan Pemain', desc: 'Balas mesej pelajar', key: 'chat', color: '#f0f9ff', accent: '#0284c7' },
+    { icon: '🏢', label: 'Interaksi dengan Staf', desc: 'Berbual dengan pentadbir lain', key: 'staffchat', color: '#FFF7ED', accent: '#B45309' },
     { icon: '👨‍💼', label: 'Urus Pentadbir', desc: 'Urus akaun pentadbir dan guru', key: 'admins', color: '#f5f3ff', accent: '#6d28d9' },
     { icon: '✉️', label: 'Peti Masuk', desc: 'Lihat mesej e-mel', key: 'email', color: '#FEF2F2', accent: '#CC0000' },
     { icon: '❔', label: 'FAQ Sistem', desc: 'Panduan untuk pentadbir baharu memahami sistem', key: 'faq', color: '#FFF7ED', accent: '#D4A843' },
-    { icon: '⚖️', label: 'Perbandingan', desc: 'Membandingkan hasil permainan', key: 'comparison', color: '#FFF7ED', accent: '#D4A843' },
+    { icon: '⚖️', label: 'Perbandingan', desc: 'Banding keputusan permainan', key: 'comparison', color: '#FFF7ED', accent: '#D4A843' },
     { icon: '📋', label: 'Log Aktiviti', desc: 'Lihat log aktiviti sistem', key: 'activity', color: '#f0f9ff', accent: '#0369a1' },
   ];
 
@@ -216,8 +215,8 @@ const Overview = ({ admin, setActive, menu }) => {
               {admin?.role === 'main_admin'
                 ? '⭐ Anda telah log masuk sebagai Pentadbir Utama — akses penuh diaktifkan.'
                 : admin?.role === 'teacher'
-                  ? '👩‍🏫 Anda telah log masuk sebagai Guru — urus sembang dan lihat analitik.'
-                  : 'Urus program kesihatan pergigian anda dari sini.'}
+                  ? '👩‍🏫 Anda telah log masuk sebagai Guru.'
+                  : 'Anda telah log masuk sebagai Pentadbir.'}
             </p>
           </div>
           <div style={styles.welcomeEmoji}>🦷</div>

@@ -452,8 +452,10 @@ const GamePage = () => {
     try {
       const res = await api.get(`/game/certificate/${player.id}`, getPlayerChatConfig());
       const cert = res.data.certificate;
-      const date = new Date(cert.completed_at);
-      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const date = new Date(cert.completed_at || Date.now());
+      const monthsBm = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
+      const monthsBi = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const months = language === 'bm' ? monthsBm : monthsBi;
       const dateStr = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
       const safeName = (cert.nickname || 'student').replace(/[^a-z0-9_-]+/gi, '_');
       const schoolClass = `${cert.school_name || '-'}${cert.class_name ? ` — ${cert.class_name}` : ''}`;
@@ -580,6 +582,13 @@ const GamePage = () => {
     const chatConfig = getPlayerChatConfig();
     api.post('/game/attempt', { player_id: player.id, checkpoint_number: activeCP }, chatConfig).catch(console.error);
     setQuizKey(prev => prev + 1);
+    setCpStep('video');
+  };
+
+  const handleCP3Retry = () => {
+    // Force student to re-watch the video before retrying Food Catcher game
+    const chatConfig = getPlayerChatConfig();
+    api.post('/game/attempt', { player_id: player.id, checkpoint_number: 3 }, chatConfig).catch(console.error);
     setCpStep('video');
   };
 
@@ -824,6 +833,7 @@ const GamePage = () => {
             </p>
 
             <div style={s.characterOptions}>
+              {/* Current Boy */}
               <button
                 type="button"
                 style={{
@@ -836,6 +846,7 @@ const GamePage = () => {
                 <CharacterPreview character="boy" />
               </button>
 
+              {/* Current Girl */}
               <button
                 type="button"
                 style={{
@@ -846,6 +857,32 @@ const GamePage = () => {
                 onClick={() => chooseCharacter('girl')}
               >
                 <CharacterPreview character="girl" />
+              </button>
+
+              {/* Malaysian School Boy */}
+              <button
+                type="button"
+                style={{
+                  ...s.characterButton,
+                  background: '#eff6ff',
+                  borderColor: '#1e3a5f',
+                }}
+                onClick={() => chooseCharacter('schoolBoy')}
+              >
+                <CharacterPreview character="schoolBoy" />
+              </button>
+
+              {/* Malaysian School Girl */}
+              <button
+                type="button"
+                style={{
+                  ...s.characterButton,
+                  background: '#fdf2f8',
+                  borderColor: '#db2777',
+                }}
+                onClick={() => chooseCharacter('schoolGirl')}
+              >
+                <CharacterPreview character="schoolGirl" />
               </button>
             </div>
           </div>
@@ -1426,7 +1463,12 @@ const GamePage = () => {
 
       {/* Full Screen CP3 — Food Game */}
       {showFullCP3 && (
-        <CP3Game player={player} onComplete={handleActivityDone} onBack={() => { setShowFullCP3(false); setCpStep('instructions'); }} />
+        <CP3Game
+          player={player}
+          onComplete={handleActivityDone}
+          onBack={() => { setCpStep('video'); }}
+          onRetry={handleCP3Retry}
+        />
       )}
 
       {/* Full Screen CP3 Final Leaderboard — Overall Leaderboard */}
@@ -1713,8 +1755,8 @@ const s = {
   characterSelectCard: { width: '100%', maxWidth: '580px', background: '#ffffff', borderRadius: '24px', padding: '2.5rem', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.35)', },
   characterTitle: { margin: '0 0 0.5rem', color: '#1e3a5f', fontSize: '2rem', fontWeight: '900', },
   characterSubtitle: { margin: '0 0 2rem', color: '#64748b', fontSize: '1rem', lineHeight: 1.5, },
-  characterOptions: { display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap', },
-  characterButton: { width: '190px', height: '210px', padding: '1rem', borderRadius: '20px', border: '4px solid', cursor: 'pointer', transition: 'transform 0.2s ease, box-shadow 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', },
+  characterOptions: { display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: '16px', flexWrap: 'nowrap', width: '100%', },
+  characterButton: { width: '135px', height: '170px', borderRadius: '18px', border: '2px solid transparent', cursor: 'pointer', padding: '0', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', },
   characterName: { fontSize: '1.25rem', fontWeight: '900', },
 };
 

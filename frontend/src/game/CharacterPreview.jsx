@@ -8,11 +8,14 @@ const CharacterPreview = ({ character }) => {
     useEffect(() => {
         if (!containerRef.current) return;
 
+        // Clear old Phaser canvas before making a new preview
+        containerRef.current.innerHTML = '';
+
         const config = {
             type: Phaser.CANVAS,
 
-            width: 160,
-            height: 160,
+            width: 130,
+            height: 150,
 
             transparent: true,
 
@@ -21,13 +24,21 @@ const CharacterPreview = ({ character }) => {
             scene: {
                 create() {
                     const previewCharacter = createChibiCharacter(this, {
-                        x: 80,
-                        y: 80,
+                        x: 65,
+                        y: 76,
                         character,
                         nickname: '',
                         showName: false,
                     });
-                    previewCharacter.playerGraphic.setScale(2.0);
+
+                    // Keep all four previews approximately the same size
+                    const isSchoolCharacter =
+                        character === 'schoolBoy' ||
+                        character === 'schoolGirl';
+
+                    previewCharacter.playerGraphic.setScale(
+                        isSchoolCharacter ? 1.8 : 2.0
+                    );
                 },
             },
 
@@ -51,12 +62,13 @@ const CharacterPreview = ({ character }) => {
         <div
             ref={containerRef}
             style={{
-                width: '160px',
-                height: '160px',
+                width: '130px',
+                height: '150px',
                 margin: '0 auto',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
+                overflow: 'hidden',
             }}
         />
     );
