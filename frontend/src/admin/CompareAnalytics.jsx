@@ -30,10 +30,10 @@ const computeMarks = (players) => {
     const totalExact = cp1Exact + cp2Exact + cp3Exact;
     return {
       ...p,
-      cp1_mark: Math.round(cp1Exact), cp1_pct: Math.round(cp1Pct * 10) / 10,
-      cp2_mark: Math.round(cp2Exact), cp2_pct: Math.round(cp2Pct * 10) / 10,
-      cp3_mark: Math.round(cp3Exact), cp3_pct: Math.round(cp3Pct * 10) / 10,
-      total_mark: Math.round(totalExact),
+      cp1_mark: Math.round(cp1Exact * 10) / 10, cp1_pct: Math.round(cp1Pct * 10) / 10,
+      cp2_mark: Math.round(cp2Exact * 10) / 10, cp2_pct: Math.round(cp2Pct * 10) / 10,
+      cp3_mark: Math.round(cp3Exact * 10) / 10, cp3_pct: Math.round(cp3Pct * 10) / 10,
+      total_mark: Math.round(totalExact * 10) / 10,
     };
   });
 };
@@ -51,10 +51,10 @@ const buildStats = (players) => {
   const cp2Done = players.filter(p => p.cp2_completed).length;
   const cp3Done = players.filter(p => p.cp3_completed).length;
   const allDone = players.filter(p => p.cp1_completed && p.cp2_completed && p.cp3_completed).length;
-  const avgScore = total > 0 ? Math.round(marked.reduce((s, p) => s + p.total_mark, 0) / total) : 0;
-  const avgCp1Mark = total > 0 ? Math.round(marked.reduce((s, p) => s + p.cp1_mark, 0) / total) : 0;
-  const avgCp2Mark = total > 0 ? Math.round(marked.reduce((s, p) => s + p.cp2_mark, 0) / total) : 0;
-  const avgCp3Mark = total > 0 ? Math.round(marked.reduce((s, p) => s + p.cp3_mark, 0) / total) : 0;
+  const avgScore = total > 0 ? Math.round(marked.reduce((s, p) => s + p.total_mark, 0) / total * 10) / 10 : 0;
+  const avgCp1Mark = total > 0 ? Math.round(marked.reduce((s, p) => s + p.cp1_mark, 0) / total * 10) / 10 : 0;
+  const avgCp2Mark = total > 0 ? Math.round(marked.reduce((s, p) => s + p.cp2_mark, 0) / total * 10) / 10 : 0;
+  const avgCp3Mark = total > 0 ? Math.round(marked.reduce((s, p) => s + p.cp3_mark, 0) / total * 10) / 10 : 0;
   const avgAtt1 = parseFloat(avg(players, 'cp1_attempts'));
   const avgAtt2 = parseFloat(avg(players, 'cp2_attempts'));
   const avgAtt3 = parseFloat(avg(players, 'cp3_attempts'));
@@ -654,10 +654,10 @@ const CompareAnalytics = () => {
                           {p.group === 'A' ? '● A' : '● B'} {p.groupLabel}
                         </span>
                       </td>
-                      <td style={lbTd}>{p.cp1_mark ?? 0}/33</td>
-                      <td style={lbTd}>{p.cp2_mark ?? 0}/33</td>
-                      <td style={lbTd}>{p.cp3_mark ?? 0}/33</td>
-                      <td style={{ ...lbTd, fontWeight: '800', color: '#1e3a5f', fontSize: '1rem' }}>{p.total_mark ?? 0}</td>
+                      <td style={lbTd}>{Number(p.cp1_mark ?? 0).toFixed(1)}/33</td>
+                      <td style={lbTd}>{Number(p.cp2_mark ?? 0).toFixed(1)}/33</td>
+                      <td style={lbTd}>{Number(p.cp3_mark ?? 0).toFixed(1)}/33</td>
+                      <td style={{ ...lbTd, fontWeight: '800', color: '#1e3a5f', fontSize: '1rem' }}>{Number(p.total_mark ?? 0).toFixed(1)}</td>
                     </tr>
                   ))}
                   {mergedLeaderboard.length === 0 && (
@@ -729,11 +729,11 @@ const SideLeaderboard = ({ label, stats, color, side }) => (
                 {p.nickname}
               </div>
               <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-                CP1:{p.cp1_mark} · CP2:{p.cp2_mark} · CP3:{p.cp3_mark}
+                CP1:{Number(p.cp1_mark).toFixed(1)} · CP2:{Number(p.cp2_mark).toFixed(1)} · CP3:{Number(p.cp3_mark).toFixed(1)}
               </div>
             </div>
             <div style={{ fontWeight: '800', color, fontSize: '1rem', flexShrink: 0 }}>
-              {p.total_mark}
+              {Number(p.total_mark).toFixed(1)}
             </div>
           </div>
         ))}

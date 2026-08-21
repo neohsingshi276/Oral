@@ -208,7 +208,7 @@ const getFinalLeaderboard = async (req, res) => {
       const cp1Score = quiz?.quiz_score || 0;
       const cp1Pct = cp1Total > 0 ? Math.min(100, (cp1Score / (cp1Total * 100)) * 100) : 0;
       const cp1Exact = (cp1Pct / 100) * CP_WEIGHT;
-      const cp1Mark = Math.round(cp1Exact); // rounded for display
+      const cp1Mark = Math.round(cp1Exact * 10) / 10; // 1 d.p. for display
 
       // CP2: uses the SAME final score as the crossword's own result —
       // (words correct / total words) x 80 + speed bonus — already 0-100.
@@ -216,13 +216,13 @@ const getFinalLeaderboard = async (req, res) => {
       const cwTotal = cw?.total_words || 0;
       const cp2Pct = Math.min(100, cw?.score || 0);
       const cp2Exact = (cp2Pct / 100) * CP_WEIGHT;
-      const cp2Mark = Math.round(cp2Exact);
+      const cp2Mark = Math.round(cp2Exact * 10) / 10;
 
       // CP3: based on target or session max, capped at 33.33
       const cp3Raw = cp3?.score || 0;
       const cp3Pct = cp3Raw > 0 ? Math.min(100, (cp3Raw / Math.max(1, cp3Denom)) * 100) : 0;
       const cp3Exact = (cp3Pct / 100) * CP_WEIGHT;
-      const cp3Mark = Math.round(cp3Exact);
+      const cp3Mark = Math.round(cp3Exact * 10) / 10;
 
       // Total: sum exact values, rounded to 1 decimal place
       const totalExact = cp1Exact + cp2Exact + cp3Exact;

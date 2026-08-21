@@ -46,10 +46,10 @@ const computeMarks = (players) => {
 
     return {
       ...p,
-      cp1_mark: Math.round(cp1Exact), cp1_pct: Math.round(cp1Pct * 10) / 10,
-      cp2_mark: Math.round(cp2Exact), cp2_pct: Math.round(cp2Pct * 10) / 10,
-      cp3_mark: Math.round(cp3Exact), cp3_pct: Math.round(cp3Pct * 10) / 10,
-      total_mark: Math.round(totalExact),
+      cp1_mark: Math.round(cp1Exact * 10) / 10, cp1_pct: Math.round(cp1Pct * 10) / 10,
+      cp2_mark: Math.round(cp2Exact * 10) / 10, cp2_pct: Math.round(cp2Pct * 10) / 10,
+      cp3_mark: Math.round(cp3Exact * 10) / 10, cp3_pct: Math.round(cp3Pct * 10) / 10,
+      total_mark: Math.round(totalExact * 10) / 10,
     };
   });
 };
@@ -112,13 +112,13 @@ const Analytics = ({ setActive }) => {
     className: p.class_name || '-',
     session: p.session_name || '-',
     nickname: p.display_nickname || p.nickname,
-    cp1: Math.round(p.cp1_pct || 0),
+    cp1: Number(p.cp1_pct || 0).toFixed(1),
     cp1Attempts: p.cp1_attempts || 0,
-    cp2: Math.round(p.cp2_pct || 0),
+    cp2: Number(p.cp2_pct || 0).toFixed(1),
     cp2Attempts: p.cp2_attempts || 0,
-    cp3: Math.round(p.cp3_pct || 0),
+    cp3: Number(p.cp3_pct || 0).toFixed(1),
     cp3Attempts: p.cp3_attempts || 0,
-    total: p.total_mark || 0,
+    total: Number(p.total_mark || 0).toFixed(1),
     completed: p.cp3_completed ? t('admin.completed') : t('admin.inProgress'),
   }));
 
@@ -162,7 +162,7 @@ const Analytics = ({ setActive }) => {
     }, {});
     const sections = Object.entries(grouped).map(([group, groupRows]) => {
       const completion = groupRows.length ? Math.round((groupRows.filter(r => r.completed === t('admin.completed')).length / groupRows.length) * 100) : 0;
-      const avg = groupRows.length ? Math.round(groupRows.reduce((sum, r) => sum + r.total, 0) / groupRows.length) : 0;
+      const avg = groupRows.length ? (groupRows.reduce((sum, r) => sum + parseFloat(r.total), 0) / groupRows.length).toFixed(1) : '0.0';
       const tableRows = groupRows.map(row => `
         <tr><td>${row.rank}</td><td>${escapeHtml(row.nickname)}</td><td>${row.cp1}</td><td>${row.cp2}</td><td>${row.cp3}</td><td>${row.total}</td><td>${row.completed}</td></tr>
       `).join('');
@@ -223,21 +223,21 @@ const Analytics = ({ setActive }) => {
   const filteredCP3 = displayPlayers.filter(p => p.cp3_completed).length;
 
   const avgCP1Mark = displayPlayers.length
-    ? Math.round(displayPlayers.reduce((s, p) => s + p.cp1_mark, 0) / displayPlayers.length) : 0;
+    ? Math.round(displayPlayers.reduce((s, p) => s + p.cp1_mark, 0) / displayPlayers.length * 10) / 10 : 0;
   const avgCP2Mark = displayPlayers.length
-    ? Math.round(displayPlayers.reduce((s, p) => s + p.cp2_mark, 0) / displayPlayers.length) : 0;
+    ? Math.round(displayPlayers.reduce((s, p) => s + p.cp2_mark, 0) / displayPlayers.length * 10) / 10 : 0;
   const avgCP3Mark = displayPlayers.length
-    ? Math.round(displayPlayers.reduce((s, p) => s + p.cp3_mark, 0) / displayPlayers.length) : 0;
+    ? Math.round(displayPlayers.reduce((s, p) => s + p.cp3_mark, 0) / displayPlayers.length * 10) / 10 : 0;
   const avgTotal = displayPlayers.length
-    ? Math.round(displayPlayers.reduce((s, p) => s + p.total_mark, 0) / displayPlayers.length) : 0;
+    ? Math.round(displayPlayers.reduce((s, p) => s + p.total_mark, 0) / displayPlayers.length * 10) / 10 : 0;
   // Precise /100 averages — computed directly from each player's exact percentage,
   // not by re-expanding an already-rounded /33 mark (avoids double-rounding drift).
   const avgCP1Pct = displayPlayers.length
-    ? Math.round(displayPlayers.reduce((s, p) => s + (p.cp1_pct || 0), 0) / displayPlayers.length) : 0;
+    ? Math.round(displayPlayers.reduce((s, p) => s + (p.cp1_pct || 0), 0) / displayPlayers.length * 10) / 10 : 0;
   const avgCP2Pct = displayPlayers.length
-    ? Math.round(displayPlayers.reduce((s, p) => s + (p.cp2_pct || 0), 0) / displayPlayers.length) : 0;
+    ? Math.round(displayPlayers.reduce((s, p) => s + (p.cp2_pct || 0), 0) / displayPlayers.length * 10) / 10 : 0;
   const avgCP3Pct = displayPlayers.length
-    ? Math.round(displayPlayers.reduce((s, p) => s + (p.cp3_pct || 0), 0) / displayPlayers.length) : 0;
+    ? Math.round(displayPlayers.reduce((s, p) => s + (p.cp3_pct || 0), 0) / displayPlayers.length * 10) / 10 : 0;
 
   const completionData = [
     { name: t('admin.cp1Quiz'), completed: filteredCP1, total: displayPlayers.length, rate: displayPlayers.length ? Math.round((filteredCP1 / displayPlayers.length) * 100) : 0, avgMark: avgCP1Mark, avgPct: avgCP1Pct },
@@ -262,7 +262,7 @@ const Analytics = ({ setActive }) => {
   });
   const sessionData = Object.values(sessionMap).map(s => ({
     ...s,
-    avgMark: s.players ? Math.round(s.totalMark / s.players) : 0,
+    avgMark: s.players ? Math.round(s.totalMark / s.players * 10) / 10 : 0,
   }));
 
   const timelineMap = {};
@@ -566,7 +566,7 @@ const Analytics = ({ setActive }) => {
                       <td style={s.td}>{sess.cp3}/{sess.players}</td>
                       <td style={s.td}>
                         <span style={{ ...s.totalBadge, ...markColor(sess.avgMark) }}>
-                          {sess.avgMark}/100
+                          {Number(sess.avgMark).toFixed(1)}/100
                         </span>
                       </td>
                     </tr>
@@ -656,7 +656,7 @@ const Analytics = ({ setActive }) => {
                       <td style={s.td}><strong>{p.nickname}</strong></td>
                       <td style={s.td}><span style={s.sessionTag}>{p.session_name}</span></td>
                       <td style={s.td}>
-                        <span style={{ fontWeight: '700', color: '#2563eb' }}>{Math.round(p.cp1_pct)}/100</span>
+                        <span style={{ fontWeight: '700', color: '#2563eb' }}>{Number(p.cp1_pct).toFixed(1)}/100</span>
                         {p.quiz_correct != null && (
                           <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                             ({p.quiz_correct}/{p.quiz_total || '?'} betul)
@@ -664,7 +664,7 @@ const Analytics = ({ setActive }) => {
                         )}
                       </td>
                       <td style={s.td}>
-                        <span style={{ fontWeight: '700', color: '#7c3aed' }}>{Math.round(p.cp2_pct)}/100</span>
+                        <span style={{ fontWeight: '700', color: '#7c3aed' }}>{Number(p.cp2_pct).toFixed(1)}/100</span>
                         {p.cw_total != null && (
                           <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                             ({p.cw_correct || 0}/{p.cw_total || '?'} perkataan)
@@ -672,7 +672,7 @@ const Analytics = ({ setActive }) => {
                         )}
                       </td>
                       <td style={s.td}>
-                        <span style={{ fontWeight: '700', color: '#0d9488' }}>{Math.round(p.cp3_pct)}/100</span>
+                        <span style={{ fontWeight: '700', color: '#0d9488' }}>{Number(p.cp3_pct).toFixed(1)}/100</span>
                         {p.cp3_score != null && (
                           <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                             ({p.cp3_score} mata)
@@ -681,7 +681,7 @@ const Analytics = ({ setActive }) => {
                       </td>
                       <td style={s.td}>
                         <span style={{ ...s.totalBadge, ...markColor(p.total_mark) }}>
-                          {p.total_mark}/100
+                          {Number(p.total_mark).toFixed(1)}/100
                         </span>
                       </td>
                     </tr>
@@ -714,13 +714,13 @@ const Analytics = ({ setActive }) => {
                       <td style={s.td}><span style={s.rank}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span></td>
                       <td style={s.td}><strong>{p.nickname}</strong></td>
                       <td style={s.td}>
-                        <span style={{ fontWeight: '700', color: '#2563eb' }}>{Math.round(p.cp1_pct)}/100</span>
+                        <span style={{ fontWeight: '700', color: '#2563eb' }}>{Number(p.cp1_pct).toFixed(1)}/100</span>
                         <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                           ({p.cp1_correct}/{p.cp1_total} betul)
                         </span>
                       </td>
                       <td style={s.td}>
-                        <span style={{ fontWeight: '700', color: '#7c3aed' }}>{Math.round(p.cp2_pct)}/100</span>
+                        <span style={{ fontWeight: '700', color: '#7c3aed' }}>{Number(p.cp2_pct).toFixed(1)}/100</span>
                         {p.cp2_total > 0 && (
                           <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                             ({p.cp2_words}/{p.cp2_total} perkataan)
@@ -728,14 +728,14 @@ const Analytics = ({ setActive }) => {
                         )}
                       </td>
                       <td style={s.td}>
-                        <span style={{ fontWeight: '700', color: '#0d9488' }}>{Math.round(p.cp3_pct)}/100</span>
+                        <span style={{ fontWeight: '700', color: '#0d9488' }}>{Number(p.cp3_pct).toFixed(1)}/100</span>
                         <span style={{ color: '#94a3b8', fontSize: '0.78rem', marginLeft: '0.35rem' }}>
                           ({p.cp3_raw}/{p.cp3_target} mata)
                         </span>
                       </td>
                       <td style={s.td}>
                         <span style={{ ...s.totalBadge, ...markColor(p.total_mark) }}>
-                          {p.total_mark}/100
+                          {Number(p.total_mark).toFixed(1)}/100
                         </span>
                       </td>
                     </tr>
