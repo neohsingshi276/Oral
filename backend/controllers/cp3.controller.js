@@ -224,9 +224,12 @@ const getFinalLeaderboard = async (req, res) => {
       const cp3Exact = (cp3Pct / 100) * CP_WEIGHT;
       const cp3Mark = Math.round(cp3Exact * 10) / 10;
 
-      // Total: sum exact values, rounded to 1 decimal place
-      const totalExact = cp1Exact + cp2Exact + cp3Exact;
-      const totalMark = Math.round(totalExact * 10) / 10;
+      const cp1PctRounded = Math.round(cp1Pct * 10) / 10;
+      const cp2PctRounded = Math.round(cp2Pct * 10) / 10;
+      const cp3PctRounded = Math.round(cp3Pct * 10) / 10;
+
+      // Total: direct average of the 3 checkpoint percentages, rounded to 1 decimal place
+      const totalMark = Math.round(((cp1PctRounded + cp2PctRounded + cp3PctRounded) / 3) * 10) / 10;
 
       return {
         player_id: player.id,
@@ -234,16 +237,16 @@ const getFinalLeaderboard = async (req, res) => {
         cp1_correct: cp1Correct,
         cp1_total: cp1Total,
         cp1_mark: cp1Mark,
-        cp1_pct: Math.round(cp1Pct * 10) / 10, // exact %, e.g. 97.2
+        cp1_pct: cp1PctRounded, // exact %, e.g. 97.2
         cp2_words: cwCorrect,
         cp2_total: cwTotal,
         cp2_completed: cwCorrect > 0 && cwTotal > 0 && cwCorrect >= cwTotal,
         cp2_mark: cp2Mark,
-        cp2_pct: Math.round(cp2Pct * 10) / 10,
+        cp2_pct: cp2PctRounded,
         cp3_raw: cp3Raw,
         cp3_target: cp3Denom,
         cp3_mark: cp3Mark,
-        cp3_pct: Math.round(cp3Pct * 10) / 10, // exact %, e.g. 78.5
+        cp3_pct: cp3PctRounded, // exact %, e.g. 78.5
         total_mark: totalMark,
       };
     }).sort((a, b) => b.total_mark - a.total_mark);

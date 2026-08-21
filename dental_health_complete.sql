@@ -436,6 +436,10 @@ CREATE TABLE IF NOT EXISTS crossword_settings (
 
 ALTER TABLE crossword_settings
 ADD COLUMN timer_seconds INT DEFAULT 300;
+
+ALTER TABLE quiz_scores     MODIFY score DECIMAL(5,1) DEFAULT 0;
+ALTER TABLE crossword_scores MODIFY score DECIMAL(5,1) DEFAULT 0;
+ALTER TABLE cp3_scores       MODIFY score DECIMAL(6,1) DEFAULT 0; -- cp3 raw scores can exceed 100
 SET FOREIGN_KEY_CHECKS = 1;
 SET SQL_SAFE_UPDATES = 1;
 

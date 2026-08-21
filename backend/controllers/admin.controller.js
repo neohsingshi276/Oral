@@ -104,26 +104,31 @@ const computePlayerMarks = (r) => {
   const cp3Pct = cp3Raw > 0 ? Math.min(100, (cp3Raw / cp3Denom) * 100) : 0;
   const cp3Exact = (cp3Pct / 100) * CP_WEIGHT;
 
-  const totalExact = cp1Exact + cp2Exact + cp3Exact;
+    const cp1PctRounded = Math.round(cp1Pct * 10) / 10;
+    const cp2PctRounded = Math.round(cp2Pct * 10) / 10;
+    const cp3PctRounded = Math.round(cp3Pct * 10) / 10;
 
-  return {
-    cp1_mark: Math.round(cp1Exact), cp1_pct: Math.round(cp1Pct * 10) / 10,
-    cp2_mark: Math.round(cp2Exact), cp2_pct: Math.round(cp2Pct * 10) / 10,
-    cp3_mark: Math.round(cp3Exact), cp3_pct: Math.round(cp3Pct * 10) / 10,
-    total_mark: Math.round(totalExact),
+    // Overall mark is the direct average of the 3 checkpoint scores: (cp1_pct + cp2_pct + cp3_pct) / 3
+    const totalMark = Math.round(((cp1PctRounded + cp2PctRounded + cp3PctRounded) / 3) * 10) / 10;
+
+    return {
+      cp1_mark: Math.round(cp1Exact * 10) / 10, cp1_pct: cp1PctRounded,
+      cp2_mark: Math.round(cp2Exact * 10) / 10, cp2_pct: cp2PctRounded,
+      cp3_mark: Math.round(cp3Exact * 10) / 10, cp3_pct: cp3PctRounded,
+      total_mark: totalMark,
+    };
   };
-};
 
-// ─── downloadCSV ──────────────────────────────────────────────────────────────
-const downloadCSV = async (req, res) => {
-  try {
-    const isTeacher = req.admin.role === 'teacher';
-    const sessionFilter = isTeacher
-      ? 'AND s.id IN (SELECT session_id FROM teacher_session_access WHERE teacher_id = ?)'
-      : '';
-    const sessionParams = isTeacher ? [req.admin.id] : [];
+  // ─── downloadCSV ──────────────────────────────────────────────────────────────
+  const downloadCSV = async (req, res) => {
+    try {
+      const isTeacher = req.admin.role === 'teacher';
+      const sessionFilter = isTeacher
+        ? 'AND s.id IN (SELECT session_id FROM teacher_session_access WHERE teacher_id = ?)'
+        : '';
+      const sessionParams = isTeacher ? [req.admin.id] : [];
 
-    const [rows] = await db.query(`
+      const [rows] = await db.query(`
       SELECT p.nickname, s.session_name, p.joined_at,
         MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.completed END) as cp1_completed,
         MAX(CASE WHEN ca.checkpoint_number = 1 THEN ca.attempts  END) as cp1_attempts,
@@ -156,52 +161,52 @@ const downloadCSV = async (req, res) => {
       GROUP BY p.id ORDER BY s.session_name, p.nickname
     `, sessionParams);
 
-    // FIX: Disambiguate duplicate nicknames in the CSV so "Ali" becomes
-    // "Ali #1" / "Ali #2" based on join order — same logic as getPlayers().
-    disambiguateNicknames(rows);
+      // FIX: Disambiguate duplicate nicknames in the CSV so "Ali" becomes
+      // "Ali #1" / "Ali #2" based on join order — same logic as getPlayers().
+      disambiguateNicknames(rows);
 
-    rows.forEach(r => {
-      const marks = computePlayerMarks(r);
-      r._cp1_mark = marks.cp1_mark;
-      r._cp2_mark = marks.cp2_mark;
-      r._cp3_mark = marks.cp3_mark;
-      r._total_mark = marks.total_mark;
-    });
+      rows.forEach(r => {
+        const marks = computePlayerMarks(r);
+        r._cp1_mark = marks.cp1_mark;
+        r._cp2_mark = marks.cp2_mark;
+        r._cp3_mark = marks.cp3_mark;
+        r._total_mark = marks.total_mark;
+      });
 
-    rows.sort((a, b) =>
-      b._total_mark - a._total_mark ||
-      String(a.display_nickname || a.nickname || '').localeCompare(String(b.display_nickname || b.nickname || ''))
-    );
+      rows.sort((a, b) =>
+        b._total_mark - a._total_mark ||
+        String(a.display_nickname || a.nickname || '').localeCompare(String(b.display_nickname || b.nickname || ''))
+      );
 
-    const headers = [
-      'Rank', 'Full Name', 'Session', 'Joined At',
-      'CP1 Completed', 'CP1 Attempts',
-      'CP2 Completed', 'CP2 Attempts',
-      'CP3 Completed', 'CP3 Attempts',
-      'Quiz Score', 'Quiz Correct', 'Crossword Score', 'Food Game Score',
-      'CP1 Mark (/33)', 'CP2 Mark (/33)', 'CP3 Mark (/33)', 'Overall Mark (/100)'
-    ];
+      const headers = [
+        'Rank', 'Full Name', 'Session', 'Joined At',
+        'CP1 Completed', 'CP1 Attempts',
+        'CP2 Completed', 'CP2 Attempts',
+        'CP3 Completed', 'CP3 Attempts',
+        'Quiz Score', 'Quiz Correct', 'Crossword Score (/100)', 'Food Game Score',
+        'CP1 Mark (/33.3)', 'CP2 Mark (/33.3)', 'CP3 Mark (/33.3)', 'Overall Mark (/100)'
+      ];
 
-    const csvEscape = (val) => {
-      const str = String(val ?? '');
-      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-        return '"' + str.replace(/"/g, '""') + '"';
-      }
-      return str;
-    };
+      const csvEscape = (val) => {
+        const str = String(val ?? '');
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+      };
 
-    const csvRows = [headers.map(csvEscape).join(',')];
-    rows.forEach((r, index) => {
-      csvRows.push([
-        index + 1, r.display_nickname, r.session_name,
-        new Date(r.joined_at).toLocaleDateString(),
-        r.cp1_completed ? 'Yes' : 'No', r.cp1_attempts || 0,
-        r.cp2_completed ? 'Yes' : 'No', r.cp2_attempts || 0,
-        r.cp3_completed ? 'Yes' : 'No', r.cp3_attempts || 0,
-        r.quiz_score || 0, r.quiz_correct || 0, r.cw_score || 0, r.cp3_score || 0,
-        r._cp1_mark, r._cp2_mark, r._cp3_mark, r._total_mark
-      ].map(csvEscape).join(','));
-    });
+      const csvRows = [headers.map(csvEscape).join(',')];
+      rows.forEach((r, index) => {
+        csvRows.push([
+          index + 1, r.display_nickname, r.session_name,
+          new Date(r.joined_at).toLocaleDateString(),
+          r.cp1_completed ? 'Yes' : 'No', r.cp1_attempts || 0,
+          r.cp2_completed ? 'Yes' : 'No', r.cp2_attempts || 0,
+          r.cp3_completed ? 'Yes' : 'No', r.cp3_attempts || 0,
+          r.quiz_score || 0, r.quiz_correct || 0, Number(r.cw_score || 0).toFixed(1), r.cp3_score || 0,
+          Number(r._cp1_mark || 0).toFixed(1), Number(r._cp2_mark || 0).toFixed(1), Number(r._cp3_mark || 0).toFixed(1), Number(r._total_mark || 0).toFixed(1)
+        ].map(csvEscape).join(','));
+      });
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=player_data.csv');

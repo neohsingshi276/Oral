@@ -42,14 +42,19 @@ const computeMarks = (players) => {
     const cp3Pct = cp3Raw > 0 ? Math.min(100, (cp3Raw / cp3Denom) * 100) : 0;
     const cp3Exact = (cp3Pct / 100) * CP_WEIGHT;
 
-    const totalExact = cp1Exact + cp2Exact + cp3Exact;
+    const cp1PctRounded = Math.round(cp1Pct * 10) / 10;
+    const cp2PctRounded = Math.round(cp2Pct * 10) / 10;
+    const cp3PctRounded = Math.round(cp3Pct * 10) / 10;
+
+    // Overall mark is the direct average of the 3 checkpoint scores: (cp1_pct + cp2_pct + cp3_pct) / 3
+    const totalMark = Math.round(((cp1PctRounded + cp2PctRounded + cp3PctRounded) / 3) * 10) / 10;
 
     return {
       ...p,
-      cp1_mark: Math.round(cp1Exact * 10) / 10, cp1_pct: Math.round(cp1Pct * 10) / 10,
-      cp2_mark: Math.round(cp2Exact * 10) / 10, cp2_pct: Math.round(cp2Pct * 10) / 10,
-      cp3_mark: Math.round(cp3Exact * 10) / 10, cp3_pct: Math.round(cp3Pct * 10) / 10,
-      total_mark: Math.round(totalExact * 10) / 10,
+      cp1_mark: Math.round(cp1Exact * 10) / 10, cp1_pct: cp1PctRounded,
+      cp2_mark: Math.round(cp2Exact * 10) / 10, cp2_pct: cp2PctRounded,
+      cp3_mark: Math.round(cp3Exact * 10) / 10, cp3_pct: cp3PctRounded,
+      total_mark: totalMark,
     };
   });
 };

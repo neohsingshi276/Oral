@@ -27,13 +27,19 @@ const computeMarks = (players) => {
     const cp3Pct = cp3Raw > 0 ? Math.min(100, (cp3Raw / cp3Denom) * 100) : 0;
     const cp3Exact = (cp3Pct / 100) * CP_WEIGHT;
 
-    const totalExact = cp1Exact + cp2Exact + cp3Exact;
+    const cp1PctRounded = Math.round(cp1Pct * 10) / 10;
+    const cp2PctRounded = Math.round(cp2Pct * 10) / 10;
+    const cp3PctRounded = Math.round(cp3Pct * 10) / 10;
+
+    // Overall mark is the direct average of the 3 checkpoint scores: (cp1_pct + cp2_pct + cp3_pct) / 3
+    const totalMark = Math.round(((cp1PctRounded + cp2PctRounded + cp3PctRounded) / 3) * 10) / 10;
+
     return {
       ...p,
-      cp1_mark: Math.round(cp1Exact * 10) / 10, cp1_pct: Math.round(cp1Pct * 10) / 10,
-      cp2_mark: Math.round(cp2Exact * 10) / 10, cp2_pct: Math.round(cp2Pct * 10) / 10,
-      cp3_mark: Math.round(cp3Exact * 10) / 10, cp3_pct: Math.round(cp3Pct * 10) / 10,
-      total_mark: Math.round(totalExact * 10) / 10,
+      cp1_mark: Math.round(cp1Exact * 10) / 10, cp1_pct: cp1PctRounded,
+      cp2_mark: Math.round(cp2Exact * 10) / 10, cp2_pct: cp2PctRounded,
+      cp3_mark: Math.round(cp3Exact * 10) / 10, cp3_pct: cp3PctRounded,
+      total_mark: totalMark,
     };
   });
 };
@@ -568,9 +574,9 @@ const CompareAnalytics = () => {
                 <tbody>
                   <StatRow label="Jumlah Pemain" a={statsA?.total ?? 0} b={statsB?.total ?? 0} />
                   <StatRow label="Purata Markah (/100)" a={statsA?.avgScore ?? 0} b={statsB?.avgScore ?? 0} />
-                  <StatRow label="Purata Markah CP1 (/33)" a={statsA?.avgCp1Mark ?? 0} b={statsB?.avgCp1Mark ?? 0} />
-                  <StatRow label="Purata Markah CP2 (/33)" a={statsA?.avgCp2Mark ?? 0} b={statsB?.avgCp2Mark ?? 0} />
-                  <StatRow label="Purata Markah CP3 (/33)" a={statsA?.avgCp3Mark ?? 0} b={statsB?.avgCp3Mark ?? 0} />
+                  <StatRow label="Purata Markah CP1 (/33.3)" a={statsA?.avgCp1Mark ?? 0} b={statsB?.avgCp1Mark ?? 0} />
+                  <StatRow label="Purata Markah CP2 (/33.3)" a={statsA?.avgCp2Mark ?? 0} b={statsB?.avgCp2Mark ?? 0} />
+                  <StatRow label="Purata Markah CP3 (/33.3)" a={statsA?.avgCp3Mark ?? 0} b={statsB?.avgCp3Mark ?? 0} />
                   <StatRow label="CP1 Selesai (%)" a={statsA?.cp1Pct ?? 0} b={statsB?.cp1Pct ?? 0} unit="%" />
                   <StatRow label="CP2 Selesai (%)" a={statsA?.cp2Pct ?? 0} b={statsB?.cp2Pct ?? 0} unit="%" />
                   <StatRow label="CP3 Selesai (%)" a={statsA?.cp3Pct ?? 0} b={statsB?.cp3Pct ?? 0} unit="%" />
@@ -654,9 +660,9 @@ const CompareAnalytics = () => {
                           {p.group === 'A' ? '● A' : '● B'} {p.groupLabel}
                         </span>
                       </td>
-                      <td style={lbTd}>{Number(p.cp1_mark ?? 0).toFixed(1)}/33</td>
-                      <td style={lbTd}>{Number(p.cp2_mark ?? 0).toFixed(1)}/33</td>
-                      <td style={lbTd}>{Number(p.cp3_mark ?? 0).toFixed(1)}/33</td>
+                      <td style={lbTd}>{Number(p.cp1_mark ?? 0).toFixed(1)}/33.3</td>
+                      <td style={lbTd}>{Number(p.cp2_mark ?? 0).toFixed(1)}/33.3</td>
+                      <td style={lbTd}>{Number(p.cp3_mark ?? 0).toFixed(1)}/33.3</td>
                       <td style={{ ...lbTd, fontWeight: '800', color: '#1e3a5f', fontSize: '1rem' }}>{Number(p.total_mark ?? 0).toFixed(1)}</td>
                     </tr>
                   ))}
