@@ -616,7 +616,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
   );
 
   if (phase === 'error') return (
-    <div style={s.fullPage}><div style={s.center}><p style={{ color: '#e11d48' }}>❌ {t('game.loadError', 'Gagal memuatkan crossword.')}</p></div></div>
+    <div style={s.fullPage}><div style={s.center}><p style={{ color: '#e11d48' }}>❌ {t('game.loadError', 'Gagal memuatkan teka silang kata.')}</p></div></div>
   );
 
   const acrossWords = words.filter(w => w.direction === 'across');
@@ -798,7 +798,7 @@ const CrosswordGame = ({ onComplete, onRetry, playerId, sessionId }) => {
       {/* Header */}
       <div style={s.header}>
         <div style={s.headerLeft}>
-          <span style={s.headerTitle}>🧩 {t('game.crosswordCp2', 'Crossword — Checkpoint 2')}</span>
+          <span style={s.headerTitle}>🧩 {t('game.crosswordCp2', 'Checkpoint 2 - Teka Silang Kata')}</span>
         </div>
         <div style={s.headerRight}>
           {/* Timer */}

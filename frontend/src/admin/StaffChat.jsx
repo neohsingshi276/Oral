@@ -138,7 +138,7 @@ const StaffChat = () => {
       {/* ── Sidebar ── */}
       <div style={s.sidebar}>
         <div style={s.sidebarHeader}>
-          <span style={s.sidebarTitle}>🏢 {tx('Sembang Staf')}</span>
+          <span style={s.sidebarTitle}>🏢 {tx('Interaksi dengan Staf')}</span>
           {totalUnread > 0 && <span style={s.totalUnread}>{totalUnread}</span>}
         </div>
         <div style={s.sidebarSub}>
@@ -230,7 +230,7 @@ const StaffChat = () => {
         {!selected ? (
           <div style={s.noChat}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏢</div>
-            <p style={{ color: '#475569', fontWeight: '700', marginBottom: '0.25rem' }}>{tx('Sembang Staf')}</p>
+            <p style={{ color: '#475569', fontWeight: '700', marginBottom: '0.25rem' }}>{tx('Interaksi dengan Staf')}</p>
             <p style={{ color: '#94a3b8', fontSize: '0.85rem', textAlign: 'center', maxWidth: '260px' }}>
               {me?.role === 'main_admin'
                 ? tx('Pilih pentadbir dari senarai untuk melihat mesej mereka.')

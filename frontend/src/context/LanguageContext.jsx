@@ -19,6 +19,21 @@ reverseExactTextTranslations['Checkpoint 2'] = 'Checkpoint 2';
 reverseExactTextTranslations['Checkpoint 3'] = 'Checkpoint 3';
 reverseExactTextTranslations['Checkpoint 4'] = 'Checkpoint 4';
 
+// Force Teka Silang Kata in BM for all crossword variations
+reverseExactTextTranslations['Crossword'] = 'Teka Silang Kata';
+reverseExactTextTranslations['Crossword Puzzle'] = 'Teka Silang Kata';
+reverseExactTextTranslations['Crosswords'] = 'Teka Silang Kata';
+reverseExactTextTranslations['crossword'] = 'teka silang kata';
+reverseExactTextTranslations['Crossword — Checkpoint 2'] = 'Checkpoint 2 - Teka Silang Kata';
+reverseExactTextTranslations['Checkpoint 2 - Crossword'] = 'Checkpoint 2 - Teka Silang Kata';
+
+// Force Interaksi dengan Pemain / Staf in BM
+reverseExactTextTranslations['Player Chat'] = 'Interaksi dengan Pemain';
+reverseExactTextTranslations['Staff Chat'] = 'Interaksi dengan Staf';
+reverseExactTextTranslations['Sembang Pemain'] = 'Interaksi dengan Pemain';
+reverseExactTextTranslations['Sembang Staf'] = 'Interaksi dengan Staf';
+reverseExactTextTranslations['Sembang'] = 'Interaksi';
+
 const getNestedValue = (source, key) => {
   const keys = key.split('.');
   let value = source;

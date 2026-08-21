@@ -146,7 +146,7 @@ const AdminFAQ = () => {
     const guide = instructions[0] || {
         title: 'Panduan Menggunakan Sistem',
         content:
-            'Cipta sesi permainan di bahagian Sesi Permainan.\nBerikan kod 4 digit kepada murid.\nPantau kemajuan murid di bahagian Pemain.\nGunakan Analitik untuk melihat prestasi.\nGunakan Sembang Pemain untuk membantu murid.\nRujuk FAQ Dijawab untuk soalan biasa.',
+            'Cipta sesi permainan di bahagian Sesi Permainan.\nBerikan kod 4 digit kepada murid.\nPantau kemajuan murid di bahagian Pemain.\nGunakan Analitik untuk melihat prestasi.\nGunakan Interaksi dengan Pemain untuk membantu murid.\nRujuk FAQ Dijawab untuk soalan biasa.',
     };
 
     const guideLines = guide.content.split('\n').filter(Boolean);

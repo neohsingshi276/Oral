@@ -183,7 +183,7 @@ const AdminChat = () => {
       {/* ── Sidebar ── */}
       <div style={s.sidebar}>
         <div style={s.sidebarHeader}>
-          <span style={s.sidebarTitle}>💬 {tx('Sembang Pemain')}</span>
+          <span style={s.sidebarTitle}>💬 {tx('Interaksi dengan Pemain')}</span>
           {totalUnread > 0 && <span style={s.totalBadge}>{totalUnread}</span>}
         </div>
         <div style={s.filterBox}>
