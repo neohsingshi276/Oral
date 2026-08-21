@@ -214,6 +214,7 @@ const bm = {
       'Anda mesti menjawab sekurang-kurangnya {min} soalan dengan betul untuk lulus kuiz.',
       'Jawab dengan betul dan sepantas yang anda boleh untuk memperoleh skor tertinggi!',
     ],
+    howToPlay: 'Cara Bermain',
     cp1StartBtn: 'Mula Kuiz!',
     cp2InstructionsTitle: 'Teka Silang Kata',
     cp2Instructions: [
@@ -868,6 +869,7 @@ const bi = {
       'You must answer at least {min} questions correctly to pass the quiz.',
       'Answer correctly and as quickly as you can to achieve the highest score!',
     ],
+    howToPlay: 'How to Play',
     cp1StartBtn: 'Start Quiz!',
     cp2InstructionsTitle: 'Crossword Puzzle',
     cp2Instructions: [

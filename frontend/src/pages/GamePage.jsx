@@ -1516,16 +1516,63 @@ const GamePage = () => {
               </div>
             )}
 
-            {cpStep === 'instructions' && (
+            {cpStep === 'instructions' && (() => {
+              // Checkpoint-specific color themes
+              const cpThemes = {
+                1: { primary: '#7c3aed', primaryLight: '#a78bfa', gradientFrom: '#7c3aed', gradientTo: '#4f46e5', bgGradient: 'linear-gradient(135deg, #ede9fe 0%, #e0e7ff 50%, #dbeafe 100%)', cardBorder: '#c4b5fd', dotColor: 'rgba(124,58,237,0.12)', numberBg: 'linear-gradient(135deg, #7c3aed, #6d28d9)', iconBg: 'linear-gradient(135deg, #a78bfa, #7c3aed)', btnGradient: 'linear-gradient(135deg, #7c3aed, #6d28d9, #4f46e5)', btnShadow: '0 6px 24px rgba(124,58,237,0.4)' },
+                2: { primary: '#b45309', primaryLight: '#d97706', gradientFrom: '#b45309', gradientTo: '#92400e', bgGradient: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 30%, #fcd34d 100%)', cardBorder: '#f59e0b', dotColor: 'rgba(217,119,6,0.12)', numberBg: 'linear-gradient(135deg, #d97706, #b45309)', iconBg: 'linear-gradient(135deg, #fbbf24, #d97706)', btnGradient: 'linear-gradient(135deg, #d97706, #b45309, #92400e)', btnShadow: '0 6px 24px rgba(180,83,9,0.4)' },
+                3: { primary: '#ea580c', primaryLight: '#f97316', gradientFrom: '#ea580c', gradientTo: '#c2410c', bgGradient: 'linear-gradient(135deg, #ffedd5 0%, #fed7aa 50%, #fdba74 100%)', cardBorder: '#fb923c', dotColor: 'rgba(234,88,12,0.12)', numberBg: 'linear-gradient(135deg, #f97316, #ea580c)', iconBg: 'linear-gradient(135deg, #fdba74, #ea580c)', btnGradient: 'linear-gradient(135deg, #f97316, #ea580c, #c2410c)', btnShadow: '0 6px 24px rgba(234,88,12,0.4)' },
+              };
+              const theme = cpThemes[activeCP] || cpThemes[1];
+              const cpIcons = { 1: '❓', 2: '🧩', 3: '🍎' };
+
+              return (
               <div style={s.modalBody}>
-                <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>
-                    {activeCP === 1 ? '❓' : activeCP === 2 ? '🧩' : '🍎'}
+                <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+                  {/* Decorative icon badge */}
+                  <div style={{
+                    width: '72px', height: '72px', borderRadius: '50%',
+                    background: theme.iconBg,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    margin: '0 auto 1rem', fontSize: '2rem',
+                    boxShadow: `0 8px 24px ${theme.dotColor}, 0 0 0 6px rgba(255,255,255,0.8)`,
+                  }}>
+                    {cpIcons[activeCP]}
                   </div>
-                  <h3 style={{ color: '#1e3a5f', fontSize: '1.3rem', fontWeight: '800', marginBottom: '1.25rem' }}>
+
+                  {/* Title with gradient text effect */}
+                  <h3 style={{
+                    background: `linear-gradient(135deg, ${theme.gradientFrom}, ${theme.gradientTo})`,
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    fontSize: '1.45rem', fontWeight: '900', marginBottom: '1.25rem', letterSpacing: '-0.02em',
+                  }}>
                     {activeCP === 1 ? t('game.cp1InstructionsTitle') : activeCP === 2 ? t('game.cp2InstructionsTitle') : t('game.cp3InstructionsTitle')}
                   </h3>
-                  <div style={{ textAlign: 'left', background: '#f8fafc', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
+
+                  {/* Instruction card with gradient background & decorative elements */}
+                  <div style={{
+                    position: 'relative', textAlign: 'left', overflow: 'hidden',
+                    background: theme.bgGradient,
+                    border: `1.5px solid ${theme.cardBorder}`,
+                    borderRadius: '16px', padding: '1.5rem 1.75rem', marginBottom: '1.75rem',
+                    boxShadow: `0 4px 16px ${theme.dotColor}`,
+                  }}>
+                    {/* Decorative floating circles */}
+                    <div style={{ position: 'absolute', top: '-18px', right: '-18px', width: '64px', height: '64px', borderRadius: '50%', background: theme.dotColor, pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', bottom: '-12px', left: '-12px', width: '40px', height: '40px', borderRadius: '50%', background: theme.dotColor, pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', top: '50%', right: '8px', width: '24px', height: '24px', borderRadius: '50%', background: theme.dotColor, pointerEvents: 'none' }} />
+
+                    {/* "How to Play" mini-label */}
+                    <div style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                      background: `linear-gradient(135deg, ${theme.gradientFrom}, ${theme.gradientTo})`,
+                      color: '#fff', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.08em',
+                      padding: '0.3rem 0.8rem', borderRadius: '20px', marginBottom: '1rem',
+                    }}>
+                      📋 {t('game.howToPlay')}
+                    </div>
+
                     {(() => {
                       const settingsObj = activeCP === 1 ? quizSettings : activeCP === 2 ? crosswordSettings : null;
                       const minCorrect = (settingsObj?.minimum_correct !== undefined && settingsObj?.minimum_correct !== null) ? Number(settingsObj.minimum_correct) : 8;
@@ -1537,34 +1584,53 @@ const GamePage = () => {
                           .replace('{count}', totalItems)
                           .replace('{min}', minCorrect);
                         return (
-                          <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: idx < instructions.length - 1 ? '0.75rem' : 0 }}>
-                            <span style={{ color: '#2563eb', fontWeight: '800', fontSize: '1rem', lineHeight: '1.5' }}>{idx + 1}.</span>
-                            <span style={{ color: '#334155', fontSize: '0.95rem', lineHeight: '1.5' }}>{text}</span>
+                          <div key={idx} style={{
+                            display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+                            marginBottom: idx < instructions.length - 1 ? '0.85rem' : 0,
+                            position: 'relative', zIndex: 1,
+                          }}>
+                            <div style={{
+                              minWidth: '28px', height: '28px', borderRadius: '50%',
+                              background: theme.numberBg,
+                              color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: '0.78rem', fontWeight: '800',
+                              boxShadow: `0 2px 8px ${theme.dotColor}`,
+                              flexShrink: 0,
+                            }}>{idx + 1}</div>
+                            <span style={{ color: '#1e293b', fontSize: '0.95rem', lineHeight: '1.6', fontWeight: '500', paddingTop: '0.15rem' }}>{text}</span>
                           </div>
                         );
                       });
                     })()}
                   </div>
+
+                  {/* Start button with matching gradient */}
                   <button
                     style={{
                       ...s.continueBtn,
-                      background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                      background: theme.btnGradient,
                       fontSize: '1.1rem',
-                      padding: '1rem 2rem',
-                      borderRadius: '12px',
-                      display: 'flex',
+                      padding: '1rem 2.5rem',
+                      borderRadius: '14px',
+                      display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '0.5rem',
+                      gap: '0.6rem',
                       margin: '0 auto',
+                      boxShadow: theme.btnShadow,
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                      letterSpacing: '0.01em',
                     }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px) scale(1.03)'; e.currentTarget.style.boxShadow = theme.btnShadow.replace('0.4', '0.55'); }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0) scale(1)'; e.currentTarget.style.boxShadow = theme.btnShadow; }}
                     onClick={() => setCpStep('activity')}
                   >
                     🚀 {activeCP === 1 ? t('game.cp1StartBtn') : activeCP === 2 ? t('game.cp2StartBtn') : t('game.cp3StartBtn')}
                   </button>
                 </div>
               </div>
-            )}
+            );
+            })()}
 
             {cpStep === 'activity' && activeCP === 2 && (
               <CrosswordGame
